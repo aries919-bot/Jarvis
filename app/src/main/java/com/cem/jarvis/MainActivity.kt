@@ -83,7 +83,7 @@ class MainActivity : Activity() {
     )
 
     private val SYS = """
-Sen Jarvis adlı, Türkçe konuşan bir telefon asistanısın. Kullanıcının cümlesini aşağıdaki kalıplardan BİRİne çevir; kalıp uymuyorsa sohbet olarak yanıtla.
+Adın Aries. Türkçe konuşan bir telefon asistanısın. Kullanıcının cümlesini aşağıdaki kalıplardan BİRİne çevir; kalıp uymuyorsa sohbet olarak yanıtla.
 Kalıplar (command alanı):
 - "<isim> ara", "<isim> mesaj <metin>", "<isim> whatsapp <metin>"
 - "müziği durdur", "müziği oynat", "müziği geç", "önceki şarkı", "sesi aç", "sesi kıs"
@@ -304,7 +304,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val top = Ui.row(this)
         top.addView(Ui.iconBtn(this, "jmenu", "Menü", 44, 24, Pal.TEXT) { openSide() })
         val titleCol = Ui.column(this)
-        val title = Ui.text(this, "Jarvis", 18f, Pal.WHITE, true)
+        val title = Ui.text(this, "Aries", 18f, Pal.WHITE, true)
         title.gravity = Gravity.CENTER_HORIZONTAL
         titleCol.addView(title, LinearLayout.LayoutParams(-1, -2))
         orbStatus = Ui.text(this, "Hazır", 12f, Pal.MUTED)
@@ -339,7 +339,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val bar = Ui.row(this)
         bar.setPadding(0, dp(8), 0, 0)
         bar.addView(Ui.iconBtn(this, "jplus", "Ekle", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { plusMenu() })
-        composer = Ui.input(this, "Jarvis'e yaz...")
+        composer = Ui.input(this, "Aries'e yaz...")
         composer.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         composer.imeOptions = EditorInfo.IME_ACTION_SEND
         composer.setOnEditorActionListener { _, action, _ ->
@@ -844,7 +844,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun exportConv() {
         val c = store.current()
         val text = c.msgs.joinToString("\n\n") { (r, t) ->
-            (if (r == "user") "Sen" else "Jarvis") + ": " + t
+            (if (r == "user") "Sen" else "Aries") + ": " + t
         }
         val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("jarvis-sohbet", text))
