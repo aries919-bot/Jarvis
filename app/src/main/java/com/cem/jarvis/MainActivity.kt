@@ -1262,11 +1262,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         showThinking()
         thread {
             try {
-                val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { null } else null) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
+                var hz = "ok"; val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
                     val src = a.sources.take(3).joinToString("\n") { "• " + it.title + " - " + it.url }
-                    say(a.text.ifEmpty { "Sonuç bulamadım." } + (if (src.isNotEmpty()) "\n\nKaynaklar:\n$src" else ""), a.text)
+                    say(a.text.ifEmpty { "Sonuç bulamadım." } + (if (src.isNotEmpty()) "\n\nKaynaklar:\n$src" else "") + " [hizli: $hz]", a.text)
                 }
             } catch (e: Exception) {
                 runOnUiThread { hideThinking(); say(Ai.friendly(e)) }
