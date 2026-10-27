@@ -26,9 +26,9 @@
 
     <application
         android:allowBackup="true"
-        android:label="Jarvis"
+        android:label="Aries"
         android:supportsRtl="false"
-        android:theme="@style/JarvisTheme">
+        android:theme="@style/AriesTheme">
 
         <activity
             android:name="com.cem.jarvis.MainActivity"

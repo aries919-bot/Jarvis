@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="JarvisTheme" parent="@android:style/Theme.Material.NoActionBar">
+    <style name="AriesTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:statusBarColor">#000000</item>
         <item name="android:navigationBarColor">#000000</item>
         <item name="android:windowBackground">#000000</item>
