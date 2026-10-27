@@ -437,7 +437,7 @@ object Ui {
         val label = when (who) {
             "Sen" -> "SEN"
             "Sistem" -> "SİSTEM"
-            else -> "JARVIS"
+            else -> "ARIES"
         }
         val lb = text(ctx, label, 10f, if (who == "J") Pal.GREEN else Pal.MUTED, true)
         lb.letterSpacing = 0.14f
