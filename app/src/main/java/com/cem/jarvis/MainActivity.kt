@@ -1262,7 +1262,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         showThinking()
         thread {
             try {
-                val a = Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
+                val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { null } else null) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
                     val src = a.sources.take(3).joinToString("\n") { "• " + it.title + " - " + it.url }

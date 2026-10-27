@@ -207,6 +207,22 @@ object Ai {
         throw ApiError(code, errText("Aries Bulut", code))
     }
 
+    private const val HIZLI_URL = "https://jarvis-cloud.aydincem919.workers.dev/hizli"
+
+    fun hizli(token: String, q: String): Answer {
+        val body = JSONObject().put("q", q)
+        val (code, txt) = Net.post(HIZLI_URL, mapOf("Authorization" to "Bearer $token"), body)
+        if (code != 200) throw ApiError(code, errText("Aries Bulut", code))
+        val j = JSONObject(txt)
+        val arr = j.optJSONArray("sources") ?: JSONArray()
+        val src = ArrayList<Source>()
+        for (i in 0 until arr.length()) {
+            val u = arr.getString(i)
+            src.add(Source(u.removePrefix("https://").removePrefix("http://").substringBefore("/"), u))
+        }
+        return Answer(j.getString("answer"), src)
+    }
+
     private fun callProvider(who: String, key: String, model: String, sys: String, hist: List<Pair<String, String>>, json: Boolean = true): String {
         if (who == "bulut") return bulut(key, sys, hist)
         return if (who == "gemini") {
