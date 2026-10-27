@@ -1,0 +1,8 @@
+build/
+.gradle/
+*.apk
+*.bak
+*.bak2
+local.properties
+build.log
+yukle.zip
