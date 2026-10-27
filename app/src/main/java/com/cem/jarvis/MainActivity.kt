@@ -68,7 +68,7 @@ class MainActivity : Activity() {
     private val navBtns = ArrayList<Button>()
     private val micBtns = ArrayList<Button>()
     private val toggleBtns = HashMap<String, Button>()
-    private val keyFields = HashMap<S butring, EditText>()
+    private val keyFields = HashMap<String, EditText>()
     private val NO_NET = "İnternet yok. Bu özellik internet gerektiriyor; yerel komutlar çalışıyor."
 
     private val PICK_FILE_REQUEST = 1001
