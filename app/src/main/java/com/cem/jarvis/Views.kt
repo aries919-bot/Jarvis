@@ -431,24 +431,80 @@ object Ui {
     }
 
     // Sade sohbet satırı (balonsuz, uçtan uca): "Sen" silik, Jarvis parlak, "Sistem" küçük ve gri.
-    fun line(ctx: Context, who: String, text: String): View {
-        val col = column(ctx)
-        col.setPadding(dp(ctx, 2), dp(ctx, 8), dp(ctx, 2), dp(ctx, 8))
-        val label = when (who) {
-            "Sen" -> "SEN"
-            "Sistem" -> "SİSTEM"
-            else -> "ARIES"
-        }
-        val lb = text(ctx, label, 10f, if (who == "J") Pal.GREEN else Pal.MUTED, true)
-        lb.letterSpacing = 0.14f
-        col.addView(lb)
+    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null): View {
+        val me = who == "Sen"
+        val sys = who == "Sistem"
+        val outer = android.widget.LinearLayout(ctx)
+        outer.orientation = android.widget.LinearLayout.VERTICAL
+        outer.setPadding(dp(ctx, 4), dp(ctx, 6), dp(ctx, 4), dp(ctx, 6))
+        val box = android.widget.LinearLayout(ctx)
+        box.orientation = android.widget.LinearLayout.VERTICAL
+        val lp = android.widget.LinearLayout.LayoutParams(-2, -2)
+        lp.gravity = if (me) android.view.Gravity.END else android.view.Gravity.START
         val tv = TextView(ctx)
         tv.text = text
-        tv.textSize = if (who == "Sistem") 13f else 16f
-        tv.setLineSpacing(0f, 1.15f)
-        tv.setTextColor(Color.parseColor(if (who == "Sen") "#BDBDBD" else if (who == "Sistem") Pal.MUTED else Pal.TEXT))
+        tv.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
+        tv.textSize = if (sys) 13f else 16f
+        tv.setLineSpacing(0f, 1.2f)
         tv.setTextIsSelectable(true)
-        col.addView(tv)
-        return col
+        tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
+        if (sys) {
+            tv.setTextColor(Color.parseColor("#8A8FA8"))
+            lp.gravity = android.view.Gravity.CENTER_HORIZONTAL
+        } else {
+            tv.setTextColor(Color.parseColor("#F2F2F7"))
+            val bg = android.graphics.drawable.GradientDrawable()
+            bg.cornerRadius = dp(ctx, 18).toFloat()
+            bg.setColor(Color.parseColor(if (me) "#3B3F8C" else "#1C1C24"))
+            tv.background = bg
+            tv.setPadding(dp(ctx, 14), dp(ctx, 10), dp(ctx, 14), dp(ctx, 10))
+        }
+        box.addView(tv)
+        outer.addView(box, lp)
+        if (who == "J" && text != "Düşünüyorum…") {
+            fun act(label: String, run: () -> Unit): TextView {
+                val a = TextView(ctx)
+                a.text = label
+                a.textSize = 12f
+                a.setTextColor(Color.parseColor("#8A8FA8"))
+                a.setPadding(dp(ctx, 6), dp(ctx, 8), dp(ctx, 12), dp(ctx, 6))
+                a.setOnClickListener { run() }
+                return a
+            }
+            val row = android.widget.LinearLayout(ctx)
+            row.orientation = android.widget.LinearLayout.HORIZONTAL
+            row.addView(act("Kopyala") {
+                val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cm.setPrimaryClip(android.content.ClipData.newPlainText("Aries", text))
+                android.widget.Toast.makeText(ctx, "Kopyalandı", android.widget.Toast.LENGTH_SHORT).show()
+            })
+            row.addView(act("Paylaş") {
+                val i = android.content.Intent(android.content.Intent.ACTION_SEND)
+                i.type = "text/plain"
+                i.putExtra(android.content.Intent.EXTRA_TEXT, text)
+                ctx.startActivity(android.content.Intent.createChooser(i, "Paylaş"))
+            })
+            row.addView(act("Büyüt") {
+                val big = TextView(ctx)
+                big.text = text
+                big.textSize = 26f
+                big.setTextColor(Color.WHITE)
+                big.setPadding(dp(ctx, 20), dp(ctx, 20), dp(ctx, 20), dp(ctx, 20))
+                big.setTextIsSelectable(true)
+                val sv = android.widget.ScrollView(ctx)
+                sv.setBackgroundColor(Color.parseColor("#101014"))
+                sv.addView(big)
+                android.app.AlertDialog.Builder(ctx).setView(sv).setPositiveButton("Kapat", null).show()
+            })
+            if (onSpeak != null) row.addView(act("Oku") { onSpeak() })
+            if (sources.isNotEmpty()) row.addView(act("Kaynak (" + sources.size + ")") {
+                val names = sources.map { it.first }.toTypedArray()
+                android.app.AlertDialog.Builder(ctx).setTitle("Kaynaklar").setItems(names) { _, w ->
+                    try { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(sources[w].second))) } catch (e: Exception) {}
+                }.show()
+            })
+            box.addView(row)
+        }
+        return outer
     }
 }

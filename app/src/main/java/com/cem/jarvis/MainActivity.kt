@@ -854,15 +854,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun renderConv(c: Conv) {
         if (!::chatBox.isInitialized) return
         chatBox.removeAllViews()
-        for ((r, t) in c.msgs) chatBox.addView(Ui.line(this, labelOf(r), t))
+        for ((r, t) in c.msgs) chatBox.addView(Ui.line(this, labelOf(r), t, emptyList()) { speakNow(t) })
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
     private fun labelOf(role: String): String = if (role == "user") "Sen" else "J"
 
-    private fun addBubble(who: String, text: String) {
+    private fun addBubble(who: String, text: String, srcs: List<Pair<String, String>> = emptyList()) {
         if (!::chatBox.isInitialized) return
-        chatBox.addView(Ui.line(this, who, text))
+        chatBox.addView(Ui.line(this, who, text, srcs) { speakNow(text) })
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
@@ -883,8 +883,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         thinkingView = null
     }
 
-    private fun say(display: String, spoken: String = display) {
-        addBubble("J", display)
+    private fun say(display: String, spoken: String = display, srcs: List<Pair<String, String>> = emptyList()) {
+        addBubble("J", display, srcs)
         store.addMsg(store.current(), "assistant", display)
         speakNow(spoken)
     }
@@ -1230,7 +1230,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun needsLive(t: String): Boolean {
         val l = t.lowercase(java.util.Locale("tr", "TR"))
         val keys = listOf("altın", "dolar", "euro", "sterlin", "borsa", "bitcoin", "kripto", "hava durumu", "haber", "son dakika", "maç", "skor", "güncel", "fiyat", "kur ")
-        return keys.any { l.contains(it) }
+        return keys.any { l.contains(it) } || l.contains("?") || listOf("kim ", "kimdir", "nedir", "kaç ", "hangi", "nerede", "ne zaman", "neden", "kaçta", "var mı", "ne kadar", "kazandı", "yendi", "sezon", "gol").any { l.contains(it) }
     }
 
     private fun askAi(text: String) {
@@ -1265,8 +1265,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                 var hz = "ok"; val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
-                    val src = a.sources.take(3).joinToString("\n") { "• " + it.title + " - " + it.url }
-                    say(a.text.ifEmpty { "Sonuç bulamadım." } + (if (src.isNotEmpty()) "\n\nKaynaklar:\n$src" else "") + " [hizli: $hz]", a.text)
+                    say(a.text.ifEmpty { "Sonuç bulamadım." }, a.text, a.sources.take(5).map { it.title to it.url })
                 }
             } catch (e: Exception) {
                 runOnUiThread { hideThinking(); say(Ai.friendly(e)) }
