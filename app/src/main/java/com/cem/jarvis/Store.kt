@@ -158,7 +158,7 @@ class Store(ctx: Context) {
         val e = prefs.edit()
         for (k in listOf("convs", "cur", "facts", "tasks", "watch", "hist", "app_files")) e.remove(k)
         if (!keepKeys) {
-            for (k in listOf("key", "groq", "groqModel", "mistral", "mistralModel", "finnhub", "news")) e.remove(k)
+            for (k in listOf("key", "bulut", "groq", "groqModel", "mistral", "mistralModel", "finnhub", "news")) e.remove(k)
         }
         e.apply()
         cache.clear()

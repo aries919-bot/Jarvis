@@ -139,12 +139,14 @@ object Ai {
     fun defaultModel(who: String): String = when (who) {
         "groq" -> GROQ_DEFAULT
         "mistral" -> MISTRAL_DEFAULT
+        "bulut" -> "bulut"
         else -> GEMINI_MODEL
     }
 
     fun displayName(who: String): String = when (who) {
         "groq" -> "Groq"
         "mistral" -> "Mistral"
+        "bulut" -> "Aries Bulut"
         else -> "Gemini"
     }
 
@@ -194,7 +196,19 @@ object Ai {
         throw last
     }
 
+    private const val BULUT_URL = "https://jarvis-cloud.aydincem919.workers.dev/ai"
+
+    private fun bulut(token: String, sys: String, hist: List<Pair<String, String>>): String {
+        val msgs = JSONArray()
+        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", t))
+        val body = JSONObject().put("system", sys).put("messages", msgs)
+        val (code, txt) = Net.post(BULUT_URL, mapOf("Authorization" to "Bearer $token"), body)
+        if (code == 200) return JSONObject(txt).getString("answer")
+        throw ApiError(code, errText("Aries Bulut", code))
+    }
+
     private fun callProvider(who: String, key: String, model: String, sys: String, hist: List<Pair<String, String>>, json: Boolean = true): String {
+        if (who == "bulut") return bulut(key, sys, hist)
         return if (who == "gemini") {
             geminiAnswer(key, sys, hist, json, false).text
         } else {

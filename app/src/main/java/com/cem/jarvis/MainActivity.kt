@@ -691,6 +691,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, flagButton("heyJarvis"))
 
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
+        keyField(col, "Aries Bulut Anahtarı", "bulut")
         keyField(col, "Google AI Studio (Gemini)", "key")
         keyField(col, "Groq Anahtarı", "groq")
         keyField(col, "Groq Model Adı", "groqModel")
@@ -1216,7 +1217,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         return false
     }
 
-    private fun hasAiKey(): Boolean = Ai.ALL.any { store.str(keyName(it)).isNotBlank() }
+    private fun hasAiKey(): Boolean = store.str("bulut").isNotBlank() || Ai.ALL.any { store.str(keyName(it)).isNotBlank() }
     private fun keyName(who: String): String = if (who == "gemini") "key" else who
     private fun providerKeys(): Map<String, String> = Ai.ALL.associateWith { store.str(keyName(it)) }
     private fun providerModels(): Map<String, String> = mapOf(
@@ -1239,7 +1240,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         showThinking()
         thread {
             try {
-                val raw = Ai.chat(providerOrder(), providerKeys(), providerModels(), SYS, hist)
+                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), SYS, hist)
                 val (cmd, reply) = Ai.parseReply(raw)
                 runOnUiThread {
                     hideThinking()
