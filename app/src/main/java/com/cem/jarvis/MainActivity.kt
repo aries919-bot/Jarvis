@@ -54,6 +54,8 @@ class MainActivity : Activity() {
 
     private lateinit var store: Store
     private var tts: TextToSpeech? = null
+    private var lastSpoken = ""
+    private var lastPos = 0
     private var ttsReady = false
     private var pendingSay: String? = null
     private var rec: SpeechRecognizer? = null
@@ -448,7 +450,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             sendComposer()
             return
         }
-        if (continuous || listeningNow) stopVoice() else startVoice()
+        if (orbState == 2) { tts?.stop(); setOrb(0) } else if (listeningNow) rec?.stopListening() else if (continuous) stopVoice() else startVoice()
     }
 
     private fun startVoice() {
@@ -456,10 +458,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1)
             return
         }
-        continuous = true
+        continuous = false
         refreshToggles()
         refreshHomeMic()
-        listen()
+        listen(true)
     }
 
     private fun stopVoice() {
@@ -920,7 +922,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             override fun onDone(id: String?) { runOnUiThread { setOrb(0); afterSpeech() } }
             override fun onError(id: String?) { runOnUiThread { setOrb(0); afterSpeech() } }
             @android.annotation.SuppressLint("NewApi")
-            override fun onRangeStart(id: String?, start: Int, end: Int, frame: Int) { runOnUiThread { pulseOrb(0.9f) } }
+            override fun onRangeStart(id: String?, start: Int, end: Int, frame: Int) { lastPos = start; runOnUiThread { pulseOrb(0.9f) } }
         })
         ttsReady = true
         pendingSay?.let { speakNow(it); pendingSay = null }
@@ -936,6 +938,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             pendingSay = t
             return
         }
+        lastSpoken = t; lastPos = 0
         engine.speak(t, TextToSpeech.QUEUE_FLUSH, null, "j")
     }
 
@@ -1141,6 +1144,16 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
+        if (Regex("^(sus|sustur|dur|yeter|bekle|bir dakika|dur biraz|bekle biraz)$").containsMatchIn(s)) {
+            tts?.stop(); setOrb(0)
+            return true
+        }
+        if (Regex("^(devam et|devam|devam et lütfen|oradan devam et)$").containsMatchIn(s)) {
+            val rest = if (lastPos in 0 until lastSpoken.length) lastSpoken.substring(lastPos) else ""
+            if (rest.isNotBlank()) { speakNow(rest); return true }
+            say("Devam edecek bir şey yok.")
+            return true
+        }
         if (Reminders.tryHandle(this, s) { msg -> say(msg) }) {
             refreshReminders()
             return true
