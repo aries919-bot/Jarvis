@@ -49,9 +49,8 @@ object Commands {
 
     private fun phoneOf(ctx: Context, name: String): String? {
         if (ctx.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return null
-        val P = android.provider.ContactsContract.CommonDataKinds.Phone
-        for (n in listOf(name.trim(), cleanSuffixes(name)).distinct()) {
-            ctx.contentResolver.query(P.CONTENT_URI, arrayOf(P.NUMBER), P.DISPLAY_NAME + " LIKE ?", arrayOf("%" + n + "%"), null)?.use { c -> if (c.moveToFirst()) return c.getString(0) }
+                for (n in listOf(name.trim(), cleanSuffixes(name)).distinct()) {
+            ctx.contentResolver.query(android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI, arrayOf(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER), android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " LIKE ?", arrayOf("%" + n + "%"), null)?.use { c -> if (c.moveToFirst()) return c.getString(0) }
         }
         return null
     }
