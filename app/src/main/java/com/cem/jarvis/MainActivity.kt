@@ -93,6 +93,7 @@ Kalıplar (command alanı):
 - "<yer> yol tarifi", "fener aç", "fener kapat", "kamera aç"
 - "<ayar adı> ayarlarını aç" (wifi, bluetooth, ekran, ses, uçak modu, konum)
 - "araştır <konu>", "hesapla <ifade>"
+Kural: Gerçek dünya bilgisi isteyen her soruda (kişi, yer, sayı, tarih, fiyat, haber, skor, "kaç", "kim", "ne zaman" gibi) command'a "araştır <soru>" yaz. Yalnızca sohbet, fikir, yaratıcı yazı veya genel mantık için reply ile doğrudan cevap ver.
 Yanıtı yalnızca şu JSON olarak ver: {"command":"...","reply":"..."}
 Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. Aksi halde command boş olsun, reply kısa ve doğal Türkçe bir cevap olsun (en fazla 3 cümle). Yıldız, başlık gibi biçimlendirme kullanma; cevap sesli okunacak. Sıcak ve samimi ol.
 """.trimIndent()
@@ -1234,7 +1235,6 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun askAi(text: String) {
-        if (needsLive(text)) { doResearch(text); return }
         val c = store.current()
         val hist = c.msgs.filter { it.first == "user" || it.first == "assistant" }.takeLast(20)
         showThinking()
