@@ -56,6 +56,8 @@ class MainActivity : Activity() {
     private var tts: TextToSpeech? = null
     private var lastSpoken = ""
     private var lastPos = 0
+    private var voiceTurn = false
+    private var barge: SpeechRecognizer? = null
     private var ttsReady = false
     private var pendingSay: String? = null
     private var rec: SpeechRecognizer? = null
@@ -687,44 +689,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val col = Ui.column(this)
         add(col, Ui.text(this, "Ayarlar", 20f, Pal.WHITE))
 
-        add(col, Ui.text(this, "Gizlilik", 14f, Pal.MUTED))
-        add(col, flagButton("aiOn"))
-        add(col, flagButton("histOn"))
-        add(col, flagButton("memOn"))
-        add(col, flagButton("heyJarvis"))
-
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
-        keyField(col, "Google AI Studio (Gemini)", "key")
-        keyField(col, "Groq Anahtarı", "groq")
-        keyField(col, "Groq Model Adı", "groqModel")
-        keyField(col, "Mistral Anahtarı", "mistral")
-        keyField(col, "Finnhub Anahtarı (Borsa)", "finnhub")
-        keyField(col, "Haber Konusu", "news")
         add(col, Ui.button(this, "Kaydet") { saveSettings() })
-
-        add(col, Ui.text(this, "Bağlantı Testi", 14f, Pal.MUTED))
-        add(col, Ui.button(this, "Gemini Test") { testProvider("gemini") })
-        add(col, Ui.button(this, "Groq Test") { testProvider("groq") })
-        testOut = Ui.card(this, "Test yapılmadı.")
-        add(col, testOut)
-
-        orderBtn = Ui.button(this, "Yapay Zekâ Sırası: " + orderLabel()) { pickOrder() }
-        add(col, orderBtn)
-
-        add(col, Ui.text(this, "Veri Yönetimi", 14f, Pal.MUTED))
-        add(col, Ui.button(this, "Hafızamı Göster") {
-            val f = store.facts()
-            say(if (f.isBlank()) "Kayıt yok." else "Hatırladıklarım: $f")
-        })
-        add(col, Ui.button(this, "Hafızayı Dışa Aktar") { exportMemory() })
-        add(col, Ui.button(this, "Tüm Verileri Temizle") {
-            confirm("Her şey silinsin mi?", {
-                store.clearAllData(false)
-                Reminders.cancelAll(this)
-                say("Temizlendi.")
-            }, {})
-        })
 
         add(col, Ui.text(this, "Hakkında", 14f, Pal.MUTED))
         add(col, Ui.card(this, ABOUT))
@@ -775,7 +742,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val p = Ui.column(this)
         p.setBackgroundColor(Color.parseColor(Pal.CARD))
         p.setPadding(dp(18), dp(44), dp(18), dp(18))
-        val navPairs = listOf(listOf("Sesli" to 1, "Asistan" to 2), listOf("Dosyalar" to 3, "Ayarlar" to 4))
+        val navPairs = listOf(listOf("Ayarlar" to 4))
         for (pair in navPairs) {
             val r = Ui.row(this)
             for ((name, idx) in pair) {
@@ -918,9 +885,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val engine = tts ?: return
         engine.setLanguage(tr)
         engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(id: String?) { runOnUiThread { setOrb(2) } }
-            override fun onDone(id: String?) { runOnUiThread { setOrb(0); afterSpeech() } }
-            override fun onError(id: String?) { runOnUiThread { setOrb(0); afterSpeech() } }
+            override fun onStart(id: String?) { runOnUiThread { setOrb(2); if (voiceTurn) startBarge() } }
+            override fun onDone(id: String?) { runOnUiThread { setOrb(0); stopBarge(); voiceTurn = false; afterSpeech() } }
+            override fun onError(id: String?) { runOnUiThread { setOrb(0); stopBarge(); voiceTurn = false; afterSpeech() } }
             @android.annotation.SuppressLint("NewApi")
             override fun onRangeStart(id: String?, start: Int, end: Int, frame: Int) { lastPos = start; runOnUiThread { pulseOrb(0.9f) } }
         })
@@ -940,6 +907,52 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         }
         lastSpoken = t; lastPos = 0
         engine.speak(t, TextToSpeech.QUEUE_FLUSH, null, "j")
+    }
+
+    private fun stopBarge() {
+        val b = barge
+        barge = null
+        try { b?.cancel(); b?.destroy() } catch (e: Exception) {}
+    }
+
+    private fun bargeHit(res: Bundle?, b: SpeechRecognizer): Boolean {
+        val t = res?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.lowercase(tr) ?: return false
+        if (!Regex("(^| )(sus|dur|bekle|yeter)( |$)").containsMatchIn(t)) return false
+        if (barge !== b) return true
+        stopBarge()
+        tts?.stop()
+        setOrb(0)
+        voiceTurn = false
+        uiHandler.postDelayed({ if (orbState != 2 && !listeningNow && hasMic()) listen(true) }, 500)
+        return true
+    }
+
+    private fun startBarge() {
+        if (!hasMic() || !SpeechRecognizer.isRecognitionAvailable(this)) return
+        stopBarge()
+        val b = SpeechRecognizer.createSpeechRecognizer(this)
+        barge = b
+        b.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(p: Bundle?) {}
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(v: Float) {}
+            override fun onBufferReceived(x: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onEvent(t: Int, p: Bundle?) {}
+            override fun onPartialResults(p: Bundle?) { bargeHit(p, b) }
+            override fun onResults(res: Bundle?) {
+                if (!bargeHit(res, b) && orbState == 2 && barge === b) uiHandler.postDelayed({ if (orbState == 2 && barge === b) startBarge() }, 300)
+            }
+            override fun onError(err: Int) {
+                if (orbState == 2 && barge === b && err != SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) uiHandler.postDelayed({ if (orbState == 2 && barge === b) startBarge() }, 500)
+            }
+        })
+        b.startListening(
+            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "tr-TR")
+                .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        )
     }
 
     private fun loopActive(): Boolean = continuous || awaitingCommand || store.flag("heyJarvis", false)
@@ -1055,6 +1068,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                     if (!manualSession && loopActive()) restartLater(400)
                     return
                 }
+                voiceTurn = true
                 if (::voiceText.isInitialized) voiceText.text = "Son söylenen: $text"
                 if (continuous || awaitingCommand) {
                     awaitingCommand = false

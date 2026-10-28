@@ -26,12 +26,12 @@ import android.widget.TextView
 // RENKLER: Tema değiştirmek istediğinde yalnızca bu bloğu düzenle.
 // ============================================================
 object Pal {
-    const val BG = "#000000"       // ekran zemini (saf siyah)
-    const val CARD = "#0A0A0A"     // kart zemini
-    const val CARD2 = "#131313"    // düğme ve giriş kutusu zemini
-    const val LINE = "#262626"     // ince kenar çizgisi
-    const val TEXT = "#F2F2F2"     // yazı
-    const val MUTED = "#8C8C8C"    // pasif yazı
+    const val BG = "#0B0D12"       // ekran zemini (saf siyah)
+    const val CARD = "#12151C"     // kart zemini
+    const val CARD2 = "#1A1E28"    // düğme ve giriş kutusu zemini
+    const val LINE = "#2A3040"     // ince kenar çizgisi
+    const val TEXT = "#EDEFF5"     // yazı
+    const val MUTED = "#8B93A7"    // pasif yazı
     const val WHITE = "#FFFFFF"    // dinleme / vurgu
     const val GREEN = "#34D399"    // başarılı işlem
     const val RED = "#FF6B6B"      // uyarı / durdur
@@ -455,7 +455,7 @@ object Ui {
             tv.setTextColor(Color.parseColor("#F2F2F7"))
             val bg = android.graphics.drawable.GradientDrawable()
             bg.cornerRadius = dp(ctx, 18).toFloat()
-            bg.setColor(Color.parseColor(if (me) "#3B3F8C" else "#1C1C24"))
+            bg.setColor(Color.parseColor(if (me) "#3B3F8C" else "#1A1E28"))
             tv.background = bg
             tv.setPadding(dp(ctx, 14), dp(ctx, 10), dp(ctx, 14), dp(ctx, 10))
         }
@@ -492,7 +492,7 @@ object Ui {
                 big.setPadding(dp(ctx, 20), dp(ctx, 20), dp(ctx, 20), dp(ctx, 20))
                 big.setTextIsSelectable(true)
                 val sv = android.widget.ScrollView(ctx)
-                sv.setBackgroundColor(Color.parseColor("#101014"))
+                sv.setBackgroundColor(Color.parseColor("#12151C"))
                 sv.addView(big)
                 android.app.AlertDialog.Builder(ctx).setView(sv).setPositiveButton("Kapat", null).show()
             })

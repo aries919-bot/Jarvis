@@ -47,6 +47,9 @@ object Commands {
         return Pair(h, m)
     }
 
+    private fun callIntent(ctx: Context, num: String): Intent =
+        Intent(if (ctx.checkSelfPermission(android.Manifest.permission.CALL_PHONE) == android.content.pm.PackageManager.PERMISSION_GRANTED) Intent.ACTION_CALL else Intent.ACTION_DIAL, Uri.parse("tel:" + num))
+
     private fun phoneOf(ctx: Context, name: String): String? {
         if (ctx.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return null
                 for (n in listOf(name.trim(), cleanSuffixes(name)).distinct()) {
@@ -110,7 +113,7 @@ object Commands {
         val yol = Regex("^(.+?)\\s+yol tarifi$").find(s)
         if (yol != null) return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(yol.groupValues[1]))), say, "Yol tarifi açılıyor.")
         val tel = Regex("^([0-9+][0-9 ]{6,})\\s*ara$").find(s)
-        if (tel != null) return go(ctx, Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tel.groupValues[1].replace(" ", ""))), say, "Arama ekranı açılıyor.")
+        if (tel != null) return go(ctx, callIntent(ctx, tel.groupValues[1].replace(" ", "")), say, "Arıyorum.")
         if (Regex("^(bugün günlerden ne|günlerden ne|bugünün tarihi|tarih|bugün ayın kaçı)\\??$").containsMatchIn(s)) {
             say(SimpleDateFormat("d MMMM yyyy, EEEE", Locale("tr", "TR")).format(Date()) + ".")
             return true
@@ -138,7 +141,7 @@ object Commands {
         if (ar != null) {
             val p = phoneOf(ctx, ar.groupValues[1])
             if (p == null) { say("Rehberde bulamadım veya rehber izni yok."); return true }
-            return go(ctx, Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + p)), say, "Arama ekranı açıldı.")
+            return go(ctx, callIntent(ctx, p), say, "Arıyorum.")
         }
         return false
     }
