@@ -43,6 +43,7 @@ object Pal {
 // (donanım hızlandırmada her sürümde aynı çalışır).
 // ============================================================
 class HoloView(c: Context) : View(c) {
+    // 0 bekleme, 1 dinleme, 2 konuşma, 3 başarılı, 4 düşünme, 5 araştırma
     var state: Int = 0
         set(v) {
             field = v
@@ -53,137 +54,127 @@ class HoloView(c: Context) : View(c) {
             field = v
             invalidate()
         }
-
-    // 0..1: ses şiddeti. Küre bu değere göre hafifçe kabarır, kendiliğinden söner.
+    // 0..1: ses şiddeti
     var level: Float = 0f
 
-    private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-    }
-    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val box = RectF()
+    private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private var t = 0f
+    private val n = 240
+    private val px = FloatArray(n)
+    private val py = FloatArray(n)
+    private val pz = FloatArray(n)
 
-    private var cacheKey = ""
-    private var halo: RadialGradient? = null
-    private var body: RadialGradient? = null
-    private var core: RadialGradient? = null
-    private var sweep: SweepGradient? = null
-
-    private fun withAlpha(col: Int, a: Int): Int = Color.argb(a, Color.red(col), Color.green(col), Color.blue(col))
-
-    private fun build(cx: Float, cy: Float, r: Float, main: Int, accent: Int) {
-        val key = "${width}x$height:$state"
-        if (key == cacheKey) return
-        cacheKey = key
-        halo = RadialGradient(
-            cx, cy, r,
-            intArrayOf(withAlpha(main, 0), withAlpha(main, 95), withAlpha(accent, 45), withAlpha(main, 0)),
-            floatArrayOf(0.50f, 0.74f, 0.88f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        body = RadialGradient(
-            cx, cy, r * 0.74f,
-            intArrayOf(withAlpha(accent, 70), withAlpha(Color.parseColor(Pal.BG), 235)),
-            floatArrayOf(0f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        core = RadialGradient(
-            cx, cy, r * 0.40f,
-            intArrayOf(Color.WHITE, withAlpha(main, 235), withAlpha(main, 130), withAlpha(main, 0)),
-            floatArrayOf(0f, 0.30f, 0.65f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        sweep = SweepGradient(
-            cx, cy,
-            intArrayOf(main, accent, Color.WHITE, main),
-            null
-        )
+    init {
+        val ga = Math.PI * (3.0 - Math.sqrt(5.0))
+        for (i in 0 until n) {
+            val y = 1.0 - 2.0 * (i + 0.5) / n
+            val rr = Math.sqrt(1.0 - y * y)
+            px[i] = (Math.cos(ga * i) * rr).toFloat()
+            py[i] = y.toFloat()
+            pz[i] = (Math.sin(ga * i) * rr).toFloat()
+        }
     }
 
-    private fun arcs(cv: Canvas, cx: Float, cy: Float, rad: Float, w: Float, n: Int, sw: Float, rot: Float, alpha: Int) {
-        box.set(cx - rad, cy - rad, cx + rad, cy + rad)
-        ring.strokeWidth = w
-        ring.alpha = alpha
-        for (i in 0 until n) cv.drawArc(box, rot + i * 360f / n, sw, false, ring)
+    private fun put(cv: Canvas, x: Float, y: Float, size: Float, a: Int, col: Int) {
+        dot.color = col
+        dot.alpha = a.coerceIn(0, 255)
+        cv.drawCircle(x, y, size, dot)
+    }
+
+    private fun shapeR(k: Int, th: Double): Double {
+        if (k == 0) return 1.0
+        val sides = k + 2
+        val seg = 2 * Math.PI / sides
+        val a = ((th % seg) + seg) % seg - seg / 2
+        return Math.cos(Math.PI / sides) / Math.cos(a)
     }
 
     override fun onDraw(cv: Canvas) {
-        if (animated) t += if (state == 2) 3.0f else if (state == 1) 2.0f else 0.7f
+        if (animated) {
+            t += when (state) {
+                2 -> 0.045f
+                1 -> 0.04f
+                5 -> 0.035f
+                4 -> 0.03f
+                else -> 0.02f
+            }
+        }
         val cx = width / 2f
         val cy = height / 2f
-        val r = minOf(width, height) / 2f - 2f
+        val r = minOf(width, height) / 2f - 4f
         if (r <= 8f) return
-        val main = when (state) {
-            1 -> Color.parseColor("#FFFFFF")
-            2 -> Color.parseColor("#FFFFFF")
-            3 -> Color.parseColor(Pal.GREEN)
-            else -> Color.parseColor("#9AA0A6")
-        }
-        val accent = when (state) {
-            1 -> Color.parseColor("#CFCFCF")
-            2 -> Color.parseColor("#BDBDBD")
-            3 -> Color.parseColor("#10B981")
-            else -> Color.parseColor("#5F6368")
-        }
-        build(cx, cy, r, main, accent)
+        val u = r * 0.82f
+        val col = if (state == 3) Color.parseColor(Pal.GREEN) else Color.WHITE
+        val ds = maxOf(1.3f, r * 0.011f)
         if (level > 0.01f) level *= 0.88f else level = 0f
-        val pulse = 1f + (if (state == 2 || state == 3) 0.06f else 0.02f) * Math.sin(t / 8.0).toFloat() + level * 0.12f
+        val lv = level.toDouble()
 
-        // dış parlama
-        fill.shader = halo
-        fill.alpha = 255
-        cv.drawCircle(cx, cy, r * pulse, fill)
-
-        // gövde
-        fill.shader = body
-        cv.drawCircle(cx, cy, r * 0.74f, fill)
-
-        // kalın ışık halkası (üç geçiş = yumuşak parlama)
-        ring.shader = sweep
-        cv.save()
-        cv.rotate(t * 0.5f, cx, cy)
-        box.set(cx - r * 0.62f, cy - r * 0.62f, cx + r * 0.62f, cy + r * 0.62f)
-        ring.strokeWidth = r * 0.15f
-        ring.alpha = 40
-        cv.drawOval(box, ring)
-        ring.strokeWidth = r * 0.09f
-        ring.alpha = 95
-        cv.drawOval(box, ring)
-        ring.strokeWidth = r * 0.035f
-        ring.alpha = 255
-        cv.drawOval(box, ring)
-        cv.restore()
-        ring.shader = null
-
-        // ince çentik halkası
-        ring.color = main
-        arcs(cv, cx, cy, r * 0.76f, 1.5f, 60, 2f, -t * 0.2f, 150)
-
-        // dönen yaylar
-        ring.color = accent
-        arcs(cv, cx, cy, r * 0.90f, 2.5f, 3, 38f, -t * 0.9f, 200)
-        ring.color = main
-        arcs(cv, cx, cy, r * 0.50f, 2f, 2, 70f, t * 1.3f, 230)
-
-        // iç çekirdek
-        fill.shader = core
-        cv.drawCircle(cx, cy, r * 0.40f * pulse, fill)
-        fill.shader = null
-
-        // yörüngedeki parçacıklar
-        fill.color = Color.WHITE
-        for (i in 0 until 14) {
-            val a = Math.toRadians((t * (0.25 + (i % 3) * 0.12) + i * 360.0 / 14))
-            val rr = r * (0.88f + 0.06f * Math.sin((t / 12.0) + i).toFloat())
-            val x = cx + (rr * Math.cos(a)).toFloat()
-            val y = cy + (rr * Math.sin(a)).toFloat()
-            fill.alpha = 90 + (i % 4) * 40
-            cv.drawCircle(x, y, 1.2f + (i % 3) * 0.7f, fill)
+        if (state == 0) {
+            val ph = (t * 0.35f).toDouble()
+            val k = ph.toInt() % 3
+            val fr = ph - Math.floor(ph)
+            val f = fr * fr * (3 - 2 * fr)
+            val br = 1.0 + 0.04 * Math.sin(t * 2.0)
+            val cnt = 72
+            for (i in 0 until cnt) {
+                val th = i * 2 * Math.PI / cnt
+                val rr = (shapeR(k, th) * (1 - f) + shapeR((k + 1) % 3, th) * f) * br
+                val x = cx + (Math.cos(th + t * 0.2) * rr * u).toFloat()
+                val y = cy + (Math.sin(th + t * 0.2) * rr * u).toFloat()
+                put(cv, x, y, ds, 130 + (80 * Math.sin(t * 2.0 + i * 0.3)).toInt(), col)
+            }
+        } else if (state == 2) {
+            for (k in 0 until 5) {
+                val phi = k * Math.PI / 5
+                for (j in 0 until 16) {
+                    val a = t * (1.0 + k * 0.25) + j * 2 * Math.PI / 16
+                    val ox = Math.cos(a)
+                    val oy = Math.sin(a) * Math.cos(phi)
+                    val oz = Math.sin(a) * Math.sin(phi)
+                    val ry = t * 0.3
+                    val xr = ox * Math.cos(ry) + oz * Math.sin(ry)
+                    val zr = -ox * Math.sin(ry) + oz * Math.cos(ry)
+                    val rad = 1.0 + lv * 0.2
+                    val dep = ((zr + 1) / 2).coerceIn(0.0, 1.0)
+                    put(cv, cx + (xr * rad * u).toFloat(), cy + (oy * rad * u).toFloat(), ds * (0.6f + 0.9f * dep.toFloat()), (60 + 195 * dep).toInt(), col)
+                }
+            }
+        } else {
+            val rot = t * 0.5
+            val cr = Math.cos(rot)
+            val sr = Math.sin(rot)
+            val tilt = 0.35
+            val ct = Math.cos(tilt)
+            val st = Math.sin(tilt)
+            val scan = (t * 1.6) % (2 * Math.PI) - Math.PI
+            for (i in 0 until n) {
+                val x0 = px[i].toDouble()
+                var y0 = py[i].toDouble()
+                val z0 = pz[i].toDouble()
+                var rad = 1.0
+                var boost = 0.0
+                val lon = Math.atan2(z0, x0)
+                if (state == 1) {
+                    rad = 1.0 + (0.05 + lv * 0.35) * Math.sin(y0 * 7 - t * 6.0)
+                } else if (state == 4) {
+                    y0 += 0.18 * Math.sin(lon * 2 + t * 3.0) * (1 - y0 * y0)
+                } else if (state == 5) {
+                    var dl = Math.abs(lon - scan)
+                    if (dl > Math.PI) dl = 2 * Math.PI - dl
+                    boost = maxOf(0.0, 1.0 - dl / 0.4)
+                } else if (state == 3) {
+                    rad = 1.0 + 0.06 * Math.sin(t * 8.0)
+                }
+                val xr = x0 * cr + z0 * sr
+                val zr = -x0 * sr + z0 * cr
+                val yt = y0 * ct - zr * st
+                val zt = y0 * st + zr * ct
+                val dep = ((zt + 1) / 2).coerceIn(0.0, 1.0)
+                val a = (35 + 190 * dep + 120 * boost).toInt()
+                val sz = ds * (0.55f + 0.9f * dep.toFloat() + 0.8f * boost.toFloat())
+                put(cv, cx + (xr * rad * u).toFloat(), cy + (yt * rad * u).toFloat(), sz, a, col)
+            }
         }
-        fill.alpha = 255
-
         if (animated) postInvalidateOnAnimation()
     }
 }

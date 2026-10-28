@@ -337,6 +337,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         homeMid.addView(chatScroll, FrameLayout.LayoutParams(-1, -1))
         holo = HoloView(this)
         homeMid.addView(holo, FrameLayout.LayoutParams(dp(ORB_DP), dp(ORB_DP), Gravity.CENTER))
+        homeMid.addOnLayoutChangeListener { _, _, tp, _, bt, _, otp, _, obt -> if (chatOpen && (bt - tp) != (obt - otp)) holo.post { placeOrb() } }
         attachOrbGesture()
         col.addView(homeMid, LinearLayout.LayoutParams(-1, 0, 1f))
 
@@ -406,7 +407,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatOpen = true
         val h = homeMid.height.toFloat()
         val size = dp(ORB_DP).toFloat()
-        val s = 0.42f
+        val s = 0.3f
         val ty = (h - size * s / 2f - dp(6)) - h / 2f
         (chatScroll.layoutParams as FrameLayout.LayoutParams).bottomMargin = (size * s + dp(12)).toInt()
         chatScroll.requestLayout()
@@ -424,6 +425,13 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             if (!chatOpen) chatScroll.visibility = View.GONE
         }.start()
         holo.animate().scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
+    }
+
+    private fun placeOrb() {
+        if (!chatOpen || !::homeMid.isInitialized) return
+        val h = homeMid.height.toFloat()
+        val size = dp(ORB_DP).toFloat()
+        holo.translationY = (h - size * 0.3f / 2f - dp(6)) - h / 2f
     }
 
     private fun hideKeyboard() {
@@ -844,6 +852,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         thinkingView = v
         chatBox.addView(v)
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
+
+    private fun orbThink(st: Int) {
+        if (::holo.isInitialized) holo.state = st
+        if (::holoV.isInitialized) holoV.state = st
     }
 
     private fun hideThinking() {
@@ -1268,6 +1281,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         showThinking()
         thread {
             try {
+                uiHandler.post { orbThink(4) }
                 val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), SYS, hist)
                 val (cmd, reply) = Ai.parseReply(raw)
                 runOnUiThread {
@@ -1290,6 +1304,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         showThinking()
         thread {
             try {
+                uiHandler.post { orbThink(5) }
                 var hz = "ok"; val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
