@@ -69,6 +69,14 @@ object Commands {
         if (Regex("müziği (oynat|devam)|şarkıyı oynat").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY); say("Oynatılıyor."); return true }
         if (Regex("müziği geç|sonraki şarkı|şarkıyı geç").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_NEXT); say("Sonraki şarkı."); return true }
         if (Regex("önceki şarkı").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PREVIOUS); say("Önceki şarkı."); return true }
+        val vp = Regex("^ses(?:i)?\\s*(?:kıs|aç|yükselt|azalt|düşür|ayarla)?\\s*(?:yüzde\\s*)?%?\\s*(\\d{1,3})\\s*(?:yap|yüzde|%)?$").find(s)
+        if (vp != null) {
+            val p = vp.groupValues[1].toInt().coerceIn(0, 100)
+            val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, Math.round(am.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * p / 100f), AudioManager.FLAG_SHOW_UI)
+            say("Ses yüzde $p.")
+            return true
+        }
         if (Regex("^sesi aç$|sesi yükselt").containsMatchIn(s)) { volume(ctx, AudioManager.ADJUST_RAISE); say("Ses açıldı."); return true }
         if (Regex("^sesi kıs$|sesi azalt|sesi düşür").containsMatchIn(s)) { volume(ctx, AudioManager.ADJUST_LOWER); say("Ses kısıldı."); return true }
         if (s.contains("ayar")) {
