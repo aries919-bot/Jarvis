@@ -1146,6 +1146,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
+        if (Commands.tryHandle(this, s) { msg -> say(msg) }) return true
         val exprVal = evalMath(s)
         if (exprVal != null) {
             say("Sonuç: " + formatNumber(exprVal))
