@@ -47,6 +47,20 @@ object Commands {
         return Pair(h, m)
     }
 
+    private fun phoneOf(ctx: Context, name: String): String? {
+        if (ctx.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return null
+        val P = android.provider.ContactsContract.CommonDataKinds.Phone
+        for (n in listOf(name.trim(), cleanSuffixes(name)).distinct()) {
+            ctx.contentResolver.query(P.CONTENT_URI, arrayOf(P.NUMBER), P.DISPLAY_NAME + " LIKE ?", arrayOf("%" + n + "%"), null)?.use { c -> if (c.moveToFirst()) return c.getString(0) }
+        }
+        return null
+    }
+
+    private fun intl(n: String): String {
+        val d = n.filter { it.isDigit() }
+        return when { d.startsWith("90") && d.length == 12 -> d; d.startsWith("0") -> "90" + d.substring(1); d.length == 10 -> "90" + d; else -> d }
+    }
+
     fun tryHandle(ctx: Context, s: String, say: (String) -> Unit): Boolean {
         if (s.contains("alarm") && Regex("kur|ayarla").containsMatchIn(s)) {
             val t = parseTime(s) ?: return false
@@ -108,6 +122,24 @@ object Commands {
             val total = st.totalBytes / 1e9
             say(String.format(Locale("tr", "TR"), "Boş alan %.1f GB, toplam %.1f GB.", free, total))
             return true
+        }
+        val wa = Regex("^(.+?)\\s+whatsapp(?:'tan|tan)?\\s+(.+)$").find(s)
+        if (wa != null) {
+            val p = phoneOf(ctx, wa.groupValues[1])
+            if (p == null) { say("Rehberde bulamadım veya rehber izni yok."); return true }
+            return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/" + intl(p) + "?text=" + Uri.encode(wa.groupValues[2]))), say, "WhatsApp açılıyor, göndermek için okuna dokun.")
+        }
+        val sm = Regex("^(.+?)\\s+(?:mesaj|sms)(?:\\s+(?:at|gönder))?\\s+(.+)$").find(s)
+        if (sm != null) {
+            val p = phoneOf(ctx, sm.groupValues[1])
+            if (p == null) { say("Rehberde bulamadım veya rehber izni yok."); return true }
+            return go(ctx, Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + p)).putExtra("sms_body", sm.groupValues[2]), say, "Mesaj taslağı açıldı.")
+        }
+        val ar = Regex("^(.+?)\\s+ara$").find(s)
+        if (ar != null) {
+            val p = phoneOf(ctx, ar.groupValues[1])
+            if (p == null) { say("Rehberde bulamadım veya rehber izni yok."); return true }
+            return go(ctx, Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + p)), say, "Arama ekranı açıldı.")
         }
         return false
     }
