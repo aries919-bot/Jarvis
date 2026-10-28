@@ -207,10 +207,20 @@ object Ai {
         throw ApiError(code, errText("Aries Bulut", code))
     }
 
+    private fun maskele(s: String): String = s
+        .replace(Regex("[\\w.+-]+@[\\w-]+\\.[\\w.]+"), "")
+        .replace(Regex("TR\\d{2}[\\d ]{20,30}", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("\\+?\\d[\\d ()-]{8,}\\d"), "")
+        .replace(Regex("\\s+"), " ").trim()
+
     private const val HIZLI_URL = "https://jarvis-cloud.aydincem919.workers.dev/hizli"
 
     fun hizli(token: String, q: String): Answer {
         val body = JSONObject().put("q", q)
+        try {
+            val hits = Net.webSearch(maskele(q))
+            if (hits.size >= 3) body.put("links", JSONArray(hits.map { it.url }))
+        } catch (e: Exception) { }
         val (code, txt) = Net.post(HIZLI_URL, mapOf("Authorization" to "Bearer $token"), body)
         if (code != 200) throw ApiError(code, errText("Aries Bulut", code))
         val j = JSONObject(txt)
