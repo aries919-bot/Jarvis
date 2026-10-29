@@ -72,11 +72,11 @@ object Reminders {
         )
     }
 
-    private fun openAppPending(ctx: Context): PendingIntent {
+    private fun openAppPending(ctx: Context, rid: Int = 0, rtext: String = ""): PendingIntent {
         val i = Intent(ctx, MainActivity::class.java)
-        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP; i.putExtra("remind_text", rtext)
         return PendingIntent.getActivity(
-            ctx, 0, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            ctx, rid, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
@@ -151,7 +151,7 @@ object Reminders {
         b.setStyle(Notification.BigTextStyle().bigText(text))
         b.setAutoCancel(true)
         b.setCategory(Notification.CATEGORY_ALARM)
-        b.setContentIntent(openAppPending(ctx))
+        b.setContentIntent(openAppPending(ctx, id, text))
         if (Build.VERSION.SDK_INT < 26) {
             b.setDefaults(Notification.DEFAULT_ALL)
             b.setPriority(Notification.PRIORITY_HIGH)

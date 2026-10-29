@@ -307,6 +307,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun buildHome(): View {
+        val rtx = intent?.getStringExtra("remind_text"); if (!rtx.isNullOrEmpty()) { intent?.removeExtra("remind_text"); window.decorView.postDelayed({ say("Hatırlatma: " + rtx) }, 1000) }
         val col = Ui.column(this)
         col.isFocusable = true
         col.isFocusableInTouchMode = true
@@ -354,6 +355,40 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             }
         }
         attachOrbGesture()
+        val panel = android.widget.LinearLayout(this)
+        panel.orientation = android.widget.LinearLayout.VERTICAL
+        panel.gravity = Gravity.CENTER_HORIZONTAL
+        val pc = android.graphics.Color.parseColor(Pal.CARD2); val pd = android.graphics.Color.rgb((android.graphics.Color.red(pc) * 0.6f).toInt(), (android.graphics.Color.green(pc) * 0.6f).toInt(), (android.graphics.Color.blue(pc) * 0.6f).toInt()); val pbg = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(pc, pd)); pbg.cornerRadius = dp(20).toFloat(); pbg.setStroke(dp(1), android.graphics.Color.parseColor(Pal.LINE))
+        panel.background = pbg
+        panel.setPadding(dp(24), dp(14), dp(24), dp(14)); panel.elevation = dp(10).toFloat()
+        val pt1 = android.widget.TextView(this); pt1.textSize = 20f; pt1.setTextColor(android.graphics.Color.parseColor(Pal.WHITE)); pt1.gravity = Gravity.CENTER_HORIZONTAL; pt1.maxLines = 2
+        val pt2 = android.widget.TextView(this); pt2.textSize = 12f; pt2.setTextColor(android.graphics.Color.parseColor(Pal.MUTED)); pt2.gravity = Gravity.CENTER_HORIZONTAL
+        panel.addView(pt1); panel.addView(pt2)
+        val tr = java.util.Locale("tr", "TR")
+        val upd = object : Runnable { override fun run() {
+            try {
+                val up = Reminders.upcoming(this@MainActivity)
+                if (up.isNotEmpty()) {
+                    val r0 = up[0]; val mins = (r0.time - System.currentTimeMillis()) / 60000L
+                    val rel = if (mins < 60) mins.toString() + " dk sonra" else if (mins < 1440) (mins / 60).toString() + " sa " + (mins % 60).toString() + " dk sonra" else java.text.SimpleDateFormat("d MMM HH:mm", tr).format(java.util.Date(r0.time))
+                    pt1.text = r0.text
+                    pt2.text = rel + (if (up.size > 1) " · +" + (up.size - 1).toString() + " hatırlatma daha" else "")
+                } else {
+                    pt1.text = java.text.SimpleDateFormat("HH:mm", tr).format(java.util.Date())
+                    pt2.text = java.text.SimpleDateFormat("d MMMM EEEE", tr).format(java.util.Date())
+                }
+            } catch (e: Exception) { }
+            if (panel.isAttachedToWindow) panel.postDelayed(this, 30000)
+        } }
+        panel.setOnClickListener {
+            openChat()
+            val up = Reminders.upcoming(this)
+            say(if (up.isEmpty()) "Yaklaşan hatırlatma yok." else "Yaklaşan hatırlatmalar:\n" + up.take(8).joinToString("\n") { x -> java.text.SimpleDateFormat("d MMM HH:mm", tr).format(java.util.Date(x.time)) + " - " + x.text })
+        }
+        val plp = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL); plp.bottomMargin = dp(14)
+        homeMid.addView(panel, plp)
+        homePanel = panel
+        panel.post(upd)
         col.addView(homeMid, LinearLayout.LayoutParams(-1, 0, 1f))
 
         // Alt sıra: artı, yazı kutusu, hoparlör, mikrofon / gönder
@@ -388,6 +423,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     // Küreyi aşağı çekince sohbet açılır, yukarı itince kapanır.
+    private var homePanel: View? = null
+
     private fun attachOrbGesture() {
         var downY = 0f
         holo.setOnTouchListener { v, e ->
@@ -425,6 +462,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatScroll.visibility = View.VISIBLE
         chatScroll.bringToFront()
         chatScroll.animate().alpha(1f).setDuration(220).start()
+        homePanel?.visibility = View.GONE
         holo.visibility = View.VISIBLE
         holo.animate().alpha(0.3f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
         chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
@@ -434,6 +472,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         if (!chatOpen || !::homeMid.isInitialized) return
         chatOpen = false
         hideKeyboard()
+        homePanel?.visibility = View.VISIBLE
         chatScroll.animate().alpha(0f).setDuration(180).withEndAction {
             if (!chatOpen) chatScroll.visibility = View.GONE
         }.start()
@@ -449,6 +488,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val full = window.decorView.rootView.height
         return full > 0 && full - r.bottom > full * 0.15
     }
+
+    override fun onNewIntent(intent: Intent?) { super.onNewIntent(intent); setIntent(intent); val rtx = intent?.getStringExtra("remind_text"); if (!rtx.isNullOrEmpty()) { intent?.removeExtra("remind_text"); say("Hatırlatma: " + rtx) } }
 
     private fun placeOrb() {
         if (!chatOpen || !::homeMid.isInitialized) return

@@ -117,7 +117,7 @@ object Commands {
                 .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, cal.timeInMillis + 3600000L)
             val fmt = SimpleDateFormat("d MMMM EEEE HH:mm", Locale("tr", "TR")).format(cal.time)
             var rem = ""
-            try { Reminders.add(ctx, cal.timeInMillis, "Zamanı geldi: " + title); val hm = SimpleDateFormat("HH:mm", Locale("tr", "TR")).format(cal.time); val t0 = cal.timeInMillis; val m8 = cal.clone() as java.util.Calendar; m8.set(java.util.Calendar.HOUR_OF_DAY, 8); m8.set(java.util.Calendar.MINUTE, 0); val pre = listOf(Pair(t0 - 86400000L, "Yarın " + hm + ": " + title), Pair(m8.timeInMillis, "Bugün " + hm + ": " + title), Pair(t0 - 10800000L, "3 saat sonra " + hm + ": " + title), Pair(t0 - 1800000L, "30 dk sonra " + hm + ": " + title)); for (p in pre) { if (p.first > System.currentTimeMillis() + 60000L && p.first < t0) Reminders.add(ctx, p.first, p.second) }; rem = " Hatırlatmalar kuruldu: 1 gün önce, sabah 08:00, 3 saat ve 30 dk önce." } catch (e: Exception) { }
+            try { Reminders.add(ctx, cal.timeInMillis, "Zamanı geldi: " + title); val hm = SimpleDateFormat("HH:mm", Locale("tr", "TR")).format(cal.time); val t0 = cal.timeInMillis; val m8 = cal.clone() as java.util.Calendar; m8.set(java.util.Calendar.HOUR_OF_DAY, 8); m8.set(java.util.Calendar.MINUTE, 0); val pre = listOf(Pair(t0 - 86400000L, "Yarın " + hm + ": " + title), Pair(m8.timeInMillis, "Bugün " + hm + ": " + title), Pair(t0 - 10800000L, "3 saat sonra " + hm + ": " + title), Pair(t0 - 1800000L, "30 dk sonra " + hm + ": " + title)); var kn = 0; for (p in pre) { if (p.first > System.currentTimeMillis() + 60000L && p.first < t0) { Reminders.add(ctx, p.first, p.second); kn++ } }; rem = " Aries hatırlatması kuruldu" + (if (kn > 0) " (+" + kn + " ön uyarı)" else ", ön uyarı yok (saat çok yakın)") + "." } catch (e: Exception) { }
             return go(ctx, ci, say, "Takvim taslağı açıldı: " + title + ", " + fmt + "." + rem)
         }
         val mv = Regex("(çal|çalar mısın|oynat|dinlet|koy|aç|dinleyelim|dinlemek istiyorum)$").find(s)
@@ -150,7 +150,7 @@ object Commands {
                 .putExtra(android.app.SearchManager.QUERY, q).putExtra(MediaStore.EXTRA_MEDIA_TITLE, q)
                 .setPackage(pkg)
             pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try { ctx.startActivity(pi); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 2500); say("Açıldı: " + q + " (" + aname + ").") }
+            try { ctx.startActivity(pi); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 2500); say("Gönderildi: " + q + " (" + aname + "). Çalmazsa uygulamadan seç.") }
             catch (e: Exception) { return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))), say, "Müzik uygulaması açılamadı, YouTube'da aranıyor: " + q + ".") }
             return true
         }
