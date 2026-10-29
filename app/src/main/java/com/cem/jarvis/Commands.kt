@@ -117,11 +117,11 @@ object Commands {
                 .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, cal.timeInMillis + 3600000L)
             val fmt = SimpleDateFormat("d MMMM EEEE HH:mm", Locale("tr", "TR")).format(cal.time)
             var rem = ""
-            try { Reminders.add(ctx, cal.timeInMillis, title); rem = " Aries hatırlatması da kuruldu." } catch (e: Exception) { }
+            try { Reminders.add(ctx, cal.timeInMillis, "Zamanı geldi: " + title); val hm = SimpleDateFormat("HH:mm", Locale("tr", "TR")).format(cal.time); val t0 = cal.timeInMillis; val m8 = cal.clone() as java.util.Calendar; m8.set(java.util.Calendar.HOUR_OF_DAY, 8); m8.set(java.util.Calendar.MINUTE, 0); val pre = listOf(Pair(t0 - 86400000L, "Yarın " + hm + ": " + title), Pair(m8.timeInMillis, "Bugün " + hm + ": " + title), Pair(t0 - 10800000L, "3 saat sonra " + hm + ": " + title), Pair(t0 - 1800000L, "30 dk sonra " + hm + ": " + title)); for (p in pre) { if (p.first > System.currentTimeMillis() + 60000L && p.first < t0) Reminders.add(ctx, p.first, p.second) }; rem = " Hatırlatmalar kuruldu: 1 gün önce, sabah 08:00, 3 saat ve 30 dk önce." } catch (e: Exception) { }
             return go(ctx, ci, say, "Takvim taslağı açıldı: " + title + ", " + fmt + "." + rem)
         }
         val mv = Regex("(çal|çalar mısın|oynat|dinlet|koy|aç|dinleyelim|dinlemek istiyorum)$").find(s)
-        if (mv != null && Regex("şarkı|müzik|parça|çal$|oynat$|dinlet$|dinleyelim|dinlemek").containsMatchIn(s) && !Regex("^youtube(?! müzik| music)|ayar|kamera|fener|wifi|bluetooth|uygulama").containsMatchIn(s)) {
+        if (mv != null && Regex("şarkı|müzik|parça|çal$|oynat$|dinlet$|dinleyelim|dinlemek|spotify|deezer|youtube müzik|youtube music").containsMatchIn(s) && !Regex("^youtube(?! müzik| music)|ayar|kamera|fener|wifi|bluetooth|uygulama").containsMatchIn(s)) {
             var q = s.substring(0, mv.range.first)
             val apps = linkedMapOf("youtube müzik" to "com.google.android.apps.youtube.music", "youtube music" to "com.google.android.apps.youtube.music", "spotify" to "com.spotify.music", "deezer" to "deezer.android.app")
             val names = mapOf("com.google.android.apps.youtube.music" to "YouTube Music", "com.spotify.music" to "Spotify", "deezer.android.app" to "Deezer")
@@ -143,13 +143,14 @@ object Commands {
                 }
             }
             val aname = names[pkg] ?: "müzik uygulaması"
+            if (q.isEmpty() && named != null) { val li = ctx.packageManager.getLaunchIntentForPackage(pkg); if (li != null) { li.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); ctx.startActivity(li); say(aname + " açıldı."); return true } }
             if (q.isEmpty()) { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY); say("Oynatma tuşu gönderildi. Çalan bir şey yoksa şarkı adını söyle."); return true }
             val pi = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
-                .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
-                .putExtra(android.app.SearchManager.QUERY, q)
+                .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/audio")
+                .putExtra(android.app.SearchManager.QUERY, q).putExtra(MediaStore.EXTRA_MEDIA_TITLE, q)
                 .setPackage(pkg)
             pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try { ctx.startActivity(pi); say("Açıldı: " + q + " (" + aname + ").") }
+            try { ctx.startActivity(pi); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 2500); say("Açıldı: " + q + " (" + aname + ").") }
             catch (e: Exception) { return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))), say, "Müzik uygulaması açılamadı, YouTube'da aranıyor: " + q + ".") }
             return true
         }

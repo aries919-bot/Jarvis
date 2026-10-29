@@ -481,9 +481,14 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             names.add("Bluetooth")
             acts.add { am.isSpeakerphoneOn = false; say("Ses Bluetooth'a döndü.") }
         }
+        if (sdk >= 31) { names.add("Varsayılana dön (Bluetooth)"); acts.add { am.clearCommunicationDevice(); say("Ses varsayılan çıkışa döndü.") } }
         names.add("Bluetooth ayarlarını aç")
         acts.add { safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS), "Bluetooth ayarları açılamadı.") }
-        android.app.AlertDialog.Builder(this).setTitle("Ses çıkışı").setItems(names.toTypedArray()) { _, w -> acts[w]() }.show()
+        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; val gd = android.graphics.drawable.GradientDrawable(); gd.setColor(android.graphics.Color.parseColor("#12151F")); gd.cornerRadius = 48f; box.background = gd; box.setPadding(56, 40, 56, 24)
+        val dlg = android.app.AlertDialog.Builder(this).setView(box).create()
+        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.WHITE); ttl.textSize = 18f; box.addView(ttl)
+        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor("#C9CEDB")); tv.textSize = 16f; tv.setPadding(0, 32, 0, 32); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
+        dlg.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT)); dlg.show()
     }
 
     private fun hideKeyboard() {

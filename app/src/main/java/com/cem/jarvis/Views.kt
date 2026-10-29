@@ -507,21 +507,7 @@ object Ui {
             cm.setPrimaryClip(android.content.ClipData.newPlainText("Aries", text))
             android.widget.Toast.makeText(ctx, "Kopyalandı", android.widget.Toast.LENGTH_SHORT).show()
         }
-        tv.setOnLongClickListener {
-            val sel = TextView(ctx)
-            sel.text = text
-            sel.textSize = 17f
-            sel.setTextColor(Color.parseColor("#FFFFFF"))
-            sel.setTextIsSelectable(true)
-            sel.setPadding(dp(ctx, 20), dp(ctx, 16), dp(ctx, 20), dp(ctx, 16))
-            val sv = android.widget.ScrollView(ctx)
-            sv.addView(sel)
-            val dlg = android.app.AlertDialog.Builder(ctx).setView(sv).setPositiveButton("Kapat", null).create()
-            dlg.show()
-            dlg.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.parseColor("#12151C")))
-            dlg.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#8B93A7"))
-            true
-        }
+        tv.setTextIsSelectable(true)
         tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
         if (sys) {
             tv.setTextColor(Color.parseColor("#8A8FA8"))
