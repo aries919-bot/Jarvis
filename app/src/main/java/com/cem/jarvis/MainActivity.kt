@@ -153,6 +153,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     override fun onResume() {
         super.onResume()
+        try { if (AriesNotifService.instance == null) android.service.notification.NotificationListenerService.requestRebind(android.content.ComponentName(this, AriesNotifService::class.java)) } catch (e: Exception) {}
         if (!::store.isInitialized) return
         refreshStatus()
         refreshTasks()
