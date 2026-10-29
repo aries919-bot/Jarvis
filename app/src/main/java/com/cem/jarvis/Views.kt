@@ -523,7 +523,7 @@ object Ui {
                 val a = TextView(ctx)
                 a.text = label
                 a.textSize = 12f
-                a.setTextColor(Color.parseColor("#8A8FA8"))
+                a.setTextColor(Color.parseColor("#B4B9D0"))
                 a.setPadding(dp(ctx, 6), dp(ctx, 8), dp(ctx, 12), dp(ctx, 6))
                 a.setOnClickListener { run() }
                 return a
