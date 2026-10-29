@@ -380,6 +380,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             } catch (e: Exception) { }
             if (panel.isAttachedToWindow) panel.postDelayed(this, 30000)
         } }
+        panel.setOnLongClickListener { openChat(); val n = AriesNotifService.items.toList(); say(if (AriesNotifService.instance == null) "Bildirim erişimi kapalı. Ayarlar'dan ver." else if (n.isEmpty()) "Yeni bildirim yok." else "Bildirimler:\n" + n.take(8).joinToString("\n") { x -> val p = x.split("|"); (p.getOrNull(1) ?: "") + ": " + (p.getOrNull(2) ?: "") }); true }
         panel.setOnClickListener {
             openChat()
             val up = Reminders.upcoming(this)
@@ -798,6 +799,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
         add(col, Ui.button(this, "Kaydet") { saveSettings() })
+
+        add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
+        add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
 
         add(col, Ui.text(this, "Hakkında", 14f, Pal.MUTED))
         add(col, Ui.card(this, ABOUT))
