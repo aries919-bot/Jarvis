@@ -106,7 +106,7 @@ object Commands {
             val cal = java.util.Calendar.getInstance()
             if (s.contains("yarın")) cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
             if (Regex("öbür gün|ertesi gün").containsMatchIn(s)) cal.add(java.util.Calendar.DAY_OF_YEAR, 2)
-            cal.set(java.util.Calendar.HOUR_OF_DAY, tt.first); cal.set(java.util.Calendar.MINUTE, tt.second); cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.HOUR_OF_DAY, tt.first); cal.set(java.util.Calendar.MINUTE, tt.second); cal.set(java.util.Calendar.SECOND, 0); if (cal.timeInMillis < System.currentTimeMillis()) cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
             var title = s.replace(Regex("(\\d{1,2}\\s*[:.]\\s*\\d{2})|(saat\\s*\\d{1,2})|(\\d{1,2}\\s*['’]?\\s*(de|da|te|ta|ye|ya)\\b)|\\b(bugün|yarın|öbür gün|ertesi gün|akşam|sabah|öğleden sonra|buçuk|takvime|takvim|ekle|kaydet|oluştur|koy|ayarla|bir|etkinlik|olarak|lütfen)\\b"), " ").replace(Regex("\\s+"), " ").trim()
             if (title.isEmpty()) title = "Etkinlik"
             title = title.replaceFirstChar { it.uppercase() }
@@ -115,20 +115,42 @@ object Commands {
                 .putExtra(android.provider.CalendarContract.Events.TITLE, title)
                 .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, cal.timeInMillis)
                 .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, cal.timeInMillis + 3600000L)
-            return go(ctx, ci, say, "Takvim taslağı açıldı, kaydetmek için onayla.")
+            val fmt = SimpleDateFormat("d MMMM EEEE HH:mm", Locale("tr", "TR")).format(cal.time)
+            var rem = ""
+            try { Reminders.add(ctx, cal.timeInMillis, title); rem = " Aries hatırlatması da kuruldu." } catch (e: Exception) { }
+            return go(ctx, ci, say, "Takvim taslağı açıldı: " + title + ", " + fmt + "." + rem)
         }
         val mv = Regex("(çal|çalar mısın|oynat|dinlet|koy|aç|dinleyelim|dinlemek istiyorum)$").find(s)
-        if (mv != null && Regex("şarkı|müzik|parça|çal$|oynat$|dinlet$|dinleyelim|dinlemek").containsMatchIn(s) && !Regex("^youtube|ayar|kamera|fener|wifi|bluetooth|uygulama").containsMatchIn(s)) {
-            val q = s.substring(0, mv.range.first)
-                .replace(Regex("\\b(bana|bir|biraz|lütfen|şarkısını|şarkıyı|şarkısı|şarkı|müziği|müzik|parçasını|parçayı|parça)\\b"), " ")
-                .replace(Regex("\\s+"), " ").trim()
+        if (mv != null && Regex("şarkı|müzik|parça|çal$|oynat$|dinlet$|dinleyelim|dinlemek").containsMatchIn(s) && !Regex("^youtube(?! müzik| music)|ayar|kamera|fener|wifi|bluetooth|uygulama").containsMatchIn(s)) {
+            var q = s.substring(0, mv.range.first)
+            val apps = linkedMapOf("youtube müzik" to "com.google.android.apps.youtube.music", "youtube music" to "com.google.android.apps.youtube.music", "spotify" to "com.spotify.music", "deezer" to "deezer.android.app")
+            val names = mapOf("com.google.android.apps.youtube.music" to "YouTube Music", "com.spotify.music" to "Spotify", "deezer.android.app" to "Deezer")
+            val sp = ctx.getSharedPreferences("aries_music", Context.MODE_PRIVATE)
+            var named: String? = null
+            for ((k, v) in apps) {
+                val r = Regex(k + "(?:['’]?(?:dan|den|tan|ten|da|de|ta|te))?(?=\\s|$)")
+                if (r.containsMatchIn(q)) { named = v; q = q.replace(r, " "); break }
+            }
+            q = q.replace(Regex("\\b(bana|bir|biraz|lütfen|şarkısını|şarkıyı|şarkısı|şarkı|müziği|müzik|parçasını|parçayı|parça)\\b"), " ").replace(Regex("\\s+"), " ").trim()
+            val def = sp.getString("app", "com.google.android.apps.youtube.music")!!
+            val pkg = named ?: def
+            if (named != null) {
+                if (named == def) sp.edit().remove("cand").putInt("cnt", 0).apply()
+                else {
+                    val c = if (sp.getString("cand", "") == named) sp.getInt("cnt", 0) + 1 else 1
+                    if (c >= 3) sp.edit().putString("app", named).remove("cand").putInt("cnt", 0).apply()
+                    else sp.edit().putString("cand", named).putInt("cnt", c).apply()
+                }
+            }
+            val aname = names[pkg] ?: "müzik uygulaması"
             if (q.isEmpty()) { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY); say("Oynatma tuşu gönderildi. Çalan bir şey yoksa şarkı adını söyle."); return true }
             val pi = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
                 .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
                 .putExtra(android.app.SearchManager.QUERY, q)
+                .setPackage(pkg)
             pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try { ctx.startActivity(pi); say("Çalınıyor: " + q + ".") }
-            catch (e: Exception) { return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))), say, "YouTube'da aranıyor: " + q + ".") }
+            try { ctx.startActivity(pi); say("Açıldı: " + q + " (" + aname + ").") }
+            catch (e: Exception) { return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))), say, "Müzik uygulaması açılamadı, YouTube'da aranıyor: " + q + ".") }
             return true
         }
         val vp = Regex("^ses(?:i)?\\s*(?:kıs|aç|yükselt|azalt|düşür|ayarla)?\\s*(?:yüzde\\s*)?%?\\s*(\\d{1,3})\\s*(?:yap|yüzde|%)?$").find(s)

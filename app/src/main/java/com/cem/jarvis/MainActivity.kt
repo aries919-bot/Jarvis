@@ -92,6 +92,7 @@ Kalıplar (command alanı):
 - "<isim> ara", "<isim> mesaj <metin>", "<isim> whatsapp <metin>"
 - "müziği durdur", "müziği oynat", "müziği geç", "önceki şarkı", "sesi aç", "sesi kıs", "sesi <0-100> yap"
 - "<şarkı adı> çal" (çal, aç, oynat, dinlet, koy, dinleyelim gibi her söylenişi bu kalıba çevir; ad yoksa "müziği oynat"; şarkı için asla "<uygulama adı> aç" yazma)
+- "<uygulama>'dan <şarkı adı> çal" (spotify, youtube müzik, deezer gibi bir uygulama adı söylenirse bu kalıbı aynen kullan)
 - "<başlık> yarın 15:00 takvime ekle" (takvim, toplantı, randevu; saat yoksa sohbet olarak saati sor)
 - İki iş varsa "ve" ile ayır: "07:30 alarm kur ve <şarkı adı> çal"
 - Komut gerçekten çalışmadan "oynatılıyor", "kuruldu" gibi sözler yazma
@@ -325,7 +326,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         titleCol.addView(orbStatus, LinearLayout.LayoutParams(-1, -2))
         top.addView(titleCol, LinearLayout.LayoutParams(0, -2, 1f))
         top.addView(Ui.iconBtn(this, "jbt", "Bluetooth", 44, 22, Pal.TEXT) {
-            safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS), "Bluetooth ayarları açılamadı.")
+            showOutputPicker()
         })
         top.addView(Ui.iconBtn(this, "jgear", "Ayarlar", 44, 22, Pal.TEXT) { showPage(4) })
         col.addView(top, LinearLayout.LayoutParams(-1, -2))
@@ -452,6 +453,37 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun placeOrb() {
         if (!chatOpen || !::homeMid.isInitialized) return
         chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
+    }
+
+    private fun showOutputPicker() {
+        val am = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
+        val sdk = android.os.Build.VERSION.SDK_INT
+        if (sdk >= 31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 7)
+            say("Bluetooth izni ver, sonra düğmeye tekrar bas.")
+            return
+        }
+        val names = ArrayList<String>()
+        val acts = ArrayList<() -> Unit>()
+        names.add("Telefon hoparlörü")
+        if (sdk >= 31) {
+            val devs = am.availableCommunicationDevices
+            val spk = devs.firstOrNull { it.type == android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+            acts.add { if (spk != null && am.setCommunicationDevice(spk)) say("Ses telefon hoparlörüne geçti.") else say("Hoparlöre geçilemedi.") }
+            val bts = devs.filter { it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO || it.type == android.media.AudioDeviceInfo.TYPE_BLE_HEADSET || it.type == android.media.AudioDeviceInfo.TYPE_BLE_SPEAKER }
+            if (bts.isEmpty()) { names.add("Bluetooth bağlı değil"); acts.add { say("Bağlı Bluetooth cihazı yok.") } }
+            for (d in bts) {
+                names.add("Bluetooth: " + d.productName)
+                acts.add { if (am.setCommunicationDevice(d)) say("Ses Bluetooth'a geçti: " + d.productName + ".") else say("Bluetooth'a geçilemedi.") }
+            }
+        } else {
+            acts.add { am.isSpeakerphoneOn = true; say("Ses telefon hoparlörüne geçti.") }
+            names.add("Bluetooth")
+            acts.add { am.isSpeakerphoneOn = false; say("Ses Bluetooth'a döndü.") }
+        }
+        names.add("Bluetooth ayarlarını aç")
+        acts.add { safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS), "Bluetooth ayarları açılamadı.") }
+        android.app.AlertDialog.Builder(this).setTitle("Ses çıkışı").setItems(names.toTypedArray()) { _, w -> acts[w]() }.show()
     }
 
     private fun hideKeyboard() {
