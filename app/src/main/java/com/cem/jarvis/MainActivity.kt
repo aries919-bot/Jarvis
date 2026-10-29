@@ -91,6 +91,10 @@ Adın Aries. Türkçe konuşan bir telefon asistanısın. Kullanıcının cümle
 Kalıplar (command alanı):
 - "<isim> ara", "<isim> mesaj <metin>", "<isim> whatsapp <metin>"
 - "müziği durdur", "müziği oynat", "müziği geç", "önceki şarkı", "sesi aç", "sesi kıs", "sesi <0-100> yap"
+- "<şarkı adı> çal" (çal, aç, oynat, dinlet, koy, dinleyelim gibi her söylenişi bu kalıba çevir; ad yoksa "müziği oynat"; şarkı için asla "<uygulama adı> aç" yazma)
+- "<başlık> yarın 15:00 takvime ekle" (takvim, toplantı, randevu; saat yoksa sohbet olarak saati sor)
+- İki iş varsa "ve" ile ayır: "07:30 alarm kur ve <şarkı adı> çal"
+- Komut gerçekten çalışmadan "oynatılıyor", "kuruldu" gibi sözler yazma
 - "<ss>:<dd> alarm kur", "<n> dakika zamanlayıcı", "<n> dakika sonra <metin> hatırlat"
 - "youtube <arama metni>", "<uygulama adı> aç"
 - "saat kaç", "batarya durumu", "depolama", "görev ekle: <metin>", "görevlerim"
@@ -103,7 +107,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
 """.trimIndent()
 
     private val ABOUT = """
-Jarvis telefonda çalışır. Sohbetler ve hafıza telefonda saklanır; Ayarlar'dan kapatabilirsin.
+Aries telefonda çalışır. Sohbetler ve hafıza telefonda saklanır; Ayarlar'dan kapatabilirsin.
 İnternetsiz: saat, tarih, batarya, depolama, alarm, zamanlayıcı, hatırlatmalar, takvim etkinliği, arama (onaylı), WhatsApp ve SMS taslağı, müzik ve ses, titreşim, uygulama açma, ayar sayfaları, fener, kamera, hesap makinesi, zar, yazı tura, yol tarifi, görevler, hafıza, dosya yönetimi.
 İnternetle: yapay zekâ sohbeti, internet araştırması (kaynaklı), çeviri, haber, borsa.
 Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uykudan uyandırması işletim sistemi tarafından kısıtlanmıştır.
@@ -168,6 +172,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     override fun onBackPressed() {
+        if (chatOpen && kbOpen()) { hideKeyboard(); return }
         if (::sidePanel.isInitialized && sidePanel.visibility == View.VISIBLE) {
             closeSide()
             return
@@ -414,17 +419,14 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun openChat() {
         if (chatOpen || !::homeMid.isInitialized) return
         chatOpen = true
-        val h = homeMid.height.toFloat()
-        val size = dp(ORB_DP).toFloat()
-        val s = 0.3f
-        holo.dotScale = 2.5f
-        val ty = (h - size * s / 2f - dp(6)) - h / 2f
-        (chatScroll.layoutParams as FrameLayout.LayoutParams).bottomMargin = (size * s + dp(12)).toInt()
+        (chatScroll.layoutParams as FrameLayout.LayoutParams).bottomMargin = 0
         chatScroll.requestLayout()
         chatScroll.visibility = View.VISIBLE
+        chatScroll.bringToFront()
         chatScroll.animate().alpha(1f).setDuration(220).start()
-        holo.animate().scaleX(s).scaleY(s).translationY(ty).setDuration(260).start()
-        chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+        holo.visibility = View.VISIBLE
+        holo.animate().alpha(0.3f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
+        chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
     }
 
     private fun closeChat() {
@@ -435,8 +437,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             if (!chatOpen) chatScroll.visibility = View.GONE
         }.start()
         holo.visibility = View.VISIBLE
+        holo.bringToFront()
         holo.dotScale = 1f
-        holo.animate().scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
+        holo.animate().alpha(1f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
     }
 
     private fun kbOpen(): Boolean {
@@ -448,14 +451,6 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun placeOrb() {
         if (!chatOpen || !::homeMid.isInitialized) return
-        val kb = kbOpen()
-        val size = dp(ORB_DP).toFloat()
-        val lp = chatScroll.layoutParams as FrameLayout.LayoutParams
-        val want = if (kb) 0 else (size * 0.3f + dp(12)).toInt()
-        if (lp.bottomMargin != want) { lp.bottomMargin = want; chatScroll.requestLayout() }
-        holo.visibility = if (kb) View.INVISIBLE else View.VISIBLE
-        val h = homeMid.height.toFloat()
-        holo.translationY = (h - size * 0.3f / 2f - dp(6)) - h / 2f
         chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
     }
 
@@ -485,7 +480,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             sendComposer()
             return
         }
-        if (orbState == 2) { tts?.stop(); setOrb(0) } else if (listeningNow) rec?.stopListening() else if (continuous) stopVoice() else startVoice()
+        if (orbState == 2) { tts?.stop(); setOrb(0) } else if (listeningNow) rec?.stopListening() else if (continuous) stopVoice() else { closeChat(); startVoice() }
     }
 
     private fun startVoice() {
@@ -735,8 +730,20 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val e = Ui.input(this, hintText)
         e.setSingleLine()
         e.setText(store.str(prefKey))
+        e.transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
         keyFields[prefKey] = e
-        add(col, e)
+        val row = Ui.row(this)
+        row.addView(e, LinearLayout.LayoutParams(0, -2, 1f))
+        var shown = false
+        val eye = Ui.button(this, "Göster") { }
+        eye.setOnClickListener {
+            shown = !shown
+            e.transformationMethod = if (shown) null else android.text.method.PasswordTransformationMethod.getInstance()
+            e.setSelection(e.text.length)
+            eye.text = if (shown) "Gizle" else "Göster"
+        }
+        row.addView(eye, LinearLayout.LayoutParams(-2, -2))
+        add(col, row)
     }
 
     private fun saveSettings() {

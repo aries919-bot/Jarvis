@@ -500,15 +500,19 @@ object Ui {
         val tv = TextView(ctx)
         tv.text = text
         tv.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
-        tv.textSize = if (sys) 13f else 16f
+        tv.textSize = if (sys) 14f else 17f
         tv.setLineSpacing(0f, 1.2f)
-        tv.setTextIsSelectable(true)
+        tv.setOnClickListener {
+            val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("Aries", text))
+            android.widget.Toast.makeText(ctx, "Kopyalandı", android.widget.Toast.LENGTH_SHORT).show()
+        }
         tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
         if (sys) {
             tv.setTextColor(Color.parseColor("#8A8FA8"))
             lp.gravity = android.view.Gravity.CENTER_HORIZONTAL
         } else {
-            tv.setTextColor(Color.parseColor("#F2F2F7"))
+            tv.setTextColor(Color.parseColor("#FFFFFF"))
             val bg = android.graphics.drawable.GradientDrawable()
             bg.cornerRadius = dp(ctx, 18).toFloat()
             bg.setColor(Color.parseColor(if (me) "#3B3F8C" else "#1A1E28"))
