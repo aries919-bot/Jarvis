@@ -342,7 +342,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatBox = Ui.column(this)
         chatScroll = ScrollView(this)
         chatScroll.addView(chatBox)
-        chatScroll.descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        chatScroll.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
         chatScroll.visibility = View.GONE
         chatScroll.alpha = 0f
         homeMid.addView(chatScroll, FrameLayout.LayoutParams(-1, -1))

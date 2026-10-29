@@ -502,6 +502,7 @@ object Ui {
         tv.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
         tv.textSize = if (sys) 14f else 17f
         tv.setLineSpacing(0f, 1.2f)
+        tv.setOnClickListener { val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager; cm.setPrimaryClip(android.content.ClipData.newPlainText("Aries", text)); android.widget.Toast.makeText(ctx, "Kopyalandı", android.widget.Toast.LENGTH_SHORT).show() }
         tv.setTextIsSelectable(true)
         tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
         if (sys) {

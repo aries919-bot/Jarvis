@@ -123,7 +123,7 @@ object Commands {
         val mv = Regex("(çal|çalar mısın|oynat|dinlet|koy|aç|dinleyelim|dinlemek istiyorum)$").find(s)
         if (mv != null && Regex("şarkı|müzik|parça|çal$|oynat$|dinlet$|dinleyelim|dinlemek|spotify|deezer|youtube müzik|youtube music").containsMatchIn(s) && !Regex("^youtube(?! müzik| music)|ayar|kamera|fener|wifi|bluetooth|uygulama").containsMatchIn(s)) {
             var q = s.substring(0, mv.range.first)
-            val apps = linkedMapOf("youtube müzik" to "com.google.android.apps.youtube.music", "youtube music" to "com.google.android.apps.youtube.music", "spotify" to "com.spotify.music", "deezer" to "deezer.android.app")
+            val apps = linkedMapOf("youtube müzik" to "com.google.android.apps.youtube.music", "youtube music" to "com.google.android.apps.youtube.music", "spotify" to "com.spotify.music", "deezer" to "deezer.android.app", "yt müzik" to "com.google.android.apps.youtube.music", "yt music" to "com.google.android.apps.youtube.music", "youtube muzik" to "com.google.android.apps.youtube.music", "ytm" to "com.google.android.apps.youtube.music")
             val names = mapOf("com.google.android.apps.youtube.music" to "YouTube Music", "com.spotify.music" to "Spotify", "deezer.android.app" to "Deezer")
             val sp = ctx.getSharedPreferences("aries_music", Context.MODE_PRIVATE)
             var named: String? = null
@@ -150,7 +150,7 @@ object Commands {
                 .putExtra(android.app.SearchManager.QUERY, q).putExtra(MediaStore.EXTRA_MEDIA_TITLE, q)
                 .setPackage(pkg)
             pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try { ctx.startActivity(pi); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 2500); say("Gönderildi: " + q + " (" + aname + "). Çalmazsa uygulamadan seç.") }
+            try { ctx.startActivity(pi); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 2500); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 6000); say("Gönderildi: " + q + " (" + aname + "). Çalmazsa uygulamadan seç.") }
             catch (e: Exception) { return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))), say, "Müzik uygulaması açılamadı, YouTube'da aranıyor: " + q + ".") }
             return true
         }
