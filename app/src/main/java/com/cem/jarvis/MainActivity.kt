@@ -227,6 +227,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private lateinit var homeMic: FrameLayout
     private lateinit var speakBtn: FrameLayout
     private var chatOpen = false
+    private var lastKb = false
     private var muted = false
     private var orbState = 0
     private val ORB_DP = 300
@@ -309,7 +310,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val top = Ui.row(this)
         top.addView(Ui.iconBtn(this, "jmenu", "Menü", 44, 24, Pal.TEXT) { openSide() })
         val titleCol = Ui.column(this)
-        val title = Ui.text(this, "Aries", 18f, Pal.WHITE, true)
+        val title = Ui.text(this, "A.R.I.E.S", 22f, Pal.WHITE, true)
+        title.setTypeface(title.typeface, android.graphics.Typeface.BOLD)
+        title.letterSpacing = 0.12f
         title.gravity = Gravity.CENTER_HORIZONTAL
         titleCol.addView(title, LinearLayout.LayoutParams(-1, -2))
         orbStatus = Ui.text(this, "Hazır", 12f, Pal.MUTED)
@@ -332,12 +335,18 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatBox = Ui.column(this)
         chatScroll = ScrollView(this)
         chatScroll.addView(chatBox)
+        chatScroll.descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
         chatScroll.visibility = View.GONE
         chatScroll.alpha = 0f
         homeMid.addView(chatScroll, FrameLayout.LayoutParams(-1, -1))
         holo = HoloView(this)
         homeMid.addView(holo, FrameLayout.LayoutParams(dp(ORB_DP), dp(ORB_DP), Gravity.CENTER))
-        homeMid.addOnLayoutChangeListener { _, _, tp, _, bt, _, otp, _, obt -> if (chatOpen && (bt - tp) != (obt - otp)) holo.post { placeOrb() } }
+        homeMid.addOnLayoutChangeListener { _, _, tp, _, bt, _, otp, _, obt ->
+            if (chatOpen && (bt - tp) != (obt - otp)) holo.post {
+                val kb = kbOpen()
+                if (lastKb && !kb) { lastKb = false; closeChat() } else { lastKb = kb; placeOrb() }
+            }
+        }
         attachOrbGesture()
         col.addView(homeMid, LinearLayout.LayoutParams(-1, 0, 1f))
 
@@ -408,6 +417,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val h = homeMid.height.toFloat()
         val size = dp(ORB_DP).toFloat()
         val s = 0.3f
+        holo.dotScale = 2.5f
         val ty = (h - size * s / 2f - dp(6)) - h / 2f
         (chatScroll.layoutParams as FrameLayout.LayoutParams).bottomMargin = (size * s + dp(12)).toInt()
         chatScroll.requestLayout()
@@ -425,6 +435,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             if (!chatOpen) chatScroll.visibility = View.GONE
         }.start()
         holo.visibility = View.VISIBLE
+        holo.dotScale = 1f
         holo.animate().scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
     }
 
@@ -445,7 +456,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         holo.visibility = if (kb) View.INVISIBLE else View.VISIBLE
         val h = homeMid.height.toFloat()
         holo.translationY = (h - size * 0.3f / 2f - dp(6)) - h / 2f
-        chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+        chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
     }
 
     private fun hideKeyboard() {

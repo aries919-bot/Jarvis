@@ -56,6 +56,7 @@ class HoloView(c: Context) : View(c) {
         }
     // 0..1: ses şiddeti
     var level: Float = 0f
+    var dotScale: Float = 1f
 
     private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val lineP = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -138,7 +139,7 @@ class HoloView(c: Context) : View(c) {
         val lv = level.toDouble()
         val u = r * 0.82f * sc * (1f + level * 0.1f)
         val col = if (state == 3) Color.parseColor(Pal.GREEN) else Color.WHITE
-        val ds = maxOf(1.3f, r * 0.009f)
+        val ds = maxOf(1.3f, r * 0.009f) * dotScale
         val rot = t * 0.5
         val cr = Math.cos(rot)
         val sr = Math.sin(rot)
@@ -146,7 +147,7 @@ class HoloView(c: Context) : View(c) {
         val ct = Math.cos(tilt)
         val st = Math.sin(tilt)
 
-        if (state == 2) {
+        if (state == 99) {
             for (k in 0 until 5) {
                 val phi = k * Math.PI / 5
                 for (j in 0 until 16) {
@@ -220,6 +221,10 @@ class HoloView(c: Context) : View(c) {
                     var dl = Math.abs(lon - scan)
                     if (dl > Math.PI) dl = 2 * Math.PI - dl
                     boost = maxOf(0.0, 1.0 - dl / 0.4)
+                } else if (state == 2) {
+                    val wv = Math.sin(pr[i] * 0.7 - t * 7.0)
+                    rad = 1.0 + (0.04 + lv * 0.3) * wv
+                    boost = maxOf(0.0, wv) * 0.7
                 } else if (state == 3) {
                     x0 += scr * 0.6 * (hash(i) - 0.5)
                     y0 += scr * 0.6 * (hash(i + 500) - 0.5)
