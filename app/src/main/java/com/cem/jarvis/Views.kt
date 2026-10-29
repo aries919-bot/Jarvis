@@ -506,7 +506,7 @@ object Ui {
         tv.setTextIsSelectable(true)
         tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
         if (sys) {
-            tv.setTextColor(Color.parseColor("#8A8FA8"))
+            tv.setTextColor(Color.parseColor("#B4B9D0"))
             lp.gravity = android.view.Gravity.CENTER_HORIZONTAL
         } else {
             tv.setTextColor(Color.parseColor("#FFFFFF"))
