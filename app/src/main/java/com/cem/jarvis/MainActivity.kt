@@ -344,7 +344,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         homeMid.addOnLayoutChangeListener { _, _, tp, _, bt, _, otp, _, obt ->
             if (chatOpen && (bt - tp) != (obt - otp)) holo.post {
                 val kb = kbOpen()
-                if (lastKb && !kb) { lastKb = false; closeChat() } else { lastKb = kb; placeOrb() }
+                lastKb = kb; placeOrb()
             }
         }
         attachOrbGesture()
@@ -1106,7 +1106,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                     if (!manualSession && loopActive()) restartLater(400)
                     return
                 }
-                voiceTurn = true
+                voiceTurn = false
                 if (::voiceText.isInitialized) voiceText.text = "Son söylenen: $text"
                 if (continuous || awaitingCommand) {
                     awaitingCommand = false
