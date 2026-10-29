@@ -43,7 +43,7 @@ object Pal {
 // (donanım hızlandırmada her sürümde aynı çalışır).
 // ============================================================
 class HoloView(c: Context) : View(c) {
-    // 0 bekleme, 1 dinleme, 2 konuşma, 3 başarılı, 4 düşünme, 5 araştırma
+    // 0 bekleme, 1 dinleme, 2 konuşma, 3 başarılı, 4 düşünme, 5 araştırma, 6 bağlanma
     var state: Int = 0
         set(v) {
             field = v
@@ -58,35 +58,54 @@ class HoloView(c: Context) : View(c) {
     var level: Float = 0f
 
     private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val lineP = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.3f
+        color = Color.WHITE
+    }
     private var t = 0f
-    private val n = 240
-    private val px = FloatArray(n)
-    private val py = FloatArray(n)
-    private val pz = FloatArray(n)
+    private var sc = 0.9f
+    private val n: Int
+    private val px: FloatArray
+    private val py: FloatArray
+    private val pz: FloatArray
+    private val pr: IntArray
 
     init {
-        val ga = Math.PI * (3.0 - Math.sqrt(5.0))
-        for (i in 0 until n) {
-            val y = 1.0 - 2.0 * (i + 0.5) / n
-            val rr = Math.sqrt(1.0 - y * y)
-            px[i] = (Math.cos(ga * i) * rr).toFloat()
-            py[i] = y.toFloat()
-            pz[i] = (Math.sin(ga * i) * rr).toFloat()
+        val xs = ArrayList<Float>()
+        val ys = ArrayList<Float>()
+        val zs = ArrayList<Float>()
+        val rs = ArrayList<Int>()
+        val rows = 15
+        for (ri in 0 until rows) {
+            val lat = -Math.PI / 2 + Math.PI * (ri + 0.5) / rows
+            val y = Math.sin(lat)
+            val rr = Math.cos(lat)
+            val cnt = Math.max(5, Math.round(30 * rr).toInt())
+            for (j in 0 until cnt) {
+                val lon = 2 * Math.PI * j / cnt + (ri % 2) * Math.PI / cnt
+                xs.add((Math.cos(lon) * rr).toFloat())
+                ys.add(y.toFloat())
+                zs.add((Math.sin(lon) * rr).toFloat())
+                rs.add(ri)
+            }
         }
+        n = xs.size
+        px = xs.toFloatArray()
+        py = ys.toFloatArray()
+        pz = zs.toFloatArray()
+        pr = rs.toIntArray()
+    }
+
+    private fun hash(i: Int): Double {
+        val v = Math.sin(i * 12.9898) * 43758.5453
+        return v - Math.floor(v)
     }
 
     private fun put(cv: Canvas, x: Float, y: Float, size: Float, a: Int, col: Int) {
         dot.color = col
         dot.alpha = a.coerceIn(0, 255)
         cv.drawCircle(x, y, size, dot)
-    }
-
-    private fun shapeR(k: Int, th: Double): Double {
-        if (k == 0) return 1.0
-        val sides = k + 2
-        val seg = 2 * Math.PI / sides
-        val a = ((th % seg) + seg) % seg - seg / 2
-        return Math.cos(Math.PI / sides) / Math.cos(a)
     }
 
     override fun onDraw(cv: Canvas) {
@@ -96,6 +115,7 @@ class HoloView(c: Context) : View(c) {
                 1 -> 0.04f
                 5 -> 0.035f
                 4 -> 0.03f
+                6 -> 0.03f
                 else -> 0.02f
             }
         }
@@ -103,27 +123,30 @@ class HoloView(c: Context) : View(c) {
         val cy = height / 2f
         val r = minOf(width, height) / 2f - 4f
         if (r <= 8f) return
-        val u = r * 0.82f
-        val col = if (state == 3) Color.parseColor(Pal.GREEN) else Color.WHITE
-        val ds = maxOf(1.3f, r * 0.011f)
+        val target = when (state) {
+            0 -> 0.86f
+            1 -> 1.0f
+            2 -> 0.94f
+            3 -> 1.04f
+            4 -> 0.9f
+            5 -> 1.0f
+            6 -> 0.92f
+            else -> 0.9f
+        }
+        sc += (target - sc) * 0.06f
         if (level > 0.01f) level *= 0.88f else level = 0f
         val lv = level.toDouble()
+        val u = r * 0.82f * sc * (1f + level * 0.1f)
+        val col = if (state == 3) Color.parseColor(Pal.GREEN) else Color.WHITE
+        val ds = maxOf(1.3f, r * 0.009f)
+        val rot = t * 0.5
+        val cr = Math.cos(rot)
+        val sr = Math.sin(rot)
+        val tilt = 0.35
+        val ct = Math.cos(tilt)
+        val st = Math.sin(tilt)
 
-        if (state == 0) {
-            val ph = (t * 0.35f).toDouble()
-            val k = ph.toInt() % 3
-            val fr = ph - Math.floor(ph)
-            val f = fr * fr * (3 - 2 * fr)
-            val br = 1.0 + 0.04 * Math.sin(t * 2.0)
-            val cnt = 72
-            for (i in 0 until cnt) {
-                val th = i * 2 * Math.PI / cnt
-                val rr = (shapeR(k, th) * (1 - f) + shapeR((k + 1) % 3, th) * f) * br
-                val x = cx + (Math.cos(th + t * 0.2) * rr * u).toFloat()
-                val y = cy + (Math.sin(th + t * 0.2) * rr * u).toFloat()
-                put(cv, x, y, ds, 130 + (80 * Math.sin(t * 2.0 + i * 0.3)).toInt(), col)
-            }
-        } else if (state == 2) {
+        if (state == 2) {
             for (k in 0 until 5) {
                 val phi = k * Math.PI / 5
                 for (j in 0 until 16) {
@@ -139,38 +162,75 @@ class HoloView(c: Context) : View(c) {
                     put(cv, cx + (xr * rad * u).toFloat(), cy + (oy * rad * u).toFloat(), ds * (0.6f + 0.9f * dep.toFloat()), (60 + 195 * dep).toInt(), col)
                 }
             }
-        } else {
-            val rot = t * 0.5
-            val cr = Math.cos(rot)
-            val sr = Math.sin(rot)
-            val tilt = 0.35
-            val ct = Math.cos(tilt)
-            val st = Math.sin(tilt)
-            val scan = (t * 1.6) % (2 * Math.PI) - Math.PI
-            for (i in 0 until n) {
+        } else if (state == 6) {
+            val m = 30
+            val qx = FloatArray(m)
+            val qy = FloatArray(m)
+            val qz = FloatArray(m)
+            for (k in 0 until m) {
+                val i = k * n / m
                 val x0 = px[i].toDouble()
-                var y0 = py[i].toDouble()
+                val y0 = py[i].toDouble()
                 val z0 = pz[i].toDouble()
+                val xr = x0 * cr + z0 * sr
+                val zr = -x0 * sr + z0 * cr
+                qx[k] = xr.toFloat()
+                qy[k] = (y0 * ct - zr * st).toFloat()
+                qz[k] = (y0 * st + zr * ct).toFloat()
+            }
+            val prog = (t * 0.3) % 1.0
+            for (k in 0 until m) {
+                for (l in k + 1 until m) {
+                    val dx = qx[k] - qx[l]
+                    val dy = qy[k] - qy[l]
+                    val dz = qz[k] - qz[l]
+                    if (dx * dx + dy * dy + dz * dz < 0.8f && hash(k * m + l) < prog * 1.15) {
+                        val dep = ((qz[k] + qz[l]) / 4f + 0.5f).coerceIn(0f, 1f)
+                        lineP.alpha = (40 + 160 * dep).toInt()
+                        cv.drawLine(cx + qx[k] * u, cy + qy[k] * u, cx + qx[l] * u, cy + qy[l] * u, lineP)
+                    }
+                }
+            }
+            for (k in 0 until m) {
+                val dep = ((qz[k] + 1f) / 2f).coerceIn(0f, 1f)
+                put(cv, cx + qx[k] * u, cy + qy[k] * u, ds * (1f + 1.2f * dep), (90 + 165 * dep).toInt(), col)
+            }
+        } else {
+            val scan = (t * 1.6) % (2 * Math.PI) - Math.PI
+            val ph = (t * 0.5) % 1.0
+            val scr = maxOf(0.0, 1.0 - ph * 2.2)
+            for (i in 0 until n) {
+                var x0 = px[i].toDouble()
+                var y0 = py[i].toDouble()
+                var z0 = pz[i].toDouble()
                 var rad = 1.0
                 var boost = 0.0
+                var vis = 1.0
                 val lon = Math.atan2(z0, x0)
-                if (state == 1) {
-                    rad = 1.0 + (0.05 + lv * 0.35) * Math.sin(y0 * 7 - t * 6.0)
+                if (state == 0) {
+                    rad = 1.0 + 0.03 * Math.sin(t * 3.0)
+                } else if (state == 1) {
+                    rad = 1.0 + (0.04 + lv * 0.35) * Math.sin(pr[i] * 0.9 - t * 6.0)
                 } else if (state == 4) {
-                    y0 += 0.18 * Math.sin(lon * 2 + t * 3.0) * (1 - y0 * y0)
+                    val w = 0.45 * Math.sin(lon * 2 + t * 2.5)
+                    boost = maxOf(0.0, 1.0 - Math.abs(y0 - w) / 0.35)
+                    vis = 0.15 + 0.85 * boost
+                    y0 += 0.12 * Math.sin(lon * 3 - t * 3.0)
                 } else if (state == 5) {
                     var dl = Math.abs(lon - scan)
                     if (dl > Math.PI) dl = 2 * Math.PI - dl
                     boost = maxOf(0.0, 1.0 - dl / 0.4)
                 } else if (state == 3) {
-                    rad = 1.0 + 0.06 * Math.sin(t * 8.0)
+                    x0 += scr * 0.6 * (hash(i) - 0.5)
+                    y0 += scr * 0.6 * (hash(i + 500) - 0.5)
+                    z0 += scr * 0.6 * (hash(i + 900) - 0.5)
                 }
                 val xr = x0 * cr + z0 * sr
                 val zr = -x0 * sr + z0 * cr
                 val yt = y0 * ct - zr * st
                 val zt = y0 * st + zr * ct
                 val dep = ((zt + 1) / 2).coerceIn(0.0, 1.0)
-                val a = (35 + 190 * dep + 120 * boost).toInt()
+                val a = ((35 + 190 * dep) * vis + 120 * boost).toInt()
                 val sz = ds * (0.55f + 0.9f * dep.toFloat() + 0.8f * boost.toFloat())
                 put(cv, cx + (xr * rad * u).toFloat(), cy + (yt * rad * u).toFloat(), sz, a, col)
             }

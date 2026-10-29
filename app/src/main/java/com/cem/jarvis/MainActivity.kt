@@ -424,14 +424,28 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatScroll.animate().alpha(0f).setDuration(180).withEndAction {
             if (!chatOpen) chatScroll.visibility = View.GONE
         }.start()
+        holo.visibility = View.VISIBLE
         holo.animate().scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
+    }
+
+    private fun kbOpen(): Boolean {
+        val r = android.graphics.Rect()
+        window.decorView.getWindowVisibleDisplayFrame(r)
+        val full = window.decorView.rootView.height
+        return full > 0 && full - r.bottom > full * 0.15
     }
 
     private fun placeOrb() {
         if (!chatOpen || !::homeMid.isInitialized) return
-        val h = homeMid.height.toFloat()
+        val kb = kbOpen()
         val size = dp(ORB_DP).toFloat()
+        val lp = chatScroll.layoutParams as FrameLayout.LayoutParams
+        val want = if (kb) 0 else (size * 0.3f + dp(12)).toInt()
+        if (lp.bottomMargin != want) { lp.bottomMargin = want; chatScroll.requestLayout() }
+        holo.visibility = if (kb) View.INVISIBLE else View.VISIBLE
+        val h = homeMid.height.toFloat()
         holo.translationY = (h - size * 0.3f / 2f - dp(6)) - h / 2f
+        chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
     private fun hideKeyboard() {
@@ -1322,6 +1336,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         showThinking()
         thread {
             try {
+                uiHandler.post { orbThink(6) }
                 val r = Ai.translate(providerOrder(), providerKeys(), providerModels(), lang, text)
                 runOnUiThread { hideThinking(); say(r) }
             } catch (e: Exception) {
