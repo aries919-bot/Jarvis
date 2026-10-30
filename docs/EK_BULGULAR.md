@@ -15,6 +15,6 @@ Kapsam: Bu oturumda okunan satırlar. Tam kod incelemesi değildir.
 - hasAiKey(), bulut veya Ai.ALL anahtarlarından birinin dolu olmasını ister. [Okundu]
 
 ## Açık noktalar
-- /hizli kimlik doğrulaması.
+- /hizli (POST): index.js satır 34-35'teki JARVIS_TOKEN kontrolünden sonra çalışıyor. [Okundu, kapsam: grep].
 - Sağlayıcıların veri saklama politikaları.
 - Cloudflare secret ve log ayarları.
