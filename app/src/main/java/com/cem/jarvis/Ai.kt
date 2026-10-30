@@ -196,6 +196,10 @@ object Ai {
         throw last
     }
 
+    fun oyVer(token: String, v: Int, a: String) {
+        try { Net.post("https://jarvis-cloud.aydincem919.workers.dev/oy_sohbet", mapOf("Authorization" to "Bearer $token"), JSONObject().put("v", v).put("a", a)) } catch (e: Exception) {}
+    }
+
     private const val BULUT_URL = "https://jarvis-cloud.aydincem919.workers.dev/ai"
 
     private fun bulut(token: String, sys: String, hist: List<Pair<String, String>>): String {

@@ -399,7 +399,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         bar.setPadding(0, dp(8), 0, 0)
         bar.addView(Ui.iconBtn(this, "jplus", "Ekle", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { plusMenu() })
         composer = Ui.input(this, "Aries'e yaz...")
-        composer.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        composer.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        composer.setHorizontallyScrolling(false)
+        composer.minLines = 1
+        composer.maxLines = 8
         composer.imeOptions = EditorInfo.IME_ACTION_SEND
         composer.setOnEditorActionListener { _, action, _ ->
             if (action == EditorInfo.IME_ACTION_SEND) { sendComposer(); true } else false
@@ -965,15 +968,21 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun renderConv(c: Conv) {
         if (!::chatBox.isInitialized) return
         chatBox.removeAllViews()
-        for ((r, t) in c.msgs) chatBox.addView(Ui.line(this, labelOf(r), t, emptyList()) { speakNow(t) })
+        for ((r, t) in c.msgs) chatBox.addView(Ui.line(this, labelOf(r), t, emptyList(), { speakNow(t) }, { v -> oyGonder(v, t) }))
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
+
+    private fun oyGonder(v: Int, t: String) {
+        val tk = store.str("bulut")
+        if (tk.isBlank()) return
+        Thread { Ai.oyVer(tk, v, t) }.start()
     }
 
     private fun labelOf(role: String): String = if (role == "user") "Sen" else "J"
 
     private fun addBubble(who: String, text: String, srcs: List<Pair<String, String>> = emptyList()) {
         if (!::chatBox.isInitialized) return
-        chatBox.addView(Ui.line(this, who, text, srcs) { speakNow(text) })
+        chatBox.addView(Ui.line(this, who, text, srcs, { speakNow(text) }, { v -> oyGonder(v, text) }))
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 

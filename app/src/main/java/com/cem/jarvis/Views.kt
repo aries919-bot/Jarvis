@@ -487,7 +487,7 @@ object Ui {
     }
 
     // Sade sohbet satırı (balonsuz, uçtan uca): "Sen" silik, Jarvis parlak, "Sistem" küçük ve gri.
-    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null): View {
+    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null, onVote: ((Int) -> Unit)? = null): View {
         val me = who == "Sen"
         val sys = who == "Sistem"
         val outer = android.widget.LinearLayout(ctx)
@@ -554,6 +554,18 @@ object Ui {
                 android.app.AlertDialog.Builder(ctx).setView(sv).setPositiveButton("Kapat", null).show()
             })
             if (onSpeak != null) row.addView(act("Oku") { onSpeak() })
+            if (onVote != null) {
+                val vk = text.hashCode()
+                val gri = "#B4B9D0"
+                val up = icon(ctx, "jup", 18, if (oyDurum[vk] == 1) Pal.WHITE else gri)
+                val dn = icon(ctx, "jdown", 18, if (oyDurum[vk] == 0) Pal.WHITE else gri)
+                up.setPadding(dp(ctx, 10), dp(ctx, 8), dp(ctx, 10), dp(ctx, 6))
+                dn.setPadding(dp(ctx, 10), dp(ctx, 8), dp(ctx, 10), dp(ctx, 6))
+                up.setOnClickListener { oyDurum[vk] = 1; up.setColorFilter(Color.parseColor(Pal.WHITE)); dn.setColorFilter(Color.parseColor(gri)); onVote(1) }
+                dn.setOnClickListener { oyDurum[vk] = 0; dn.setColorFilter(Color.parseColor(Pal.WHITE)); up.setColorFilter(Color.parseColor(gri)); onVote(0) }
+                row.addView(up)
+                row.addView(dn)
+            }
             if (sources.isNotEmpty()) row.addView(act("Kaynak (" + sources.size + ")") {
                 val names = sources.map { it.first }.toTypedArray()
                 android.app.AlertDialog.Builder(ctx).setTitle("Kaynaklar").setItems(names) { _, w ->
@@ -565,3 +577,5 @@ object Ui {
         return outer
     }
 }
+
+private val oyDurum = HashMap<Int, Int>()
