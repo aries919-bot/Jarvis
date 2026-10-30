@@ -805,9 +805,43 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
         add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
 
+        add(col, Ui.text(this, "Hafıza", 14f, Pal.MUTED))
+        val memBtn = Ui.button(this, flagLabel("memOn")) {}
+        memBtn.setOnClickListener {
+            store.setFlag("memOn", !store.flag("memOn", true))
+            memBtn.text = flagLabel("memOn")
+        }
+        add(col, memBtn)
+        val factsBox = Ui.column(this)
+        add(col, factsBox)
+        renderFacts(factsBox)
+        add(col, Ui.button(this, "Bütün notları sil") {
+            confirm("Bütün notlar silinsin mi?", {
+                store.clearFacts()
+                renderFacts(factsBox)
+            }, {})
+        })
+
         add(col, Ui.text(this, "Hakkında", 14f, Pal.MUTED))
         add(col, Ui.card(this, ABOUT))
         return scrollOf(col)
+    }
+
+    private fun renderFacts(box: LinearLayout) {
+        box.removeAllViews()
+        val list = store.facts().split("; ").map { it.trim() }.filter { it.isNotEmpty() }
+        if (list.isEmpty()) {
+            add(box, Ui.card(this, "Kayıtlı not yok."))
+            return
+        }
+        for ((i, f) in list.withIndex()) {
+            add(box, Ui.button(this, f + "  ✕") {
+                confirm("Silinsin mi: '" + f + "'?", {
+                    store.put("facts", list.filterIndexed { j, _ -> j != i }.joinToString("; "))
+                    renderFacts(box)
+                }, {})
+            })
+        }
     }
 
     private fun keyField(col: LinearLayout, hintText: String, prefKey: String) {
