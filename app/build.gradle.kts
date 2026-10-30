@@ -5,6 +5,17 @@ plugins {
 android {
     namespace = "com.cem.jarvis"
     compileSdk = 34
+    signingConfigs {
+        create("aries") {
+            val ks = System.getenv("KEYSTORE_PATH")
+            if (!ks.isNullOrBlank()) {
+                storeFile = file(ks)
+                storePassword = System.getenv("KEYSTORE_PASS")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASS")
+            }
+        }
+    }
     defaultConfig {
         applicationId = "com.cem.jarvis"
         minSdk = 24
@@ -17,4 +28,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    buildTypes {
+        getByName("debug") {
+            if (!System.getenv("KEYSTORE_PATH").isNullOrBlank()) signingConfig = signingConfigs.getByName("aries")
+        }
+    }
 }

@@ -16,7 +16,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Imza dosyasi
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/aries.jks"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/aries.jks" >> "$GITHUB_ENV"
       - run: gradle assembleDebug --no-daemon
+        env:
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASS }}
       - uses: actions/upload-artifact@v4
         with:
           name: aries-apk

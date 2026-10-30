@@ -109,7 +109,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
 """.trimIndent()
 
     private val ABOUT = """
-Aries telefonda çalışır. Sohbetler ve hafıza telefonda saklanır; Ayarlar'dan kapatabilirsin.
+Aries telefonda çalışır. Sohbetler telefonda, hafıza hem telefonda hem Aries Bulut'ta saklanır. Hafıza komutları: hatırla: x (sormadan kaydeder), notlarım, notlarda ara: x, unut: x, unut hepsi, profilim: x. Kart, şifre, kimlik kaydedilmez. gizli: ile başlayan mesaj buluta kaydedilmez.
 İnternetsiz: saat, tarih, batarya, depolama, alarm, zamanlayıcı, hatırlatmalar, takvim etkinliği, arama (onaylı), WhatsApp ve SMS taslağı, müzik ve ses, titreşim, uygulama açma, ayar sayfaları, fener, kamera, hesap makinesi, zar, yazı tura, yol tarifi, görevler, hafıza, dosya yönetimi.
 İnternetle: yapay zekâ sohbeti, internet araştırması (kaynaklı), çeviri, haber, borsa.
 Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uykudan uyandırması işletim sistemi tarafından kısıtlanmıştır.
@@ -805,23 +805,6 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
         add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
 
-        add(col, Ui.text(this, "Hafıza", 14f, Pal.MUTED))
-        val memBtn = Ui.button(this, flagLabel("memOn")) {}
-        memBtn.setOnClickListener {
-            store.setFlag("memOn", !store.flag("memOn", true))
-            memBtn.text = flagLabel("memOn")
-        }
-        add(col, memBtn)
-        val factsBox = Ui.column(this)
-        add(col, factsBox)
-        renderFacts(factsBox)
-        add(col, Ui.button(this, "Bütün notları sil") {
-            confirm("Bütün notlar silinsin mi?", {
-                store.clearFacts()
-                renderFacts(factsBox)
-            }, {})
-        })
-
         add(col, Ui.text(this, "Hakkında", 14f, Pal.MUTED))
         add(col, Ui.card(this, ABOUT))
         return scrollOf(col)
@@ -1284,12 +1267,6 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             store.addMsg(c, "user", raw)
         }
         val s = raw.lowercase(tr).trim().removeSuffix(" lütfen").trim()
-        val pf = pendingFact
-        if (pf != null && !fromAi) {
-            pendingFact = null
-            if (s == "evet") { store.addFact(pf); say("Not ettim."); return }
-            if (s == "hayır" || s == "hayir") { say("Kaydetmedim."); return }
-        }
         try {
             if (localCommand(raw, s)) return
             if (fromAi) {
@@ -1349,13 +1326,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
-        val mem = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(raw.trim())
-        if (mem != null) {
-            if (!store.flag("memOn", true)) { say("Hafıza kapalı."); return true }
-            pendingFact = mem.groupValues[1]
-            say("Şunu kaydedeyim mi: '" + mem.groupValues[1] + "'? (evet/hayır)")
-            return true
-        }
+        if (Regex("^(?:bunu )?hatırla[:,]?\\s+.+|^unut\\s*:?\\s+.+|^notlarım[.!?]*$|^notlarda ara\\s*:?\\s+.+|^profilim\\s*:\\s*.+|^profilim[.!?]*$", RegexOption.IGNORE_CASE).containsMatchIn(raw.trim())) return memCloud(raw)
 
         if (Regex("saat kaç").containsMatchIn(s)) {
             val c = Calendar.getInstance()
@@ -1602,6 +1573,36 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("jarvis", store.exportJson()))
         say("Hafıza panoya kopyalandı.")
+    }
+
+    private fun memCloud(raw: String): Boolean {
+        val t = raw.trim()
+        val tk = store.str("bulut")
+        val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        if (tk.isBlank() || !isOnline()) {
+            if (fact != null) {
+                if (Regex("\\d{11,}|şifre|parola|cvv", RegexOption.IGNORE_CASE).containsMatchIn(fact)) say("Kart, şifre ya da kimlik gibi görünüyor, kaydetmedim.")
+                else { store.addFact(fact); say("Not ettim (yalnızca telefonda): " + fact) }
+            } else if (Regex("^notlarım", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
+                say(store.facts().ifBlank { "Kayıtlı notun yok." })
+            } else say("Bu komut için internet ve Aries Bulut anahtarı gerekir.")
+            return true
+        }
+        showThinking()
+        thread {
+            try {
+                val ans = Ai.chat(listOf("bulut"), mapOf("bulut" to tk), emptyMap(), "", listOf(Pair("user", t)))
+                runOnUiThread {
+                    hideThinking()
+                    if (fact != null && ans.startsWith("Not ettim")) store.addFact(fact)
+                    if (ans.startsWith("Bütün notları sildim")) store.clearFacts()
+                    say(ans)
+                }
+            } catch (e: Exception) {
+                runOnUiThread { hideThinking(); say(Ai.friendly(e)) }
+            }
+        }
+        return true
     }
 
     private fun searchFacts(query: String): List<String> {

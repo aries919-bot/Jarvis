@@ -27,6 +27,41 @@ object Commands {
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
     }
 
+    private fun playing(c: android.media.session.MediaController?): Boolean =
+        c?.playbackState?.state == android.media.session.PlaybackState.STATE_PLAYING
+
+    private fun mcOf(ctx: Context, pkg: String?): android.media.session.MediaController? = try {
+        val msm = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as android.media.session.MediaSessionManager
+        val l = msm.getActiveSessions(android.content.ComponentName(ctx, AriesNotifService::class.java)).filter { pkg == null || it.packageName == pkg }
+        l.firstOrNull { playing(it) } ?: l.firstOrNull()
+    } catch (e: Exception) { null }
+
+    private fun mediaVerify(ctx: Context, want: Boolean, okMsg: String, failMsg: String, say: (String) -> Unit) {
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val c = mcOf(ctx, null)
+            if (c == null) say("Çalan medya oturumu görünmüyor.")
+            else if (playing(c) == want) {
+                val t = c.metadata?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE).orEmpty()
+                say(if (want && t.isNotBlank()) okMsg.trimEnd('.') + ": " + t + "." else okMsg)
+            } else say(failMsg)
+        }, 1200)
+    }
+
+    private fun musicVerify(ctx: Context, pkg: String, aname: String, q: String, say: (String) -> Unit) {
+        val h = android.os.Handler(android.os.Looper.getMainLooper())
+        say("Gönderildi: " + q + " (" + aname + "). Kontrol ediyorum.")
+        h.postDelayed({ try { val c = mcOf(ctx, pkg); if (c != null && !playing(c)) c.transportControls.playFromSearch(q, android.os.Bundle()) } catch (e: Exception) { } }, 2500)
+        h.postDelayed({ try { if (!playing(mcOf(ctx, pkg))) media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 6000)
+        h.postDelayed({
+            val c = mcOf(ctx, pkg)
+            if (playing(c)) {
+                val t = c?.metadata?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE).orEmpty()
+                say("Çalıyor" + (if (t.isNotBlank()) ": " + t else "") + " (" + aname + ").")
+            } else if (c == null) say("Çaldığını doğrulayamadım, medya oturumu görünmüyor. Çalmazsa uygulamadan seç.")
+            else say("Çalmadı. " + aname + " içinden şarkıyı elle seç.")
+        }, 9000)
+    }
+
     private fun volume(ctx: Context, dir: Int) {
         val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         am.adjustStreamVolume(AudioManager.STREAM_MUSIC, dir, AudioManager.FLAG_SHOW_UI)
@@ -96,8 +131,8 @@ object Commands {
                 .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
             return go(ctx, i, say, "Zamanlayıcı kuruldu: " + (if (secs >= 60) (secs / 60).toString() + " dakika" else secs.toString() + " saniye") + ".")
         }
-        if (Regex("müziği (durdur|duraklat)|şarkıyı durdur").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PAUSE); say("Durduruldu."); return true }
-        if (Regex("müziği (oynat|devam)|şarkıyı oynat").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY); say("Oynatılıyor."); return true }
+        if (Regex("müziği (durdur|duraklat)|şarkıyı durdur").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PAUSE); mediaVerify(ctx, false, "Durduruldu.", "Durdurma tuşunu gönderdim ama hâlâ çalıyor görünüyor.", say); return true }
+        if (Regex("müziği (oynat|devam)|şarkıyı oynat").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY); mediaVerify(ctx, true, "Oynatılıyor.", "Oynatma tuşunu gönderdim ama çalan bir şey görünmüyor.", say); return true }
         if (Regex("müziği geç|sonraki şarkı|şarkıyı geç").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_NEXT); say("Sonraki şarkı."); return true }
         if (Regex("önceki şarkı").containsMatchIn(s)) { media(ctx, KeyEvent.KEYCODE_MEDIA_PREVIOUS); say("Önceki şarkı."); return true }
         if (Regex("takvim|etkinlik|toplantı|randevu|buluşma").containsMatchIn(s) && Regex("ekle|kaydet|oluştur|koy|ayarla").containsMatchIn(s)) {
@@ -106,8 +141,21 @@ object Commands {
             val cal = java.util.Calendar.getInstance()
             if (s.contains("yarın")) cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
             if (Regex("öbür gün|ertesi gün").containsMatchIn(s)) cal.add(java.util.Calendar.DAY_OF_YEAR, 2)
-            cal.set(java.util.Calendar.HOUR_OF_DAY, tt.first); cal.set(java.util.Calendar.MINUTE, tt.second); cal.set(java.util.Calendar.SECOND, 0); if (cal.timeInMillis < System.currentTimeMillis()) cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
-            var title = s.replace(Regex("(\\d{1,2}\\s*[:.]\\s*\\d{2})|(saat\\s*\\d{1,2})|(\\d{1,2}\\s*['’]?\\s*(de|da|te|ta|ye|ya)\\b)|\\b(bugün|yarın|öbür gün|ertesi gün|akşam|sabah|öğleden sonra|buçuk|takvime|takvim|ekle|kaydet|oluştur|koy|ayarla|bir|etkinlik|olarak|lütfen)\\b"), " ").replace(Regex("\\s+"), " ").trim()
+            var explicitDate = false
+            val ayl = listOf("ocak","şubat","mart","nisan","mayıs","haziran","temmuz","ağustos","eylül","ekim","kasım","aralık")
+            val dm = Regex("(\\d{1,2})\\s+(ocak|şubat|mart|nisan|mayıs|haziran|temmuz|ağustos|eylül|ekim|kasım|aralık)").find(s)
+            val gs = Regex("(\\d{1,3})\\s+gün\\s+sonra").find(s)
+            if (dm != null) {
+                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                cal.set(java.util.Calendar.MONTH, ayl.indexOf(dm.groupValues[2]))
+                cal.set(java.util.Calendar.DAY_OF_MONTH, dm.groupValues[1].toInt().coerceIn(1, 31))
+                explicitDate = true
+            } else if (gs != null) {
+                cal.add(java.util.Calendar.DAY_OF_YEAR, gs.groupValues[1].toInt())
+                explicitDate = true
+            }
+            cal.set(java.util.Calendar.HOUR_OF_DAY, tt.first); cal.set(java.util.Calendar.MINUTE, tt.second); cal.set(java.util.Calendar.SECOND, 0); if (cal.timeInMillis < System.currentTimeMillis()) cal.add(if (dm != null) java.util.Calendar.YEAR else java.util.Calendar.DAY_OF_YEAR, 1)
+            var title = s.replace(Regex("(\\d{1,2}\\s+(?:ocak|şubat|mart|nisan|mayıs|haziran|temmuz|ağustos|eylül|ekim|kasım|aralık))|(\\d+\\s+gün\\s+sonra)|(\\d{1,2}\\s*[:.]\\s*\\d{2})|(saat\\s*\\d{1,2})|(\\d{1,2}\\s*['’]?\\s*(de|da|te|ta|ye|ya)\\b)|\\b(bugün|yarın|öbür gün|ertesi gün|akşam|sabah|öğleden sonra|buçuk|takvime|takvim|ekle|kaydet|oluştur|koy|ayarla|bir|etkinlik|olarak|lütfen)\\b"), " ").replace(Regex("\\s+"), " ").trim()
             if (title.isEmpty()) title = "Etkinlik"
             title = title.replaceFirstChar { it.uppercase() }
             val ci = Intent(Intent.ACTION_INSERT)
@@ -150,7 +198,7 @@ object Commands {
                 .putExtra(android.app.SearchManager.QUERY, q).putExtra(MediaStore.EXTRA_MEDIA_TITLE, q)
                 .setPackage(pkg)
             pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try { ctx.startActivity(pi); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 2500); android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { media(ctx, KeyEvent.KEYCODE_MEDIA_PLAY) } catch (e: Exception) { } }, 6000); say("Gönderildi: " + q + " (" + aname + "). Çalmazsa uygulamadan seç.") }
+            try { ctx.startActivity(pi); musicVerify(ctx, pkg, aname, q, say) }
             catch (e: Exception) { return go(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))), say, "Müzik uygulaması açılamadı, YouTube'da aranıyor: " + q + ".") }
             return true
         }

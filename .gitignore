@@ -6,3 +6,5 @@ build/
 local.properties
 build.log
 yukle.zip
+aries.jks
+aries.b64
