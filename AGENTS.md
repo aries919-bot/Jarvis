@@ -9,3 +9,7 @@
 - guclu: orta/cok dosyali isler. kucuk: yalniz tek dosya, basit isler.
 - denetci: yazmaz, sadece ONAY/RED. Onay insandan degil denetciden gelir.
 - Zor is (mimari, tasarim): Claude'la planla, sonra uygulat.
+
+## Evren kurali
+- Evren (kamu platformu) modellerine Ai.kt (Worker adresi var) ve docs/ klasorunu oldugu gibi verme; gerekirse adres satirlarini cikararak parca ver.
+- Anahtar, token ve Worker adresi hicbir modele gitmez.
