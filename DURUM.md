@@ -6,10 +6,10 @@
 - OpenCode ortami: model gecisi, Tavily, Superpowers, ajanlar, git is akisi (is.sh + denetle.py)
 - Arac dosyalari (AGENTS.md, is.sh, denetle.py) Jarvis main'ine eklendi ve GitHub'a itildi
 - deneme-proje GitHub'a (Private) itildi, Cohere anahtari calisiyor
+- Cohere OpenCode yedek zincirine eklendi: openrouter/free, groq/gptoss, cohere/command-a-03-2025
 
 ## Siradaki
 - Jarvis kodunu Evren'e vermeden once hassas kisimlari ayikla
-- Cohere'i OpenCode'a yedek halka olarak ekle (istege bagli)
 - GitHub token'ini github.com/settings/tokens'tan sil
 
 ## Kurallar
