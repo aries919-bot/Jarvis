@@ -79,6 +79,7 @@ class MainActivity : Activity() {
     private lateinit var fileListView: LinearLayout
 
     private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true)
+    private var pendingFact: String? = null
     private val flagTitles = mapOf(
         "heyJarvis" to "Hey Jarvis",
         "aiOn" to "Yapay zekâ",
@@ -1249,6 +1250,12 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             store.addMsg(c, "user", raw)
         }
         val s = raw.lowercase(tr).trim().removeSuffix(" lütfen").trim()
+        val pf = pendingFact
+        if (pf != null && !fromAi) {
+            pendingFact = null
+            if (s == "evet") { store.addFact(pf); say("Not ettim."); return }
+            if (s == "hayır" || s == "hayir") { say("Kaydetmedim."); return }
+        }
         try {
             if (localCommand(raw, s)) return
             if (fromAi) {
@@ -1310,8 +1317,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         val mem = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(raw.trim())
         if (mem != null) {
-            store.addFact(mem.groupValues[1])
-            say("Not ettim.")
+            if (!store.flag("memOn", true)) { say("Hafıza kapalı."); return true }
+            pendingFact = mem.groupValues[1]
+            say("Şunu kaydedeyim mi: '" + mem.groupValues[1] + "'? (evet/hayır)")
             return true
         }
 
