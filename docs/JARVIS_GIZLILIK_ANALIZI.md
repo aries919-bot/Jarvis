@@ -1,5 +1,5 @@
 # JARVIS Gizlilik ve Veri Akışı Analizi
-
+TASLAK: Tam kod incelemesi yapılmadı. Bu rapor yalnızca belirtilen satırlara dayanır ve gizlilik kararı için tek başına yeterli değildir.
 **Durum:** Aşama 1 – Yalnızca analiz.  
 **Kod değişikliği:** Yapılmadı.  
 **Deploy:** Yapılmadı.  
