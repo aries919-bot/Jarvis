@@ -1029,7 +1029,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun renderConv(c: Conv) {
         if (!::chatBox.isInitialized) return
         chatBox.removeAllViews()
-        for ((r, t) in c.msgs) chatBox.addView(Ui.line(this, labelOf(r), t, emptyList(), { speakNow(t) }, { v -> oyGonder(v, t) }))
+        val lastAries = c.msgs.indexOfLast { it.first != "user" }
+        for ((i, m) in c.msgs.withIndex()) {
+            val (r, t) = m
+            chatBox.addView(Ui.line(this, labelOf(r), t, emptyList(), { speakNow(t) }, { v -> oyGonder(v, t) }, emptyList(), null, i == lastAries))
+        }
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
@@ -1041,20 +1045,25 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun labelOf(role: String): String = if (role == "user") "Sen" else "J"
 
-    private fun addBubble(who: String, text: String, srcs: List<Pair<String, String>> = emptyList()) {
+    private fun addBubble(who: String, text: String, srcs: List<Pair<String, String>> = emptyList(), ai: Boolean = false) {
         if (!::chatBox.isInitialized) return
         clearSuggest()
-        val oneri = who == "J" && text != "Düşünüyorum…"
+        val aries = who == "J" && text != "Düşünüyorum…"
+        val oneri = aries && ai
         val onSuggest: ((String) -> Unit)? = if (oneri) { s -> suggestTap(s) } else null
         chatBox.addView(Ui.line(this, who, text, srcs, { speakNow(text) }, { v -> oyGonder(v, text) },
-            if (oneri) listOf("Başka bir fikir", "Daha kısa anlat") else emptyList(), onSuggest))
+            if (oneri) listOf("Başka bir fikir", "Daha kısa anlat") else emptyList(), onSuggest, aries))
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
     private fun clearSuggest() {
         if (!::chatBox.isInitialized) return
-        val old = chatBox.findViewWithTag<View>("oneri")
-        (old?.parent as? android.view.ViewGroup)?.removeView(old)
+        for (tag in listOf("oneri", "aksiyon")) {
+            while (true) {
+                val old = chatBox.findViewWithTag<View>(tag) ?: break
+                (old.parent as? android.view.ViewGroup)?.removeView(old)
+            }
+        }
     }
 
     private fun suggestTap(s: String) {
@@ -1086,8 +1095,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         thinkingView = null
     }
 
-    private fun say(display: String, spoken: String = display, srcs: List<Pair<String, String>> = emptyList()) {
-        addBubble("J", display, srcs)
+    private fun say(display: String, spoken: String = display, srcs: List<Pair<String, String>> = emptyList(), ai: Boolean = false) {
+        addBubble("J", display, srcs, ai)
         store.addMsg(store.current(), "assistant", display)
         speakNow(spoken)
     }
@@ -1514,7 +1523,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                 runOnUiThread {
                     hideThinking()
                     if (cmd.isNotBlank()) handle(cmd, true)
-                    else say(reply.ifEmpty { "Anlaşılamadı." })
+                    else say(reply.ifEmpty { "Anlaşılamadı." }, ai = true)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -1535,7 +1544,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                 var hz = "ok"; val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
-                    say(a.text.ifEmpty { "Sonuç bulamadım." }, a.text, a.sources.take(5).map { it.title to it.url })
+                    say(a.text.ifEmpty { "Sonuç bulamadım." }, a.text, a.sources.take(5).map { it.title to it.url }, ai = true)
                 }
             } catch (e: Exception) {
                 runOnUiThread { hideThinking(); say(Ai.friendly(e)) }
@@ -1551,7 +1560,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             try {
                 uiHandler.post { orbThink(6) }
                 val r = Ai.translate(providerOrder(), providerKeys(), providerModels(), lang, text)
-                runOnUiThread { hideThinking(); say(r) }
+                runOnUiThread { hideThinking(); say(r, ai = true) }
             } catch (e: Exception) {
                 runOnUiThread { hideThinking(); say(Ai.friendly(e)) }
             }

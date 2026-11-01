@@ -488,51 +488,41 @@ object Ui {
         return Pair(r, sw)
     }
 
-    // Sade sohbet satırı (balonsuz, uçtan uca): "Sen" silik, Jarvis parlak, "Sistem" küçük ve gri.
-    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null, onVote: ((Int) -> Unit)? = null, suggestions: List<String> = emptyList(), onSuggest: ((String) -> Unit)? = null): View {
+    // Sade sohbet satırı: Aries balonsuz tam genişlik, "Sen" sağda koyu lavanta balon, "Sistem" küçük ve gri.
+    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null, onVote: ((Int) -> Unit)? = null, suggestions: List<String> = emptyList(), onSuggest: ((String) -> Unit)? = null, showActions: Boolean = false): View {
         val me = who == "Sen"
         val sys = who == "Sistem"
         val outer = android.widget.LinearLayout(ctx)
         outer.orientation = android.widget.LinearLayout.VERTICAL
-        outer.setPadding(dp(ctx, 4), dp(ctx, 6), dp(ctx, 4), dp(ctx, 6))
+        outer.setPadding(dp(ctx, 16), dp(ctx, 6), dp(ctx, 16), dp(ctx, 6))
         val box = android.widget.LinearLayout(ctx)
         box.orientation = android.widget.LinearLayout.VERTICAL
         val lp = android.widget.LinearLayout.LayoutParams(-2, -2)
         lp.gravity = if (me) android.view.Gravity.END else android.view.Gravity.START
-        val name = when { me -> "Cem"; who == "J" -> "Aries"; else -> null }
-        if (name != null) {
-            val nv = TextView(ctx)
-            nv.text = name
-            nv.textSize = 11f
-            nv.setTextColor(Color.parseColor(if (me) Pal.ACCENT else Pal.MUTED))
-            nv.setPadding(dp(ctx, 6), dp(ctx, 0), dp(ctx, 6), dp(ctx, 3))
-            val nlp = android.widget.LinearLayout.LayoutParams(-2, -2)
-            nlp.gravity = lp.gravity
-            outer.addView(nv, nlp)
-        }
         val tv = TextView(ctx)
         tv.text = text
         tv.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
-        tv.textSize = if (sys) 14f else 18f
+        tv.textSize = if (sys) 14f else if (me) 15f else 16f
         tv.setLineSpacing(0f, 1.4f)
         tv.setOnClickListener { val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager; cm.setPrimaryClip(android.content.ClipData.newPlainText("Aries", text)); android.widget.Toast.makeText(ctx, "Kopyalandı", android.widget.Toast.LENGTH_SHORT).show() }
         tv.setTextIsSelectable(true)
-        tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
         if (sys) {
             tv.setTextColor(Color.parseColor("#B4B9D0"))
             lp.gravity = android.view.Gravity.CENTER_HORIZONTAL
-        } else {
+        } else if (me) {
             tv.setTextColor(Color.parseColor("#FFFFFF"))
+            tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.80f).toInt()
             val bg = android.graphics.drawable.GradientDrawable()
             bg.cornerRadius = dp(ctx, 18).toFloat()
-            bg.setColor(Color.parseColor(if (me) Pal.BUBBLE_ME else Pal.CARD2))
-            bg.setStroke(dp(ctx, 1), Color.parseColor(if (me) Pal.ACCENT else Pal.LINE))
+            bg.setColor(Color.parseColor(Pal.BUBBLE_ME))
             tv.background = bg
             tv.setPadding(dp(ctx, 14), dp(ctx, 10), dp(ctx, 14), dp(ctx, 10))
+        } else {
+            tv.setTextColor(Color.parseColor("#FFFFFF"))
         }
         box.addView(tv)
         outer.addView(box, lp)
-        if (who == "J" && text != "Düşünüyorum…") {
+        if (who == "J" && text != "Düşünüyorum…" && showActions) {
             fun act(label: String, run: () -> Unit): TextView {
                 val a = TextView(ctx)
                 a.text = label
@@ -544,6 +534,7 @@ object Ui {
             }
             val row = android.widget.LinearLayout(ctx)
             row.orientation = android.widget.LinearLayout.HORIZONTAL
+            row.tag = "aksiyon"
             row.addView(act("Kopyala") {
                 val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 cm.setPrimaryClip(android.content.ClipData.newPlainText("Aries", text))
