@@ -112,11 +112,13 @@ object Commands {
     private fun tryOne(ctx: Context, s: String, say: (String) -> Unit): Boolean {
         if (s.contains("alarm") && Regex("kur|ayarla|koy|ekle|yap").containsMatchIn(s)) {
             val t = parseTime(s) ?: return false
+            val yarin = s.contains("yarın") || s.contains("yarin")
             val i = Intent(AlarmClock.ACTION_SET_ALARM)
                 .putExtra(AlarmClock.EXTRA_HOUR, t.first)
                 .putExtra(AlarmClock.EXTRA_MINUTES, t.second)
                 .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-            return go(ctx, i, say, "Alarm kuruldu: %02d:%02d.".format(t.first, t.second))
+            if (yarin) i.putExtra(AlarmClock.EXTRA_DAYS, arrayListOf(java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }.get(java.util.Calendar.DAY_OF_WEEK)))
+            return go(ctx, i, say, "Alarm kuruldu: %02d:%02d%s.".format(t.first, t.second, if (yarin) " (yarın)" else ""))
         }
         if (Regex("zamanlayıcı|sayaç|geri sayım").containsMatchIn(s)) {
             val tms = Regex("(\\d+)\\s*(saniye|sn|dakika|dk|saat)").findAll(s).toList()
