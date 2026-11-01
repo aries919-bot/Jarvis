@@ -102,7 +102,7 @@ object Commands {
     }
 
     fun tryHandle(ctx: Context, s: String, say: (String) -> Unit): Boolean {
-        val parts = s.split(Regex("\\s+(?:ve|ardından|ayrıca|bir de)\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        val parts = s.split(Regex("\\s+(?:ardından|ayrıca|bir de)\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return tryOne(ctx, s, say)
         if (!tryOne(ctx, parts[0], say)) return tryOne(ctx, s, say)
         for (p in parts.drop(1)) { if (!tryOne(ctx, p, say)) say("Şunu anlayamadım: " + p) }
