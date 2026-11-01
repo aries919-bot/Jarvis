@@ -35,6 +35,8 @@ object Pal {
     const val WHITE = "#FFFFFF"    // dinleme / vurgu
     const val GREEN = "#34D399"    // başarılı işlem
     const val RED = "#FF6B6B"      // uyarı / durdur
+    const val ACCENT = "#C4B5FD"   // lavanta vurgu (tek vurgu rengi)
+    const val BUBBLE_ME = "#1E1B2E"// kullanıcı balonu zemini (koyu lavanta alt tonu)
 }
 
 // ============================================================
@@ -487,7 +489,7 @@ object Ui {
     }
 
     // Sade sohbet satırı (balonsuz, uçtan uca): "Sen" silik, Jarvis parlak, "Sistem" küçük ve gri.
-    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null, onVote: ((Int) -> Unit)? = null): View {
+    fun line(ctx: Context, who: String, text: String, sources: List<Pair<String, String>> = emptyList(), onSpeak: (() -> Unit)? = null, onVote: ((Int) -> Unit)? = null, suggestions: List<String> = emptyList(), onSuggest: ((String) -> Unit)? = null): View {
         val me = who == "Sen"
         val sys = who == "Sistem"
         val outer = android.widget.LinearLayout(ctx)
@@ -497,6 +499,17 @@ object Ui {
         box.orientation = android.widget.LinearLayout.VERTICAL
         val lp = android.widget.LinearLayout.LayoutParams(-2, -2)
         lp.gravity = if (me) android.view.Gravity.END else android.view.Gravity.START
+        val name = when { me -> "Cem"; who == "J" -> "Aries"; else -> null }
+        if (name != null) {
+            val nv = TextView(ctx)
+            nv.text = name
+            nv.textSize = 11f
+            nv.setTextColor(Color.parseColor(if (me) Pal.ACCENT else Pal.MUTED))
+            nv.setPadding(dp(ctx, 6), dp(ctx, 0), dp(ctx, 6), dp(ctx, 3))
+            val nlp = android.widget.LinearLayout.LayoutParams(-2, -2)
+            nlp.gravity = lp.gravity
+            outer.addView(nv, nlp)
+        }
         val tv = TextView(ctx)
         tv.text = text
         tv.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
@@ -512,7 +525,8 @@ object Ui {
             tv.setTextColor(Color.parseColor("#FFFFFF"))
             val bg = android.graphics.drawable.GradientDrawable()
             bg.cornerRadius = dp(ctx, 18).toFloat()
-            bg.setColor(Color.parseColor(if (me) "#3B3F8C" else "#1A1E28"))
+            bg.setColor(Color.parseColor(if (me) Pal.BUBBLE_ME else Pal.CARD2))
+            bg.setStroke(dp(ctx, 1), Color.parseColor(if (me) Pal.ACCENT else Pal.LINE))
             tv.background = bg
             tv.setPadding(dp(ctx, 14), dp(ctx, 10), dp(ctx, 14), dp(ctx, 10))
         }
@@ -573,6 +587,30 @@ object Ui {
                 }.show()
             })
             box.addView(row)
+            if (suggestions.isNotEmpty() && onSuggest != null) {
+                val srow = android.widget.LinearLayout(ctx)
+                srow.orientation = android.widget.LinearLayout.HORIZONTAL
+                srow.tag = "oneri"
+                for (s in suggestions) {
+                    val b = TextView(ctx)
+                    b.text = s
+                    b.textSize = 12f
+                    b.setTextColor(Color.parseColor(Pal.ACCENT))
+                    val sbg = android.graphics.drawable.GradientDrawable()
+                    sbg.cornerRadius = dp(ctx, 14).toFloat()
+                    sbg.setColor(Color.parseColor(Pal.CARD2))
+                    sbg.setStroke(dp(ctx, 1), Color.parseColor(Pal.LINE))
+                    b.background = sbg
+                    b.setPadding(dp(ctx, 12), dp(ctx, 6), dp(ctx, 12), dp(ctx, 6))
+                    b.setOnClickListener { onSuggest(s) }
+                    val mlp = android.widget.LinearLayout.LayoutParams(-2, -2)
+                    mlp.rightMargin = dp(ctx, 6)
+                    srow.addView(b, mlp)
+                }
+                val slp = android.widget.LinearLayout.LayoutParams(-2, -2)
+                slp.topMargin = dp(ctx, 4)
+                box.addView(srow, slp)
+            }
         }
         return outer
     }

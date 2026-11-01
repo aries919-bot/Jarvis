@@ -13,3 +13,7 @@
 ## Evren kurali
 - Evren (kamu platformu) modellerine Ai.kt (Worker adresi var) ve docs/ klasorunu oldugu gibi verme; gerekirse adres satirlarini cikararak parca ver.
 - Anahtar, token ve Worker adresi hicbir modele gitmez.
+
+HARITA KURALI: Her gorevde once HARITA.md ye bak. Dosyayi bastan sona okuma. grep -n ile yeri dogrula, yalniz o araligi oku.
+
+HARITA YENILEME: Kod degistirdiysen isin sonunda sh harita.sh calistir (HARITA.md yi gunceller).

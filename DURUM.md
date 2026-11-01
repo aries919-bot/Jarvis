@@ -1,18 +1,25 @@
 # DURUM (kaldigimiz yer)
 
-## Son guncelleme: 31 Ekim 2026
+## Son guncelleme: 1 Kasim 2026
 
-## Biten
-- OpenCode ortami: model gecisi, Tavily, Superpowers, ajanlar, git is akisi (is.sh + denetle.py)
-- Arac dosyalari (AGENTS.md, is.sh, denetle.py) Jarvis main'ine eklendi ve GitHub'a itildi
-- deneme-proje GitHub'a (Private) itildi, Cohere anahtari calisiyor
-- Cohere OpenCode yedek zincirine eklendi: openrouter/free, groq/gptoss, cohere/command-a-03-2025
+## Bitti
+- OpenCode ajan duzeni: Build, Plan, Kucuk, Guclu, Denetci; yedek zincir calisiyor
+- G1 Notif.kt yamasi ~/Jarvis te uygulandi (commit/derleme yok)
+- G2 yamasi push edildi (4dc7377), Actions sonucu ve canli test bekliyor
+- G7 ve G8 kodda var (4794de1)
+- Deploy: main e git push, GitHub Actions otomatik
+
+## Yapilmadi
+- G3-G6, G15 (tema, ekran kapanmamasi): kodda yok
+- G16 GOREVLER.md de yok
+- Android dosyalari henuz okunmadi
 
 ## Siradaki
-- Jarvis kodunu Evren'e vermeden once hassas kisimlari ayikla
-- GitHub token'ini github.com/settings/tokens'tan sil
+- Actions yesil mi, Telegram canli test
+- Worker hatalari: zaman asimi, 15+ karakter yonlendirme, hata bildirimi, oy kimligi, gizlilik maskesi, /arastir waitUntil
 
 ## Kurallar
 - Anahtarlar sohbete yazilmaz, read -s ile girilir
-- Basit isler ucretsiz modellere, zor isler Claude'a
-- Her degisiklik is.sh baslat / bitir ile, denetci ONAY vermeden birlesme yok
+- Evren e Ai.kt ve docs/ verilmez
+- Her tur sonrasi git status --short, sonra /new
+- Termux ta wrangler ve /tmp yok

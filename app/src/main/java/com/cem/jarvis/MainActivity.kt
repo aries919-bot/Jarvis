@@ -99,7 +99,7 @@ Kalıplar (command alanı):
 - Komut gerçekten çalışmadan "oynatılıyor", "kuruldu" gibi sözler yazma
 - "<ss>:<dd> alarm kur", "<n> dakika zamanlayıcı", "<n> dakika sonra <metin> hatırlat"
 - "youtube <arama metni>", "<uygulama adı> aç"
-- "saat kaç", "batarya durumu", "depolama", "görev ekle: <metin>", "görevlerim"
+- "saat kaç", "batarya durumu", "depolama", "görev ekle: <metin>"
 - "<yer> yol tarifi", "fener aç", "fener kapat", "kamera aç"
 - "<ayar adı> ayarlarını aç" (wifi, bluetooth, ekran, ses, uçak modu, konum)
 - "araştır <konu>", "hesapla <ifade>"
@@ -110,7 +110,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
 
     private val ABOUT = """
 Aries telefonda çalışır. Sohbetler telefonda, hafıza hem telefonda hem Aries Bulut'ta saklanır. Hafıza komutları: hatırla: x (sormadan kaydeder), notlarım, notlarda ara: x, unut: x, unut hepsi, profilim: x. Kart, şifre, kimlik kaydedilmez. gizli: ile başlayan mesaj buluta kaydedilmez.
-İnternetsiz: saat, tarih, batarya, depolama, alarm, zamanlayıcı, hatırlatmalar, takvim etkinliği, arama (onaylı), WhatsApp ve SMS taslağı, müzik ve ses, titreşim, uygulama açma, ayar sayfaları, fener, kamera, hesap makinesi, zar, yazı tura, yol tarifi, görevler, hafıza, dosya yönetimi.
+İnternetsiz: saat, tarih, batarya, depolama, alarm, zamanlayıcı, hatırlatmalar, takvim etkinliği, arama (onaylı), WhatsApp ve SMS taslağı, müzik ve ses, uygulama açma, ayar sayfaları, fener, kamera, hesap makinesi, yol tarifi, görevler, hafıza, dosya yönetimi.
 İnternetle: yapay zekâ sohbeti, internet araştırması (kaynaklı), çeviri, haber, borsa.
 Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uykudan uyandırması işletim sistemi tarafından kısıtlanmıştır.
 """.trimIndent()
@@ -165,6 +165,12 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     override fun onPause() {
         super.onPause()
         rec?.cancel()
+        uiHandler.removeCallbacksAndMessages(null)
+        stopBarge()
+        listeningNow = false
+        setMicUi(false)
+        setOrb(0)
+        keepScreen(false)
     }
 
     override fun onDestroy() {
@@ -239,6 +245,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private var muted = false
     private var orbState = 0
     private val ORB_DP = 300
+    private val ORB_MIN = 0.18f
 
     private fun buildUi() {
         val root = FrameLayout(this)
@@ -357,6 +364,31 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             }
         }
         attachOrbGesture()
+        val greetBox = Ui.column(this)
+        greetBox.gravity = Gravity.CENTER_HORIZONTAL
+        val greetMain = Ui.text(this, greeting().removeSuffix("."), 20f, Pal.WHITE)
+        greetMain.gravity = Gravity.CENTER_HORIZONTAL
+        greetMain.setTypeface(greetMain.typeface, android.graphics.Typeface.BOLD)
+        val greetHint = Ui.text(this, "Sabah özetini iste", 12f, Pal.MUTED)
+        greetHint.gravity = Gravity.CENTER_HORIZONTAL
+        greetBox.addView(greetMain)
+        greetBox.addView(greetHint)
+        homeMid.addView(greetBox, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER))
+        homeGreet = greetBox
+        greetBox.post {
+            var ty = holo.top + holo.height + dp(12) - greetBox.top
+            val panelTop = homePanel?.top ?: homeMid.height
+            val maxTy = panelTop - dp(8) - greetBox.height - greetBox.top
+            if (ty > maxTy) ty = maxTy
+            greetBox.translationY = ty.toFloat()
+        }
+        val chatStat = Ui.text(this, "", 12f, Pal.MUTED)
+        chatStat.gravity = Gravity.CENTER_HORIZONTAL
+        val csLp = FrameLayout.LayoutParams(-1, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL)
+        csLp.topMargin = dp((ORB_DP * ORB_MIN).toInt() + 8)
+        homeMid.addView(chatStat, csLp)
+        chatStat.visibility = View.GONE
+        chatOrbStatus = chatStat
         val panel = android.widget.LinearLayout(this)
         panel.orientation = android.widget.LinearLayout.VERTICAL
         panel.gravity = Gravity.CENTER_HORIZONTAL
@@ -430,6 +462,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     // Küreyi aşağı çekince sohbet açılır, yukarı itince kapanır.
     private var homePanel: View? = null
+    private var homeGreet: View? = null
+    private var chatOrbStatus: TextView? = null
 
     private fun attachOrbGesture() {
         var downY = 0f
@@ -463,15 +497,20 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun openChat() {
         if (chatOpen || !::homeMid.isInitialized) return
         chatOpen = true
-        (chatScroll.layoutParams as FrameLayout.LayoutParams).bottomMargin = 0
+        val clp = chatScroll.layoutParams as FrameLayout.LayoutParams
+        clp.bottomMargin = 0
+        clp.topMargin = dp((ORB_DP * ORB_MIN).toInt() + 32)
         chatScroll.requestLayout()
         chatScroll.visibility = View.VISIBLE
         chatScroll.bringToFront()
         chatScroll.animate().alpha(1f).setDuration(220).start()
         homePanel?.visibility = View.GONE
+        homeGreet?.visibility = View.GONE
         holo.visibility = View.VISIBLE
-        holo.animate().alpha(0.3f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(260).start()
-        chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
+        holo.bringToFront()
+        chatOrbStatus?.visibility = View.VISIBLE
+        chatOrbStatus?.bringToFront()
+        placeOrb(true)
     }
 
     private fun closeChat() {
@@ -479,9 +518,14 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatOpen = false
         hideKeyboard()
         homePanel?.visibility = View.VISIBLE
+        homeGreet?.visibility = View.VISIBLE
         chatScroll.animate().alpha(0f).setDuration(180).withEndAction {
             if (!chatOpen) chatScroll.visibility = View.GONE
         }.start()
+        val clp = chatScroll.layoutParams as FrameLayout.LayoutParams
+        clp.topMargin = 0
+        chatScroll.requestLayout()
+        chatOrbStatus?.visibility = View.GONE
         holo.visibility = View.VISIBLE
         holo.bringToFront()
         holo.dotScale = 1f
@@ -497,9 +541,26 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     override fun onNewIntent(intent: Intent?) { super.onNewIntent(intent); setIntent(intent); val rtx = intent?.getStringExtra("remind_text"); if (!rtx.isNullOrEmpty()) { intent?.removeExtra("remind_text"); say("Hatırlatma: " + rtx) } }
 
-    private fun placeOrb() {
+    private fun placeOrb(animate: Boolean = false) {
         if (!chatOpen || !::homeMid.isInitialized) return
         chatScroll.post { chatScroll.scrollTo(0, chatBox.height) }
+        holo.post {
+            if (!chatOpen) return@post
+            val mini = ORB_MIN
+            holo.pivotX = holo.width / 2f
+            holo.pivotY = holo.height / 2f
+            val cy = holo.top + holo.height / 2f
+            val ty = dp(4) - (cy - holo.width * mini / 2f)
+            if (animate) {
+                holo.animate().alpha(1f).scaleX(mini).scaleY(mini).translationY(ty).setDuration(260).start()
+            } else {
+                holo.animate().cancel()
+                holo.alpha = 1f
+                holo.scaleX = mini
+                holo.scaleY = mini
+                holo.translationY = ty
+            }
+        }
     }
 
     private fun showOutputPicker() {
@@ -655,7 +716,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.button(this, "Durdur (ses ve dinleme)") { stopAll() })
         add(col, Ui.card(
             this,
-            "Örnekler: saat kaç, zar at, 5 artı 3 çarpı 2 kaç eder, Ayşe ara, Ayşe whatsapp geç kalacağım, yarın saat 9'da ilaç hatırlat, Kızılay yol tarifi, fener aç, wifi ayarlarını aç, araştır: ..., İngilizceye çevir: ..., hatırla: ..."
+            "Örnekler: saat kaç, 5 artı 3 çarpı 2 kaç eder, Ayşe ara, Ayşe whatsapp geç kalacağım, yarın saat 9'da ilaç hatırlat, Kızılay yol tarifi, fener aç, wifi ayarlarını aç, araştır: ..., İngilizceye çevir: ..., hatırla: ..."
         ))
         return scrollOf(col)
     }
@@ -699,7 +760,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         })
 
         add(col, Ui.text(this, "Borsa", 14f, Pal.MUTED))
-        stockView = Ui.card(this, "İzlenen hisse yok. Örnek: 'AAPL izle' de.")
+        stockView = Ui.card(this, "İzlenen hisse yok.")
         add(col, stockView)
         add(col, Ui.button(this, "Fiyatları yenile") {
             if (isOnline()) fetchWatchlist(false) else setStockText(NO_NET)
@@ -982,14 +1043,31 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun addBubble(who: String, text: String, srcs: List<Pair<String, String>> = emptyList()) {
         if (!::chatBox.isInitialized) return
-        chatBox.addView(Ui.line(this, who, text, srcs, { speakNow(text) }, { v -> oyGonder(v, text) }))
+        clearSuggest()
+        val oneri = who == "J" && text != "Düşünüyorum…"
+        val onSuggest: ((String) -> Unit)? = if (oneri) { s -> suggestTap(s) } else null
+        chatBox.addView(Ui.line(this, who, text, srcs, { speakNow(text) }, { v -> oyGonder(v, text) },
+            if (oneri) listOf("Başka bir fikir", "Daha kısa anlat") else emptyList(), onSuggest))
         chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
+
+    private fun clearSuggest() {
+        if (!::chatBox.isInitialized) return
+        val old = chatBox.findViewWithTag<View>("oneri")
+        (old?.parent as? android.view.ViewGroup)?.removeView(old)
+    }
+
+    private fun suggestTap(s: String) {
+        composer.setText("")
+        openChat()
+        handle(s)
     }
 
     private fun showThinking() {
         hideThinking()
         if (!::chatBox.isInitialized) return
         if (::orbStatus.isInitialized) orbStatus.text = "Düşünüyor…"
+        chatOrbStatus?.text = "Düşünüyor…"
         val v = Ui.line(this, "J", "Düşünüyorum…")
         thinkingView = v
         chatBox.addView(v)
@@ -1028,6 +1106,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         }
         orbStatus.text = txt
         voiceStatus.text = txt
+        chatOrbStatus?.text = when (state) {
+            1 -> "Dinliyor…"
+            2 -> "Aries konuşuyor"
+            else -> ""
+        }
         if (::speakBtn.isInitialized) {
             if (state == 2) Ui.swapIcon(speakBtn, "jclose", Pal.RED) else Ui.swapIcon(speakBtn, "jspeaker", Pal.TEXT)
             speakBtn.alpha = if (muted && state != 2) 0.4f else 1f
@@ -1041,8 +1124,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         engine.setLanguage(tr)
         engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(id: String?) { runOnUiThread { setOrb(2); if (voiceTurn) startBarge() } }
-            override fun onDone(id: String?) { runOnUiThread { setOrb(0); stopBarge(); voiceTurn = false; afterSpeech() } }
-            override fun onError(id: String?) { runOnUiThread { setOrb(0); stopBarge(); voiceTurn = false; afterSpeech() } }
+            override fun onDone(id: String?) { runOnUiThread { setOrb(0); stopBarge(); voiceTurn = false; keepScreen(false); afterSpeech() } }
+            override fun onError(id: String?) { runOnUiThread { setOrb(0); stopBarge(); voiceTurn = false; keepScreen(false); afterSpeech() } }
             @android.annotation.SuppressLint("NewApi")
             override fun onRangeStart(id: String?, start: Int, end: Int, frame: Int) { lastPos = start; runOnUiThread { pulseOrb(0.9f) } }
         })
@@ -1061,6 +1144,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return
         }
         lastSpoken = t; lastPos = 0
+        keepScreen(true)
         engine.speak(t, TextToSpeech.QUEUE_FLUSH, null, "j")
     }
 
@@ -1185,6 +1269,12 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             b.text = if (on) "⏹ Gönder" else (b.tag as? String ?: "🎤")
         }
         refreshHomeMic()
+        keepScreen(on)
+    }
+
+    private fun keepScreen(on: Boolean) {
+        if (on) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     private fun listen(manual: Boolean = false) {
@@ -1335,15 +1425,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
-        if (Regex("^(?:bunu )?hatırla[:,]?\\s+.+|^unut\\s*:?\\s+.+|^notlarım[.!?]*$|^notlarda ara\\s*:?\\s+.+|^profilim\\s*:\\s*.+|^profilim[.!?]*$", RegexOption.IGNORE_CASE).containsMatchIn(raw.trim())) return memCloud(raw)
+        if (Regex("^(?:bunu )?hatırla[:,]?\\s+.+|^unut\\s*(?::\\s*|\\s+).+|^notlarım[.!?]*$|^notlarda ara\\s*:?\\s+.+|^profilim\\s*:\\s*.+|^profilim[.!?]*$", RegexOption.IGNORE_CASE).containsMatchIn(raw.trim())) return memCloud(raw)
 
-        if (Regex("saat kaç").containsMatchIn(s)) {
+        if (Regex("^saat kaç(ti)?$").containsMatchIn(s)) {
             val c = Calendar.getInstance()
             say("Saat %02d:%02d.".format(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE)))
             return true
         }
 
-        if (Regex("batarya|şarj").containsMatchIn(s)) {
+        if (Regex("^(batarya|şarj)( durumu)?$").containsMatchIn(s)) {
             say(batteryText())
             return true
         }
@@ -1588,6 +1678,18 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val t = raw.trim()
         val tk = store.str("bulut")
         val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        val unutN = Regex("^unut\\s*(?::\\s*|\\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
+        if (unutN != null) {
+            val n = unutN.groupValues[1].toIntOrNull() ?: 0
+            val list = store.facts().split("; ").map { it.trim() }.filter { it.isNotEmpty() }
+            if (n < 1 || n > list.size) {
+                say(if (list.isEmpty()) "Kayıtlı not yok." else "$n numaralı not yok, toplam " + list.size + " not var.")
+            } else {
+                store.put("facts", list.filterIndexed { j, _ -> j != n - 1 }.joinToString("; "))
+                say("$n numaralı notu sildim: " + list[n - 1])
+            }
+            return true
+        }
         if (tk.isBlank() || !isOnline()) {
             if (fact != null) {
                 if (Regex("\\d{11,}|şifre|parola|cvv", RegexOption.IGNORE_CASE).containsMatchIn(fact)) say("Kart, şifre ya da kimlik gibi görünüyor, kaydetmedim.")
@@ -1663,5 +1765,13 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         "Depolama: %.1f GB boş".format(Locale.US, st.availableBytes / 1e9)
     } catch (e: Exception) { "Depolama: bilinmiyor" }
 
-    private fun greeting(): String = "Emrinizdeyim efendim."
+    private fun greeting(): String {
+        val h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        return when (h) {
+            in 5..11 -> "Günaydın, Cem."
+            in 12..17 -> "İyi günler, Cem."
+            in 18..22 -> "İyi akşamlar, Cem."
+            else -> "İyi geceler, Cem."
+        }
+    }
 }
