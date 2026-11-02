@@ -89,21 +89,33 @@ class MediaVM : ViewModel() {
 
     fun load(i: Int) {
         tab = i; searching = false
-        fetch { when (i) { 0 -> api.trending(); 1 -> api.movies(); 2 -> api.series(); else -> api.anime() } }
+        fetch {
+            when (i) {
+                0 -> Page(tvmazeSchedule("TR"))
+                2 -> Page(tvmazeSchedule("US"))
+                else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
+                        else if (i == 1) api.movies() else api.anime()
+            }
+        }
     }
 
     fun search(q: String) {
         if (q.isBlank()) return
         history = (listOf(q) + history.filter { it != q }).take(5)
         searching = true
-        fetch { api.search(q).let { p -> Page(p.results.filter { it.media_type != "person" && it.poster_path != null }) } }
+        fetch {
+            val tm = if (BuildConfig.TMDB_TOKEN.isNotBlank()) runCatching {
+                api.search(q).results.filter { it.media_type != "person" && it.poster_path != null }
+            }.getOrDefault(emptyList()) else emptyList()
+            Page(if (tm.isNotEmpty()) tm else webSearch(q))
+        }
     }
 
     fun removeHistory(q: String) { history = history - q }
 
     private fun fetch(block: suspend () -> Page) = viewModelScope.launch {
         loading = true; error = null
-        try { list = block().results } catch (e: Exception) { error = "Bağlantı kurulamadı. İnternetini kontrol et." }
+        try { list = block().results } catch (e: Exception) { error = if (e.message == "tmdb") "Filmler ve Anime listesi için TMDB anahtarı gerekli. Arama anahtarsız çalışır." else "Bağlantı kurulamadı. İnternetini kontrol et." }
         loading = false
     }
 }
@@ -183,7 +195,7 @@ fun SearchScreen(vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
 fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)) {
         Box {
-            AsyncImage("$IMG${media.poster_path}", media.label, Modifier.size(58.dp, 82.dp).clip(RoundedCornerShape(10.dp)))
+            AsyncImage(webImg(media.poster_path), media.label, Modifier.size(58.dp, 82.dp).clip(RoundedCornerShape(10.dp)))
             Text("$rank", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                 modifier = Modifier.background(if (rank == 1) Color(0xFFFF5A3C) else Color(0xFFD8A21A), RoundedCornerShape(bottomEnd = 8.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
         }
@@ -204,6 +216,7 @@ fun DetailScreen(media: Item, vm: MediaVM, onBack: () -> Unit, onOpen: (Item) ->
     var trailerKey by remember(media.id) { mutableStateOf<String?>(null) }
     var region by remember(media.id) { mutableStateOf<Region?>(null) }
     LaunchedEffect(media.id) {
+        if (media.poster_path?.startsWith("http") == true) return@LaunchedEffect
         runCatching { trailerKey = api.videos(type, media.id).results.firstOrNull { it.site == "YouTube" && it.type == "Trailer" }?.key }
         runCatching { region = api.providers(type, media.id).results?.get("TR") }
     }
@@ -211,7 +224,7 @@ fun DetailScreen(media: Item, vm: MediaVM, onBack: () -> Unit, onOpen: (Item) ->
         item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
         item {
             Row(Modifier.padding(vertical = 16.dp)) {
-                AsyncImage("$IMG${media.poster_path}", media.label, Modifier.size(120.dp, 175.dp).clip(RoundedCornerShape(14.dp)))
+                AsyncImage(webImg(media.poster_path), media.label, Modifier.size(120.dp, 175.dp).clip(RoundedCornerShape(14.dp)))
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(media.label, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -230,13 +243,17 @@ fun DetailScreen(media: Item, vm: MediaVM, onBack: () -> Unit, onOpen: (Item) ->
                 enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
             ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+            var web by remember { mutableStateOf(false) }
+            Spacer(Modifier.height(10.dp))
+            OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
+            if (web) WebDialog(media.label) { web = false }
             Text("Benzerler", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
         }
         item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(vm.list.filter { it.id != media.id }.take(8)) { s ->
                     Column(Modifier.width(110.dp).clickable { onOpen(s) }) {
-                        AsyncImage("$IMG${s.poster_path}", s.label, Modifier.size(110.dp, 160.dp).clip(RoundedCornerShape(12.dp)))
+                        AsyncImage(webImg(s.poster_path), s.label, Modifier.size(110.dp, 160.dp).clip(RoundedCornerShape(12.dp)))
                         Text(s.label, color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
