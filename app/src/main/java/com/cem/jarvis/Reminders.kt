@@ -388,6 +388,7 @@ object Reminders {
             whenCal.add(Calendar.SECOND, Math.round(addMinutes * 60.0).toInt())
         } else {
             if (pm && h in 1..11) h += 12
+            if (pm && h == 12 && pmMatch?.groupValues?.get(1) != "öğleden sonra") h = 0
             whenCal.set(Calendar.SECOND, 0)
             whenCal.set(Calendar.MILLISECOND, 0)
             whenCal.set(Calendar.HOUR_OF_DAY, h)
