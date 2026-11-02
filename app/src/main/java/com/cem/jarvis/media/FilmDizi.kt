@@ -91,8 +91,8 @@ class MediaVM : ViewModel() {
         tab = i; searching = false
         fetch {
             when (i) {
-                0 -> Page(tvmazeSchedule("TR"))
-                2 -> Page(tvmazeSchedule("US"))
+                0 -> Page(tvmazePage(0))
+                2 -> Page(tvmazePage(1))
                 else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
                         else if (i == 1) api.movies() else api.anime()
             }
@@ -108,6 +108,18 @@ class MediaVM : ViewModel() {
                 api.search(q).results.filter { it.media_type != "person" && it.poster_path != null }
             }.getOrDefault(emptyList()) else emptyList()
             Page(if (tm.isNotEmpty()) tm else webSearch(q))
+        }
+    }
+
+    private var pageNo = 1
+    fun more() {
+        val t = tab
+        viewModelScope.launch {
+            try {
+                val extra = if (t == 0 || t == 2) tvmazePage(pageNo + (if (t == 2) 5 else 0)) else emptyList()
+                pageNo++
+                list = list + extra.filter { n -> list.none { it.id == n.id } }
+            } catch (e: Exception) { }
         }
     }
 
@@ -184,6 +196,9 @@ fun SearchScreen(vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
             vm.error?.let { e -> item { Text(e, color = Color(0xFFFF8A7A), modifier = Modifier.padding(16.dp)) } }
             if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Color(0xFF9AA1B2), modifier = Modifier.padding(16.dp)) }
             items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
+            if (!vm.searching && vm.list.size >= 20) item {
+                Button(onClick = { vm.more() }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Daha fazla göster") }
+            }
         }
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF202433)).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
