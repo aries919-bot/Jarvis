@@ -257,7 +257,7 @@ object Commands {
             return go(ctx, Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + p)).putExtra("sms_body", sm.groupValues[2]), say, "Mesaj taslağı açıldı.")
         }
         val ar = Regex("^(.+?)\\s+ara$").find(s)
-        if (ar != null) {
+        if (ar != null && !s.contains("whatsapp") && !s.contains("mesaj") && !s.contains("sms")) {
             val p = phoneOf(ctx, ar.groupValues[1])
             if (p == null) { say("Rehberde bulamadım veya rehber izni yok."); return true }
             return go(ctx, callIntent(ctx, p), say, "Arıyorum.")

@@ -90,7 +90,7 @@ class MainActivity : Activity() {
     private val SYS = """
 Adın Aries. Türkçe konuşan bir telefon asistanısın. Kullanıcının cümlesini aşağıdaki kalıplardan BİRİne çevir; kalıp uymuyorsa sohbet olarak yanıtla.
 Kalıplar (command alanı):
-- "<isim> ara", "<isim> mesaj <metin>", "<isim> whatsapp <metin>"
+- "<isim> whatsapp <metin>", "<isim> mesaj <metin>", "<isim> ara" (cümlede whatsapp veya mesaj geçiyorsa asla "ara" kalıbını kullanma)
 - "müziği durdur", "müziği oynat", "müziği geç", "önceki şarkı", "sesi aç", "sesi kıs", "sesi <0-100> yap"
 - "<şarkı adı> çal" (çal, aç, oynat, dinlet, koy, dinleyelim gibi her söylenişi bu kalıba çevir; ad yoksa "müziği oynat"; şarkı için asla "<uygulama adı> aç" yazma)
 - "<uygulama>'dan <şarkı adı> çal" (spotify, youtube müzik, deezer gibi bir uygulama adı söylenirse bu kalıbı aynen kullan)
