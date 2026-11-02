@@ -150,10 +150,14 @@ fun MediaRoot(onExit: () -> Unit, vm: MediaVM = viewModel()) {
 @Composable
 fun SearchScreen(vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
     var q by remember { mutableStateOf("") }
+    var web2 by remember { mutableStateOf(false) }
+    if (web2) WebDialog(q) { web2 = false }
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
             Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.weight(1f))
+            Text("🌐", fontSize = 24.sp, modifier = Modifier.clickable { web2 = true }.padding(8.dp))
         }
         LazyColumn(Modifier.weight(1f)) {
             if (vm.history.isNotEmpty() && !vm.searching) {
