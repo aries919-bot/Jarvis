@@ -27,6 +27,7 @@
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:allowBackup="true"
         android:label="Aries"
@@ -62,6 +63,7 @@
 
     <service android:name="com.cem.jarvis.AriesNotifService" android:exported="true" android:label="Aries" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"><intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter></service>
 
+        <activity android:name=".media.FilmDiziActivity" android:exported="false"/>
     </application>
 
 </manifest>

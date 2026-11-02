@@ -339,6 +339,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         top.addView(Ui.iconBtn(this, "jbt", "Bluetooth", 44, 22, Pal.TEXT) {
             showOutputPicker()
         })
+        val filmBtn = Ui.text(this, "▶", 20f, Pal.TEXT)
+        filmBtn.gravity = Gravity.CENTER
+        filmBtn.contentDescription = "Film ve Dizi"
+        filmBtn.setOnClickListener { startActivity(android.content.Intent(this, com.cem.jarvis.media.FilmDiziActivity::class.java)) }
+        top.addView(filmBtn, LinearLayout.LayoutParams(dp(44), dp(44)))
         top.addView(Ui.iconBtn(this, "jgear", "Ayarlar", 44, 22, Pal.TEXT) { showPage(4) })
         col.addView(top, LinearLayout.LayoutParams(-1, -2))
 
