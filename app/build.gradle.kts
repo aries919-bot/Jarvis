@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,7 +7,7 @@ plugins {
 
 val tmdbToken: String = run {
     val f = rootProject.file("local.properties")
-    val p = java.util.Properties()
+    val p = Properties()
     if (f.exists()) f.inputStream().use { p.load(it) }
     p.getProperty("TMDB_TOKEN") ?: System.getenv("TMDB_TOKEN") ?: ""
 }
