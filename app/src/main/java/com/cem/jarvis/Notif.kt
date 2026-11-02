@@ -10,6 +10,7 @@ import java.util.Locale
 class AriesNotifService : NotificationListenerService() {
     companion object {
         @Volatile var instance: AriesNotifService? = null
+        @Volatile var gizliSay: ((String) -> Unit)? = null
         val items: MutableList<String> = java.util.Collections.synchronizedList(ArrayList<String>())
         private val sonlar = HashMap<String, Long>()
         private val sonSoyleme = HashMap<String, Long>()
@@ -35,7 +36,8 @@ class AriesNotifService : NotificationListenerService() {
             var sonuc = parcalar.joinToString(" ")
             if (sirali.size > 8) sonuc += " " + (sirali.size - 8) + " bildirim daha var, devam için tekrar söyle."
             items.removeAll(okunacak.toSet())
-            say(sonuc)
+            val gizli = gizliSay
+            if (gizli != null) gizli(sonuc) else svc.soyle(sonuc)
         }
     }
 

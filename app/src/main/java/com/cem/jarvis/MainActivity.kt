@@ -145,6 +145,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         requestPermissions(perms.toTypedArray(), 1)
 
         Reminders.restoreAll(this)
+        AriesNotifService.gizliSay = { t -> runOnUiThread { sayGizli(t) } }
         refreshStatus()
         refreshTasks()
         refreshReminders()
@@ -1099,6 +1100,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         addBubble("J", display, srcs, ai)
         store.addMsg(store.current(), "assistant", display)
         speakNow(spoken)
+    }
+
+    private fun sayGizli(metin: String) {
+        addBubble("J", metin, emptyList(), false)
+        speakNow(metin)
     }
 
     private fun setOrb(state: Int) {
