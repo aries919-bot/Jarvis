@@ -150,7 +150,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         refreshTasks()
         refreshReminders()
         refreshDevice()
-        say(greeting())
+        sayGizli(greeting())
     }
 
     override fun onResume() {

@@ -117,7 +117,7 @@ object Commands {
                 .putExtra(AlarmClock.EXTRA_HOUR, t.first)
                 .putExtra(AlarmClock.EXTRA_MINUTES, t.second)
                 .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-            if (yarin) i.putExtra(AlarmClock.EXTRA_DAYS, arrayListOf(java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }.get(java.util.Calendar.DAY_OF_WEEK)))
+            if (yarin) i.putIntegerArrayListExtra(AlarmClock.EXTRA_DAYS, arrayListOf(java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }.get(java.util.Calendar.DAY_OF_WEEK)))
             return go(ctx, i, say, "Alarm kuruldu: %02d:%02d%s.".format(t.first, t.second, if (yarin) " (yarın)" else ""))
         }
         if (Regex("zamanlayıcı|sayaç|geri sayım").containsMatchIn(s)) {
