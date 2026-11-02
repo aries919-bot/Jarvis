@@ -214,6 +214,7 @@ object Commands {
         }
         if (Regex("^sesi (biraz |çok )?aç$|sesi yükselt|sesi artır|sesi arttır").containsMatchIn(s)) { volume(ctx, AudioManager.ADJUST_RAISE); say("Ses açıldı."); return true }
         if (Regex("^sesi (biraz |çok )?kıs$|sesi azalt|sesi düşür|sesi alçalt").containsMatchIn(s)) { volume(ctx, AudioManager.ADJUST_LOWER); say("Ses kısıldı."); return true }
+        if (s.contains("bildirim") && s.contains("oku")) { AriesNotifService.oku(ctx, say); return true }
         if (s.contains("ayar")) {
             val act = when {
                 Regex("wi-?fi").containsMatchIn(s) -> Settings.ACTION_WIFI_SETTINGS

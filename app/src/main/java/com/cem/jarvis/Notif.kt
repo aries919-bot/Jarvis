@@ -16,6 +16,27 @@ class AriesNotifService : NotificationListenerService() {
         private const val TEKRAR_MS = 5000L
         private const val SOYLEME_ARALIK_MS = 10000L
         private val susPaketler = setOf("android", "com.android.systemui")
+
+        fun oku(ctx: Context, say: (String) -> Unit) {
+            val svc = instance
+            if (svc == null) { say("Bildirim erişimi kapalı. Ayarlar'dan ver."); return }
+            val kopya = items.toList()
+            if (kopya.isEmpty()) { say("Yeni bildirim yok."); return }
+            val sirali = kopya.sortedBy { it.substringAfterLast('|').toLongOrNull() ?: 0L }
+            val okunacak = sirali.take(8)
+            val parcalar = okunacak.map { satir ->
+                val p = satir.split("|")
+                val ad = svc.uygulamaAdi(p.getOrNull(0) ?: "")
+                val gonderen = p.getOrNull(1) ?: ""
+                var metin = p.getOrNull(2) ?: ""
+                if (metin.length > 200) metin = metin.substring(0, 200)
+                if (gonderen.isBlank()) ad + ": " + metin else ad + ", " + gonderen + ": " + metin
+            }
+            var sonuc = parcalar.joinToString(" ")
+            if (sirali.size > 8) sonuc += " " + (sirali.size - 8) + " bildirim daha var, devam için tekrar söyle."
+            items.removeAll(okunacak.toSet())
+            say(sonuc)
+        }
     }
 
     private var tts: TextToSpeech? = null

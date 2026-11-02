@@ -414,7 +414,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             } catch (e: Exception) { }
             if (panel.isAttachedToWindow) panel.postDelayed(this, 30000)
         } }
-        panel.setOnLongClickListener { openChat(); val n = AriesNotifService.items.toList(); say(if (AriesNotifService.instance == null) "Bildirim erişimi kapalı. Ayarlar'dan ver." else if (n.isEmpty()) "Yeni bildirim yok." else "Bildirimler:\n" + n.take(8).joinToString("\n") { x -> val p = x.split("|"); (p.getOrNull(1) ?: "") + ": " + (p.getOrNull(2) ?: "") }); true }
+        panel.setOnLongClickListener { openChat(); AriesNotifService.oku(this) { t -> say(t) }; true }
         panel.setOnClickListener {
             openChat()
             val up = Reminders.upcoming(this)
