@@ -232,7 +232,7 @@ object Reminders {
     private const val NUMW = "(?:\\d+|(?:(?:on|yirmi|otuz|kırk|elli|altmış)\\s+)?(?:bir|iki|üç|dört|beş|altı|yedi|sekiz|dokuz)|on|yirmi|otuz|kırk|elli|altmış)"
     private const val SUF = "(?:['’]?(?:da|de|ta|te|ya|ye|a|e)(?!" + W + "))?"
 
-    private val REL = Regex(LB + "(" + NUMW + "|yarım|çeyrek)\\s*(dakika|dk|saat|saniye|sn)\\s*(?:sonra|sonrasında|içinde)")
+    private val REL = Regex(LB + "((" + NUMW + ")(?:\\s*buçu[kğ]" + W + "*)?|yarım|çeyrek)\\s*(dakika|dk|saat|saniye|sn)\\s*(?:sonra|sonrasında|içinde)")
     private val ABS_A = Regex("(?<![0-9])(?:saat\\s*)?(\\d{1,2})\\s*[:.]\\s*(\\d{2})(?![0-9])" + SUF)
     private val ABS_B = Regex(LB + "saat\\s*(" + NUMW + ")(?:\\s*(buçu[kğ]" + W + "*))?" + SUF)
     private val ABS_D = Regex("(?<![0-9:.])(\\d{1,2})['’](?:da|de|ta|te)(?!" + W + ")")
@@ -296,10 +296,10 @@ object Reminders {
             val x: Double? = when (w) {
                 "yarım" -> 0.5
                 "çeyrek" -> 0.25
-                else -> num(w)?.toDouble()
+                else -> num(r.groupValues[2])?.toDouble()?.let { if (w.contains("buçu")) it + 0.5 else it }
             }
             if (x != null) {
-                val mult = when (r.groupValues[2]) {
+                val mult = when (r.groupValues[3]) {
                     "dakika", "dk" -> 1.0
                     "saat" -> 60.0
                     else -> 1.0 / 60.0
