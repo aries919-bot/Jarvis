@@ -173,15 +173,18 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     var web2 by remember { mutableStateOf(false) }
     var play2 by remember { mutableStateOf<PlayReq?>(null) }
     if (web2) {
-        val p = play2
-        if (p != null) ResumePlayer(
-            p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
-            requestHeaders = p.headers,
-            mimeType = p.mimeType,
-            onPlaybackError = { play2 = null }
-        )
-        else MediaSourceBrowser(q, { web2 = false }) { url, mime, headers, item, season, episode ->
-            play2 = PlayReq(url, item, season, episode, headers, mime)
+        Box(Modifier.fillMaxSize()) {
+            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode ->
+                play2 = PlayReq(url, item, season, episode, headers, mime)
+            }
+            play2?.let { p ->
+                ResumePlayer(
+                    p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
+                    requestHeaders = p.headers,
+                    mimeType = p.mimeType,
+                    onPlaybackError = { play2 = null }
+                )
+            }
         }
         return
     }
@@ -270,15 +273,18 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         runCatching { region = api.providers(type, media.id).results?.get("TR") }
     }
     if (web) {
-        val pr = play
-        if (pr != null) ResumePlayer(
-            pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
-            requestHeaders = pr.headers,
-            mimeType = pr.mimeType,
-            onPlaybackError = { play = null }
-        )
-        else MediaSourceBrowser(media.label, { web = false }) { url, mime, headers, item, season, episode ->
-            play = PlayReq(url, item, season, episode, headers, mime)
+        Box(Modifier.fillMaxSize()) {
+            MediaSourceBrowser(media.label, { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode ->
+                play = PlayReq(url, item, season, episode, headers, mime)
+            }
+            play?.let { pr ->
+                ResumePlayer(
+                    pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
+                    requestHeaders = pr.headers,
+                    mimeType = pr.mimeType,
+                    onPlaybackError = { play = null }
+                )
+            }
         }
         return
     }
