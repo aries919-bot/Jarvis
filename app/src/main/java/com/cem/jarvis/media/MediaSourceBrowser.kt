@@ -132,7 +132,7 @@ private fun ariesCleanTitle(raw: String): String {
 /**
  * Seekee düzeninde arama ekranı + izleme sayfası.
  * Arama: katalog kartı ve web sonuç kartları.
- * Katalog bilgisi ayrı, web sayfası ayrı açılır; doğrudan medya bağlantısı kullanıcı tarafından girilir.
+ * Katalog bilgisi ayrı, web sayfası ayrı açılır; kaynaklar otomatik taranır ve uygun akış oynatıcıya aktarılır.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -769,28 +769,28 @@ private fun AriesWatchScreen(
                     }
                 }
             }
-            item(key = "w-own-media") {
+            item(key = "w-auto-scan") {
                 Column(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
                         .background(AriesWatchCard).padding(14.dp)
                 ) {
-                    Text("Kendi medya bağlantın", color = AriesText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("Kullanım iznin olan MP4 / M3U8 / MPD bağlantıları oynatılır. Web sayfalarından video çıkarılmaz.",
-                        color = AriesMuted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp, bottom = 10.dp))
-                    OutlinedTextField(
-                        value = personalMediaUrl,
-                        onValueChange = onPersonalMediaUrlChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text("https://…") },
-                        placeholder = { Text("video.mp4 veya yayın.m3u8") }
+                    Text(
+                        "Otomatik kaynak tarama",
+                        color = AriesText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    if (!playerError.isNullOrBlank()) {
-                        Text(playerError, color = Color(0xFFFF8A7A), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-                    }
-                    Button(onClick = onPlayPersonalMedia, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                        Text("▶  Bağlantıyı oynat")
-                    }
+                    Text(
+                        when {
+                            currentUrl != null -> "Açık kaynak taranıyor. Uygun ve erişilebilir bir video akışı bulunursa Aries oynatıcısında otomatik açılır."
+                            searching -> "Aries izleme kaynaklarını arıyor…"
+                            sources.isNotEmpty() -> "Kaynaklar bulundu. İlk kaynak otomatik deneniyor; doğrudan akış alınamazsa sayfa uygulama içinde açılır."
+                            else -> "Bu arama için kaynak bulunamadı. Başlığı veya bölüm numarasını değiştirerek tekrar deneyebilirsin."
+                        },
+                        color = AriesMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 5.dp)
+                    )
                 }
             }
             if (watch.total > 0) {
