@@ -177,7 +177,8 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
         if (p != null) ResumePlayer(
             p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
             requestHeaders = p.headers,
-            mimeType = p.mimeType
+            mimeType = p.mimeType,
+            onPlaybackError = { play2 = null }
         )
         else MediaSourceBrowser(q, { web2 = false }) { url, mime, headers, item, season, episode ->
             play2 = PlayReq(url, item, season, episode, headers, mime)
@@ -273,7 +274,8 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         if (pr != null) ResumePlayer(
             pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
             requestHeaders = pr.headers,
-            mimeType = pr.mimeType
+            mimeType = pr.mimeType,
+            onPlaybackError = { play = null }
         )
         else MediaSourceBrowser(media.label, { web = false }) { url, mime, headers, item, season, episode ->
             play = PlayReq(url, item, season, episode, headers, mime)
