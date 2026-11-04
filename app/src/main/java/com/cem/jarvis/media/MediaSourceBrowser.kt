@@ -1425,7 +1425,7 @@ private fun createAriesSiteWebView(
                       function scanText(text) {
                         if (!text || text.length > 1000000) return;
                         try {
-                          var found = text.match(/https?:\\?\/\\?\/[^"'\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\s<>]*)?/ig) || [];
+                          var found = text.match(/https?:\\?\/\\?\/[^"'\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\s<>]*)?/ig) || [];
                           found.forEach(function(url) { emit(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'), ''); });
                         } catch(e) {}
                       }
