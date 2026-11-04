@@ -50,6 +50,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -252,13 +254,24 @@ fun MediaSourceBrowser(
     }
 
     fun openNextAutoSource() {
-        val next = results.firstOrNull { it.url !in attemptedSourceUrls }
-        if (next != null) openSite(next)
-        else {
-            // Keep the last opened page visible as an in-app WebView fallback.
-            sourceScanExhausted = true
-            status = "Otomatik tarama tamamlandı. Doğrudan akış bulunamadı; açık siteyi Aries içinde izleyebilirsin."
+        val next = results.firstOrNull {
+            it.url !in attemptedSourceUrls && !isAriesDiscoveryOnlyHost(it.url)
         }
+        if (next != null) {
+            openSite(next)
+            return
+        }
+        // If every remaining result is a catalogue/search page, leave one in the
+        // in-app browser as a fallback instead of treating it as a playable host.
+        val fallback = results.firstOrNull { it.url !in attemptedSourceUrls }
+        if (activeSite == null && fallback != null) {
+            attemptedSourceUrls.add(fallback.url)
+            activeSite = fallback
+            pageTitle = fallback.title
+            pageUrl = fallback.url
+        }
+        sourceScanExhausted = true
+        status = "Otomatik tarama tamamlandı. Doğrudan akış bulunamadı; açık sayfa Aries içinde bırakıldı."
     }
 
     fun openResultInPlayer(site: AriesSiteResult) {
@@ -361,23 +374,30 @@ fun MediaSourceBrowser(
                             onHideCustom = onHideCustomCb,
                             onCreated = { siteView = it },
                             onGone = { v -> if (siteView === v) siteView = null },
-                            onMediaFound = { mediaUrl, detectedMime ->
+                            onMediaFound = { mediaUrl, detectedMime, capturedHeaders ->
                                 if (autoPlayedMediaUrl != mediaUrl && (isSupportedMediaUrl(mediaUrl) || isAriesMediaMime(detectedMime))) {
                                     autoPlayedMediaUrl = mediaUrl
                                     val page = siteView?.url ?: selectedSite.url
-                                    val headers = linkedMapOf(
-                                        "Referer" to page,
-                                        "User-Agent" to (siteView?.settings?.userAgentString
-                                            ?: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+                                    val headers = linkedMapOf<String, String>()
+                                    capturedHeaders.forEach { (name, value) ->
+                                        if (isAriesForwardableHeader(name) && value.isNotBlank()) headers[name] = value
+                                    }
+                                    headers.putIfAbsent("Referer", page)
+                                    headers.putIfAbsent(
+                                        "User-Agent",
+                                        siteView?.settings?.userAgentString
+                                            ?: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36"
                                     )
                                     val origin = runCatching {
                                         val uri = Uri.parse(page)
                                         "${uri.scheme}://${uri.authority}"
                                     }.getOrNull()
-                                    if (!origin.isNullOrBlank()) headers["Origin"] = origin
-                                    val cookie = CookieManager.getInstance().getCookie(mediaUrl)
-                                        ?: CookieManager.getInstance().getCookie(page)
-                                    if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
+                                    if (!origin.isNullOrBlank()) headers.putIfAbsent("Origin", origin)
+                                    if (!headers.containsKey("Cookie")) {
+                                        val cookie = CookieManager.getInstance().getCookie(mediaUrl)
+                                            ?: CookieManager.getInstance().getCookie(page)
+                                        if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
+                                    }
                                     val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
                                         ?: createWebQueryItem(activeQuery, currentWatch.isMovie)
                                     onPlayMedia(
@@ -612,7 +632,7 @@ private fun AriesSiteWeb(
     onHideCustom: () -> Unit,
     onCreated: (WebView) -> Unit,
     onGone: (WebView) -> Unit,
-    onMediaFound: ((String, String?) -> Unit)? = null
+    onMediaFound: ((String, String?, Map<String, String>) -> Unit)? = null
 ) {
     val loaded = remember { arrayOfNulls<String>(1) }
     val holder = remember { arrayOfNulls<WebView>(1) }
@@ -1358,6 +1378,161 @@ private fun createAriesSearchWebView(
 }
 
 @SuppressLint("SetJavaScriptEnabled")
+private val ARIES_MEDIA_SNIFFER_SCRIPT = """
+    (function () {
+      if (window.__ariesSnifferInstalled) return;
+      window.__ariesSnifferInstalled = true;
+
+      var candidates = [];
+      var flushTimer = null;
+      var sent = false;
+
+      function headersObject(source) {
+        var out = {};
+        try {
+          if (!source) return out;
+          if (typeof source.forEach === 'function') {
+            source.forEach(function (value, key) { out[String(key)] = String(value); });
+          } else if (Array.isArray(source)) {
+            source.forEach(function (pair) { if (pair && pair.length > 1) out[String(pair[0])] = String(pair[1]); });
+          } else if (typeof source === 'object') {
+            Object.keys(source).forEach(function (key) { out[key] = String(source[key]); });
+          }
+        } catch (e) {}
+        return out;
+      }
+
+      function absolute(raw) {
+        try { return new URL(String(raw || ''), location.href).href; }
+        catch (e) { return ''; }
+      }
+
+      function score(url, mime) {
+        var u = String(url || '').toLowerCase();
+        var m = String(mime || '').toLowerCase();
+        if (u.indexOf('.m3u8') >= 0 || m.indexOf('mpegurl') >= 0) return 100;
+        if (u.indexOf('.mpd') >= 0 || m.indexOf('dash+xml') >= 0) return 95;
+        if (u.indexOf('.mp4') >= 0 || u.indexOf('.m4v') >= 0 || m.indexOf('video/mp4') >= 0) return 85;
+        if (u.indexOf('.webm') >= 0 || m.indexOf('video/webm') >= 0) return 80;
+        if (u.indexOf('.mov') >= 0 || m.indexOf('video/quicktime') >= 0) return 75;
+        return 0;
+      }
+
+      function queue(raw, mime, requestHeaders) {
+        var url = absolute(raw);
+        if (!url || !/^https?:\/\//i.test(url)) return;
+        var s = score(url, mime);
+        if (!s) return;
+        var previous = candidates.find(function (item) { return item.url === url; });
+        if (previous) {
+          if (s > previous.score) { previous.score = s; previous.mime = mime || previous.mime; }
+          if (requestHeaders) previous.headers = Object.assign(previous.headers || {}, requestHeaders);
+        } else {
+          candidates.push({ url: url, mime: mime || '', headers: requestHeaders || {}, score: s });
+        }
+        if (flushTimer) clearTimeout(flushTimer);
+        flushTimer = setTimeout(flush, 1400);
+      }
+
+      function flush() {
+        if (sent || !candidates.length) return;
+        candidates.sort(function (a, b) { return b.score - a.score; });
+        var best = candidates[0];
+        sent = true;
+        try {
+          if (window.AriesMediaBridge && window.AriesMediaBridge.found) {
+            window.AriesMediaBridge.found(best.url, best.mime || '', JSON.stringify(best.headers || {}));
+          }
+        } catch (e) {}
+      }
+
+      function inspectBody(text, url, requestHeaders) {
+        if (!text) return;
+        var body = String(text).slice(0, 4096).replace(/^\s+/, '');
+        if (body.indexOf('#EXTM3U') === 0) queue(url, 'application/vnd.apple.mpegurl', requestHeaders);
+        else if (/<MPD(?:\s|>)/i.test(body)) queue(url, 'application/dash+xml', requestHeaders);
+        var regex = /https?:\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?/ig;
+        var match;
+        while ((match = regex.exec(String(text).slice(0, 1000000))) !== null) queue(match[0], '', requestHeaders);
+      }
+
+      function scanDom() {
+        try {
+          document.querySelectorAll('video, audio, source').forEach(function (element) {
+            var raw = element.currentSrc || element.src || element.getAttribute('src') || '';
+            queue(raw, element.getAttribute('type') || '', {});
+          });
+          performance.getEntriesByType('resource').forEach(function (entry) { queue(entry.name, '', {}); });
+        } catch (e) {}
+      }
+
+      try {
+        var originalFetch = window.fetch;
+        if (originalFetch) {
+          window.fetch = function (input, init) {
+            var url = '';
+            var requestHeaders = {};
+            try {
+              url = typeof input === 'string' ? input : (input && input.url) || '';
+              requestHeaders = headersObject((init && init.headers) || (input && input.headers));
+            } catch (e) {}
+            return originalFetch.apply(this, arguments).then(function (response) {
+              try {
+                var contentType = response.headers.get('content-type') || '';
+                var responseUrl = response.url || url;
+                if (score(responseUrl, contentType) > 0) queue(responseUrl, contentType, requestHeaders);
+                else if (/text|json|xml|mpegurl|dash\+xml|octet-stream/i.test(contentType)) {
+                  response.clone().text().then(function (body) { inspectBody(body, responseUrl, requestHeaders); }).catch(function () {});
+                }
+              } catch (e) {}
+              return response;
+            });
+          };
+        }
+      } catch (e) {}
+
+      try {
+        var originalOpen = XMLHttpRequest.prototype.open;
+        var originalHeader = XMLHttpRequest.prototype.setRequestHeader;
+        var originalSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function (method, url) {
+          this.__ariesUrl = absolute(url);
+          this.__ariesHeaders = {};
+          return originalOpen.apply(this, arguments);
+        };
+        XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+          try { this.__ariesHeaders[String(name)] = String(value); } catch (e) {}
+          return originalHeader.apply(this, arguments);
+        };
+        XMLHttpRequest.prototype.send = function () {
+          this.addEventListener('loadend', function () {
+            try {
+              var contentType = this.getResponseHeader('content-type') || '';
+              var responseUrl = this.responseURL || this.__ariesUrl || '';
+              if (this.status >= 200 && this.status < 400 && score(responseUrl, contentType) > 0) {
+                queue(responseUrl, contentType, this.__ariesHeaders || {});
+              } else if (this.status >= 200 && this.status < 400) {
+                try { inspectBody(this.responseText || '', responseUrl, this.__ariesHeaders || {}); } catch (e) {}
+              }
+            } catch (e) {}
+          });
+          return originalSend.apply(this, arguments);
+        };
+      } catch (e) {}
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scanDom, { once: true });
+      } else {
+        scanDom();
+      }
+      try {
+        new MutationObserver(scanDom).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+      } catch (e) {}
+      setInterval(scanDom, 2500);
+      window.__ariesScanMedia = scanDom;
+    })();
+    """.trimIndent()
+
 private fun createAriesSiteWebView(
     context: android.content.Context,
     onTitle: (String) -> Unit,
@@ -1366,7 +1541,7 @@ private fun createAriesSiteWebView(
     onStatus: (String) -> Unit,
     onShowCustom: (View, WebChromeClient.CustomViewCallback) -> Unit,
     onHideCustom: () -> Unit,
-    onMediaFound: ((String, String?) -> Unit)? = null
+    onMediaFound: ((String, String?, Map<String, String>) -> Unit)? = null
 ): WebView {
     val mainHandler = Handler(Looper.getMainLooper())
     return WebView(context).apply {
@@ -1374,14 +1549,35 @@ private fun createAriesSiteWebView(
         settings.mediaPlaybackRequiresUserGesture = false
         addJavascriptInterface(object {
             @JavascriptInterface
-            fun found(rawUrl: String, contentType: String?) {
+            fun found(rawUrl: String, contentType: String?, rawHeaders: String?) {
                 val candidate = rawUrl.trim()
                 val mime = contentType?.substringBefore(";")?.trim()?.lowercase()
+                val requestHeaders = runCatching {
+                    val json = JSONObject(rawHeaders.orEmpty())
+                    buildMap {
+                        val keys = json.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val value = json.optString(key)
+                            if (isAriesForwardableHeader(key) && value.isNotBlank()) put(key, value)
+                        }
+                    }
+                }.getOrDefault(emptyMap())
                 if (isSupportedMediaUrl(candidate) || isAriesMediaMime(mime)) {
-                    mainHandler.post { onMediaFound?.invoke(candidate, mime) }
+                    mainHandler.post { onMediaFound?.invoke(candidate, mime, requestHeaders) }
                 }
             }
         }, "AriesMediaBridge")
+
+        // Install before site scripts run. onPageFinished-only injection misses
+        // players that request their manifests during initial page startup.
+        val documentStartInstalled = runCatching {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                WebViewCompat.addDocumentStartJavaScript(this, ARIES_MEDIA_SNIFFER_SCRIPT, setOf("*"))
+                true
+            } else false
+        }.getOrDefault(false)
+
         webChromeClient = object : WebChromeClient() {
             override fun onReceivedTitle(view: WebView?, title: String?) {
                 if (!title.isNullOrBlank()) onTitle(title)
@@ -1400,104 +1596,25 @@ private fun createAriesSiteWebView(
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 onLoading(true)
                 if (!url.isNullOrBlank()) onUrl(url)
+                if (!documentStartInstalled) view?.evaluateJavascript(ARIES_MEDIA_SNIFFER_SCRIPT, null)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 onLoading(false)
-                onStatus("Sayfa taranıyor; doğrudan MP4 / M3U8 / MPD akışı aranıyor…")
+                onStatus("Sayfanın medya istekleri taranıyor…")
                 if (!url.isNullOrBlank()) onUrl(url)
-                val scanScript = """
-                    (function() {
-                      if (window.__ariesSnifferInstalled) return;
-                      window.__ariesSnifferInstalled = true;
-
-                      function emit(raw, contentType) {
-                        if (!raw) return;
-                        var url = '';
-                        try { url = new URL(raw, location.href).href; } catch(e) { return; }
-                        if (!/^https?:\/\//i.test(url)) return;
-                        var mime = (contentType || '').toLowerCase();
-                        var ext = /\.(m3u8|mpd|mp4|webm|m4v|mov|mkv)(?:$|[?#&])/i.test(url);
-                        var mediaMime = /mpegurl|vnd\.apple\.mpegurl|dash\+xml|video\/(mp4|webm|quicktime)/i.test(mime);
-                        if (ext || mediaMime) AriesMediaBridge.found(url, mime);
-                      }
-
-                      function scanText(text) {
-                        if (!text || text.length > 1000000) return;
-                        try {
-                          var found = text.match(/https?:\\?\/\\?\/[^"'\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\s<>]*)?/ig) || [];
-                          found.forEach(function(url) { emit(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'), ''); });
-                        } catch(e) {}
-                      }
-
-                      function scan() {
-                        document.querySelectorAll('video, audio, source').forEach(function(el) {
-                          emit(el.currentSrc || el.src || el.getAttribute('src') || '', el.getAttribute('type') || '');
-                        });
-                        try {
-                          performance.getEntriesByType('resource').forEach(function(entry) { emit(entry.name, ''); });
-                        } catch(e) {}
-                        document.querySelectorAll('iframe').forEach(function(frame) {
-                          try {
-                            var doc = frame.contentDocument;
-                            if (doc) doc.querySelectorAll('video,source').forEach(function(el) {
-                              emit(el.currentSrc || el.src || el.getAttribute('src') || '', el.getAttribute('type') || '');
-                            });
-                          } catch(e) {}
-                        });
-                      }
-
-                      // Capture HLS/DASH/MP4 requests made by modern JS-based players.
-                      try {
-                        var originalFetch = window.fetch;
-                        if (originalFetch) window.fetch = function() {
-                          return originalFetch.apply(this, arguments).then(function(response) {
-                            try {
-                              var ct = response.headers.get('content-type') || '';
-                              emit(response.url, ct);
-                              if (/json|text|javascript/i.test(ct)) {
-                                response.clone().text().then(scanText).catch(function() {});
-                              }
-                            } catch(e) {}
-                            return response;
-                          });
-                        };
-                      } catch(e) {}
-
-                      try {
-                        var originalOpen = XMLHttpRequest.prototype.open;
-                        XMLHttpRequest.prototype.open = function(method, url) {
-                          try { this.__ariesRequestUrl = new URL(url, location.href).href; } catch(e) {}
-                          return originalOpen.apply(this, arguments);
-                        };
-                        var originalSend = XMLHttpRequest.prototype.send;
-                        XMLHttpRequest.prototype.send = function() {
-                          this.addEventListener('load', function() {
-                            try {
-                              var ct = this.getResponseHeader('content-type') || '';
-                              emit(this.responseURL || this.__ariesRequestUrl, ct);
-                              if (/json|text|javascript/i.test(ct)) scanText(this.responseText || '');
-                            } catch(e) {}
-                          });
-                          return originalSend.apply(this, arguments);
-                        };
-                      } catch(e) {}
-
-                      scan();
-                      if (!window.__ariesMediaObserver) {
-                        window.__ariesMediaObserver = new MutationObserver(scan);
-                        window.__ariesMediaObserver.observe(document.documentElement, {childList:true,subtree:true,attributes:true,attributeFilter:['src']});
-                      }
-                      setInterval(scan, 2500);
-                    })();
-                """.trimIndent()
-                view?.evaluateJavascript(scanScript, null)
+                // Also run a DOM/resource scan after load; network hooks were installed at document start.
+                view?.evaluateJavascript("window.__ariesScanMedia && window.__ariesScanMedia();", null)
             }
 
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
                 val candidate = request?.url?.toString().orEmpty()
+                val requestHeaders = request?.requestHeaders.orEmpty()
+                    .filterKeys { isAriesForwardableHeader(it) }
                 if (isSupportedMediaUrl(candidate)) {
-                    mainHandler.post { onMediaFound?.invoke(candidate, inferAriesMimeType(candidate)) }
+                    mainHandler.post {
+                        onMediaFound?.invoke(candidate, inferAriesMimeType(candidate), requestHeaders)
+                    }
                 }
                 return super.shouldInterceptRequest(view, request)
             }
@@ -1505,7 +1622,9 @@ private fun createAriesSiteWebView(
             override fun onLoadResource(view: WebView?, url: String?) {
                 val candidate = url.orEmpty()
                 if (isSupportedMediaUrl(candidate)) {
-                    mainHandler.post { onMediaFound?.invoke(candidate, inferAriesMimeType(candidate)) }
+                    mainHandler.post {
+                        onMediaFound?.invoke(candidate, inferAriesMimeType(candidate), emptyMap())
+                    }
                 }
                 super.onLoadResource(view, url)
             }
@@ -1534,6 +1653,15 @@ private fun WebView.configureAriesWebView() {
         "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     CookieManager.getInstance().setAcceptCookie(true)
     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+}
+
+private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
+    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
+    return listOf(
+        "justwatch.com", "themoviedb.org", "imdb.com", "tvmaze.com",
+        "thetvdb.com", "wikipedia.org", "rottentomatoes.com",
+        "metacritic.com", "trakt.tv", "letterboxd.com"
+    ).any { host == it || host.endsWith(".$it") }
 }
 
 private fun hostOfAries(url: String): String =
@@ -1565,6 +1693,14 @@ private fun fetchAriesSimilar(id: Int, isTv: Boolean, key: String): List<AriesSi
     }
     return list
 }
+private fun isAriesForwardableHeader(name: String): Boolean {
+    val key = name.trim().lowercase()
+    return key in setOf(
+        "authorization", "cookie", "referer", "origin", "user-agent",
+        "accept", "x-api-key", "x-auth-token", "x-requested-with"
+    ) || (key.startsWith("x-") && key.length <= 64)
+}
+
 private fun isAriesMediaMime(mime: String?): Boolean =
     !mime.isNullOrBlank() && (
         mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") ||
@@ -1599,9 +1735,8 @@ private fun isSupportedMediaUrl(url: String): Boolean {
     val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
     val path = uri.path.orEmpty().lowercase()
     if (listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }) return true
-    val format = listOf("format", "type", "mime", "ext").mapNotNull { uri.getQueryParameter(it) }
+    val format = listOf("format", "type", "mime", "ext", "output").mapNotNull { uri.getQueryParameter(it) }
         .joinToString(" ").lowercase()
-    return format.contains("m3u8") || format.contains("mpd") ||
-        format.contains("mpegurl") || format.contains("dash+xml") ||
-        format.contains("video/mp4") || format.contains("video/webm")
+    return listOf("m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm", "video/quicktime")
+        .any { format.contains(it) }
 }
