@@ -2,7 +2,7 @@ name: Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, film-dizi-v2 ]
 
 jobs:
   build:
@@ -16,13 +16,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Imza dosyasi
+      - name: Imza dosyasi (opsiyonel)
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/aries.jks"
-          echo "KEYSTORE_PATH=$RUNNER_TEMP/aries.jks" >> "$GITHUB_ENV"
-      - run: gradle assembleDebug --no-daemon
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/aries.jks"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/aries.jks" >> "$GITHUB_ENV"
+          else
+            echo "İmza anahtarı tanımlı değil; Android debug imzası kullanılacak."
+          fi
+      - name: APK derle
+        run: gradle assembleDebug --no-daemon
         env:
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
