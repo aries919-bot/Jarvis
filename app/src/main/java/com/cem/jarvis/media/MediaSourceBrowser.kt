@@ -160,6 +160,7 @@ fun MediaSourceBrowser(
     var trailerPlaying by remember { mutableStateOf(false) }
     var playerError by remember { mutableStateOf<String?>(null) }
     var autoPlayedMediaUrl by remember { mutableStateOf<String?>(null) }
+    val attemptedSourceUrls = remember { mutableStateListOf<String>() }
     var fullscreenView by remember { mutableStateOf<View?>(null) }
     var fullscreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     val hostContext = LocalContext.current
@@ -242,14 +243,24 @@ fun MediaSourceBrowser(
         trailerPlaying = false
         playerError = null
         autoPlayedMediaUrl = null
+        attemptedSourceUrls.add(site.url)
         activeSite = site
         pageTitle = site.title
         pageUrl = site.url
-        status = "Site açılıyor…"
+        status = "Kaynak taranıyor: ${site.title}"
     }
 
-    // Web arama kartı yalnızca seçilen web sayfasını açar; sayfadaki akışları ayıklayıp oynatmaz.
+    fun openNextAutoSource() {
+        val next = results.firstOrNull { it.url !in attemptedSourceUrls }
+        if (next != null) openSite(next)
+        else {
+            activeSite = null
+            status = "İlk kaynaklarda doğrudan video bulunamadı. Başka bir kaynak seçebilir veya web sayfasında izleyebilirsin."
+        }
+    }
+
     fun openResultInPlayer(site: AriesSiteResult) {
+        attemptedSourceUrls.clear()
         openSite(site)
     }
 
@@ -259,6 +270,7 @@ fun MediaSourceBrowser(
         playerError = null
         watching = w
         activeSite = null
+        attemptedSourceUrls.clear()
         runWebSearch(ariesWatchQuery(w))
     }
 
@@ -269,7 +281,19 @@ fun MediaSourceBrowser(
         val next = w.copy(episode = episode)
         watching = next
         activeSite = null
+        attemptedSourceUrls.clear()
         runWebSearch(ariesWatchQuery(next))
+    }
+
+    LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, results.size) {
+        val current = activeSite
+        if (watching != null && current != null && autoPlayedMediaUrl == null) {
+            kotlinx.coroutines.delay(12000)
+            if (activeSite?.url == current.url && autoPlayedMediaUrl == null) {
+                status = "Bu kaynakta doğrudan akış bulunamadı; sıradaki kaynak deneniyor…"
+                openNextAutoSource()
+            }
+        }
     }
 
     BackHandler(enabled = activeSite != null && watching == null) {
@@ -543,9 +567,15 @@ fun MediaSourceBrowser(
                         },
                         onSearchFinished = {
                             searching = false
-                            status = if (results.isEmpty())
-                                "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
-                            else "${results.size} site sonucu bulundu"
+                            if (watching != null && results.isNotEmpty()) {
+                                attemptedSourceUrls.clear()
+                                status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
+                                openNextAutoSource()
+                            } else {
+                                status = if (results.isEmpty())
+                                    "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
+                                else "${results.size} site sonucu bulundu"
+                            }
                         }
                     ).also {
                         searchView = it
@@ -1450,6 +1480,7 @@ private fun fetchAriesSimilar(id: Int, isTv: Boolean, key: String): List<AriesSi
     return list
 }
 private fun isSupportedMediaUrl(url: String): Boolean {
-    val u = url.lowercase()
-    return u.startsWith("http") && listOf(".m3u8", ".mp4", ".mpd", ".webm", ".mkv").any { u.contains(it) }
+    if (!url.startsWith("https://", ignoreCase = true) && !url.startsWith("http://", ignoreCase = true)) return false
+    val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault(url.lowercase())
+    return listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }
 }
