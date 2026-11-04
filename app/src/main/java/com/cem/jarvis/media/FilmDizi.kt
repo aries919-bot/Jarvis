@@ -279,15 +279,18 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     }
     if (web) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(media.label, { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode ->
-                play = PlayReq(url, item, season, episode, headers, mime)
+            MediaSourceBrowser(media.label, { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure ->
+                play = PlayReq(url, item, season, episode, headers, mime, onFailure)
             }
             play?.let { pr ->
                 ResumePlayer(
                     pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
                     requestHeaders = pr.headers,
                     mimeType = pr.mimeType,
-                    onPlaybackError = { play = null }
+                    onPlaybackError = {
+                        play = null
+                        pr.onFailure(pr.url)
+                    }
                 )
             }
         }
