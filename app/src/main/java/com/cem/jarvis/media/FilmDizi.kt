@@ -47,7 +47,9 @@ data class Item(
     val id: Int, val title: String?, val name: String?, val overview: String?,
     val poster_path: String?, val vote_average: Double?, val popularity: Double?,
     val media_type: String?, val first_air_date: String?, val release_date: String?,
-    val genre_ids: List<Int>? = null
+    val genre_ids: List<Int>? = null,
+    val source: String? = null,
+    val genres: List<String>? = null
 ) {
     val label get() = title ?: name ?: ""
     val year get() = (release_date ?: first_air_date ?: "").take(4)
