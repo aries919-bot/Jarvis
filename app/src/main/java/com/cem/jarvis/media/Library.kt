@@ -30,7 +30,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
 import coil.compose.AsyncImage
@@ -256,7 +259,9 @@ fun fmtRemaining(ms: Long): String {
 fun ResumePlayer(
     url: String, item: Item, season: Int, episode: Int, lib: LibraryVM,
     hasNext: Boolean, onNext: () -> Unit, onClose: () -> Unit,
-    onEpisodes: () -> Unit = onClose
+    onEpisodes: () -> Unit = onClose,
+    requestHeaders: Map<String, String> = emptyMap(),
+    mimeType: String? = null
 ) {
     val ctx = LocalContext.current
     val owner = LocalLifecycleOwner.current
@@ -268,12 +273,24 @@ fun ResumePlayer(
     var ended by remember { mutableStateOf(false) }
     var videoSize by remember { mutableStateOf("Büyük") }
 
-    val player = remember {
-        ExoPlayer.Builder(ctx).build().apply {
-            setMediaItem(MediaItem.fromUri(url)); prepare()
-            if (saved != null) seekTo((saved.positionMs - 5000).coerceAtLeast(0))
-            playWhenReady = true
-        }
+    val player = remember(url, requestHeaders, mimeType) {
+        val httpFactory = DefaultHttpDataSource.Factory()
+            .setAllowCrossProtocolRedirects(true)
+            .setDefaultRequestProperties(requestHeaders)
+        val dataSourceFactory = DefaultDataSource.Factory(ctx, httpFactory)
+        val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+        ExoPlayer.Builder(ctx)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
+            .apply {
+                val mediaItem = MediaItem.Builder().setUri(url).apply {
+                    mimeType?.let { setMimeType(it) }
+                }.build()
+                setMediaItem(mediaItem)
+                prepare()
+                if (saved != null) seekTo((saved.positionMs - 5000).coerceAtLeast(0))
+                playWhenReady = true
+            }
     }
     fun save() { if (player.duration > 0) lib.saveProgress(item, season, episode, player.currentPosition, player.duration, ended) }
 
