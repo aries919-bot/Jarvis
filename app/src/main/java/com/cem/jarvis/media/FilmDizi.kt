@@ -174,15 +174,20 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     var play2 by remember { mutableStateOf<PlayReq?>(null) }
     if (web2) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode ->
-                play2 = PlayReq(url, item, season, episode, headers, mime)
+            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure ->
+                play2 = PlayReq(url, item, season, episode, headers, mime, onFailure)
             }
             play2?.let { p ->
                 ResumePlayer(
                     p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
                     requestHeaders = p.headers,
                     mimeType = p.mimeType,
-                    onPlaybackError = { play2 = null }
+                    onPlaybackError = {
+                        // Do not abandon the WebView page: tell its stream queue to try
+                        // the next manifest/URL captured from the same source.
+                        play2 = null
+                        p.onFailure(p.url)
+                    }
                 )
             }
         }
@@ -353,5 +358,6 @@ data class PlayReq(
     val season: Int,
     val episode: Int,
     val headers: Map<String, String> = emptyMap(),
-    val mimeType: String? = null
+    val mimeType: String? = null,
+    val onFailure: (String) -> Unit = {}
 )
