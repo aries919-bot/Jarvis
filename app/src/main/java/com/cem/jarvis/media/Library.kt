@@ -32,6 +32,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.AspectRatioFrameLayout
 import coil.compose.AsyncImage
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -265,6 +266,7 @@ fun ResumePlayer(
     }
     var banner by remember { mutableStateOf(saved != null) }
     var ended by remember { mutableStateOf(false) }
+    var videoSize by remember { mutableStateOf("Büyük") }
 
     val player = remember {
         ExoPlayer.Builder(ctx).build().apply {
@@ -288,8 +290,27 @@ fun ResumePlayer(
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(factory = { PlayerView(it).apply { this.player = player; useController = false } }, modifier = Modifier.fillMaxSize())
-        PlayerControls(player, "${item.label}${if (item.title == null) " ($episode)" else ""}", hasNext, onNext, onEpisodes, onClose)
+        val videoModifier = when (videoSize) {
+            "Küçük" -> Modifier.fillMaxWidth(0.60f).aspectRatio(16f / 9f).align(Alignment.Center)
+            "Orta" -> Modifier.fillMaxWidth(0.80f).aspectRatio(16f / 9f).align(Alignment.Center)
+            else -> Modifier.fillMaxSize()
+        }
+        AndroidView(
+            factory = { PlayerView(it).apply {
+                this.player = player
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+            } },
+            modifier = videoModifier,
+            update = { it.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT; it.player = player }
+        )
+        PlayerControls(
+            player, "${item.label}${if (item.title == null) " ($episode)" else ""}",
+            hasNext, onNext, onEpisodes, onClose,
+            videoSize = videoSize,
+            onVideoSizeChange = { videoSize = it },
+            onFullscreen = { videoSize = "Büyük" }
+        )
 
         if (banner && saved != null) Row(
             Modifier.align(Alignment.TopCenter).padding(top = 60.dp).background(Color(0xCC000000), RoundedCornerShape(14.dp)).padding(12.dp),
