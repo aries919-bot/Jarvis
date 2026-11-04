@@ -139,13 +139,12 @@ private fun ariesCleanTitle(raw: String): String {
 fun MediaSourceBrowser(
     query: String,
     onBack: () -> Unit,
-    onPlayMedia: (String, Item, Int, Int) -> Unit
+    onPlayMedia: (String, String?, Map<String, String>, Item, Int, Int) -> Unit
 ) {
     var searchText by remember(query) { mutableStateOf(query) }
     var activeQuery by remember(query) { mutableStateOf(query) }
     var webTerm by remember(query) { mutableStateOf(query) }
     var activeSite by remember { mutableStateOf<AriesSiteResult?>(null) }
-    var personalMediaUrl by remember { mutableStateOf("") }
     var pageTitle by remember { mutableStateOf("") }
     var pageUrl by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Film ve dizi siteleri aranıyor…") }
@@ -160,6 +159,7 @@ fun MediaSourceBrowser(
     var trailerPlaying by remember { mutableStateOf(false) }
     var playerError by remember { mutableStateOf<String?>(null) }
     var autoPlayedMediaUrl by remember { mutableStateOf<String?>(null) }
+    var sourceScanExhausted by remember { mutableStateOf(false) }
     val attemptedSourceUrls = remember { mutableStateListOf<String>() }
     var fullscreenView by remember { mutableStateOf<View?>(null) }
     var fullscreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
@@ -243,6 +243,7 @@ fun MediaSourceBrowser(
         trailerPlaying = false
         playerError = null
         autoPlayedMediaUrl = null
+        sourceScanExhausted = false
         attemptedSourceUrls.add(site.url)
         activeSite = site
         pageTitle = site.title
@@ -254,8 +255,9 @@ fun MediaSourceBrowser(
         val next = results.firstOrNull { it.url !in attemptedSourceUrls }
         if (next != null) openSite(next)
         else {
-            activeSite = null
-            status = "İlk kaynaklarda doğrudan video bulunamadı. Başka bir kaynak seçebilir veya web sayfasında izleyebilirsin."
+            // Keep the last opened page visible as an in-app WebView fallback.
+            sourceScanExhausted = true
+            status = "Otomatik tarama tamamlandı. Doğrudan akış bulunamadı; açık siteyi Aries içinde izleyebilirsin."
         }
     }
 
@@ -285,12 +287,12 @@ fun MediaSourceBrowser(
         runWebSearch(ariesWatchQuery(next))
     }
 
-    LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, results.size) {
+    LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, results.size, sourceScanExhausted) {
         val current = activeSite
-        if (watching != null && current != null && autoPlayedMediaUrl == null) {
-            kotlinx.coroutines.delay(12000)
-            if (activeSite?.url == current.url && autoPlayedMediaUrl == null) {
-                status = "Bu kaynakta doğrudan akış bulunamadı; sıradaki kaynak deneniyor…"
+        if (watching != null && current != null && autoPlayedMediaUrl == null && !sourceScanExhausted) {
+            kotlinx.coroutines.delay(18000)
+            if (activeSite?.url == current.url && autoPlayedMediaUrl == null && !sourceScanExhausted) {
+                status = "Bu kaynakta akış bulunamadı; sıradaki kaynak deneniyor…"
                 openNextAutoSource()
             }
         }
@@ -328,24 +330,7 @@ fun MediaSourceBrowser(
                 sources = results.toList(),
                 searching = searching,
                 currentUrl = activeSite?.url,
-                personalMediaUrl = personalMediaUrl,
-                onPersonalMediaUrlChange = { personalMediaUrl = it },
                 playerError = playerError,
-                onPlayPersonalMedia = {
-                    if (isSupportedMediaUrl(personalMediaUrl)) {
-                        val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
-                            ?: createWebQueryItem(activeQuery, currentWatch.isMovie)
-                        onPlayMedia(
-                            personalMediaUrl.trim(),
-                            playableItem,
-                            currentWatch.season ?: 0,
-                            currentWatch.episode
-                        )
-                        playerError = null
-                    } else {
-                        playerError = "Geçerli bir HTTPS MP4, M3U8 veya MPD bağlantısı gir."
-                    }
-                },
                 similar = similar,
                 trailerUrl = info?.trailerUrl,
                 trailerPlaying = trailerPlaying,
@@ -375,12 +360,33 @@ fun MediaSourceBrowser(
                             onHideCustom = onHideCustomCb,
                             onCreated = { siteView = it },
                             onGone = { v -> if (siteView === v) siteView = null },
-                            onMediaFound = { mediaUrl ->
+                            onMediaFound = { mediaUrl, detectedMime ->
                                 if (autoPlayedMediaUrl != mediaUrl && isSupportedMediaUrl(mediaUrl)) {
                                     autoPlayedMediaUrl = mediaUrl
+                                    val page = siteView?.url ?: selectedSite.url
+                                    val headers = linkedMapOf(
+                                        "Referer" to page,
+                                        "User-Agent" to (siteView?.settings?.userAgentString
+                                            ?: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+                                    )
+                                    val origin = runCatching {
+                                        val uri = Uri.parse(page)
+                                        "${uri.scheme}://${uri.authority}"
+                                    }.getOrNull()
+                                    if (!origin.isNullOrBlank()) headers["Origin"] = origin
+                                    val cookie = CookieManager.getInstance().getCookie(mediaUrl)
+                                        ?: CookieManager.getInstance().getCookie(page)
+                                    if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
                                     val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
                                         ?: createWebQueryItem(activeQuery, currentWatch.isMovie)
-                                    onPlayMedia(mediaUrl, playableItem, currentWatch.season ?: 0, currentWatch.episode)
+                                    onPlayMedia(
+                                        mediaUrl,
+                                        detectedMime ?: inferAriesMimeType(mediaUrl),
+                                        headers,
+                                        playableItem,
+                                        currentWatch.season ?: 0,
+                                        currentWatch.episode
+                                    )
                                 }
                             }
                         )
@@ -569,6 +575,7 @@ fun MediaSourceBrowser(
                             searching = false
                             if (watching != null && results.isNotEmpty()) {
                                 attemptedSourceUrls.clear()
+                                sourceScanExhausted = false
                                 status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
                                 openNextAutoSource()
                             } else {
@@ -657,10 +664,7 @@ private fun AriesWatchScreen(
     sources: List<AriesSiteResult>,
     searching: Boolean,
     currentUrl: String?,
-    personalMediaUrl: String,
-    onPersonalMediaUrlChange: (String) -> Unit,
     playerError: String?,
-    onPlayPersonalMedia: () -> Unit,
     similar: List<AriesSimilar>,
     trailerUrl: String?,
     trailerPlaying: Boolean,
@@ -782,9 +786,10 @@ private fun AriesWatchScreen(
                     )
                     Text(
                         when {
-                            currentUrl != null -> "Açık kaynak taranıyor. Uygun ve erişilebilir bir video akışı bulunursa Aries oynatıcısında otomatik açılır."
+                            currentUrl != null && sourceScanExhausted -> "Doğrudan video adresi bulunamadı. Açık web sayfası Aries içinde bırakıldı."
+                            currentUrl != null -> "Açık sayfanın ağ istekleri ve oynatıcı kaynakları taranıyor."
                             searching -> "Aries izleme kaynaklarını arıyor…"
-                            sources.isNotEmpty() -> "Kaynaklar bulundu. İlk kaynak otomatik deneniyor; doğrudan akış alınamazsa sayfa uygulama içinde açılır."
+                            sources.isNotEmpty() -> "Kaynaklar bulundu. İlk sayfa otomatik açılıyor; akış bulunamazsa sonraki kaynak deneniyor."
                             else -> "Bu arama için kaynak bulunamadı. Başlığı veya bölüm numarasını değiştirerek tekrar deneyebilirsin."
                         },
                         color = AriesMuted,
@@ -1364,11 +1369,15 @@ private fun createAriesSiteWebView(
     val mainHandler = Handler(Looper.getMainLooper())
     return WebView(context).apply {
         configureAriesWebView()
+        settings.mediaPlaybackRequiresUserGesture = false
         addJavascriptInterface(object {
             @JavascriptInterface
-            fun found(rawUrl: String) {
+            fun found(rawUrl: String, contentType: String?) {
                 val candidate = rawUrl.trim()
-                if (isSupportedMediaUrl(candidate)) mainHandler.post { onMediaFound?.invoke(candidate) }
+                val mime = contentType?.substringBefore(";")?.trim()?.lowercase()
+                if (isSupportedMediaUrl(candidate) || isAriesMediaMime(mime)) {
+                    mainHandler.post { onMediaFound?.invoke(candidate, mime) }
+                }
             }
         }, "AriesMediaBridge")
         webChromeClient = object : WebChromeClient() {
@@ -1397,22 +1406,71 @@ private fun createAriesSiteWebView(
                 if (!url.isNullOrBlank()) onUrl(url)
                 val scanScript = """
                     (function() {
+                      if (window.__ariesSnifferInstalled) return;
+                      window.__ariesSnifferInstalled = true;
+
+                      function emit(raw, contentType) {
+                        if (!raw) return;
+                        var url = '';
+                        try { url = new URL(raw, location.href).href; } catch(e) { return; }
+                        if (!/^https?:\/\//i.test(url)) return;
+                        var mime = (contentType || '').toLowerCase();
+                        var ext = /\.(m3u8|mpd|mp4|webm|m4v|mov|mkv)(?:$|[?#&])/i.test(url);
+                        var mediaMime = /mpegurl|vnd\.apple\.mpegurl|dash\+xml|video\/(mp4|webm|quicktime)/i.test(mime);
+                        if (ext || mediaMime) AriesMediaBridge.found(url, mime);
+                      }
+
                       function scan() {
                         document.querySelectorAll('video, audio, source').forEach(function(el) {
-                          var raw = el.currentSrc || el.src || el.getAttribute('src') || '';
-                          if (!raw) return;
-                          try { raw = new URL(raw, location.href).href; } catch(e) { return; }
-                          if (/^https:\/\//i.test(raw) && /\.(mp4|m3u8|mpd|webm|m4v|mov)(?:$|[?#])/i.test(raw)) {
-                            AriesMediaBridge.found(raw);
-                          }
+                          emit(el.currentSrc || el.src || el.getAttribute('src') || '', el.getAttribute('type') || '');
+                        });
+                        try {
+                          performance.getEntriesByType('resource').forEach(function(entry) { emit(entry.name, ''); });
+                        } catch(e) {}
+                        document.querySelectorAll('iframe').forEach(function(frame) {
+                          try {
+                            var doc = frame.contentDocument;
+                            if (doc) doc.querySelectorAll('video,source').forEach(function(el) {
+                              emit(el.currentSrc || el.src || el.getAttribute('src') || '', el.getAttribute('type') || '');
+                            });
+                          } catch(e) {}
                         });
                       }
+
+                      // Capture HLS/DASH/MP4 requests made by modern JS-based players.
+                      try {
+                        var originalFetch = window.fetch;
+                        if (originalFetch) window.fetch = function() {
+                          return originalFetch.apply(this, arguments).then(function(response) {
+                            try { emit(response.url, response.headers.get('content-type') || ''); } catch(e) {}
+                            return response;
+                          });
+                        };
+                      } catch(e) {}
+
+                      try {
+                        var originalOpen = XMLHttpRequest.prototype.open;
+                        XMLHttpRequest.prototype.open = function(method, url) {
+                          try { this.__ariesRequestUrl = new URL(url, location.href).href; } catch(e) {}
+                          return originalOpen.apply(this, arguments);
+                        };
+                        var originalSend = XMLHttpRequest.prototype.send;
+                        XMLHttpRequest.prototype.send = function() {
+                          this.addEventListener('load', function() {
+                            try {
+                              emit(this.responseURL || this.__ariesRequestUrl, this.getResponseHeader('content-type') || '');
+                            } catch(e) {}
+                          });
+                          return originalSend.apply(this, arguments);
+                        };
+                      } catch(e) {}
+
                       scan();
                       if (!window.__ariesMediaObserver) {
                         window.__ariesMediaObserver = new MutationObserver(scan);
                         window.__ariesMediaObserver.observe(document.documentElement, {childList:true,subtree:true,attributes:true,attributeFilter:['src']});
-                        setTimeout(scan, 1000); setTimeout(scan, 3000); setTimeout(scan, 7000);
                       }
+                      setInterval(scan, 2500);
                     })();
                 """.trimIndent()
                 view?.evaluateJavascript(scanScript, null)
@@ -1420,8 +1478,18 @@ private fun createAriesSiteWebView(
 
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
                 val candidate = request?.url?.toString().orEmpty()
-                if (isSupportedMediaUrl(candidate)) mainHandler.post { onMediaFound?.invoke(candidate) }
+                if (isSupportedMediaUrl(candidate)) {
+                    mainHandler.post { onMediaFound?.invoke(candidate, inferAriesMimeType(candidate)) }
+                }
                 return super.shouldInterceptRequest(view, request)
+            }
+
+            override fun onLoadResource(view: WebView?, url: String?) {
+                val candidate = url.orEmpty()
+                if (isSupportedMediaUrl(candidate)) {
+                    mainHandler.post { onMediaFound?.invoke(candidate, inferAriesMimeType(candidate)) }
+                }
+                super.onLoadResource(view, url)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -1479,8 +1547,43 @@ private fun fetchAriesSimilar(id: Int, isTv: Boolean, key: String): List<AriesSi
     }
     return list
 }
+private fun isAriesMediaMime(mime: String?): Boolean =
+    !mime.isNullOrBlank() && (
+        mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") ||
+            mime.contains("dash+xml") || mime.contains("video/mp4") ||
+            mime.contains("video/webm") || mime.contains("video/quicktime")
+    )
+
+private fun inferAriesMimeType(url: String, responseType: String? = null): String? {
+    val mime = responseType?.lowercase().orEmpty()
+    return when {
+        mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") -> "application/x-mpegURL"
+        mime.contains("dash+xml") -> "application/dash+xml"
+        mime.contains("video/mp4") -> "video/mp4"
+        mime.contains("video/webm") -> "video/webm"
+        mime.contains("video/quicktime") -> "video/quicktime"
+        else -> {
+            val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
+            when {
+                path.endsWith(".m3u8") -> "application/x-mpegURL"
+                path.endsWith(".mpd") -> "application/dash+xml"
+                path.endsWith(".mp4") || path.endsWith(".m4v") -> "video/mp4"
+                path.endsWith(".webm") -> "video/webm"
+                path.endsWith(".mov") -> "video/quicktime"
+                else -> null
+            }
+        }
+    }
+}
+
 private fun isSupportedMediaUrl(url: String): Boolean {
     if (!url.startsWith("https://", ignoreCase = true) && !url.startsWith("http://", ignoreCase = true)) return false
-    val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault(url.lowercase())
-    return listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }
+    val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+    val path = uri.path.orEmpty().lowercase()
+    if (listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }) return true
+    val format = listOf("format", "type", "mime", "ext").mapNotNull { uri.getQueryParameter(it) }
+        .joinToString(" ").lowercase()
+    return format.contains("m3u8") || format.contains("mpd") ||
+        format.contains("mpegurl") || format.contains("dash+xml") ||
+        format.contains("video/mp4") || format.contains("video/webm")
 }
