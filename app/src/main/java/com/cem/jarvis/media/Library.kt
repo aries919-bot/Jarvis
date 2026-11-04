@@ -261,7 +261,8 @@ fun ResumePlayer(
     hasNext: Boolean, onNext: () -> Unit, onClose: () -> Unit,
     onEpisodes: () -> Unit = onClose,
     requestHeaders: Map<String, String> = emptyMap(),
-    mimeType: String? = null
+    mimeType: String? = null,
+    onPlaybackError: (PlaybackException) -> Unit = {}
 ) {
     val ctx = LocalContext.current
     val owner = LocalLifecycleOwner.current
@@ -300,6 +301,9 @@ fun ResumePlayer(
     DisposableEffect(player) {
         val l = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) { if (state == Player.STATE_ENDED) { ended = true; save() } }
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                onPlaybackError(error)
+            }
         }
         val obs = LifecycleEventObserver { _, e -> if (e == Lifecycle.Event.ON_PAUSE) save() }   // uygulama arka plana gidince
         player.addListener(l); owner.lifecycle.addObserver(obs)
