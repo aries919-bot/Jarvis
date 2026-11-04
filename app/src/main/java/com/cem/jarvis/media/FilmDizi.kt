@@ -171,8 +171,11 @@ fun MediaRoot(onExit: () -> Unit, vm: MediaVM = viewModel(), lib: LibraryVM = vi
 fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
     var q by remember { mutableStateOf("") }
     var web2 by remember { mutableStateOf(false) }
+    var play2 by remember { mutableStateOf<PlayReq?>(null) }
     if (web2) {
-        MediaSourceBrowser(q) { web2 = false }
+        val p = play2
+        if (p != null) ResumePlayer(p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null })
+        else MediaSourceBrowser(q, { web2 = false }, { u, i, s, e -> play2 = PlayReq(u, i, s, e) })
         return
     }
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
@@ -253,13 +256,16 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     var trailerKey by remember(media.id) { mutableStateOf<String?>(null) }
     var region by remember(media.id) { mutableStateOf<Region?>(null) }
     var web by remember(media.id) { mutableStateOf(false) }
+    var play by remember(media.id) { mutableStateOf<PlayReq?>(null) }
     LaunchedEffect(media.id) {
         if (media.poster_path?.startsWith("http") == true) return@LaunchedEffect
         runCatching { trailerKey = api.videos(type, media.id).results.firstOrNull { it.site == "YouTube" && it.type == "Trailer" }?.key }
         runCatching { region = api.providers(type, media.id).results?.get("TR") }
     }
     if (web) {
-        MediaSourceBrowser(media.label) { web = false }
+        val pr = play
+        if (pr != null) ResumePlayer(pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null })
+        else MediaSourceBrowser(media.label, { web = false }, { u, i, s, e -> play = PlayReq(u, i, s, e) })
         return
     }
     LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
@@ -320,3 +326,5 @@ fun TrailerPlayer(key: String, onClose: () -> Unit) {
         Text("‹", color = Color.White, fontSize = 34.sp, modifier = Modifier.padding(16.dp).clickable(onClick = onClose))
     }
 }
+
+data class PlayReq(val url: String, val item: Item, val season: Int, val episode: Int)
