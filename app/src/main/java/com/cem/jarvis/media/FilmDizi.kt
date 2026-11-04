@@ -9,6 +9,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,7 +46,8 @@ private const val IMG = "https://image.tmdb.org/t/p/w342"
 data class Item(
     val id: Int, val title: String?, val name: String?, val overview: String?,
     val poster_path: String?, val vote_average: Double?, val popularity: Double?,
-    val media_type: String?, val first_air_date: String?, val release_date: String?
+    val media_type: String?, val first_air_date: String?, val release_date: String?,
+    val genre_ids: List<Int>? = null
 ) {
     val label get() = title ?: name ?: ""
     val year get() = (release_date ?: first_air_date ?: "").take(4)
@@ -64,11 +68,13 @@ interface Tmdb {
         @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR"
     ): Page
     @GET("search/multi") suspend fun search(@Query("query") q: String, @Query("language") l: String = "tr-TR"): Page
+    @GET("tv/{id}") suspend fun tvInfo(@Path("id") id: Int, @Query("language") l: String = "tr-TR"): TvInfo
+    @GET("tv/{id}/season/{s}") suspend fun season(@Path("id") id: Int, @Path("s") s: Int, @Query("language") l: String = "tr-TR"): Season
     @GET("{type}/{id}/videos") suspend fun videos(@Path("type") t: String, @Path("id") id: Int): Videos
     @GET("{type}/{id}/watch/providers") suspend fun providers(@Path("type") t: String, @Path("id") id: Int): Providers
 }
 
-private val api: Tmdb = Retrofit.Builder()
+internal val api: Tmdb = Retrofit.Builder()
     .baseUrl("https://api.themoviedb.org/3/")
     .client(OkHttpClient.Builder().addInterceptor { c ->
         c.proceed(c.request().newBuilder().addHeader("Authorization", "Bearer ${BuildConfig.TMDB_TOKEN}").build())
@@ -149,29 +155,33 @@ fun FilmDiziCard(onClick: () -> Unit) {
 }
 
 @Composable
-fun MediaRoot(onExit: () -> Unit, vm: MediaVM = viewModel()) {
+fun MediaRoot(onExit: () -> Unit, vm: MediaVM = viewModel(), lib: LibraryVM = viewModel()) {
     var detail by remember { mutableStateOf<Item?>(null) }
     var trailer by remember { mutableStateOf<String?>(null) }
     when {
         trailer != null -> TrailerPlayer(trailer!!) { trailer = null }
-        detail != null -> DetailScreen(detail!!, vm, onBack = { detail = null }, onOpen = { detail = it }, onTrailer = { trailer = it })
-        else -> SearchScreen(vm, onBack = onExit, onOpen = { detail = it })
+        detail != null -> DetailScreen(detail!!, vm, lib, onBack = { detail = null }, onOpen = { detail = it }, onTrailer = { trailer = it })
+        else -> SearchScreen(vm, lib, onBack = onExit, onOpen = { detail = it })
     }
 }
 
 @Composable
-fun SearchScreen(vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
+fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
     var q by remember { mutableStateOf("") }
     var web2 by remember { mutableStateOf(false) }
     if (web2) WebDialog(q) { web2 = false }
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
+            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
             Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             Text("🌐", fontSize = 24.sp, modifier = Modifier.clickable { web2 = true }.padding(8.dp))
         }
         LazyColumn(Modifier.weight(1f)) {
+            if (!vm.searching) item {
+                ContinueRow(lib) { onOpen(it.toItem()) }
+                FavoritesRow(lib) { onOpen(it.toItem()) }
+            }
             if (vm.history.isNotEmpty() && !vm.searching) {
                 item { Text("Geçmiş", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)) }
                 items(vm.history) { h ->
@@ -195,7 +205,8 @@ fun SearchScreen(vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
             if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
             vm.error?.let { e -> item { Text(e, color = Color(0xFFFF8A7A), modifier = Modifier.padding(16.dp)) } }
             if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Color(0xFF9AA1B2), modifier = Modifier.padding(16.dp)) }
-            items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
+            if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
+            else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
             if (!vm.searching && vm.list.size >= 20) item {
                 Button(onClick = { vm.more() }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Daha fazla göster") }
             }
@@ -203,6 +214,8 @@ fun SearchScreen(vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF202433)).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             TextField(q, { q = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Film veya dizi ara") },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { vm.search(q) }),
                 colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                     focusedTextColor = Color.White, unfocusedTextColor = Color.White))
             Button(onClick = { vm.search(q) }) { Text("Ara") }
@@ -229,7 +242,7 @@ fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
 }
 
 @Composable
-fun DetailScreen(media: Item, vm: MediaVM, onBack: () -> Unit, onOpen: (Item) -> Unit, onTrailer: (String) -> Unit) {
+fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit, onTrailer: (String) -> Unit) {
     val ctx = LocalContext.current
     val type = if (media.media_type == "movie" || media.title != null) "movie" else "tv"
     var trailerKey by remember(media.id) { mutableStateOf<String?>(null) }
@@ -262,6 +275,9 @@ fun DetailScreen(media: Item, vm: MediaVM, onBack: () -> Unit, onOpen: (Item) ->
                 enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
             ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+            Spacer(Modifier.height(10.dp))
+            FavoriteButton(media, lib)
+            if (type == "tv" && media.poster_path?.startsWith("http") != true) EpisodeList(media, lib)
             var web by remember { mutableStateOf(false) }
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
