@@ -1449,3 +1449,7 @@ private fun fetchAriesSimilar(id: Int, isTv: Boolean, key: String): List<AriesSi
     }
     return list
 }
+private fun isSupportedMediaUrl(url: String): Boolean {
+    val u = url.lowercase()
+    return u.startsWith("http") && listOf(".m3u8", ".mp4", ".mpd", ".webm", ".mkv").any { u.contains(it) }
+}
