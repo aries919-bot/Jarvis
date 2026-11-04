@@ -169,7 +169,10 @@ fun MediaRoot(onExit: () -> Unit, vm: MediaVM = viewModel(), lib: LibraryVM = vi
 fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
     var q by remember { mutableStateOf("") }
     var web2 by remember { mutableStateOf(false) }
-    if (web2) WebDialog(q) { web2 = false }
+    if (web2) {
+        MediaSourceBrowser(q) { web2 = false }
+        return
+    }
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
@@ -247,10 +250,15 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     val type = if (media.media_type == "movie" || media.title != null) "movie" else "tv"
     var trailerKey by remember(media.id) { mutableStateOf<String?>(null) }
     var region by remember(media.id) { mutableStateOf<Region?>(null) }
+    var web by remember(media.id) { mutableStateOf(false) }
     LaunchedEffect(media.id) {
         if (media.poster_path?.startsWith("http") == true) return@LaunchedEffect
         runCatching { trailerKey = api.videos(type, media.id).results.firstOrNull { it.site == "YouTube" && it.type == "Trailer" }?.key }
         runCatching { region = api.providers(type, media.id).results?.get("TR") }
+    }
+    if (web) {
+        MediaSourceBrowser(media.label) { web = false }
+        return
     }
     LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
         item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
@@ -278,10 +286,8 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
             if (type == "tv" && media.poster_path?.startsWith("http") != true) EpisodeList(media, lib)
-            var web by remember { mutableStateOf(false) }
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
-            if (web) WebDialog(media.label) { web = false }
             Text("Benzerler", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
         }
         item {
