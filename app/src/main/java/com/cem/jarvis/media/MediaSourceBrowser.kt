@@ -394,8 +394,9 @@ fun MediaSourceBrowser(
                                     }.getOrNull()
                                     if (!origin.isNullOrBlank()) headers.putIfAbsent("Origin", origin)
                                     if (!headers.containsKey("Cookie")) {
+                                        // Only send cookies scoped to the media host; never copy the page's
+                                        // session cookie to an unrelated CDN host.
                                         val cookie = CookieManager.getInstance().getCookie(mediaUrl)
-                                            ?: CookieManager.getInstance().getCookie(page)
                                         if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
                                     }
                                     val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
