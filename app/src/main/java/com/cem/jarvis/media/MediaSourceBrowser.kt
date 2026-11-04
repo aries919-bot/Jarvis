@@ -1366,7 +1366,7 @@ private fun createAriesSiteWebView(
     onStatus: (String) -> Unit,
     onShowCustom: (View, WebChromeClient.CustomViewCallback) -> Unit,
     onHideCustom: () -> Unit,
-    onMediaFound: ((String) -> Unit)? = null
+    onMediaFound: ((String, String?) -> Unit)? = null
 ): WebView {
     val mainHandler = Handler(Looper.getMainLooper())
     return WebView(context).apply {
