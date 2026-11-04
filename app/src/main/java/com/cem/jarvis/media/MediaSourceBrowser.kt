@@ -5,10 +5,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
-import android.view.View
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.view.View
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -21,9 +21,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -31,11 +32,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -73,35 +75,47 @@ private data class AriesTitleInfo(
     val runtimeMin: Int
 )
 
-// Aries teması (uygulama ekran görüntülerinden)
-private val AriesBg = Color(0xFF0A0E17)
-private val AriesCard = Color(0xFF161B28)
-private val AriesChip = Color(0xFF222838)
-private val AriesAccent = Color(0xFF93B0FF)
-private val AriesMuted = Color(0xFF9AA3B5)
-private val AriesText = Color(0xFFE6E9F0)
-private val AriesFire = Color(0xFFFFA726)
+// Seekee ekran görüntüsündeki gri tema
+private val AriesBg = Color(0xFF1E1E1E)
+private val AriesCard = Color(0xFF2B2B2B)
+private val AriesChip = Color(0xFF3C3C3C)
+private val AriesText = Color.White
+private val AriesBody = Color(0xFFE0E0E0)
+private val AriesMuted = Color(0xFFB0B0B0)
 
 // TMDB anahtarı projede zaten varsa otomatik bulunur (BuildConfig).
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
 private const val ARIES_TMDB_KEY_FALLBACK = ""
 
+private fun ariesDdgUrl(term: String): String {
+    val full = if (term.contains("izle", ignoreCase = true)) term else "$term izle"
+    return "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(full, "UTF-8")
+}
+
+private fun ariesChipLabels(count: Int): List<String> {
+    if (count <= 0) return emptyList()
+    if (count <= 6) return (1..count).map { it.toString() }
+    return listOf("1", "2", "…", (count - 1).toString(), count.toString())
+}
+
 /**
- * Seekee tarzı arama ekranı + aranan dizi/filmin TMDB bilgi kartı.
- * Üstte kart (poster, sezon/bölüm sayısı, sezon çipleri), altta site sonuçları.
+ * Seekee düzeninde arama ekranı: üstte TMDB'den sezon kartları (poster sağda,
+ * bölüm çipleri, İzle düğmesi), altında web sonuçları.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun MediaSourceBrowser(query: String, onBack: () -> Unit) {
     var searchText by remember(query) { mutableStateOf(query) }
     var activeQuery by remember(query) { mutableStateOf(query) }
+    var webTerm by remember(query) { mutableStateOf(query) }
     var activeSite by remember { mutableStateOf<AriesSiteResult?>(null) }
     var pageTitle by remember { mutableStateOf("") }
     var pageUrl by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Film ve dizi siteleri aranıyor…") }
     var loading by remember { mutableStateOf(false) }
     val results = remember { mutableStateListOf<AriesSiteResult>() }
-    var webView by remember { mutableStateOf<WebView?>(null) }
+    var searchView by remember { mutableStateOf<WebView?>(null) }
+    var siteView by remember { mutableStateOf<WebView?>(null) }
     var info by remember { mutableStateOf<AriesTitleInfo?>(null) }
     var infoNote by remember { mutableStateOf("") }
     var fullscreenView by remember { mutableStateOf<View?>(null) }
@@ -147,20 +161,21 @@ fun MediaSourceBrowser(query: String, onBack: () -> Unit) {
         if (found == null) infoNote = "Bu arama için bilgi kartı bulunamadı." else info = found
     }
 
+    fun runWebSearch(term: String) {
+        webTerm = term
+        results.clear()
+        loading = true
+        status = "\"$term\" için siteler aranıyor…"
+        searchView?.loadUrl(ariesDdgUrl(term))
+    }
+
     fun startSearch(text: String) {
         val term = text.trim()
         if (term.isEmpty()) return
         searchText = term
         activeQuery = term
         activeSite = null
-        val searchViewAttached = results.isEmpty()
-        results.clear()
-        loading = true
-        status = "Farklı sitelerde arama yapılıyor…"
-        if (searchViewAttached) {
-            val encoded = URLEncoder.encode("$term izle film dizi", "UTF-8")
-            webView?.loadUrl("https://html.duckduckgo.com/html/?q=$encoded")
-        }
+        runWebSearch(term)
     }
 
     fun openSite(site: AriesSiteResult) {
@@ -172,7 +187,7 @@ fun MediaSourceBrowser(query: String, onBack: () -> Unit) {
     }
 
     BackHandler(enabled = activeSite != null) {
-        webView?.stopLoading()
+        siteView?.stopLoading()
         activeSite = null
         status = if (results.isEmpty()) "Arama sonucu bekleniyor" else "${results.size} site bulundu"
     }
@@ -181,327 +196,360 @@ fun MediaSourceBrowser(query: String, onBack: () -> Unit) {
 
     DisposableEffect(Unit) {
         onDispose {
-            webView?.stopLoading()
-            webView?.removeJavascriptInterface("AriesSearchBridge")
-            webView?.destroy()
-            webView = null
+            siteView?.stopLoading()
+            siteView?.destroy()
+            siteView = null
+            searchView?.stopLoading()
+            searchView?.removeJavascriptInterface("AriesSearchBridge")
+            searchView?.destroy()
+            searchView = null
         }
     }
 
     Box(Modifier.fillMaxSize()) {
-    Column(Modifier.fillMaxSize().background(AriesBg)) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "‹",
-                color = AriesText,
-                fontSize = 32.sp,
-                modifier = Modifier
-                    .clickable {
-                        if (activeSite != null) {
-                            webView?.stopLoading()
-                            activeSite = null
-                        } else onBack()
-                    }
-                    .padding(end = 12.dp)
-            )
-            Column(Modifier.weight(1f)) {
-                Text(
-                    if (activeSite == null) "Ara" else pageTitle.ifBlank { "Site" },
-                    color = AriesText,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (activeSite != null) {
-                    Text(
-                        pageUrl,
-                        color = AriesMuted,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            if (activeSite != null) {
-                Text(
-                    "Yenile",
-                    color = AriesAccent,
-                    modifier = Modifier.clickable { webView?.reload() }.padding(6.dp)
-                )
-            }
-        }
-
-        if (activeSite == null) {
+        Column(Modifier.fillMaxSize().background(AriesBg)) {
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                Modifier.fillMaxWidth().background(AriesCard).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    placeholder = { Text("Film veya dizi adı") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { startSearch(searchText) })
+                Text(
+                    "‹",
+                    color = AriesText,
+                    fontSize = 32.sp,
+                    modifier = Modifier
+                        .clickable {
+                            if (activeSite != null) {
+                                siteView?.stopLoading()
+                                activeSite = null
+                            } else onBack()
+                        }
+                        .padding(end = 14.dp)
                 )
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = { startSearch(searchText) }) { Text("Ara") }
-            }
-
-            Text(
-                status,
-                color = AriesMuted,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            if (results.isEmpty()) {
-                Box(Modifier.padding(horizontal = 12.dp)) { AriesInfoBlock(info, infoNote) }
-                Box(Modifier.weight(1f).fillMaxWidth()) {
-                    AndroidView(
-                        modifier = Modifier.fillMaxSize(),
-                        factory = { context ->
-                            createAriesSearchWebView(
-                                context = context,
-                                onTitle = { pageTitle = it },
-                                onUrl = { pageUrl = it },
-                                onLoading = { loading = it },
-                                onStatus = { status = it },
-                                onResult = { result ->
-                                    if (results.none { it.url == result.url }) results.add(result)
-                                },
-                                onSearchFinished = {
-                                    loading = false
-                                    status = if (results.isEmpty())
-                                        "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
-                                    else "${results.size} site sonucu bulundu"
-                                }
-                            ).also {
-                                webView = it
-                                val encoded = URLEncoder.encode("$activeQuery izle film dizi", "UTF-8")
-                                it.loadUrl("https://html.duckduckgo.com/html/?q=$encoded")
-                            }
-                        },
-                        update = { webView = it }
+                if (activeSite == null) {
+                    BasicTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = AriesText,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        cursorBrush = SolidColor(AriesText),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { startSearch(searchText) }),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        "Ara",
+                        color = AriesText,
+                        fontSize = 16.sp,
+                        modifier = Modifier.clickable { startSearch(searchText) }.padding(8.dp)
+                    )
+                } else {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            pageTitle.ifBlank { "Site" },
+                            color = AriesText,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            pageUrl,
+                            color = AriesMuted,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        "Yenile",
+                        color = AriesText,
+                        modifier = Modifier.clickable { siteView?.reload() }.padding(6.dp)
                     )
                 }
-            } else {
+            }
+
+            if (activeSite == null) {
+                Text(
+                    status,
+                    color = AriesMuted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
                 LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    item(key = "aries-info") { AriesInfoBlock(info, infoNote) }
-                    items(results, key = { it.url }) { result ->
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(AriesCard)
-                                .clickable { openSite(result) }
-                                .padding(14.dp)
-                        ) {
+                    val currentInfo = info
+                    if (currentInfo != null) {
+                        item(key = "aries-summary") {
+                            val summary = if (currentInfo.isTv) {
+                                val eps = if (currentInfo.totalEpisodes > 0) currentInfo.totalEpisodes
+                                else currentInfo.seasons.sumOf { it.episodes }
+                                "${currentInfo.title} · ${currentInfo.seasons.size} Sezon · $eps Bölüm"
+                            } else {
+                                currentInfo.title +
+                                    if (currentInfo.runtimeMin > 0) " · ${currentInfo.runtimeMin} dk" else ""
+                            }
                             Text(
-                                result.title,
+                                summary,
                                 color = AriesText,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                             )
-                            if (result.snippet.isNotBlank()) {
-                                Text(
-                                    result.snippet,
-                                    color = AriesMuted,
-                                    fontSize = 14.sp,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(top = 5.dp)
+                        }
+                        if (currentInfo.isTv && currentInfo.seasons.isNotEmpty()) {
+                            items(currentInfo.seasons, key = { "season-${it.number}" }) { season ->
+                                AriesRichCard(
+                                    info = currentInfo,
+                                    season = season,
+                                    onWatch = {
+                                        runWebSearch("${currentInfo.title} ${season.number}. sezon")
+                                    },
+                                    onEpisode = { ep ->
+                                        runWebSearch(
+                                            "${currentInfo.title} ${season.number}. sezon $ep. bölüm"
+                                        )
+                                    }
                                 )
                             }
-                            Row(
-                                Modifier.fillMaxWidth().padding(top = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    hostOfAries(result.url),
-                                    color = AriesMuted,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    "İzle  ›",
-                                    color = Color(0xFF0A0E17),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(AriesAccent)
-                                        .padding(horizontal = 22.dp, vertical = 10.dp)
+                        } else {
+                            item(key = "aries-single") {
+                                AriesRichCard(
+                                    info = currentInfo,
+                                    season = null,
+                                    onWatch = { runWebSearch("${currentInfo.title} film") },
+                                    onEpisode = { }
                                 )
                             }
                         }
+                    } else if (infoNote.isNotBlank()) {
+                        item(key = "aries-note") {
+                            Text(
+                                infoNote,
+                                color = AriesMuted,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    items(results, key = { it.url }) { result ->
+                        AriesWebCard(result) { openSite(result) }
                     }
                 }
+            } else {
+                Text(
+                    status,
+                    color = AriesMuted,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+                AndroidView(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    factory = { context ->
+                        createAriesSiteWebView(
+                            context = context,
+                            onTitle = { pageTitle = it },
+                            onUrl = { pageUrl = it },
+                            onLoading = { loading = it },
+                            onStatus = { status = it },
+                            onShowCustom = { view, callback ->
+                                fullscreenCallback = callback
+                                fullscreenView = view
+                            },
+                            onHideCustom = {
+                                fullscreenCallback = null
+                                fullscreenView = null
+                            }
+                        ).also {
+                            siteView = it
+                            it.loadUrl(activeSite!!.url)
+                        }
+                    },
+                    update = { siteView = it }
+                )
             }
-        } else {
-            Text(
-                status,
-                color = AriesMuted,
-                fontSize = 11.sp,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-            )
+        }
+
+        // Arama sonuçlarını toplayan görünmez WebView (arama ekranının arkasında çalışır)
+        Box(Modifier.size(1.dp)) {
             AndroidView(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
                 factory = { context ->
-                    createAriesSiteWebView(
+                    createAriesSearchWebView(
                         context = context,
-                        onTitle = { pageTitle = it },
-                        onUrl = { pageUrl = it },
+                        onTitle = { },
+                        onUrl = { },
                         onLoading = { loading = it },
-                        onStatus = { status = it },
-                        onShowCustom = { view, callback ->
-                            fullscreenCallback = callback
-                            fullscreenView = view
+                        onStatus = { },
+                        onResult = { result ->
+                            if (results.none { it.url == result.url }) results.add(result)
                         },
-                        onHideCustom = {
-                            fullscreenCallback = null
-                            fullscreenView = null
+                        onSearchFinished = {
+                            loading = false
+                            status = if (results.isEmpty())
+                                "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
+                            else "${results.size} site sonucu bulundu"
                         }
                     ).also {
-                        webView = it
-                        it.loadUrl(activeSite!!.url)
+                        searchView = it
+                        it.loadUrl(ariesDdgUrl(webTerm))
                     }
-                },
-                update = { webView = it }
+                }
             )
         }
-    }
-    fullscreenView?.let { view ->
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
-            AndroidView(modifier = Modifier.fillMaxSize(), factory = { view })
+
+        fullscreenView?.let { view ->
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                AndroidView(modifier = Modifier.fillMaxSize(), factory = { view })
+            }
         }
     }
-    }
 }
 
 @Composable
-private fun AriesInfoBlock(info: AriesTitleInfo?, note: String) {
-    if (info != null) {
-        AriesTitleCard(info)
-    } else if (note.isNotBlank()) {
-        Text(note, color = AriesMuted, fontSize = 12.sp, modifier = Modifier.padding(vertical = 4.dp))
-    }
-}
+private fun AriesRichCard(
+    info: AriesTitleInfo,
+    season: AriesSeason?,
+    onWatch: () -> Unit,
+    onEpisode: (Int) -> Unit
+) {
+    val title = if (season != null) "${info.title} ${season.number}.Sezon" else info.title
+    val meta = listOf(
+        if (info.isTv) "TV Dizisi" else "Film",
+        info.year,
+        info.genres
+    ).filter { it.isNotBlank() }.joinToString(" · ")
+    val labels = ariesChipLabels(season?.episodes ?: 0)
 
-@Composable
-private fun AriesTitleCard(info: AriesTitleInfo) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Brush.linearGradient(listOf(Color(0xFF151B2E), Color(0xFF241A2E))))
-            .padding(14.dp)
+            .background(AriesCard)
+            .padding(16.dp)
     ) {
-        Row {
-            AriesPoster(info.posterUrl, Modifier.width(96.dp).height(140.dp))
-            Spacer(Modifier.width(14.dp))
+        Text(
+            title,
+            color = AriesText,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(Modifier.fillMaxWidth().padding(top = 10.dp)) {
             Column(Modifier.weight(1f)) {
-                Text(
-                    info.title,
-                    color = AriesText,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                val meta = listOf(
-                    info.year,
-                    if (info.isTv) "TV Dizisi" else "Film",
-                    info.genres
-                ).filter { it.isNotBlank() }.joinToString(" · ")
-                Text(
-                    meta,
-                    color = AriesMuted,
-                    fontSize = 13.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                if (info.isTv) {
-                    val seasonCount = info.seasons.size
-                    val episodeCount = if (info.totalEpisodes > 0) info.totalEpisodes
-                    else info.seasons.sumOf { it.episodes }
+                Text(meta, color = AriesBody, fontSize = 15.sp)
+                if (info.overview.isNotBlank()) {
                     Text(
-                        "$seasonCount Sezon · $episodeCount Bölüm",
-                        color = AriesAccent,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                } else if (info.runtimeMin > 0) {
-                    Text(
-                        "${info.runtimeMin} dk",
-                        color = AriesAccent,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-                if (info.rating > 0.0) {
-                    Text(
-                        "🔥 " + String.format("%.1f", info.rating),
-                        color = AriesFire,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        info.overview,
+                        color = AriesBody,
+                        fontSize = 15.sp,
+                        maxLines = 6,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 6.dp)
                     )
                 }
             }
+            Spacer(Modifier.width(12.dp))
+            AriesPoster(info.posterUrl, Modifier.width(104.dp).height(156.dp))
         }
-        if (info.overview.isNotBlank()) {
-            Text(
-                info.overview,
-                color = AriesMuted,
-                fontSize = 13.sp,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-        }
-        if (info.isTv && info.seasons.isNotEmpty()) {
-            Text(
-                "Sezonlar",
-                color = AriesText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
-            )
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(info.seasons, key = { it.number }) { season ->
-                    Column(
+        if (labels.isNotEmpty()) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                labels.forEach { label ->
+                    val episode = label.toIntOrNull()
+                    Box(
                         Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(AriesChip)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .clickable(enabled = episode != null) {
+                                if (episode != null) onEpisode(episode)
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            "${season.number}. Sezon",
-                            color = AriesText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text("${season.episodes} bölüm", color = AriesMuted, fontSize = 11.sp)
+                        Text(label, color = AriesText, fontSize = 16.sp)
                     }
                 }
             }
         }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+                .height(46.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(AriesChip)
+                .clickable { onWatch() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("İzle  ›", color = AriesText, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        }
+        AriesSourceRow("TMDB")
+    }
+}
+
+@Composable
+private fun AriesWebCard(result: AriesSiteResult, onOpen: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(AriesCard)
+            .clickable { onOpen() }
+            .padding(16.dp)
+    ) {
+        Text(
+            result.title,
+            color = AriesText,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (result.snippet.isNotBlank()) {
+            Text(
+                result.snippet,
+                color = AriesBody,
+                fontSize = 15.sp,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+        AriesSourceRow(hostOfAries(result.url))
+    }
+}
+
+@Composable
+private fun AriesSourceRow(name: String) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier.size(26.dp).clip(CircleShape).background(AriesChip),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(name.take(1).uppercase(), color = AriesText, fontSize = 12.sp)
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(
+            name,
+            color = AriesMuted,
+            fontSize = 13.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        Text("•••", color = AriesMuted, fontSize = 16.sp)
     }
 }
 
@@ -517,7 +565,7 @@ private fun AriesPoster(url: String?, modifier: Modifier) {
             }
         }
     }
-    Box(modifier.clip(RoundedCornerShape(14.dp)).background(AriesChip)) {
+    Box(modifier.clip(RoundedCornerShape(12.dp)).background(AriesChip)) {
         bmp?.let {
             Image(
                 bitmap = it.asImageBitmap(),
