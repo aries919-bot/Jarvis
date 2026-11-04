@@ -174,8 +174,14 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     var play2 by remember { mutableStateOf<PlayReq?>(null) }
     if (web2) {
         val p = play2
-        if (p != null) ResumePlayer(p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null })
-        else MediaSourceBrowser(q, { web2 = false }, { u, i, s, e -> play2 = PlayReq(u, i, s, e) })
+        if (p != null) ResumePlayer(
+            p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
+            requestHeaders = p.headers,
+            mimeType = p.mimeType
+        )
+        else MediaSourceBrowser(q, { web2 = false }) { url, mime, headers, item, season, episode ->
+            play2 = PlayReq(url, item, season, episode, headers, mime)
+        }
         return
     }
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
@@ -327,4 +333,11 @@ fun TrailerPlayer(key: String, onClose: () -> Unit) {
     }
 }
 
-data class PlayReq(val url: String, val item: Item, val season: Int, val episode: Int)
+data class PlayReq(
+    val url: String,
+    val item: Item,
+    val season: Int,
+    val episode: Int,
+    val headers: Map<String, String> = emptyMap(),
+    val mimeType: String? = null
+)
