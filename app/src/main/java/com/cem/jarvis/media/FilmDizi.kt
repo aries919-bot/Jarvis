@@ -270,8 +270,14 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     }
     if (web) {
         val pr = play
-        if (pr != null) ResumePlayer(pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null })
-        else MediaSourceBrowser(media.label, { web = false }, { u, i, s, e -> play = PlayReq(u, i, s, e) })
+        if (pr != null) ResumePlayer(
+            pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
+            requestHeaders = pr.headers,
+            mimeType = pr.mimeType
+        )
+        else MediaSourceBrowser(media.label, { web = false }) { url, mime, headers, item, season, episode ->
+            play = PlayReq(url, item, season, episode, headers, mime)
+        }
         return
     }
     LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
