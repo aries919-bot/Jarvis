@@ -35,6 +35,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
@@ -141,6 +142,7 @@ private fun ariesCleanTitle(raw: String): String {
 fun MediaSourceBrowser(
     query: String,
     onBack: () -> Unit,
+    playerOverlay: Boolean = false,
     onPlayMedia: (String, String?, Map<String, String>, Item, Int, Int) -> Unit
 ) {
     var searchText by remember(query) { mutableStateOf(query) }
@@ -166,6 +168,14 @@ fun MediaSourceBrowser(
     var fullscreenView by remember { mutableStateOf<View?>(null) }
     var fullscreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     val hostContext = LocalContext.current
+
+    // Keep the source page mounted behind ExoPlayer so a failed stream or
+    // the player's back action returns to the exact same page and watch state.
+    LaunchedEffect(playerOverlay, activeSite?.url) {
+        siteView?.let { view ->
+            if (playerOverlay) view.onPause() else view.onResume()
+        }
+    }
 
     val onShowCustomCb: (View, WebChromeClient.CustomViewCallback) -> Unit = { view, callback ->
         fullscreenCallback = callback
@@ -335,7 +345,7 @@ fun MediaSourceBrowser(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().alpha(if (playerOverlay) 0f else 1f)) {
         val currentWatch = watching
         if (currentWatch != null) {
             AriesWatchScreen(
