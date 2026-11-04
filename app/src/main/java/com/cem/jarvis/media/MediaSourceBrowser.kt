@@ -404,7 +404,7 @@ fun MediaSourceBrowser(
                         )
                         else -> Text(
                             playerError ?: if (searching) "Web sonuçları aranıyor…"
-                            else "Bir kaynak seç veya kendi doğrudan medya bağlantını gir.",
+                            else "Uygun akış bulunamazsa seçilen kaynak uygulama içinde açılır.",
                             color = AriesMuted,
                             fontSize = 15.sp
                         )
@@ -1422,6 +1422,14 @@ private fun createAriesSiteWebView(
                         if (ext || mediaMime) AriesMediaBridge.found(url, mime);
                       }
 
+                      function scanText(text) {
+                        if (!text || text.length > 1000000) return;
+                        try {
+                          var found = text.match(/https?:\\?\/\\?\/[^"'\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\s<>]*)?/ig) || [];
+                          found.forEach(function(url) { emit(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'), ''); });
+                        } catch(e) {}
+                      }
+
                       function scan() {
                         document.querySelectorAll('video, audio, source').forEach(function(el) {
                           emit(el.currentSrc || el.src || el.getAttribute('src') || '', el.getAttribute('type') || '');
@@ -1444,7 +1452,13 @@ private fun createAriesSiteWebView(
                         var originalFetch = window.fetch;
                         if (originalFetch) window.fetch = function() {
                           return originalFetch.apply(this, arguments).then(function(response) {
-                            try { emit(response.url, response.headers.get('content-type') || ''); } catch(e) {}
+                            try {
+                              var ct = response.headers.get('content-type') || '';
+                              emit(response.url, ct);
+                              if (/json|text|javascript/i.test(ct)) {
+                                response.clone().text().then(scanText).catch(function() {});
+                              }
+                            } catch(e) {}
                             return response;
                           });
                         };
@@ -1460,7 +1474,9 @@ private fun createAriesSiteWebView(
                         XMLHttpRequest.prototype.send = function() {
                           this.addEventListener('load', function() {
                             try {
-                              emit(this.responseURL || this.__ariesRequestUrl, this.getResponseHeader('content-type') || '');
+                              var ct = this.getResponseHeader('content-type') || '';
+                              emit(this.responseURL || this.__ariesRequestUrl, ct);
+                              if (/json|text|javascript/i.test(ct)) scanText(this.responseText || '');
                             } catch(e) {}
                           });
                           return originalSend.apply(this, arguments);
