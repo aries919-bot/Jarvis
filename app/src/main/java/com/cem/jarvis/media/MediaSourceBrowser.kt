@@ -330,6 +330,7 @@ fun MediaSourceBrowser(
                 sources = results.toList(),
                 searching = searching,
                 currentUrl = activeSite?.url,
+                scanExhausted = sourceScanExhausted,
                 playerError = playerError,
                 similar = similar,
                 trailerUrl = info?.trailerUrl,
@@ -361,7 +362,7 @@ fun MediaSourceBrowser(
                             onCreated = { siteView = it },
                             onGone = { v -> if (siteView === v) siteView = null },
                             onMediaFound = { mediaUrl, detectedMime ->
-                                if (autoPlayedMediaUrl != mediaUrl && isSupportedMediaUrl(mediaUrl)) {
+                                if (autoPlayedMediaUrl != mediaUrl && (isSupportedMediaUrl(mediaUrl) || isAriesMediaMime(detectedMime))) {
                                     autoPlayedMediaUrl = mediaUrl
                                     val page = siteView?.url ?: selectedSite.url
                                     val headers = linkedMapOf(
@@ -611,7 +612,7 @@ private fun AriesSiteWeb(
     onHideCustom: () -> Unit,
     onCreated: (WebView) -> Unit,
     onGone: (WebView) -> Unit,
-    onMediaFound: ((String) -> Unit)? = null
+    onMediaFound: ((String, String?) -> Unit)? = null
 ) {
     val loaded = remember { arrayOfNulls<String>(1) }
     val holder = remember { arrayOfNulls<WebView>(1) }
@@ -664,6 +665,7 @@ private fun AriesWatchScreen(
     sources: List<AriesSiteResult>,
     searching: Boolean,
     currentUrl: String?,
+    scanExhausted: Boolean,
     playerError: String?,
     similar: List<AriesSimilar>,
     trailerUrl: String?,
@@ -786,7 +788,7 @@ private fun AriesWatchScreen(
                     )
                     Text(
                         when {
-                            currentUrl != null && sourceScanExhausted -> "Doğrudan video adresi bulunamadı. Açık web sayfası Aries içinde bırakıldı."
+                            currentUrl != null && scanExhausted -> "Doğrudan video adresi bulunamadı. Açık web sayfası Aries içinde bırakıldı."
                             currentUrl != null -> "Açık sayfanın ağ istekleri ve oynatıcı kaynakları taranıyor."
                             searching -> "Aries izleme kaynaklarını arıyor…"
                             sources.isNotEmpty() -> "Kaynaklar bulundu. İlk sayfa otomatik açılıyor; akış bulunamazsa sonraki kaynak deneniyor."
