@@ -583,6 +583,7 @@ private fun AriesSiteWeb(
             val view = holder[0]
             if (view != null) {
                 view.stopLoading()
+                view.removeJavascriptInterface("AriesMediaBridge")
                 view.destroy()
                 onGone(view)
             }
