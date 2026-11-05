@@ -98,11 +98,12 @@ class MediaVM : ViewModel() {
     fun load(i: Int) {
         tab = i; searching = false
         fetch {
+            if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
             when (i) {
                 0 -> api.trending()
                 2 -> api.series()
-                else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
-                        else if (i == 1) api.movies() else api.anime()
+                1 -> api.movies()
+                else -> api.anime()
             }
         }
     }
@@ -134,9 +135,26 @@ class MediaVM : ViewModel() {
     fun removeHistory(q: String) { history = history - q }
 
     private fun fetch(block: suspend () -> Page) = viewModelScope.launch {
-        loading = true; error = null
-        try { list = block().results } catch (e: Exception) { error = if (e.message == "tmdb") "Filmler ve Anime listesi için TMDB anahtarı gerekli. Arama anahtarsız çalışır." else "Bağlantı kurulamadı. İnternetini kontrol et." }
-        loading = false
+        loading = true
+        error = null
+        try {
+            list = block().results
+        } catch (e: Exception) {
+            error = when {
+                e.message == "tmdb" || BuildConfig.TMDB_TOKEN.isBlank() ->
+                    "TMDB erişim anahtarı bu APK'ya eklenmemiş. Popüler katalog açılamıyor; web aramasını kullanabilirsin."
+                e is retrofit2.HttpException && (e.code() == 401 || e.code() == 403) ->
+                    "TMDB erişim anahtarı geçersiz veya yetkisiz (HTTP ${e.code()})."
+                e is retrofit2.HttpException && e.code() == 429 ->
+                    "TMDB istek sınırına ulaşıldı (HTTP 429). Biraz sonra yeniden dene."
+                e is java.io.IOException ->
+                    "TMDB sunucusuna bağlanılamadı. İnternet bağlantını kontrol et."
+                else ->
+                    "Film bilgisi alınamadı: ${e.javaClass.simpleName}."
+            }
+        } finally {
+            loading = false
+        }
     }
 }
 
