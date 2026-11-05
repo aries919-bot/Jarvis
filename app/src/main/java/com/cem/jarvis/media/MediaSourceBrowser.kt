@@ -1995,12 +1995,19 @@ private fun createAriesSiteWebView(
                 val candidate = request?.url?.toString().orEmpty()
                 val requestHeaders = request?.requestHeaders.orEmpty()
                     .filterKeys { isAriesForwardableHeader(it) }
-                if (isSupportedMediaUrl(candidate)) {
+                // Many hosts hide the media format behind opaque URLs (for example
+                // /stream?id=...); inspect WebView's response MIME as well as the URL.
+                // This is passive observation: the response is returned untouched.
+                val response = super.shouldInterceptRequest(view, request)
+                val responseMime = response?.mimeType?.substringBefore(";")?.trim()?.lowercase()
+                val detectedMime = responseMime?.takeIf { isAriesMediaMime(it) }
+                    ?: inferAriesMimeType(candidate)
+                if (isSupportedMediaUrl(candidate) || isAriesMediaMime(responseMime)) {
                     mainHandler.post {
-                        onMediaFound?.invoke(candidate, inferAriesMimeType(candidate), requestHeaders)
+                        onMediaFound?.invoke(candidate, detectedMime, requestHeaders)
                     }
                 }
-                return super.shouldInterceptRequest(view, request)
+                return response
             }
 
             override fun onLoadResource(view: WebView?, url: String?) {
