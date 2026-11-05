@@ -303,6 +303,7 @@ fun ResumePlayer(
         val l = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) { if (state == Player.STATE_ENDED) { ended = true; save() } }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                android.widget.Toast.makeText(ctx, "ARIES: ${error.errorCodeName}", android.widget.Toast.LENGTH_LONG).show()
                 onPlaybackError(error)
             }
         }
