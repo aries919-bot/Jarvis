@@ -1497,6 +1497,33 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
       var candidates = [];
       var flushTimer = null;
       var sentUrls = Object.create(null);
+      var observedDocuments = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+      var scanQueued = false;
+
+      function scheduleScan() {
+        if (scanQueued) return;
+        scanQueued = true;
+        setTimeout(function () {
+          scanQueued = false;
+          scanDom();
+        }, 180);
+      }
+
+      function observeDocument(doc) {
+        if (!doc || !doc.documentElement || !observedDocuments || observedDocuments.has(doc)) return;
+        observedDocuments.add(doc);
+        try {
+          new MutationObserver(scheduleScan).observe(doc.documentElement, {
+            childList: true, subtree: true, attributes: true,
+            attributeFilter: ['src', 'type']
+          });
+        } catch (e) {}
+        try {
+          ['play', 'playing', 'loadedmetadata', 'canplay', 'durationchange'].forEach(function (eventName) {
+            doc.addEventListener(eventName, scheduleScan, true);
+          });
+        } catch (e) {}
+      }
 
       function headersObject(source) {
         var out = {};
@@ -1624,6 +1651,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
       function scanDocument(doc, depth, visited) {
         if (!doc || depth > 8 || visited.indexOf(doc) >= 0) return;
         visited.push(doc);
+        observeDocument(doc);
         try {
           doc.querySelectorAll('video, audio, source').forEach(function (element) {
             var raw = element.currentSrc || element.src || element.getAttribute('src') || '';
@@ -1749,10 +1777,9 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
       ['play', 'playing', 'loadedmetadata', 'canplay', 'durationchange'].forEach(function (eventName) {
         document.addEventListener(eventName, function () { scanDom(); }, true);
       });
-      try {
-        new MutationObserver(scanDom).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
-      } catch (e) {}
-      setInterval(scanDom, 1800);
+      observeDocument(document);
+      // A modest fallback catches late player initialization when observers are unavailable.
+      setInterval(scanDom, 1000);
       window.__ariesScanMedia = scanDom;
     })();
     """.trimIndent()
