@@ -1528,19 +1528,31 @@ private fun createAriesSearchWebView(
                       function txt(el) {
                         return (el && (el.innerText || el.textContent) || '').trim();
                       }
-                      var anchors = document.querySelectorAll('a.result__a, a[data-testid="result-title-a"]');
-                      anchors.forEach(function(a) {
+                      var seen = Object.create(null);
+                      function addAnchor(a) {
+                        if (!a) return;
+                        var row = a.closest('.result, [data-testid="result"], li.b_algo, .web-result') || a.parentElement;
+                        if (row && (row.matches('.result--ad, [data-testid="ad"], article[data-testid="ad"]') ||
+                            row.querySelector('.result--ad, [data-testid="ad"]'))) return;
                         var u = a.href || '';
                         try {
                           var parsed = new URL(u, location.href);
                           if (parsed.searchParams.has('uddg')) u = parsed.searchParams.get('uddg');
                           else u = parsed.href;
                         } catch(e) {}
-                        if (!/^https?:\/\//i.test(u)) return;
-                        var row = a.closest('.result') || a.closest('[data-testid="result"]') || a.parentElement;
-                        var sn = row ? row.querySelector('.result__snippet, [data-result="snippet"]') : null;
+                        if (!/^https?:\/\//i.test(u) || seen[u]) return;
+                        seen[u] = true;
+                        var sn = row ? row.querySelector('.result__snippet, [data-result="snippet"], .b_caption p') : null;
                         AriesSearchBridge.add(txt(a), u, txt(sn));
-                      });
+                      }
+                      // DuckDuckGo HTML, its newer test-id markup, and common Bing-style
+                      // organic result containers. Keep ads out and de-duplicate URLs.
+                      var anchors = document.querySelectorAll(
+                        'a.result__a, a[data-testid="result-title-a"], ' +
+                        'article[data-testid="result"] h2 a, div[data-testid="result"] h2 a, ' +
+                        'li.b_algo h2 a, .web-result h2 a'
+                      );
+                      anchors.forEach(addAnchor);
                       AriesSearchBridge.done();
                     })();
                 """.trimIndent()
@@ -1958,9 +1970,9 @@ private fun ariesPreferredSourcePriority(url: String): Int {
     val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }
         .getOrDefault("")
     return when {
+        host == "yabancidizi.fan" || host.endsWith(".yabancidizi.fan") -> 110
         host == "yabancidizi.tv" || host.endsWith(".yabancidizi.tv") -> 100
         host == "dizilla.now" || host.endsWith(".dizilla.now") -> 90
-        host == "yabancidizi.fan" || host.endsWith(".yabancidizi.fan") -> 88
         host == "dizilla.club" || host.endsWith(".dizilla.club") -> 85
         else -> 0
     }
