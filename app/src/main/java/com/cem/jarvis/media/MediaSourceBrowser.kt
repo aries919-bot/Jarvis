@@ -1634,7 +1634,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
           candidates.push({ url: url, mime: mime || '', headers: requestHeaders || {}, score: s });
         }
         if (flushTimer) clearTimeout(flushTimer);
-        flushTimer = setTimeout(flush, 1400);
+        flushTimer = setTimeout(flush, 450);
       }
 
       function flush() {
