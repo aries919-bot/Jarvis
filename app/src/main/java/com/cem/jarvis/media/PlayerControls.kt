@@ -4,6 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.media.AudioManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -35,7 +38,9 @@ import kotlin.math.roundToInt
 @Composable
 fun PlayerControls(
     player: ExoPlayer, title: String, hasNext: Boolean,
-    onNext: () -> Unit, onEpisodes: () -> Unit, onClose: () -> Unit
+    onNext: () -> Unit, onEpisodes: () -> Unit, onClose: () -> Unit,
+    videoSize: String = "Büyük", onVideoSizeChange: (String) -> Unit = {},
+    onFullscreen: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
     val act = ctx as? Activity
@@ -44,6 +49,7 @@ fun PlayerControls(
 
     var show by remember { mutableStateOf(true) }
     var locked by remember { mutableStateOf(false) }
+    var fullscreen by remember { mutableStateOf(false) }
     var playing by remember { mutableStateOf(true) }
     var pos by remember { mutableLongStateOf(0L) }
     var dur by remember { mutableLongStateOf(0L) }
@@ -55,7 +61,20 @@ fun PlayerControls(
 
     DisposableEffect(Unit) {
         act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        onDispose { act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED }
+        onDispose {
+            act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            act?.window?.let { WindowCompat.getInsetsController(it, it.decorView).show(WindowInsetsCompat.Type.systemBars()) }
+        }
+    }
+    DisposableEffect(fullscreen) {
+        val window = act?.window
+        if (window != null) {
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            if (fullscreen) controller.hide(WindowInsetsCompat.Type.systemBars())
+            else controller.show(WindowInsetsCompat.Type.systemBars())
+        }
+        onDispose { if (fullscreen && window != null) WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars()) }
     }
     LaunchedEffect(speed) { player.setPlaybackSpeed(speed); prefs.edit().putFloat("speed", speed).apply() }
     LaunchedEffect(Unit) { while (true) { pos = player.currentPosition; dur = player.duration.coerceAtLeast(0); playing = player.isPlaying; delay(500) } }
@@ -131,6 +150,8 @@ fun PlayerControls(
                     Opt("Hız (${"%.2f".format(speed).trimEnd('0').trimEnd('.')}x)") { menu = "s" }
                     Opt("Ses") { menu = "a" }
                     Opt("Altyazılar", enabled = hasText) { menu = "t" }
+                    Opt("Görüntü ($videoSize)") { menu = "v" }
+                    Opt(if (fullscreen) "Tam ekrandan çık" else "Tam ekran") { fullscreen = !fullscreen; onFullscreen() }
                     Opt("Bölüm") { onEpisodes() }
                     if (hasNext) Opt("Sonraki Bölüm ▸") { onNext() }
                 }
@@ -153,6 +174,12 @@ fun PlayerControls(
                 "a" -> player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }.forEachIndexed { i, g ->
                     MenuItem(g.getTrackFormat(0).language ?: "Ses ${i + 1}", g.isSelected) {
                         params { it.setOverrideForType(TrackSelectionOverride(g.mediaTrackGroup, 0)) }; menu = null
+                    }
+                }
+                "v" -> listOf("Küçük", "Orta", "Büyük", "Ekrana sığdır").forEach { size ->
+                    MenuItem(size, videoSize == size || (size == "Ekrana sığdır" && videoSize == "Büyük")) {
+                        onVideoSizeChange(if (size == "Ekrana sığdır") "Büyük" else size)
+                        menu = null
                     }
                 }
                 "t" -> {

@@ -35,6 +35,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
@@ -50,6 +51,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -61,6 +64,13 @@ private data class AriesSiteResult(
     val title: String,
     val url: String,
     val snippet: String
+)
+
+private data class AriesMediaCandidate(
+    val url: String,
+    val mime: String?,
+    val headers: Map<String, String>,
+    val score: Int
 )
 
 private data class AriesSeason(val number: Int, val episodes: Int)
@@ -132,20 +142,20 @@ private fun ariesCleanTitle(raw: String): String {
 /**
  * Seekee düzeninde arama ekranı + izleme sayfası.
  * Arama: katalog kartı ve web sonuç kartları.
- * Katalog bilgisi ayrı, web sayfası ayrı açılır; doğrudan medya bağlantısı kullanıcı tarafından girilir.
+ * Katalog bilgisi ayrı, web sayfası ayrı açılır; kaynaklar otomatik taranır ve uygun akış oynatıcıya aktarılır.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun MediaSourceBrowser(
     query: String,
     onBack: () -> Unit,
-    onPlayMedia: (String, Item, Int, Int) -> Unit
+    playerOverlay: Boolean = false,
+    onPlayMedia: (String, String?, Map<String, String>, Item, Int, Int, (String) -> Unit) -> Unit
 ) {
     var searchText by remember(query) { mutableStateOf(query) }
     var activeQuery by remember(query) { mutableStateOf(query) }
     var webTerm by remember(query) { mutableStateOf(query) }
     var activeSite by remember { mutableStateOf<AriesSiteResult?>(null) }
-    var personalMediaUrl by remember { mutableStateOf("") }
     var pageTitle by remember { mutableStateOf("") }
     var pageUrl by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Film ve dizi siteleri aranıyor…") }
@@ -160,9 +170,23 @@ fun MediaSourceBrowser(
     var trailerPlaying by remember { mutableStateOf(false) }
     var playerError by remember { mutableStateOf<String?>(null) }
     var autoPlayedMediaUrl by remember { mutableStateOf<String?>(null) }
+    var mediaWasDetected by remember { mutableStateOf(false) }
+    var sourceScanExhausted by remember { mutableStateOf(false) }
+    val attemptedSourceUrls = remember { mutableStateListOf<String>() }
+    val mediaCandidates = remember { mutableStateListOf<AriesMediaCandidate>() }
+    val failedMediaUrls = remember { mutableStateListOf<String>() }
+    var playbackCandidateUrl by remember { mutableStateOf<String?>(null) }
     var fullscreenView by remember { mutableStateOf<View?>(null) }
     var fullscreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     val hostContext = LocalContext.current
+
+    // Keep the source page mounted behind ExoPlayer so a failed stream or
+    // the player's back action returns to the exact same page and watch state.
+    LaunchedEffect(playerOverlay, activeSite?.url) {
+        siteView?.let { view ->
+            if (playerOverlay) view.onPause() else view.onResume()
+        }
+    }
 
     val onShowCustomCb: (View, WebChromeClient.CustomViewCallback) -> Unit = { view, callback ->
         fullscreenCallback = callback
@@ -235,6 +259,10 @@ fun MediaSourceBrowser(
         activeSite = null
         watching = null
         playerError = null
+        autoPlayedMediaUrl = null
+        mediaCandidates.clear()
+        failedMediaUrls.clear()
+        playbackCandidateUrl = null
         runWebSearch(term)
     }
 
@@ -242,14 +270,41 @@ fun MediaSourceBrowser(
         trailerPlaying = false
         playerError = null
         autoPlayedMediaUrl = null
+        mediaWasDetected = false
+        mediaCandidates.clear()
+        failedMediaUrls.clear()
+        playbackCandidateUrl = null
+        sourceScanExhausted = false
+        attemptedSourceUrls.add(site.url)
         activeSite = site
         pageTitle = site.title
         pageUrl = site.url
-        status = "Site açılıyor…"
+        status = "Kaynak taranıyor: ${site.title}"
     }
 
-    // Web arama kartı yalnızca seçilen web sayfasını açar; sayfadaki akışları ayıklayıp oynatmaz.
+    fun openNextAutoSource() {
+        val next = results.firstOrNull {
+            it.url !in attemptedSourceUrls && !isAriesDiscoveryOnlyHost(it.url)
+        }
+        if (next != null) {
+            openSite(next)
+            return
+        }
+        // If every remaining result is a catalogue/search page, leave one in the
+        // in-app browser as a fallback instead of treating it as a playable host.
+        val fallback = results.firstOrNull { it.url !in attemptedSourceUrls }
+        if (activeSite == null && fallback != null) {
+            attemptedSourceUrls.add(fallback.url)
+            activeSite = fallback
+            pageTitle = fallback.title
+            pageUrl = fallback.url
+        }
+        sourceScanExhausted = true
+        status = "Otomatik tarama tamamlandı. Doğrudan akış bulunamadı; açık sayfa Aries içinde bırakıldı."
+    }
+
     fun openResultInPlayer(site: AriesSiteResult) {
+        attemptedSourceUrls.clear()
         openSite(site)
     }
 
@@ -259,6 +314,11 @@ fun MediaSourceBrowser(
         playerError = null
         watching = w
         activeSite = null
+        autoPlayedMediaUrl = null
+        mediaCandidates.clear()
+        failedMediaUrls.clear()
+        playbackCandidateUrl = null
+        attemptedSourceUrls.clear()
         runWebSearch(ariesWatchQuery(w))
     }
 
@@ -269,7 +329,105 @@ fun MediaSourceBrowser(
         val next = w.copy(episode = episode)
         watching = next
         activeSite = null
+        autoPlayedMediaUrl = null
+        mediaCandidates.clear()
+        failedMediaUrls.clear()
+        playbackCandidateUrl = null
+        attemptedSourceUrls.clear()
         runWebSearch(ariesWatchQuery(next))
+    }
+
+    // Collect a short burst of requests, prefer a master HLS manifest, and hand off only one
+    // candidate at a time. A failed candidate is remembered so the next one can be tried.
+    LaunchedEffect(
+        activeSite?.url, watching, mediaCandidates.size, playbackCandidateUrl,
+        failedMediaUrls.size, sourceScanExhausted
+    ) {
+        val selectedSite = activeSite
+        val currentWatch = watching
+        if (selectedSite != null && currentWatch != null &&
+            playbackCandidateUrl == null && !sourceScanExhausted
+        ) {
+            kotlinx.coroutines.delay(3200)
+            if (activeSite?.url != selectedSite.url || watching != currentWatch ||
+                playbackCandidateUrl != null || sourceScanExhausted
+            ) return@LaunchedEffect
+
+            val candidate = mediaCandidates
+                .filterNot { item -> failedMediaUrls.contains(item.url) }
+                .maxByOrNull { it.score }
+
+            if (candidate == null) {
+                if (mediaCandidates.isNotEmpty() && failedMediaUrls.size >= mediaCandidates.size) {
+                    sourceScanExhausted = true
+                    status = "Bu sayfadaki video akışları Aries oynatıcısında açılamadı. Aynı kaynak sayfası açık bırakıldı."
+                }
+                return@LaunchedEffect
+            }
+
+            val page = siteView?.url?.takeIf { it.startsWith("http", true) } ?: selectedSite.url
+            val headers = linkedMapOf<String, String>()
+            candidate.headers.forEach { (name, value) ->
+                if (isAriesForwardableHeader(name) && value.isNotBlank()) headers[name] = value
+            }
+            headers.putIfAbsent("Referer", page)
+            headers.putIfAbsent(
+                "User-Agent",
+                siteView?.settings?.userAgentString
+                    ?: "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36"
+            )
+            val origin = runCatching {
+                val uri = Uri.parse(page)
+                "${uri.scheme}://${uri.authority}"
+            }.getOrNull()
+            if (!origin.isNullOrBlank()) headers.putIfAbsent("Origin", origin)
+            if (!headers.containsKey("Cookie")) {
+                val cookie = CookieManager.getInstance().getCookie(candidate.url)
+                if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
+            }
+
+            playbackCandidateUrl = candidate.url
+            autoPlayedMediaUrl = candidate.url
+            status = "Video akışı bulundu; Aries oynatıcısına aktarılıyor…"
+            siteView?.evaluateJavascript(
+                "document.querySelectorAll('video,audio').forEach(function(v){try{v.pause();}catch(e){}});",
+                null
+            )
+            val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
+                ?: createWebQueryItem(activeQuery, currentWatch.isMovie)
+
+            onPlayMedia(
+                candidate.url,
+                candidate.mime ?: inferAriesMimeType(candidate.url),
+                headers,
+                playableItem,
+                currentWatch.season ?: 0,
+                currentWatch.episode
+            ) { failedUrl ->
+                if (activeSite?.url == selectedSite.url && playbackCandidateUrl == failedUrl) {
+                    if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl)
+                    playbackCandidateUrl = null
+                    autoPlayedMediaUrl = null
+                    status = "Bu video akışı açılamadı; başka bir akış deneniyor…"
+                }
+            }
+        }
+    }
+
+    // Keep the current source page open if no playable stream is detected.
+    LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, sourceScanExhausted, mediaWasDetected) {
+        val current = activeSite
+        if (watching != null && current != null && autoPlayedMediaUrl == null &&
+            !mediaWasDetected && !sourceScanExhausted
+        ) {
+            kotlinx.coroutines.delay(30000)
+            if (activeSite?.url == current.url && autoPlayedMediaUrl == null &&
+                !mediaWasDetected && !sourceScanExhausted
+            ) {
+                sourceScanExhausted = true
+                status = "Bu sayfada doğrudan video akışı bulunamadı. Kaynak sayfası açık bırakıldı."
+            }
+        }
     }
 
     BackHandler(enabled = activeSite != null && watching == null) {
@@ -296,7 +454,7 @@ fun MediaSourceBrowser(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().alpha(if (playerOverlay) 0f else 1f)) {
         val currentWatch = watching
         if (currentWatch != null) {
             AriesWatchScreen(
@@ -304,24 +462,8 @@ fun MediaSourceBrowser(
                 sources = results.toList(),
                 searching = searching,
                 currentUrl = activeSite?.url,
-                personalMediaUrl = personalMediaUrl,
-                onPersonalMediaUrlChange = { personalMediaUrl = it },
+                scanExhausted = sourceScanExhausted,
                 playerError = playerError,
-                onPlayPersonalMedia = {
-                    if (isSupportedMediaUrl(personalMediaUrl)) {
-                        val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
-                            ?: createWebQueryItem(activeQuery, currentWatch.isMovie)
-                        onPlayMedia(
-                            personalMediaUrl.trim(),
-                            playableItem,
-                            currentWatch.season ?: 0,
-                            currentWatch.episode
-                        )
-                        playerError = null
-                    } else {
-                        playerError = "Geçerli bir HTTPS MP4, M3U8 veya MPD bağlantısı gir."
-                    }
-                },
                 similar = similar,
                 trailerUrl = info?.trailerUrl,
                 trailerPlaying = trailerPlaying,
@@ -351,12 +493,32 @@ fun MediaSourceBrowser(
                             onHideCustom = onHideCustomCb,
                             onCreated = { siteView = it },
                             onGone = { v -> if (siteView === v) siteView = null },
-                            onMediaFound = { mediaUrl ->
-                                if (autoPlayedMediaUrl != mediaUrl && isSupportedMediaUrl(mediaUrl)) {
-                                    autoPlayedMediaUrl = mediaUrl
-                                    val playableItem = info?.toCatalogItem(activeQuery, currentWatch.isMovie)
-                                        ?: createWebQueryItem(activeQuery, currentWatch.isMovie)
-                                    onPlayMedia(mediaUrl, playableItem, currentWatch.season ?: 0, currentWatch.episode)
+                            onMediaFound = { mediaUrl, detectedMime, capturedHeaders ->
+                                if (isSupportedMediaUrl(mediaUrl) || isAriesMediaMime(detectedMime)) {
+                                    val normalizedUrl = mediaUrl.trim()
+                                    val score = ariesMediaCandidateScore(normalizedUrl, detectedMime)
+                                    if (score > 0 && failedMediaUrls.none { it == normalizedUrl }) {
+                                         mediaWasDetected = true
+                                        val index = mediaCandidates.indexOfFirst { it.url == normalizedUrl }
+                                        if (index < 0) {
+                                            mediaCandidates.add(
+                                                AriesMediaCandidate(
+                                                    url = normalizedUrl,
+                                                    mime = detectedMime ?: inferAriesMimeType(normalizedUrl),
+                                                    headers = capturedHeaders,
+                                                    score = score
+                                                )
+                                            )
+                                            status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
+                                        } else {
+                                            val old = mediaCandidates[index]
+                                            mediaCandidates[index] = old.copy(
+                                                mime = detectedMime ?: old.mime,
+                                                headers = old.headers + capturedHeaders,
+                                                score = maxOf(old.score, score)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         )
@@ -373,7 +535,7 @@ fun MediaSourceBrowser(
                         )
                         else -> Text(
                             playerError ?: if (searching) "Web sonuçları aranıyor…"
-                            else "Bir kaynak seç veya kendi doğrudan medya bağlantını gir.",
+                            else "Uygun akış bulunamazsa seçilen kaynak uygulama içinde açılır.",
                             color = AriesMuted,
                             fontSize = 15.sp
                         )
@@ -543,9 +705,16 @@ fun MediaSourceBrowser(
                         },
                         onSearchFinished = {
                             searching = false
-                            status = if (results.isEmpty())
-                                "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
-                            else "${results.size} site sonucu bulundu"
+                            if (watching != null && results.isNotEmpty()) {
+                                attemptedSourceUrls.clear()
+                                sourceScanExhausted = false
+                                status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
+                                openNextAutoSource()
+                            } else {
+                                status = if (results.isEmpty())
+                                    "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
+                                else "${results.size} site sonucu bulundu"
+                            }
                         }
                     ).also {
                         searchView = it
@@ -574,7 +743,7 @@ private fun AriesSiteWeb(
     onHideCustom: () -> Unit,
     onCreated: (WebView) -> Unit,
     onGone: (WebView) -> Unit,
-    onMediaFound: ((String) -> Unit)? = null
+    onMediaFound: ((String, String?, Map<String, String>) -> Unit)? = null
 ) {
     val loaded = remember { arrayOfNulls<String>(1) }
     val holder = remember { arrayOfNulls<WebView>(1) }
@@ -627,10 +796,8 @@ private fun AriesWatchScreen(
     sources: List<AriesSiteResult>,
     searching: Boolean,
     currentUrl: String?,
-    personalMediaUrl: String,
-    onPersonalMediaUrlChange: (String) -> Unit,
+    scanExhausted: Boolean,
     playerError: String?,
-    onPlayPersonalMedia: () -> Unit,
     similar: List<AriesSimilar>,
     trailerUrl: String?,
     trailerPlaying: Boolean,
@@ -739,28 +906,29 @@ private fun AriesWatchScreen(
                     }
                 }
             }
-            item(key = "w-own-media") {
+            item(key = "w-auto-scan") {
                 Column(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
                         .background(AriesWatchCard).padding(14.dp)
                 ) {
-                    Text("Kendi medya bağlantın", color = AriesText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("Kullanım iznin olan MP4 / M3U8 / MPD bağlantıları oynatılır. Web sayfalarından video çıkarılmaz.",
-                        color = AriesMuted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp, bottom = 10.dp))
-                    OutlinedTextField(
-                        value = personalMediaUrl,
-                        onValueChange = onPersonalMediaUrlChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text("https://…") },
-                        placeholder = { Text("video.mp4 veya yayın.m3u8") }
+                    Text(
+                        "Otomatik kaynak tarama",
+                        color = AriesText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    if (!playerError.isNullOrBlank()) {
-                        Text(playerError, color = Color(0xFFFF8A7A), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-                    }
-                    Button(onClick = onPlayPersonalMedia, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                        Text("▶  Bağlantıyı oynat")
-                    }
+                    Text(
+                        when {
+                            currentUrl != null && scanExhausted -> "Doğrudan video adresi bulunamadı. Açık web sayfası Aries içinde bırakıldı."
+                            currentUrl != null -> "Açık sayfanın ağ istekleri ve oynatıcı kaynakları taranıyor."
+                            searching -> "Aries izleme kaynaklarını arıyor…"
+                            sources.isNotEmpty() -> "Kaynaklar bulundu. İlk sayfa otomatik açılıyor; akış bulunamazsa sonraki kaynak deneniyor."
+                            else -> "Bu arama için kaynak bulunamadı. Başlığı veya bölüm numarasını değiştirerek tekrar deneyebilirsin."
+                        },
+                        color = AriesMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 5.dp)
+                    )
                 }
             }
             if (watch.total > 0) {
@@ -1321,6 +1489,248 @@ private fun createAriesSearchWebView(
 }
 
 @SuppressLint("SetJavaScriptEnabled")
+private val ARIES_MEDIA_SNIFFER_SCRIPT = """
+    (function () {
+      if (window.__ariesSnifferInstalled) return;
+      window.__ariesSnifferInstalled = true;
+
+      var candidates = [];
+      var flushTimer = null;
+      var sentUrls = Object.create(null);
+
+      function headersObject(source) {
+        var out = {};
+        try {
+          if (!source) return out;
+          if (typeof source.forEach === 'function') {
+            source.forEach(function (value, key) { out[String(key)] = String(value); });
+          } else if (Array.isArray(source)) {
+            source.forEach(function (pair) { if (pair && pair.length > 1) out[String(pair[0])] = String(pair[1]); });
+          } else if (typeof source === 'object') {
+            Object.keys(source).forEach(function (key) { out[key] = String(source[key]); });
+          }
+        } catch (e) {}
+        return out;
+      }
+
+      function absolute(raw) {
+        try { return new URL(String(raw || ''), location.href).href; }
+        catch (e) { return ''; }
+      }
+
+      function score(url, mime) {
+        var u = String(url || '').toLowerCase();
+        var m = String(mime || '').toLowerCase();
+        if (u.indexOf('.m3u8') >= 0 || m.indexOf('mpegurl') >= 0) return 100;
+        if (u.indexOf('.mpd') >= 0 || m.indexOf('dash+xml') >= 0) return 95;
+        if (u.indexOf('.mp4') >= 0 || u.indexOf('.m4v') >= 0 || m.indexOf('video/mp4') >= 0) return 85;
+        if (u.indexOf('.webm') >= 0 || m.indexOf('video/webm') >= 0) return 80;
+        if (u.indexOf('.mov') >= 0 || m.indexOf('video/quicktime') >= 0) return 75;
+        return 0;
+      }
+
+      function queue(raw, mime, requestHeaders) {
+        var url = absolute(raw);
+        if (!url || !/^https?:\/\//i.test(url)) return;
+        var s = score(url, mime);
+        if (!s) return;
+        var previous = candidates.find(function (item) { return item.url === url; });
+        if (previous) {
+          if (s > previous.score) { previous.score = s; previous.mime = mime || previous.mime; }
+          if (requestHeaders) previous.headers = Object.assign(previous.headers || {}, requestHeaders);
+        } else {
+          candidates.push({ url: url, mime: mime || '', headers: requestHeaders || {}, score: s });
+        }
+        if (flushTimer) clearTimeout(flushTimer);
+        flushTimer = setTimeout(flush, 1400);
+      }
+
+      function flush() {
+        if (!candidates.length) return;
+        candidates.sort(function (a, b) { return b.score - a.score; });
+        candidates.forEach(function (item) {
+          if (sentUrls[item.url]) return;
+          sentUrls[item.url] = true;
+          try {
+            if (window.AriesMediaBridge && window.AriesMediaBridge.found) {
+              window.AriesMediaBridge.found(item.url, item.mime || '', JSON.stringify(item.headers || {}));
+            }
+          } catch (e) {}
+        });
+      }
+
+      function inspectBody(text, url, requestHeaders) {
+        if (!text) return;
+        var body = String(text).slice(0, 4096).replace(/^\s+/, '');
+        if (body.indexOf('#EXTM3U') === 0) queue(url, 'application/vnd.apple.mpegurl', requestHeaders);
+        else if (/<MPD(?:\s|>)/i.test(body)) queue(url, 'application/dash+xml', requestHeaders);
+        var bodyText = String(text).slice(0, 1000000);
+        var regex = /(?:https?:)?\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?|(?:\.\.\/|\.\/|\/)?[A-Za-z0-9_~%+./-]+\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?/ig;
+        var match;
+        while ((match = regex.exec(bodyText)) !== null) {
+          try { queue(new URL(match[0], url || location.href).href, '', requestHeaders); } catch (e) {}
+        }
+      }
+
+      var startAttempted = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+      var startSelectors = [
+        '.vjs-big-play-button',
+        '.plyr__control--overlaid',
+        '[data-plyr="play"]',
+        '.jw-display-icon-container',
+        '.jw-icon-playback',
+        '.html5-video-player .ytp-large-play-button',
+        'button[aria-label*="play" i]',
+        '[role="button"][aria-label*="play" i]'
+      ];
+
+      function visiblePlayerControl(element) {
+        if (!element || !element.getBoundingClientRect) return false;
+        var rect = element.getBoundingClientRect();
+        var style = window.getComputedStyle(element);
+        return rect.width >= 20 && rect.height >= 20 &&
+          style.display !== 'none' && style.visibility !== 'hidden' &&
+          Number(style.opacity || 1) > 0 && rect.bottom > 0 && rect.right > 0 &&
+          rect.top < window.innerHeight && rect.left < window.innerWidth;
+      }
+
+      function startVisiblePlayers() {
+        try {
+          document.querySelectorAll('video').forEach(function (video) {
+            if (startAttempted && startAttempted.has(video)) return;
+            if (!video.paused) {
+              if (startAttempted) startAttempted.add(video);
+              return;
+            }
+            if (video.readyState < 1) return;
+            if (startAttempted) startAttempted.add(video);
+            var result = video.play();
+            if (result && result.catch) result.catch(function () {});
+          });
+
+          for (var i = 0; i < startSelectors.length; i++) {
+            var controls = document.querySelectorAll(startSelectors[i]);
+            for (var j = 0; j < controls.length; j++) {
+              var control = controls[j];
+              if (startAttempted && startAttempted.has(control)) continue;
+              if (!visiblePlayerControl(control)) continue;
+              if (startAttempted) startAttempted.add(control);
+              try { control.click(); } catch (e) {}
+            }
+          }
+        } catch (e) {}
+      }
+
+      function scanDom() {
+        try {
+          document.querySelectorAll('video, audio, source').forEach(function (element) {
+            var raw = element.currentSrc || element.src || element.getAttribute('src') || '';
+            queue(raw, element.getAttribute('type') || '', {});
+          });
+          performance.getEntriesByType('resource').forEach(function (entry) { queue(entry.name, '', {}); });
+          startVisiblePlayers();
+        } catch (e) {}
+      }
+
+      try {
+        var originalFetch = window.fetch;
+        if (originalFetch) {
+          window.fetch = function (input, init) {
+            var url = '';
+            var requestHeaders = {};
+            try {
+              url = typeof input === 'string' ? input : (input && input.url) || '';
+              requestHeaders = headersObject((init && init.headers) || (input && input.headers));
+            } catch (e) {}
+            return originalFetch.apply(this, arguments).then(function (response) {
+              try {
+                var contentType = response.headers.get('content-type') || '';
+                var responseUrl = response.url || url;
+                if (score(responseUrl, contentType) > 0) {
+                  queue(responseUrl, contentType, requestHeaders);
+                } else if (/text|json|xml|mpegurl|dash\+xml|octet-stream/i.test(contentType)) {
+                  var clone = response.clone();
+                  var reader = clone.body && clone.body.getReader ? clone.body.getReader() : null;
+                  if (reader) {
+                    reader.read().then(function (part) {
+                      if (part && part.value) {
+                        inspectBody(new TextDecoder().decode(part.value.slice(0, 65536)), responseUrl, requestHeaders);
+                      }
+                      try { reader.cancel(); } catch (e) {}
+                    }).catch(function () {});
+                  } else {
+                    clone.text().then(function (body) {
+                      inspectBody(String(body).slice(0, 65536), responseUrl, requestHeaders);
+                    }).catch(function () {});
+                  }
+                }
+              } catch (e) {}
+              return response;
+            });
+          };
+        }
+      } catch (e) {}
+
+      try {
+        var originalOpen = XMLHttpRequest.prototype.open;
+        var originalHeader = XMLHttpRequest.prototype.setRequestHeader;
+        var originalSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function (method, url) {
+          this.__ariesUrl = absolute(url);
+          this.__ariesHeaders = {};
+          return originalOpen.apply(this, arguments);
+        };
+        XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+          try { this.__ariesHeaders[String(name)] = String(value); } catch (e) {}
+          return originalHeader.apply(this, arguments);
+        };
+        XMLHttpRequest.prototype.send = function () {
+          this.addEventListener('loadend', function () {
+            try {
+              var contentType = this.getResponseHeader('content-type') || '';
+              var responseUrl = this.responseURL || this.__ariesUrl || '';
+              if (this.status < 200 || this.status >= 400) return;
+              if (score(responseUrl, contentType) > 0) {
+                queue(responseUrl, contentType, this.__ariesHeaders || {});
+                return;
+              }
+              var responseType = this.responseType || '';
+              if (responseType === '' || responseType === 'text') {
+                inspectBody(this.responseText || '', responseUrl, this.__ariesHeaders || {});
+              } else if (responseType === 'arraybuffer' && this.response && this.response.byteLength > 0 && this.response.byteLength <= 4194304) {
+                var bytes = new Uint8Array(this.response, 0, Math.min(65536, this.response.byteLength));
+                inspectBody(new TextDecoder().decode(bytes), responseUrl, this.__ariesHeaders || {});
+              } else if (responseType === 'blob' && this.response && this.response.size > 0 && this.response.size <= 4194304) {
+                this.response.slice(0, 65536).text().then((body) => {
+                  inspectBody(body, responseUrl, this.__ariesHeaders || {});
+                }).catch(function () {});
+              } else if (responseType === 'json' && this.response) {
+                inspectBody(JSON.stringify(this.response), responseUrl, this.__ariesHeaders || {});
+              }
+            } catch (e) {}
+          });
+          return originalSend.apply(this, arguments);
+        };
+      } catch (e) {}
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scanDom, { once: true });
+      } else {
+        scanDom();
+      }
+      // Players often attach their source only after an explicit play gesture.
+      // Re-scan on media lifecycle events without clicking page links or ads.
+      ['play', 'playing', 'loadedmetadata', 'canplay', 'durationchange'].forEach(function (eventName) {
+        document.addEventListener(eventName, function () { scanDom(); }, true);
+      });
+      try {
+        new MutationObserver(scanDom).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+      } catch (e) {}
+      setInterval(scanDom, 1800);
+      window.__ariesScanMedia = scanDom;
+    })();
+    """.trimIndent()
+
 private fun createAriesSiteWebView(
     context: android.content.Context,
     onTitle: (String) -> Unit,
@@ -1329,18 +1739,43 @@ private fun createAriesSiteWebView(
     onStatus: (String) -> Unit,
     onShowCustom: (View, WebChromeClient.CustomViewCallback) -> Unit,
     onHideCustom: () -> Unit,
-    onMediaFound: ((String) -> Unit)? = null
+    onMediaFound: ((String, String?, Map<String, String>) -> Unit)? = null
 ): WebView {
     val mainHandler = Handler(Looper.getMainLooper())
     return WebView(context).apply {
         configureAriesWebView()
+        settings.mediaPlaybackRequiresUserGesture = false
         addJavascriptInterface(object {
             @JavascriptInterface
-            fun found(rawUrl: String) {
+            fun found(rawUrl: String, contentType: String?, rawHeaders: String?) {
                 val candidate = rawUrl.trim()
-                if (isSupportedMediaUrl(candidate)) mainHandler.post { onMediaFound?.invoke(candidate) }
+                val mime = contentType?.substringBefore(";")?.trim()?.lowercase()
+                val requestHeaders = runCatching {
+                    val json = JSONObject(rawHeaders.orEmpty())
+                    buildMap {
+                        val keys = json.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val value = json.optString(key)
+                            if (isAriesForwardableHeader(key) && value.isNotBlank()) put(key, value)
+                        }
+                    }
+                }.getOrDefault(emptyMap())
+                if (isSupportedMediaUrl(candidate) || isAriesMediaMime(mime)) {
+                    mainHandler.post { onMediaFound?.invoke(candidate, mime, requestHeaders) }
+                }
             }
         }, "AriesMediaBridge")
+
+        // Install before site scripts run. onPageFinished-only injection misses
+        // players that request their manifests during initial page startup.
+        val documentStartInstalled = runCatching {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                WebViewCompat.addDocumentStartJavaScript(this, ARIES_MEDIA_SNIFFER_SCRIPT, setOf("*"))
+                true
+            } else false
+        }.getOrDefault(false)
+
         webChromeClient = object : WebChromeClient() {
             override fun onReceivedTitle(view: WebView?, title: String?) {
                 if (!title.isNullOrBlank()) onTitle(title)
@@ -1359,39 +1794,37 @@ private fun createAriesSiteWebView(
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 onLoading(true)
                 if (!url.isNullOrBlank()) onUrl(url)
+                if (!documentStartInstalled) view?.evaluateJavascript(ARIES_MEDIA_SNIFFER_SCRIPT, null)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 onLoading(false)
-                onStatus("Sayfa taranıyor; doğrudan MP4 / M3U8 / MPD akışı aranıyor…")
+                onStatus("Sayfanın medya istekleri taranıyor…")
                 if (!url.isNullOrBlank()) onUrl(url)
-                val scanScript = """
-                    (function() {
-                      function scan() {
-                        document.querySelectorAll('video, audio, source').forEach(function(el) {
-                          var raw = el.currentSrc || el.src || el.getAttribute('src') || '';
-                          if (!raw) return;
-                          try { raw = new URL(raw, location.href).href; } catch(e) { return; }
-                          if (/^https:\/\//i.test(raw) && /\.(mp4|m3u8|mpd|webm|m4v|mov)(?:$|[?#])/i.test(raw)) {
-                            AriesMediaBridge.found(raw);
-                          }
-                        });
-                      }
-                      scan();
-                      if (!window.__ariesMediaObserver) {
-                        window.__ariesMediaObserver = new MutationObserver(scan);
-                        window.__ariesMediaObserver.observe(document.documentElement, {childList:true,subtree:true,attributes:true,attributeFilter:['src']});
-                        setTimeout(scan, 1000); setTimeout(scan, 3000); setTimeout(scan, 7000);
-                      }
-                    })();
-                """.trimIndent()
-                view?.evaluateJavascript(scanScript, null)
+                // Also run a DOM/resource scan after load; network hooks were installed at document start.
+                view?.evaluateJavascript("window.__ariesScanMedia && window.__ariesScanMedia();", null)
             }
 
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
                 val candidate = request?.url?.toString().orEmpty()
-                if (isSupportedMediaUrl(candidate)) mainHandler.post { onMediaFound?.invoke(candidate) }
+                val requestHeaders = request?.requestHeaders.orEmpty()
+                    .filterKeys { isAriesForwardableHeader(it) }
+                if (isSupportedMediaUrl(candidate)) {
+                    mainHandler.post {
+                        onMediaFound?.invoke(candidate, inferAriesMimeType(candidate), requestHeaders)
+                    }
+                }
                 return super.shouldInterceptRequest(view, request)
+            }
+
+            override fun onLoadResource(view: WebView?, url: String?) {
+                val candidate = url.orEmpty()
+                if (isSupportedMediaUrl(candidate)) {
+                    mainHandler.post {
+                        onMediaFound?.invoke(candidate, inferAriesMimeType(candidate), emptyMap())
+                    }
+                }
+                super.onLoadResource(view, url)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -1418,6 +1851,15 @@ private fun WebView.configureAriesWebView() {
         "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     CookieManager.getInstance().setAcceptCookie(true)
     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+}
+
+private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
+    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
+    return listOf(
+        "justwatch.com", "themoviedb.org", "imdb.com", "tvmaze.com",
+        "thetvdb.com", "wikipedia.org", "rottentomatoes.com",
+        "metacritic.com", "trakt.tv", "letterboxd.com"
+    ).any { host == it || host.endsWith(".$it") }
 }
 
 private fun hostOfAries(url: String): String =
@@ -1449,7 +1891,65 @@ private fun fetchAriesSimilar(id: Int, isTv: Boolean, key: String): List<AriesSi
     }
     return list
 }
+private fun isAriesForwardableHeader(name: String): Boolean {
+    val key = name.trim().lowercase()
+    return key in setOf(
+        "authorization", "cookie", "referer", "origin", "user-agent",
+        "accept", "x-api-key", "x-auth-token", "x-requested-with"
+    ) || (key.startsWith("x-") && key.length <= 64)
+}
+
+private fun isAriesMediaMime(mime: String?): Boolean =
+    !mime.isNullOrBlank() && (
+        mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") ||
+            mime.contains("dash+xml") || mime.contains("video/mp4") ||
+            mime.contains("video/webm") || mime.contains("video/quicktime")
+    )
+
+private fun inferAriesMimeType(url: String, responseType: String? = null): String? {
+    val mime = responseType?.lowercase().orEmpty()
+    return when {
+        mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") -> "application/x-mpegURL"
+        mime.contains("dash+xml") -> "application/dash+xml"
+        mime.contains("video/mp4") -> "video/mp4"
+        mime.contains("video/webm") -> "video/webm"
+        mime.contains("video/quicktime") -> "video/quicktime"
+        else -> {
+            val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
+            when {
+                path.endsWith(".m3u8") -> "application/x-mpegURL"
+                path.endsWith(".mpd") -> "application/dash+xml"
+                path.endsWith(".mp4") || path.endsWith(".m4v") -> "video/mp4"
+                path.endsWith(".webm") -> "video/webm"
+                path.endsWith(".mov") -> "video/quicktime"
+                else -> null
+            }
+        }
+    }
+}
+
+private fun ariesMediaCandidateScore(url: String, mime: String?): Int {
+    val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
+    val type = mime.orEmpty().lowercase()
+    return when {
+        path.endsWith("master.m3u8") -> 110
+        path.endsWith(".m3u8") || type.contains("mpegurl") -> 100
+        path.endsWith(".mpd") || type.contains("dash+xml") -> 95
+        path.endsWith(".mp4") || path.endsWith(".m4v") || type.contains("video/mp4") -> 85
+        path.endsWith(".webm") || type.contains("video/webm") -> 80
+        path.endsWith(".mov") || type.contains("video/quicktime") -> 75
+        path.endsWith(".mkv") -> 70
+        else -> 0
+    }
+}
+
 private fun isSupportedMediaUrl(url: String): Boolean {
-    val u = url.lowercase()
-    return u.startsWith("http") && listOf(".m3u8", ".mp4", ".mpd", ".webm", ".mkv").any { u.contains(it) }
+    if (!url.startsWith("https://", ignoreCase = true) && !url.startsWith("http://", ignoreCase = true)) return false
+    val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+    val path = uri.path.orEmpty().lowercase()
+    if (listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }) return true
+    val format = listOf("format", "type", "mime", "ext", "output").mapNotNull { uri.getQueryParameter(it) }
+        .joinToString(" ").lowercase()
+    return listOf("m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm", "video/quicktime")
+        .any { format.contains(it) }
 }

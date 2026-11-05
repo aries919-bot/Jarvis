@@ -30,8 +30,8 @@ android {
         applicationId = "com.cem.jarvis"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 9
+        versionName = "1.8"
         buildConfigField("String", "TMDB_TOKEN", "\"$tmdbToken\"")
     }
     compileOptions {
@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.webkit:webkit:1.18.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")

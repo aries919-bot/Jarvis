@@ -173,9 +173,24 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     var web2 by remember { mutableStateOf(false) }
     var play2 by remember { mutableStateOf<PlayReq?>(null) }
     if (web2) {
-        val p = play2
-        if (p != null) ResumePlayer(p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null })
-        else MediaSourceBrowser(q, { web2 = false }, { u, i, s, e -> play2 = PlayReq(u, i, s, e) })
+        Box(Modifier.fillMaxSize()) {
+            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure ->
+                play2 = PlayReq(url, item, season, episode, headers, mime, onFailure)
+            }
+            play2?.let { p ->
+                ResumePlayer(
+                    p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
+                    requestHeaders = p.headers,
+                    mimeType = p.mimeType,
+                    onPlaybackError = {
+                        // Do not abandon the WebView page: tell its stream queue to try
+                        // the next manifest/URL captured from the same source.
+                        play2 = null
+                        p.onFailure(p.url)
+                    }
+                )
+            }
+        }
         return
     }
     Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
@@ -263,9 +278,22 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         runCatching { region = api.providers(type, media.id).results?.get("TR") }
     }
     if (web) {
-        val pr = play
-        if (pr != null) ResumePlayer(pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null })
-        else MediaSourceBrowser(media.label, { web = false }, { u, i, s, e -> play = PlayReq(u, i, s, e) })
+        Box(Modifier.fillMaxSize()) {
+            MediaSourceBrowser(media.label, { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure ->
+                play = PlayReq(url, item, season, episode, headers, mime, onFailure)
+            }
+            play?.let { pr ->
+                ResumePlayer(
+                    pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
+                    requestHeaders = pr.headers,
+                    mimeType = pr.mimeType,
+                    onPlaybackError = {
+                        play = null
+                        pr.onFailure(pr.url)
+                    }
+                )
+            }
+        }
         return
     }
     LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
@@ -327,4 +355,12 @@ fun TrailerPlayer(key: String, onClose: () -> Unit) {
     }
 }
 
-data class PlayReq(val url: String, val item: Item, val season: Int, val episode: Int)
+data class PlayReq(
+    val url: String,
+    val item: Item,
+    val season: Int,
+    val episode: Int,
+    val headers: Map<String, String> = emptyMap(),
+    val mimeType: String? = null,
+    val onFailure: (String) -> Unit = {}
+)
