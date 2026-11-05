@@ -1621,13 +1621,39 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         } catch (e) {}
       }
 
-      function scanDom() {
+      function scanDocument(doc, depth, visited) {
+        if (!doc || depth > 8 || visited.indexOf(doc) >= 0) return;
+        visited.push(doc);
         try {
-          document.querySelectorAll('video, audio, source').forEach(function (element) {
+          doc.querySelectorAll('video, audio, source').forEach(function (element) {
             var raw = element.currentSrc || element.src || element.getAttribute('src') || '';
             queue(raw, element.getAttribute('type') || '', {});
           });
-          performance.getEntriesByType('resource').forEach(function (entry) { queue(entry.name, '', {}); });
+        } catch (e) {}
+        try {
+          var win = doc.defaultView;
+          if (win && win.performance && win.performance.getEntriesByType) {
+            win.performance.getEntriesByType('resource').forEach(function (entry) {
+              queue(entry.name, '', {});
+            });
+          }
+        } catch (e) {}
+        // Document-start injection runs in supported cross-origin frames too.
+        // This bounded traversal covers same-origin frames on older WebView versions
+        // where only the top-level document can receive the fallback script.
+        try {
+          doc.querySelectorAll('iframe, frame').forEach(function (frame) {
+            try {
+              var child = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+              if (child) scanDocument(child, depth + 1, visited);
+            } catch (e) {}
+          });
+        } catch (e) {}
+      }
+
+      function scanDom() {
+        try {
+          scanDocument(document, 0, []);
           startVisiblePlayers();
         } catch (e) {}
       }
