@@ -103,7 +103,7 @@ private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: Stri
         // Read only a tiny prefix. This also lets us recognize extensionless URLs
         // whose server reports application/octet-stream instead of video/mp4.
         val prefixBytes = connection.inputStream.use { input ->
-            val bytes = ByteArray(96)
+            val bytes = ByteArray(8192)
             val count = input.read(bytes)
             if (count <= 0) ByteArray(0) else bytes.copyOf(count)
         }
