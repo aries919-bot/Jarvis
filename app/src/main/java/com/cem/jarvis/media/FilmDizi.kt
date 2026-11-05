@@ -316,7 +316,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
             val names = region?.free?.joinToString { it.provider_name }
             OutlinedButton(
                 onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
-                enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
+                enabled = region?.link != null && !region?.free.isNullOrEmpty(), modifier = Modifier.fillMaxWidth()
             ) { Text(if (names.isNullOrBlank()) "Ücretsiz yasal yayın bulunamadı" else "Ücretsiz nerede izlenir: $names") }
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
