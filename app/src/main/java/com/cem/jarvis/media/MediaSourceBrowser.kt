@@ -1751,8 +1751,8 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         if (!url || !/^https?:\/\//i.test(url)) return;
         var s = score(url, mime);
         // Some players use extensionless endpoints (for example /stream?id=...).
-        // Only allow this weak candidate when it is the active source of a media
-        // element; the native HTTP probe must confirm a real media response.
+        // Only allow this weak candidate for a declared media-element source;
+        // the native HTTP probe must confirm a real media response.
         if (!s && allowOpaque) {
           s = 40;
           if (!mime) mime = 'application/octet-stream';
@@ -1811,10 +1811,8 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
           doc.querySelectorAll('video, audio, source').forEach(function (element) {
             var raw = element.currentSrc || element.src || element.getAttribute('src') || '';
             var media = element.tagName === 'SOURCE' ? element.parentElement : element;
-            var activeMedia = !!(media && raw && (
-              media.currentSrc || media.readyState > 0 || media.networkState === 2
-            ));
-            queue(raw, element.getAttribute('type') || '', {}, activeMedia);
+            var hasMediaSource = !!(media && raw);
+            queue(raw, element.getAttribute('type') || '', {}, hasMediaSource);
           });
         } catch (e) {}
         try {
