@@ -1495,7 +1495,7 @@ private fun createAriesSearchWebView(
             fun add(title: String, url: String, snippet: String) {
                 if (!url.startsWith("http://") && !url.startsWith("https://")) return
                 if (hostOfAries(url).contains("duckduckgo.com")) return
-                if (isAriesPaidSubscriptionResult(title, url, snippet)) return
+                if (isAriesPaidSubscriptionResult(url)) return
                 val result = AriesSiteResult(
                     title = title.take(180).ifBlank { hostOfAries(url) },
                     url = url.take(2000),
@@ -1940,8 +1940,9 @@ private val ARIES_PAID_SUBSCRIPTION_HOSTS = setOf(
 private fun isAriesPaidSubscriptionHost(url: String): Boolean {
     val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
     val host = uri.host.orEmpty().lowercase().removePrefix("www.")
-    // amazon.com is also a general retail domain; only hide its video routes.
-    val isAmazonVideo = (host == "amazon.com" || host.endsWith(".amazon.com")) &&
+    // Amazon is also a general retail domain; hide only its video routes.
+    val isAmazonVideo = (host == "amazon.com" || host.endsWith(".amazon.com") ||
+        host == "amazon.co.uk" || host.endsWith(".amazon.co.uk")) &&
         uri.path.orEmpty().lowercase().let { path ->
             path.startsWith("/gp/video") || path.startsWith("/primevideo") || path.startsWith("/video/")
         }
@@ -1950,7 +1951,7 @@ private fun isAriesPaidSubscriptionHost(url: String): Boolean {
 
 // Do not filter by title/snippet keywords: a free source page may mention a paid
 // service in an article or comparison. Filter only the actual destination host.
-private fun isAriesPaidSubscriptionResult(title: String, url: String, snippet: String): Boolean =
+private fun isAriesPaidSubscriptionResult(url: String): Boolean =
     isAriesPaidSubscriptionHost(url)
 
 private fun ariesPreferredSourcePriority(url: String): Int {
@@ -2015,7 +2016,8 @@ private fun isAriesMediaMime(mime: String?): Boolean =
     !mime.isNullOrBlank() && (
         mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") ||
             mime.contains("dash+xml") || mime.contains("video/mp4") ||
-            mime.contains("video/webm") || mime.contains("video/quicktime")
+            mime.contains("video/webm") || mime.contains("video/quicktime") ||
+            mime.contains("matroska")
     )
 
 private fun inferAriesMimeType(url: String, responseType: String? = null): String? {
@@ -2026,6 +2028,7 @@ private fun inferAriesMimeType(url: String, responseType: String? = null): Strin
         mime.contains("video/mp4") -> "video/mp4"
         mime.contains("video/webm") -> "video/webm"
         mime.contains("video/quicktime") -> "video/quicktime"
+        mime.contains("matroska") -> "video/x-matroska"
         else -> {
             val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
             when {
@@ -2034,6 +2037,7 @@ private fun inferAriesMimeType(url: String, responseType: String? = null): Strin
                 path.endsWith(".mp4") || path.endsWith(".m4v") -> "video/mp4"
                 path.endsWith(".webm") -> "video/webm"
                 path.endsWith(".mov") -> "video/quicktime"
+                path.endsWith(".mkv") -> "video/x-matroska"
                 else -> null
             }
         }
@@ -2062,6 +2066,8 @@ private fun isSupportedMediaUrl(url: String): Boolean {
     if (listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }) return true
     val format = listOf("format", "type", "mime", "ext", "output").mapNotNull { uri.getQueryParameter(it) }
         .joinToString(" ").lowercase()
-    return listOf("m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm", "video/quicktime")
-        .any { format.contains(it) }
+    return listOf(
+        "m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm",
+        "video/quicktime", "mkv", "matroska", "video/x-matroska"
+    ).any { format.contains(it) }
 }
