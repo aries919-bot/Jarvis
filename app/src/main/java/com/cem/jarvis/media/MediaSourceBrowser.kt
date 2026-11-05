@@ -73,6 +73,35 @@ private data class AriesMediaCandidate(
     val score: Int
 )
 
+/** Small ranged-GET sanity check; it does not bypass DRM or access controls. */
+private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: String?, headers: Map<String, String>): Boolean = withContext(Dispatchers.IO) {
+    val uri = runCatching { Uri.parse(mediaUrl) }.getOrNull() ?: return@withContext false
+    if (uri.scheme != "https" && uri.scheme != "http") return@withContext false
+    val path = uri.path.orEmpty().lowercase()
+    val connection = runCatching { URL(mediaUrl).openConnection() as? HttpURLConnection }.getOrNull() ?: return@withContext false
+    try {
+        connection.requestMethod = "GET"
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        connection.instanceFollowRedirects = true
+        connection.setRequestProperty("Range", "bytes=0-8191")
+        connection.setRequestProperty("Accept-Encoding", "identity")
+        headers.forEach { (name, value) ->
+            if (isAriesForwardableHeader(name) && value.isNotBlank() && !name.equals("host", true) && !name.equals("content-length", true)) connection.setRequestProperty(name, value)
+        }
+        if (connection.responseCode !in 200..299) return@withContext false
+        val contentType = connection.contentType.orEmpty().substringBefore(";").lowercase()
+        val isHls = path.endsWith(".m3u8") || mimeType.orEmpty().contains("mpegurl", true) || contentType.contains("mpegurl")
+        val isDash = path.endsWith(".mpd") || mimeType.orEmpty().contains("dash+xml", true) || contentType.contains("dash+xml")
+        if (!isHls && !isDash) return@withContext contentType.startsWith("video/") || path.endsWith(".mp4") || path.endsWith(".m4v") || path.endsWith(".webm") || path.endsWith(".mov") || path.endsWith(".mkv") || contentType == "application/octet-stream"
+        val prefix = connection.inputStream.use { input ->
+            val bytes = ByteArray(8192)
+            val count = input.read(bytes)
+            if (count <= 0) "" else String(bytes, 0, count, Charsets.UTF_8).trimStart()
+        }
+        if (isHls) prefix.startsWith("#EXTM3U") else prefix.contains("<MPD", ignoreCase = true)
+    } catch (_: Exception) { false } finally { connection.disconnect() }
+}
 private data class AriesSeason(val number: Int, val episodes: Int)
 
 private data class AriesSimilar(val title: String, val posterUrl: String?, val isTv: Boolean)
@@ -386,9 +415,18 @@ fun MediaSourceBrowser(
                 if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
             }
 
+            status = "Video kaynağı doğrulanıyor…"
+            val candidateValid = validateAriesMediaCandidate(candidate.url, candidate.mime ?: inferAriesMimeType(candidate.url), headers)
+            if (activeSite?.url != selectedSite.url || watching != currentWatch) return@LaunchedEffect
+            if (!candidateValid) {
+                if (!failedMediaUrls.contains(candidate.url)) failedMediaUrls.add(candidate.url)
+                status = "Bu bağlantı doğrulanamadı; diğer kaynak deneniyor…"
+                return@LaunchedEffect
+            }
+
             playbackCandidateUrl = candidate.url
             autoPlayedMediaUrl = candidate.url
-            status = "Video akışı bulundu; Aries oynatıcısına aktarılıyor…"
+            status = "Video akışı doğrulandı; Aries oynatıcısına aktarılıyor…"
             siteView?.evaluateJavascript(
                 "document.querySelectorAll('video,audio').forEach(function(v){try{v.pause();}catch(e){}});",
                 null
@@ -1599,54 +1637,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         }
       }
 
-      var startAttempted = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
-      var startSelectors = [
-        '.vjs-big-play-button',
-        '.plyr__control--overlaid',
-        '[data-plyr="play"]',
-        '.jw-display-icon-container',
-        '.jw-icon-playback',
-        '.html5-video-player .ytp-large-play-button',
-        'button[aria-label*="play" i]',
-        '[role="button"][aria-label*="play" i]'
-      ];
-
-      function visiblePlayerControl(element) {
-        if (!element || !element.getBoundingClientRect) return false;
-        var rect = element.getBoundingClientRect();
-        var style = window.getComputedStyle(element);
-        return rect.width >= 20 && rect.height >= 20 &&
-          style.display !== 'none' && style.visibility !== 'hidden' &&
-          Number(style.opacity || 1) > 0 && rect.bottom > 0 && rect.right > 0 &&
-          rect.top < window.innerHeight && rect.left < window.innerWidth;
-      }
-
-      function startVisiblePlayers() {
-        try {
-          document.querySelectorAll('video').forEach(function (video) {
-            if (startAttempted && startAttempted.has(video)) return;
-            if (!video.paused) {
-              if (startAttempted) startAttempted.add(video);
-              return;
-            }
-            if (video.readyState < 1) return;
-            if (startAttempted) startAttempted.add(video);
-            var result = video.play();
-            if (result && result.catch) result.catch(function () {});
-          });
-
-          for (var i = 0; i < startSelectors.length; i++) {
-            var controls = document.querySelectorAll(startSelectors[i]);
-            for (var j = 0; j < controls.length; j++) {
-              var control = controls[j];
-              if (startAttempted && startAttempted.has(control)) continue;
-              if (!visiblePlayerControl(control)) continue;
-              if (startAttempted) startAttempted.add(control);
-              try { control.click(); } catch (e) {}
-            }
-          }
-        } catch (e) {}
-      }
+      // Passive discovery only: never synthesize clicks or call play() on page elements.
 
       function scanDocument(doc, depth, visited) {
         if (!doc || depth > 8 || visited.indexOf(doc) >= 0) return;
