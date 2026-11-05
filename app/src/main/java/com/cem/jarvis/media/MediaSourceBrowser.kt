@@ -318,7 +318,9 @@ fun MediaSourceBrowser(
 
     fun openNextAutoSource() {
         val next = results.firstOrNull {
-            it.url !in attemptedSourceUrls && !isAriesDiscoveryOnlyHost(it.url)
+            it.url !in attemptedSourceUrls &&
+                !isAriesDiscoveryOnlyHost(it.url) &&
+                !isAriesPaidSubscriptionHost(it.url)
         }
         if (next != null) {
             openSite(next)
@@ -744,7 +746,9 @@ fun MediaSourceBrowser(
                         onLoading = { },
                         onStatus = { },
                         onResult = { result ->
-                            if (results.none { it.url == result.url }) results.add(result)
+                            if (!isAriesPaidSubscriptionHost(result.url) &&
+                                results.none { it.url == result.url }
+                            ) results.add(result)
                         },
                         onSearchFinished = {
                             searching = false
@@ -1477,6 +1481,7 @@ private fun createAriesSearchWebView(
             fun add(title: String, url: String, snippet: String) {
                 if (!url.startsWith("http://") && !url.startsWith("https://")) return
                 if (hostOfAries(url).contains("duckduckgo.com")) return
+                if (isAriesPaidSubscriptionHost(url)) return
                 val result = AriesSiteResult(
                     title = title.take(180).ifBlank { hostOfAries(url) },
                     url = url.take(2000),
@@ -1899,6 +1904,20 @@ private fun WebView.configureAriesWebView() {
         "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     CookieManager.getInstance().setAcceptCookie(true)
     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+}
+
+private val ARIES_PAID_SUBSCRIPTION_HOSTS = setOf(
+    "netflix.com", "primevideo.com", "amazon.com", "amazon.co.uk",
+    "disneyplus.com", "disneyplus.com.tr", "max.com", "hbomax.com",
+    "tv.apple.com", "apple.com", "paramountplus.com", "hulu.com",
+    "peacocktv.com", "mubi.com", "tod.tv", "blutv.com", "tabii.com"
+)
+
+private fun isAriesPaidSubscriptionHost(url: String): Boolean {
+    val host = runCatching {
+        Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.")
+    }.getOrDefault("")
+    return ARIES_PAID_SUBSCRIPTION_HOSTS.any { host == it || host.endsWith(".$it") }
 }
 
 private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
