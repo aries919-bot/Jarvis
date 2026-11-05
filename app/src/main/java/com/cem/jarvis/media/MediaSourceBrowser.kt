@@ -170,11 +170,8 @@ private val AriesWatchSel = Color(0xFF6E6E6E)
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
 private const val ARIES_TMDB_KEY_FALLBACK = ""
 
-private fun ariesSourceQuery(term: String): String {
-    val clean = term.trim()
-    // Search the requested catalogues first, then retain a general fallback.
-    return "\"$clean\" (site:yabancidizi.fan OR site:yabancidizi.tv OR site:dizilla.now OR site:dizilla.club) OR \"$clean\" izle"
-}
+private fun ariesSourceQuery(term: String): String =
+    AriesMediaSourceCatalog.searchQuery(term)
 
 private fun ariesDdgUrl(term: String): String =
     "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(ariesSourceQuery(term), "UTF-8")
@@ -427,7 +424,11 @@ fun MediaSourceBrowser(
             if (candidate == null) {
                 if (mediaCandidates.isNotEmpty() && failedMediaUrls.size >= mediaCandidates.size) {
                     sourceScanExhausted = true
-                    status = "Bu sayfadaki video akışları Aries oynatıcısında açılamadı. Aynı kaynak sayfası açık bırakıldı."
+                    status = "Bu sayfadaki akışlar doğrulanamadı; sıradaki kaynak deneniyor…"
+                    kotlinx.coroutines.delay(350)
+                    if (activeSite?.url == selectedSite.url && watching == currentWatch) {
+                        openNextAutoSource()
+                    }
                 }
                 return@LaunchedEffect
             }
@@ -493,15 +494,21 @@ fun MediaSourceBrowser(
     // Keep the current source page open if no playable stream is detected.
     LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, sourceScanExhausted, mediaWasDetected) {
         val current = activeSite
-        if (watching != null && current != null && autoPlayedMediaUrl == null &&
+        val currentWatch = watching
+        if (currentWatch != null && current != null && autoPlayedMediaUrl == null &&
             !mediaWasDetected && !sourceScanExhausted
         ) {
-            kotlinx.coroutines.delay(30000)
-            if (activeSite?.url == current.url && autoPlayedMediaUrl == null &&
-                !mediaWasDetected && !sourceScanExhausted
+            // Do not leave the automatic search stuck on a page that exposes no media URL.
+            kotlinx.coroutines.delay(18000)
+            if (activeSite?.url == current.url && watching == currentWatch &&
+                autoPlayedMediaUrl == null && !mediaWasDetected && !sourceScanExhausted
             ) {
                 sourceScanExhausted = true
-                status = "Bu sayfada doğrudan video akışı bulunamadı. Kaynak sayfası açık bırakıldı."
+                status = "Bu sayfada oynatılabilir akış bulunamadı; sıradaki kaynak deneniyor…"
+                kotlinx.coroutines.delay(350)
+                if (activeSite?.url == current.url && watching == currentWatch) {
+                    openNextAutoSource()
+                }
             }
         }
     }
@@ -802,9 +809,11 @@ fun MediaSourceBrowser(
                             }
                         },
                         onSearchFinished = {
-                            if (results.isEmpty() && !searchFallbackUsed) {
+                            // Always query both engines. A partial DuckDuckGo result set must
+                            // not prevent Bing from contributing other indexed source pages.
+                            if (!searchFallbackUsed) {
                                 searchFallbackUsed = true
-                                status = "İlk arama motoru sonuç vermedi; alternatif kaynak aranıyor…"
+                                status = "İkinci arama motoru da taranıyor; kaynaklar birleştiriliyor…"
                                 searchView?.loadUrl(ariesBingUrl(webTerm))
                             } else {
                                 searching = false
@@ -815,7 +824,7 @@ fun MediaSourceBrowser(
                                     openNextAutoSource()
                                 } else {
                                     status = if (results.isEmpty())
-                                        "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
+                                        "İki arama motorunda da kaynak sonucu alınamadı. Başka kelimeler deneyebilirsin."
                                     else "${results.size} site sonucu bulundu"
                                 }
                             }
@@ -2009,26 +2018,11 @@ private fun isAriesPaidSubscriptionHost(url: String): Boolean {
 private fun isAriesPaidSubscriptionResult(url: String): Boolean =
     isAriesPaidSubscriptionHost(url)
 
-private fun ariesPreferredSourcePriority(url: String): Int {
-    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }
-        .getOrDefault("")
-    return when {
-        host == "yabancidizi.fan" || host.endsWith(".yabancidizi.fan") -> 110
-        host == "yabancidizi.tv" || host.endsWith(".yabancidizi.tv") -> 100
-        host == "dizilla.now" || host.endsWith(".dizilla.now") -> 90
-        host == "dizilla.club" || host.endsWith(".dizilla.club") -> 85
-        else -> 0
-    }
-}
+private fun ariesPreferredSourcePriority(url: String): Int =
+    AriesMediaSourceCatalog.sourcePriority(url)
 
-private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
-    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
-    return listOf(
-        "justwatch.com", "themoviedb.org", "imdb.com", "tvmaze.com",
-        "thetvdb.com", "wikipedia.org", "rottentomatoes.com",
-        "metacritic.com", "trakt.tv", "letterboxd.com"
-    ).any { host == it || host.endsWith(".$it") }
-}
+private fun isAriesDiscoveryOnlyHost(url: String): Boolean =
+    AriesMediaSourceCatalog.isDiscoveryOnlyHost(url)
 
 private fun hostOfAries(url: String): String =
     runCatching { Uri.parse(url).host?.removePrefix("www.") ?: url }.getOrDefault(url)
