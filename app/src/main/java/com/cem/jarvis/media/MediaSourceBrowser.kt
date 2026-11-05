@@ -185,10 +185,14 @@ private fun ariesChipLabels(count: Int): List<String> {
     return listOf("1", "2", "…", (count - 1).toString(), count.toString())
 }
 
-private fun ariesWatchQuery(w: AriesWatch): String = when {
-    w.season != null -> "${w.title} ${w.season}. sezon ${w.episode}. bölüm"
-    w.isMovie -> "${w.title} film"
-    else -> w.title
+private fun ariesWatchQuery(w: AriesWatch, year: String? = null): String {
+    // Keep same-name titles apart by adding the catalogue release year when known.
+    val yearTerm = year?.takeIf { it.matches(Regex("\\d{4}")) }?.let { " $it" }.orEmpty()
+    return when {
+        w.season != null -> "${w.title}$yearTerm ${w.season}. sezon ${w.episode}. bölüm"
+        w.isMovie -> "${w.title}$yearTerm film"
+        else -> "${w.title}$yearTerm"
+    }
 }
 
 private fun ariesCleanTitle(raw: String): String {
@@ -381,7 +385,7 @@ fun MediaSourceBrowser(
         failedMediaUrls.clear()
         playbackCandidateUrl = null
         attemptedSourceUrls.clear()
-        runWebSearch(ariesWatchQuery(w))
+        runWebSearch(ariesWatchQuery(w, info?.year))
     }
 
     fun selectEpisode(episode: Int) {
@@ -396,7 +400,7 @@ fun MediaSourceBrowser(
         failedMediaUrls.clear()
         playbackCandidateUrl = null
         attemptedSourceUrls.clear()
-        runWebSearch(ariesWatchQuery(next))
+        runWebSearch(ariesWatchQuery(next, info?.year))
     }
 
     // Collect a short burst of requests, prefer a master HLS manifest, and hand off only one
