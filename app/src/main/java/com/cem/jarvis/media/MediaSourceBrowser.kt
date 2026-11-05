@@ -348,7 +348,7 @@ fun MediaSourceBrowser(
         if (selectedSite != null && currentWatch != null &&
             playbackCandidateUrl == null && !sourceScanExhausted
         ) {
-            kotlinx.coroutines.delay(1400)
+            kotlinx.coroutines.delay(3200)
             if (activeSite?.url != selectedSite.url || watching != currentWatch ||
                 playbackCandidateUrl != null || sourceScanExhausted
             ) return@LaunchedEffect
@@ -420,7 +420,7 @@ fun MediaSourceBrowser(
         if (watching != null && current != null && autoPlayedMediaUrl == null &&
             !mediaWasDetected && !sourceScanExhausted
         ) {
-            kotlinx.coroutines.delay(18000)
+            kotlinx.coroutines.delay(30000)
             if (activeSite?.url == current.url && autoPlayedMediaUrl == null &&
                 !mediaWasDetected && !sourceScanExhausted
             ) {
@@ -1564,9 +1564,12 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         var body = String(text).slice(0, 4096).replace(/^\s+/, '');
         if (body.indexOf('#EXTM3U') === 0) queue(url, 'application/vnd.apple.mpegurl', requestHeaders);
         else if (/<MPD(?:\s|>)/i.test(body)) queue(url, 'application/dash+xml', requestHeaders);
-        var regex = /https?:\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?/ig;
+        var bodyText = String(text).slice(0, 1000000);
+        var regex = /(?:https?:)?\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?|(?:\.\.\/|\.\/|\/)?[A-Za-z0-9_~%+./-]+\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?/ig;
         var match;
-        while ((match = regex.exec(String(text).slice(0, 1000000))) !== null) queue(match[0], '', requestHeaders);
+        while ((match = regex.exec(bodyText)) !== null) {
+          try { queue(new URL(match[0], url || location.href).href, '', requestHeaders); } catch (e) {}
+        }
       }
 
       var startAttempted = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
@@ -1715,10 +1718,15 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
       } else {
         scanDom();
       }
+      // Players often attach their source only after an explicit play gesture.
+      // Re-scan on media lifecycle events without clicking page links or ads.
+      ['play', 'playing', 'loadedmetadata', 'canplay', 'durationchange'].forEach(function (eventName) {
+        document.addEventListener(eventName, function () { scanDom(); }, true);
+      });
       try {
         new MutationObserver(scanDom).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
       } catch (e) {}
-      setInterval(scanDom, 2500);
+      setInterval(scanDom, 1800);
       window.__ariesScanMedia = scanDom;
     })();
     """.trimIndent()
