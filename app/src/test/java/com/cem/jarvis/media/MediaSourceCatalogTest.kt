@@ -14,8 +14,15 @@ class MediaSourceCatalogTest {
             "321moviesfree.com",
             "cuevana19.com",
             "123pelicula.com",
-            "justwatch.com"
+            "yabancidizi.fan"
         ).forEach { domain -> assertTrue("Missing $domain", query.contains("site:$domain")) }
+    }
+
+    @Test
+    fun searchQueryDoesNotAddUnscopedFallbackOrCatalogueDomain() {
+        val query = AriesMediaSourceCatalog.searchQuery("Breaking Bad 2008 1. sezon 1. bölüm")
+        assertFalse(query.contains("justwatch.com"))
+        assertFalse(query.contains("OR \"Breaking Bad"))
     }
 
     @Test
@@ -28,6 +35,7 @@ class MediaSourceCatalogTest {
     @Test
     fun cataloguePagesAreNotTreatedAsPlayableSources() {
         assertTrue(AriesMediaSourceCatalog.isDiscoveryOnlyHost("https://www.justwatch.com/tr/film/example"))
+        assertTrue(AriesMediaSourceCatalog.isDiscoveryOnlyHost("https://www.tvmaze.com/shows/1/example"))
         assertFalse(AriesMediaSourceCatalog.isDiscoveryOnlyHost("https://dizipalizm.com/diziler/"))
     }
 
