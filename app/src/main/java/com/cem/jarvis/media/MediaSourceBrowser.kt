@@ -1673,7 +1673,6 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
       function scanDom() {
         try {
           scanDocument(document, 0, []);
-          startVisiblePlayers();
         } catch (e) {}
       }
 
