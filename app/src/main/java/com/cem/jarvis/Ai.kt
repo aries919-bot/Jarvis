@@ -217,6 +217,7 @@ object Ai {
         .replace(Regex("\\+?\\d[\\d ()-]{8,}\\d"), "")
         .replace(Regex("\\s+"), " ").trim()
 
+    fun film(token: String, q: String): String { val c = URL("https://jarvis-cloud.aydincem919.workers.dev/film?q=" + java.net.URLEncoder.encode(q, "UTF-8")).openConnection() as HttpURLConnection; c.connectTimeout = 8000; c.readTimeout = 15000; c.setRequestProperty("Authorization", "Bearer " + token); val code = c.responseCode; if (code != 200) throw ApiError(code, errText("Aries Bulut", code)); val arr = JSONArray(c.inputStream.bufferedReader().use { it.readText() }); if (arr.length() == 0) return "Sonuç bulamadım."; return (0 until minOf(arr.length(), 3)).joinToString(Char(10).toString() + Char(10)) { val o = arr.getJSONObject(it); o.optString("ad") + " (" + o.optString("yil") + ") puan " + o.optString("puan") + Char(10) + o.optString("ozet") } }
     private const val HIZLI_URL = "https://jarvis-cloud.aydincem919.workers.dev/hizli"
 
     fun hizli(token: String, q: String): Answer {

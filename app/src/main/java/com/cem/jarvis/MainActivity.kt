@@ -1474,6 +1474,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
+        val flm = Regex("^(film|dizi) (ara|bul)[:,]? +(.+)$").find(s); if (flm != null) { val tk = store.str("bulut"); if (tk.isBlank()) { say("Aries Bulut anahtarı yok."); return true }; showThinking(); thread { try { val r = Ai.film(tk, flm.groupValues[3]); runOnUiThread { hideThinking(); say(r) } } catch (e: Exception) { runOnUiThread { hideThinking(); say(Ai.friendly(e)) } } }; return true }
         val res = Regex("^araştır[:,]?\\s+(.+)$").find(s)
         if (res != null) {
             doResearch(res.groupValues[1])
