@@ -278,6 +278,8 @@ fun ResumePlayer(
     val player = remember(url, requestHeaders, mimeType) {
         val httpFactory = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(10_000)
+            .setReadTimeoutMs(15_000)
             .setDefaultRequestProperties(requestHeaders)
         val dataSourceFactory = DefaultDataSource.Factory(ctx, httpFactory)
         val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
