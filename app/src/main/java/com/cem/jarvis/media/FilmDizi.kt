@@ -58,13 +58,13 @@ data class Page(val results: List<Item>)
 data class Video(val key: String, val site: String, val type: String)
 data class Videos(val results: List<Video>)
 data class Provider(val provider_name: String)
-data class Region(val link: String?, val flatrate: List<Provider>?)
+data class Region(val link: String?, val free: List<Provider>?, val ads: List<Provider>? = null, val flatrate: List<Provider>? = null)
 data class Providers(val results: Map<String, Region>?)
 
 interface Tmdb {
-    @GET("trending/all/week") suspend fun trending(@Query("language") l: String = "tr-TR"): Page
+    @GET("trending/all/week") suspend fun trending(@Query("language") l: String = "tr-TR", @Query("page") p: Int = 1): Page
     @GET("movie/popular") suspend fun movies(@Query("language") l: String = "tr-TR"): Page
-    @GET("tv/popular") suspend fun series(@Query("language") l: String = "tr-TR"): Page
+    @GET("tv/popular") suspend fun series(@Query("language") l: String = "tr-TR", @Query("page") p: Int = 1): Page
     @GET("discover/tv") suspend fun anime(
         @Query("with_genres") g: String = "16", @Query("with_original_language") o: String = "ja",
         @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR"
@@ -98,11 +98,12 @@ class MediaVM : ViewModel() {
     fun load(i: Int) {
         tab = i; searching = false
         fetch {
+            if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
             when (i) {
-                0 -> Page(tvmazePage(0))
-                2 -> Page(tvmazePage(1))
-                else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
-                        else if (i == 1) api.movies() else api.anime()
+                0 -> api.trending()
+                2 -> api.series()
+                1 -> api.movies()
+                else -> api.anime()
             }
         }
     }
@@ -115,7 +116,7 @@ class MediaVM : ViewModel() {
             val tm = if (BuildConfig.TMDB_TOKEN.isNotBlank()) runCatching {
                 api.search(q).results.filter { it.media_type != "person" && it.poster_path != null }
             }.getOrDefault(emptyList()) else emptyList()
-            Page(if (tm.isNotEmpty()) tm else webSearch(q))
+            Page(tm)
         }
     }
 
@@ -124,7 +125,7 @@ class MediaVM : ViewModel() {
         val t = tab
         viewModelScope.launch {
             try {
-                val extra = if (t == 0 || t == 2) tvmazePage(pageNo + (if (t == 2) 5 else 0)) else emptyList()
+                val extra = when (t) { 0 -> api.trending(p = pageNo + 1).results; 2 -> api.series(p = pageNo + 1).results; else -> emptyList() }
                 pageNo++
                 list = list + extra.filter { n -> list.none { it.id == n.id } }
             } catch (e: Exception) { }
@@ -134,9 +135,26 @@ class MediaVM : ViewModel() {
     fun removeHistory(q: String) { history = history - q }
 
     private fun fetch(block: suspend () -> Page) = viewModelScope.launch {
-        loading = true; error = null
-        try { list = block().results } catch (e: Exception) { error = if (e.message == "tmdb") "Filmler ve Anime listesi için TMDB anahtarı gerekli. Arama anahtarsız çalışır." else "Bağlantı kurulamadı. İnternetini kontrol et." }
-        loading = false
+        loading = true
+        error = null
+        try {
+            list = block().results
+        } catch (e: Exception) {
+            error = when {
+                e.message == "tmdb" || BuildConfig.TMDB_TOKEN.isBlank() ->
+                    "TMDB erişim anahtarı bu APK'ya eklenmemiş. Popüler katalog açılamıyor; web aramasını kullanabilirsin."
+                e is retrofit2.HttpException && (e.code() == 401 || e.code() == 403) ->
+                    "TMDB erişim anahtarı geçersiz veya yetkisiz (HTTP ${e.code()})."
+                e is retrofit2.HttpException && e.code() == 429 ->
+                    "TMDB istek sınırına ulaşıldı (HTTP 429). Biraz sonra yeniden dene."
+                e is java.io.IOException ->
+                    "TMDB sunucusuna bağlanılamadı. İnternet bağlantını kontrol et."
+                else ->
+                    "Film bilgisi alınamadı: ${e.javaClass.simpleName}."
+            }
+        } finally {
+            loading = false
+        }
     }
 }
 
@@ -313,11 +331,14 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
             }
             Spacer(Modifier.height(10.dp))
-            val names = region?.flatrate?.joinToString { it.provider_name }
+            val subscriptionNames = region?.flatrate.orEmpty().map { it.provider_name }
+            val freeNames = region?.free.orEmpty().map { "${it.provider_name} (ücretsiz)" }
+            val adNames = region?.ads.orEmpty().map { "${it.provider_name} (reklamlı)" }
+            val names = (subscriptionNames + freeNames + adNames).distinct().joinToString()
             OutlinedButton(
                 onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
-                enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
-            ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
+                enabled = region?.link != null && names.isNotBlank(), modifier = Modifier.fillMaxWidth()
+            ) { Text(if (names.isBlank()) "Yasal platform bilgisi bulunamadı" else "Yasal izleme seçenekleri: $names") }
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)

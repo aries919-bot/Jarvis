@@ -2,10 +2,12 @@ name: Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master, film-dizi-v2 ]
+    branches: [ main, master, film-dizi-v2, seekee-media-discovery ]
+  pull_request:
+    branches: [ film-dizi-v2 ]
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  group: android-apk-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -31,13 +33,26 @@ jobs:
           else
             echo "İmza anahtarı tanımlı değil; Android debug imzası kullanılacak."
           fi
-      - name: APK derle
-        run: gradle assembleDebug --no-daemon
+      - name: Birim testleri ve APK derle
+        run: gradle testDebugUnitTest assembleDebug --no-daemon
         env:
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASS: ${{ secrets.KEY_PASS }}
+      - name: APK dosyasını ve imzasını doğrula
+        run: |
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -t "$APK"
+          SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          APKSIGNER="$(find "$SDK_DIR/build-tools" -type f -name apksigner 2>/dev/null | sort -V | tail -n 1)"
+          AAPT="$(find "$SDK_DIR/build-tools" -type f -name aapt 2>/dev/null | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          test -n "$AAPT"
+          "$APKSIGNER" verify --verbose "$APK"
+          "$AAPT" dump badging "$APK" | grep "package: name='com.cem.jarvis' versionCode='13' versionName='1.12'"
+          sha256sum "$APK"
       - uses: actions/upload-artifact@v4
         with:
           name: aries-apk

@@ -47,55 +47,9 @@ fun webImg(p: String?): String = when {
     else -> TMDB_IMG + p
 }
 
-private fun getJson(url: String): String =
-    webHttp.newCall(Request.Builder().url(url).header("User-Agent", "AriesApp/1.0").build())
-        .execute().use { it.body?.string().orEmpty() }
-
-private fun showItem(sh: JSONObject): Item? {
-    val im = sh.optJSONObject("image")?.optString("medium")
-    if (im.isNullOrBlank()) return null
-    val r = sh.optJSONObject("rating")?.optDouble("average") ?: Double.NaN
-    return Item(sh.getInt("id"), null, sh.optString("name"),
-        sh.optString("summary").replace(Regex("<[^>]*>"), ""), im,
-        if (r.isNaN()) null else r, null, "tv", sh.optString("premiered"), null)
-}
-
-suspend fun tvmazeSchedule(country: String): List<Item> = withContext(Dispatchers.IO) {
-    val day = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-    val arr = JSONArray(getJson("https://api.tvmaze.com/schedule?country=$country&date=$day"))
-    val seen = HashSet<Int>()
-    val out = mutableListOf<Item>()
-    for (i in 0 until arr.length()) {
-        val sh = arr.getJSONObject(i).optJSONObject("show") ?: continue
-        val it = showItem(sh) ?: continue
-        if (seen.add(it.id)) out += it
-        if (out.size >= 25) break
-    }
-    out
-}
-
-suspend fun webSearch(q: String): List<Item> = withContext(Dispatchers.IO) {
-    val out = mutableListOf<Item>()
-    runCatching {
-        val arr = JSONArray(getJson("https://api.tvmaze.com/search/shows?q=" + Uri.encode(q)))
-        for (i in 0 until minOf(arr.length(), 10)) {
-            showItem(arr.getJSONObject(i).getJSONObject("show"))?.let { out += it }
-        }
-    }
-    runCatching {
-        val u = "https://tr.wikipedia.org/w/api.php?action=query&generator=search&gsrlimit=8" +
-            "&prop=pageimages%7Cextracts&exintro=1&explaintext=1&exlimit=max&piprop=thumbnail" +
-            "&pithumbsize=342&format=json&gsrsearch=" + Uri.encode(q)
-        val pages = JSONObject(getJson(u)).optJSONObject("query")?.optJSONObject("pages")
-        pages?.keys()?.forEach { k ->
-            val pg = pages.getJSONObject(k)
-            val th = pg.optJSONObject("thumbnail")?.optString("source")
-            if (!th.isNullOrBlank())
-                out += Item(pg.getInt("pageid"), null, pg.optString("title"), pg.optString("extract"), th, null, null, "tv", null, null)
-        }
-    }
-    out
-}
+// Search metadata is provided by TMDB in MediaVM. Do not fall back to TVmaze,
+// Wikipedia, or general web pages as if they were film/series catalogue results.
+suspend fun webSearch(q: String): List<Item> = emptyList()
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -150,11 +104,4 @@ fun WebDialog(query: String, onClose: () -> Unit) {
             }
         }
     }
-}
-
-suspend fun tvmazePage(page: Int): List<Item> = withContext(Dispatchers.IO) {
-    val arr = JSONArray(getJson("https://api.tvmaze.com/shows?page=$page"))
-    val out = mutableListOf<Item>()
-    for (i in 0 until arr.length()) showItem(arr.getJSONObject(i))?.let { out += it }
-    out.sortedByDescending { it.vote_average ?: 0.0 }
 }
