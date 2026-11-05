@@ -58,7 +58,7 @@ data class Page(val results: List<Item>)
 data class Video(val key: String, val site: String, val type: String)
 data class Videos(val results: List<Video>)
 data class Provider(val provider_name: String)
-data class Region(val link: String?, val flatrate: List<Provider>?)
+data class Region(val link: String?, val free: List<Provider>?)
 data class Providers(val results: Map<String, Region>?)
 
 interface Tmdb {
@@ -313,11 +313,11 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
             }
             Spacer(Modifier.height(10.dp))
-            val names = region?.flatrate?.joinToString { it.provider_name }
+            val names = region?.free?.joinToString { it.provider_name }
             OutlinedButton(
                 onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
                 enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
-            ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
+            ) { Text(if (names.isNullOrBlank()) "Ücretsiz yasal yayın bulunamadı" else "Ücretsiz nerede izlenir: $names") }
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)

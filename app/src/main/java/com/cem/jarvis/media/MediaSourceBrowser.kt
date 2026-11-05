@@ -1481,7 +1481,7 @@ private fun createAriesSearchWebView(
             fun add(title: String, url: String, snippet: String) {
                 if (!url.startsWith("http://") && !url.startsWith("https://")) return
                 if (hostOfAries(url).contains("duckduckgo.com")) return
-                if (isAriesPaidSubscriptionHost(url)) return
+                if (isAriesPaidSubscriptionResult(title, url, snippet)) return
                 val result = AriesSiteResult(
                     title = title.take(180).ifBlank { hostOfAries(url) },
                     url = url.take(2000),
@@ -1910,7 +1910,17 @@ private val ARIES_PAID_SUBSCRIPTION_HOSTS = setOf(
     "netflix.com", "primevideo.com", "amazon.com", "amazon.co.uk",
     "disneyplus.com", "disneyplus.com.tr", "max.com", "hbomax.com",
     "tv.apple.com", "apple.com", "paramountplus.com", "hulu.com",
-    "peacocktv.com", "mubi.com", "tod.tv", "blutv.com", "tabii.com"
+    "peacocktv.com", "mubi.com", "tod.tv", "blutv.com", "tabii.com",
+    "discoveryplus.com", "crunchyroll.com", "funimation.com", "starz.com",
+    "showtime.com", "fubo.tv", "sling.com"
+)
+
+private val ARIES_PAID_SUBSCRIPTION_BRANDS = listOf(
+    "netflix", "prime video", "amazon prime video", "disney+", "disney plus",
+    "hbo max", "paramount+", "paramount plus", "apple tv+", "apple tv plus",
+    "hulu", "peacock", "mubi", "tod", "blu tv", "tabii", "discovery+",
+    "discovery plus", "crunchyroll", "funimation", "starz", "showtime", "fubo",
+    "sling tv"
 )
 
 private fun isAriesPaidSubscriptionHost(url: String): Boolean {
@@ -1918,6 +1928,15 @@ private fun isAriesPaidSubscriptionHost(url: String): Boolean {
         Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.")
     }.getOrDefault("")
     return ARIES_PAID_SUBSCRIPTION_HOSTS.any { host == it || host.endsWith(".$it") }
+}
+
+private fun isAriesPaidSubscriptionResult(title: String, url: String, snippet: String): Boolean {
+    if (isAriesPaidSubscriptionHost(url)) return true
+    val text = "$title $snippet".lowercase()
+    return ARIES_PAID_SUBSCRIPTION_BRANDS.any { brand ->
+        Regex("(^|[^\\p{L}\\p{N}])" + Regex.escape(brand) + "([^\\p{L}\\p{N}]|$)")
+            .containsMatchIn(text)
+    }
 }
 
 private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
