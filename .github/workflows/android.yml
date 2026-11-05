@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master, film-dizi-v2, seekee-media-discovery ]
+  pull_request:
+    branches: [ film-dizi-v2 ]
 
 concurrency:
   group: android-apk-${{ github.ref }}
