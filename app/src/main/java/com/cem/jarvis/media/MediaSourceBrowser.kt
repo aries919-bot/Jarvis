@@ -179,6 +179,9 @@ private fun ariesDdgUrl(term: String): String =
 private fun ariesBingUrl(term: String): String =
     "https://www.bing.com/search?q=" + URLEncoder.encode(ariesSourceQuery(term), "UTF-8")
 
+private fun ariesGoogleUrl(term: String): String =
+    "https://www.google.com/search?q=" + URLEncoder.encode(ariesSourceQuery(term), "UTF-8")
+
 private fun ariesChipLabels(count: Int): List<String> {
     if (count <= 0) return emptyList()
     if (count <= 6) return (1..count).map { it.toString() }
@@ -221,7 +224,7 @@ fun MediaSourceBrowser(
     var pageUrl by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Film ve dizi siteleri aranıyor…") }
     var searching by remember { mutableStateOf(true) }
-    var searchFallbackUsed by remember { mutableStateOf(false) }
+    var searchEnginePass by remember { mutableIntStateOf(0) }
     val results = remember { mutableStateListOf<AriesSiteResult>() }
     var searchView by remember { mutableStateOf<WebView?>(null) }
     var siteView by remember { mutableStateOf<WebView?>(null) }
@@ -310,7 +313,7 @@ fun MediaSourceBrowser(
         webTerm = term
         results.clear()
         searching = true
-        searchFallbackUsed = false
+        searchEnginePass = 0
         status = "\"$term\" için kaynaklar aranıyor…"
         searchView?.loadUrl(ariesDdgUrl(term))
     }
@@ -358,15 +361,12 @@ fun MediaSourceBrowser(
         }
         // If every remaining result is a catalogue/search page, leave one in the
         // in-app browser as a fallback instead of treating it as a playable host.
-        val fallback = results.firstOrNull { it.url !in attemptedSourceUrls }
-        if (activeSite == null && fallback != null) {
-            attemptedSourceUrls.add(fallback.url)
-            activeSite = fallback
-            pageTitle = fallback.title
-            pageUrl = fallback.url
-        }
         sourceScanExhausted = true
-        status = "Otomatik tarama tamamlandı. Doğrudan akış bulunamadı; açık sayfa Aries içinde bırakıldı."
+        status = if (results.isEmpty()) {
+            "Üç arama motorunda da oynatılabilir kaynak sayfası bulunamadı."
+        } else {
+            "Katalog sayfaları video kaynağı değildir; denenebilecek başka kaynak kalmadı."
+        }
     }
 
     fun openResultInPlayer(site: AriesSiteResult) {
@@ -401,6 +401,19 @@ fun MediaSourceBrowser(
         playbackCandidateUrl = null
         attemptedSourceUrls.clear()
         runWebSearch(ariesWatchQuery(next, info?.year))
+    }
+
+    fun retrySourceSearch() {
+        val currentWatch = watching ?: return
+        activeSite = null
+        playerError = null
+        autoPlayedMediaUrl = null
+        mediaCandidates.clear()
+        failedMediaUrls.clear()
+        playbackCandidateUrl = null
+        attemptedSourceUrls.clear()
+        sourceScanExhausted = false
+        runWebSearch(ariesWatchQuery(currentWatch, info?.year))
     }
 
     // Collect a short burst of requests, prefer a master HLS manifest, and hand off only one
@@ -565,6 +578,7 @@ fun MediaSourceBrowser(
                         else "${results.size} site bulundu"
                 },
                 onSelectEpisode = { selectEpisode(it) },
+                onRetrySearch = { retrySourceSearch() },
                 onSelectSource = { openSite(it) },
                 onSimilar = { startSearch(it) },
                 video = {
@@ -634,8 +648,11 @@ fun MediaSourceBrowser(
                             onGone = { v -> if (siteView === v) siteView = null }
                         )
                         else -> Text(
-                            playerError ?: if (searching) "Web sonuçları aranıyor…"
-                            else "Uygun akış bulunamazsa seçilen kaynak uygulama içinde açılır.",
+                            playerError ?: when {
+                                searching -> "Web kaynakları aranıyor…"
+                                sourceScanExhausted -> "Oynatılabilir kaynak bulunamadı. Aşağıdan yeniden arayabilirsin."
+                                else -> "Arama sonuçları bekleniyor…"
+                            },
                             color = AriesMuted,
                             fontSize = 15.sp
                         )
@@ -802,6 +819,7 @@ fun MediaSourceBrowser(
                         onStatus = { },
                         onResult = { result ->
                             if (!isAriesPaidSubscriptionHost(result.url) &&
+                                !isAriesDiscoveryOnlyHost(result.url) &&
                                 results.none { it.url == result.url }
                             ) {
                                 val priority = ariesPreferredSourcePriority(result.url)
@@ -813,23 +831,31 @@ fun MediaSourceBrowser(
                             }
                         },
                         onSearchFinished = {
-                            // Always query both engines. A partial DuckDuckGo result set must
-                            // not prevent Bing from contributing other indexed source pages.
-                            if (!searchFallbackUsed) {
-                                searchFallbackUsed = true
-                                status = "İkinci arama motoru da taranıyor; kaynaklar birleştiriliyor…"
-                                searchView?.loadUrl(ariesBingUrl(webTerm))
-                            } else {
-                                searching = false
-                                if (watching != null && results.isNotEmpty()) {
-                                    attemptedSourceUrls.clear()
-                                    sourceScanExhausted = false
-                                    status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
-                                    openNextAutoSource()
-                                } else {
-                                    status = if (results.isEmpty())
-                                        "İki arama motorunda da kaynak sonucu alınamadı. Başka kelimeler deneyebilirsin."
-                                    else "${results.size} site sonucu bulundu"
+                            // Merge results from three engines; do not stop at a partial result set.
+                            when (searchEnginePass) {
+                                0 -> {
+                                    searchEnginePass = 1
+                                    status = "Bing de kaynakları tarıyor…"
+                                    searchView?.loadUrl(ariesBingUrl(webTerm))
+                                }
+                                1 -> {
+                                    searchEnginePass = 2
+                                    status = "Google da kaynakları tarıyor…"
+                                    searchView?.loadUrl(ariesGoogleUrl(webTerm))
+                                }
+                                else -> {
+                                    searching = false
+                                    if (watching != null && results.isNotEmpty()) {
+                                        attemptedSourceUrls.clear()
+                                        sourceScanExhausted = false
+                                        status = "${results.size} kaynak sayfası bulundu. İlk kaynak otomatik deneniyor…"
+                                        openNextAutoSource()
+                                    } else {
+                                        status = if (results.isEmpty())
+                                            "Üç arama motorunda da desteklenen kaynak sayfası bulunamadı. Aynı ekrandan yeniden deneyebilirsin."
+                                        else "${results.size} kaynak sayfası bulundu"
+                                        if (watching != null && results.isEmpty()) sourceScanExhausted = true
+                                    }
                                 }
                             }
                         }
@@ -921,6 +947,7 @@ private fun AriesWatchScreen(
     onPlayTrailer: () -> Unit,
     onBack: () -> Unit,
     onSelectEpisode: (Int) -> Unit,
+    onRetrySearch: () -> Unit,
     onSelectSource: (AriesSiteResult) -> Unit,
     onSimilar: (String) -> Unit,
     video: @Composable () -> Unit
@@ -1040,12 +1067,20 @@ private fun AriesWatchScreen(
                             currentUrl != null -> "Açık sayfanın ağ istekleri ve oynatıcı kaynakları taranıyor."
                             searching -> "Aries izleme kaynaklarını arıyor…"
                             sources.isNotEmpty() -> "Kaynaklar bulundu. İlk sayfa otomatik açılıyor; akış bulunamazsa sonraki kaynak deneniyor."
-                            else -> "Bu arama için kaynak bulunamadı. Başlığı veya bölüm numarasını değiştirerek tekrar deneyebilirsin."
+                            else -> "Katalog bilgileri (TVmaze/TMDB) video kaynağı değildir. Kaynak aramasını aşağıdan yenileyebilirsin."
                         },
                         color = AriesMuted,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 5.dp)
                     )
+                    if (sources.isEmpty() && !searching) {
+                        OutlinedButton(
+                            onClick = onRetrySearch,
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                        ) {
+                            Text("Kaynak aramasını yenile")
+                        }
+                    }
                 }
             }
             if (watch.total > 0) {
@@ -1550,8 +1585,8 @@ private fun createAriesSearchWebView(
             @JavascriptInterface
             fun add(title: String, url: String, snippet: String) {
                 if (!url.startsWith("http://") && !url.startsWith("https://")) return
-                if (hostOfAries(url).contains("duckduckgo.com")) return
-                if (isAriesPaidSubscriptionResult(url)) return
+                if (isAriesSearchEngineHost(url)) return
+                if (isAriesPaidSubscriptionResult(url) || isAriesDiscoveryOnlyHost(url)) return
                 val result = AriesSiteResult(
                     title = title.take(180).ifBlank { hostOfAries(url) },
                     url = url.take(2000),
@@ -1594,7 +1629,10 @@ private fun createAriesSearchWebView(
                         try {
                           var parsed = new URL(u, location.href);
                           if (parsed.searchParams.has('uddg')) u = parsed.searchParams.get('uddg');
-                          else u = parsed.href;
+                          else if ((parsed.hostname === 'www.google.com' || parsed.hostname === 'google.com') &&
+                                   parsed.pathname === '/url' && parsed.searchParams.has('q')) {
+                            u = parsed.searchParams.get('q');
+                          } else u = parsed.href;
                         } catch(e) {}
                         if (!/^https?:\/\//i.test(u) || seen[u]) return;
                         seen[u] = true;
@@ -1603,11 +1641,16 @@ private fun createAriesSearchWebView(
                       }
                       // DuckDuckGo HTML, its newer test-id markup, and common Bing-style
                       // organic result containers. Keep ads out and de-duplicate URLs.
-                      var anchors = document.querySelectorAll(
-                        'a.result__a, a[data-testid="result-title-a"], ' +
+                      var anchors = Array.prototype.slice.call(document.querySelectorAll(
+                        'a.result__a, a[data-testid="result-title-a"], .result__title a, ' +
                         'article[data-testid="result"] h2 a, div[data-testid="result"] h2 a, ' +
-                        'li.b_algo h2 a, .web-result h2 a'
-                      );
+                        '#b_results li.b_algo h2 a, li.b_algo h2 a, .web-result h2 a'
+                      ));
+                      // Google wraps organic results in anchors containing h3 headings.
+                      document.querySelectorAll('h3').forEach(function (heading) {
+                        var link = heading.closest('a[href]');
+                        if (link) anchors.push(link);
+                      });
                       anchors.forEach(addAnchor);
                       AriesSearchBridge.done();
                     })();
@@ -2004,6 +2047,11 @@ private val ARIES_PAID_SUBSCRIPTION_HOSTS = setOf(
     "crunchyroll.com", "funimation.com", "starz.com", "showtime.com",
     "fubo.tv", "sling.com"
 )
+
+private fun isAriesSearchEngineHost(url: String): Boolean {
+    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
+    return listOf("google.com", "bing.com", "duckduckgo.com").any { host == it || host.endsWith(".$it") }
+}
 
 private fun isAriesPaidSubscriptionHost(url: String): Boolean {
     val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
