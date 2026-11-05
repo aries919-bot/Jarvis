@@ -51,7 +51,7 @@ jobs:
           test -n "$APKSIGNER"
           test -n "$AAPT"
           "$APKSIGNER" verify --verbose "$APK"
-          "$AAPT" dump badging "$APK" | grep "package: name='com.cem.jarvis' versionCode='12' versionName='1.11'"
+          "$AAPT" dump badging "$APK" | grep "package: name='com.cem.jarvis' versionCode='13' versionName='1.12'"
           sha256sum "$APK"
       - uses: actions/upload-artifact@v4
         with:
