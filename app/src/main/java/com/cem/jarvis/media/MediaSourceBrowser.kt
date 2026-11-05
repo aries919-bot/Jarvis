@@ -153,8 +153,13 @@ private val AriesWatchSel = Color(0xFF6E6E6E)
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
 private const val ARIES_TMDB_KEY_FALLBACK = ""
 
-private fun ariesDdgUrl(term: String): String =
-    "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(term.trim(), "UTF-8")
+private fun ariesDdgUrl(term: String): String {
+    val clean = term.trim()
+    // Search the two requested catalogues first while keeping a general fallback
+    // in the same result set so a temporary source outage does not empty search.
+    val query = "\"$clean\" (site:yabancidizi.tv OR site:dizilla.now OR site:dizilla.club) OR \"$clean\" izle"
+    return "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(query, "UTF-8")
+}
 
 private fun ariesChipLabels(count: Int): List<String> {
     if (count <= 0) return emptyList()
@@ -750,7 +755,14 @@ fun MediaSourceBrowser(
                         onResult = { result ->
                             if (!isAriesPaidSubscriptionHost(result.url) &&
                                 results.none { it.url == result.url }
-                            ) results.add(result)
+                            ) {
+                                val priority = ariesPreferredSourcePriority(result.url)
+                                val insertAt = results.indexOfFirst {
+                                    ariesPreferredSourcePriority(it.url) < priority
+                                }
+                                if (priority > 0 && insertAt >= 0) results.add(insertAt, result)
+                                else results.add(result)
+                            }
                         },
                         onSearchFinished = {
                             searching = false
@@ -1940,6 +1952,17 @@ private fun isAriesPaidSubscriptionHost(url: String): Boolean {
 // service in an article or comparison. Filter only the actual destination host.
 private fun isAriesPaidSubscriptionResult(title: String, url: String, snippet: String): Boolean =
     isAriesPaidSubscriptionHost(url)
+
+private fun ariesPreferredSourcePriority(url: String): Int {
+    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }
+        .getOrDefault("")
+    return when {
+        host == "yabancidizi.tv" || host.endsWith(".yabancidizi.tv") -> 100
+        host == "dizilla.now" || host.endsWith(".dizilla.now") -> 90
+        host == "dizilla.club" || host.endsWith(".dizilla.club") -> 85
+        else -> 0
+    }
+}
 
 private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
     val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
