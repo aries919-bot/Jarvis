@@ -549,26 +549,37 @@ fun MediaSourceBrowser(
                                 if (isSupportedMediaUrl(mediaUrl) || isAriesMediaMime(detectedMime)) {
                                     val normalizedUrl = mediaUrl.trim()
                                     val score = ariesMediaCandidateScore(normalizedUrl, detectedMime)
-                                    if (score > 0 && failedMediaUrls.none { it == normalizedUrl }) {
-                                         mediaWasDetected = true
+                                    if (score > 0) {
+                                        mediaWasDetected = true
+                                        // A late manifest can appear after the empty-source timeout.
+                                        // Re-open the scan and retry a failed URL only when its
+                                        // MIME type, score, or request headers have actually improved.
+                                        sourceScanExhausted = false
                                         val index = mediaCandidates.indexOfFirst { it.url == normalizedUrl }
                                         if (index < 0) {
-                                            mediaCandidates.add(
-                                                AriesMediaCandidate(
-                                                    url = normalizedUrl,
-                                                    mime = detectedMime ?: inferAriesMimeType(normalizedUrl),
-                                                    headers = capturedHeaders,
-                                                    score = score
+                                            if (failedMediaUrls.none { it == normalizedUrl }) {
+                                                mediaCandidates.add(
+                                                    AriesMediaCandidate(
+                                                        url = normalizedUrl,
+                                                        mime = detectedMime ?: inferAriesMimeType(normalizedUrl),
+                                                        headers = capturedHeaders,
+                                                        score = score
+                                                    )
                                                 )
-                                            )
-                                            status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
+                                                status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
+                                            }
                                         } else {
                                             val old = mediaCandidates[index]
-                                            mediaCandidates[index] = old.copy(
+                                            val updated = old.copy(
                                                 mime = detectedMime ?: old.mime,
                                                 headers = old.headers + capturedHeaders,
                                                 score = maxOf(old.score, score)
                                             )
+                                            if (updated != old) {
+                                                failedMediaUrls.remove(normalizedUrl)
+                                                mediaCandidates[index] = updated
+                                                status = "Video isteği bilgileri güncellendi; kaynak yeniden deneniyor…"
+                                            }
                                         }
                                     }
                                 }
