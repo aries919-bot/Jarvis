@@ -23,6 +23,7 @@ class MediaSourceCatalogTest {
         val query = AriesMediaSourceCatalog.searchQuery("Breaking Bad 2008 1. sezon 1. bölüm")
         assertFalse(query.contains("justwatch.com"))
         assertFalse(query.contains("OR \"Breaking Bad"))
+        assertTrue(query.contains("OR Breaking Bad 2008"))
     }
 
     @Test
