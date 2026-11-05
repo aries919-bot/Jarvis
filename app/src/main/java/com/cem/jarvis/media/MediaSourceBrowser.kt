@@ -76,7 +76,7 @@ private data class AriesMediaCandidate(
 /** Small ranged-GET sanity check; it does not bypass DRM or access controls. */
 private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: String?, headers: Map<String, String>): Boolean = withContext(Dispatchers.IO) {
     val uri = runCatching { Uri.parse(mediaUrl) }.getOrNull() ?: return@withContext false
-    if (uri.scheme != "https" && uri.scheme != "http") return@withContext false
+    if (!isAriesPublicMediaUrl(uri)) return@withContext false
     val path = uri.path.orEmpty().lowercase()
     val connection = runCatching { URL(mediaUrl).openConnection() as? HttpURLConnection }.getOrNull() ?: return@withContext false
     try {
@@ -107,6 +107,23 @@ private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: Stri
         else prefix.contains("<MPD", ignoreCase = true)
     } catch (_: Exception) { false } finally { connection.disconnect() }
 }
+/**
+ * Reject local/private destinations before probing a media URL discovered in an
+ * embedded third-party page. The player may still load ordinary public HTTP(S) media.
+ */
+private fun isAriesPublicMediaUrl(uri: Uri): Boolean {
+    if (uri.scheme != "https" && uri.scheme != "http") return false
+    if (!uri.userInfo.isNullOrBlank()) return false
+    val host = uri.host?.lowercase()?.removeSuffix(".") ?: return false
+    if (host == "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return false
+    val address = runCatching { java.net.InetAddress.getByName(host) }.getOrNull() ?: return false
+    return !address.isAnyLocalAddress &&
+        !address.isLoopbackAddress &&
+        !address.isLinkLocalAddress &&
+        !address.isSiteLocalAddress &&
+        !address.isMulticastAddress
+}
+
 private data class AriesSeason(val number: Int, val episodes: Int)
 
 private data class AriesSimilar(val title: String, val posterUrl: String?, val isTv: Boolean)
@@ -213,6 +230,7 @@ fun MediaSourceBrowser(
     var sourceScanExhausted by remember { mutableStateOf(false) }
     val attemptedSourceUrls = remember { mutableStateListOf<String>() }
     val mediaCandidates = remember { mutableStateListOf<AriesMediaCandidate>() }
+    var mediaCandidateRevision by remember { mutableIntStateOf(0) }
     val failedMediaUrls = remember { mutableStateListOf<String>() }
     var playbackCandidateUrl by remember { mutableStateOf<String?>(null) }
     var fullscreenView by remember { mutableStateOf<View?>(null) }
@@ -381,8 +399,8 @@ fun MediaSourceBrowser(
     // Collect a short burst of requests, prefer a master HLS manifest, and hand off only one
     // candidate at a time. A failed candidate is remembered so the next one can be tried.
     LaunchedEffect(
-        activeSite?.url, watching, mediaCandidates.size, playbackCandidateUrl,
-        failedMediaUrls.size, sourceScanExhausted
+        activeSite?.url, watching, mediaCandidates.size, mediaCandidateRevision,
+        playbackCandidateUrl, failedMediaUrls.size, sourceScanExhausted
     ) {
         val selectedSite = activeSite
         val currentWatch = watching
@@ -566,6 +584,7 @@ fun MediaSourceBrowser(
                                                         score = score
                                                     )
                                                 )
+                                                mediaCandidateRevision++
                                                 status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
                                             }
                                         } else {
@@ -578,6 +597,7 @@ fun MediaSourceBrowser(
                                             if (updated != old) {
                                                 failedMediaUrls.remove(normalizedUrl)
                                                 mediaCandidates[index] = updated
+                                                mediaCandidateRevision++
                                                 status = "Video isteği bilgileri güncellendi; kaynak yeniden deneniyor…"
                                             }
                                         }
@@ -2032,7 +2052,7 @@ private fun isAriesForwardableHeader(name: String): Boolean {
     return key in setOf(
         "authorization", "cookie", "referer", "origin", "user-agent",
         "accept", "x-api-key", "x-auth-token", "x-requested-with"
-    ) || (key.startsWith("x-") && key.length <= 64)
+    )
 }
 
 private fun isAriesMediaMime(mime: String?): Boolean =
@@ -2077,7 +2097,7 @@ private fun ariesMediaCandidateScore(url: String, mime: String?): Int {
         path.endsWith(".mp4") || path.endsWith(".m4v") || type.contains("video/mp4") -> 85
         path.endsWith(".webm") || type.contains("video/webm") -> 80
         path.endsWith(".mov") || type.contains("video/quicktime") -> 75
-        path.endsWith(".mkv") -> 70
+        path.endsWith(".mkv") || type.contains("matroska") -> 70
         else -> 0
     }
 }
