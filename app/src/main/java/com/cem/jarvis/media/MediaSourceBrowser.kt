@@ -1563,6 +1563,52 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         while ((match = regex.exec(String(text).slice(0, 1000000))) !== null) queue(match[0], '', requestHeaders);
       }
 
+      var startAttempted = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+      var startSelectors = [
+        '.vjs-big-play-button',
+        '.plyr__control--overlaid',
+        '[data-plyr="play"]',
+        '.jw-display-icon-container',
+        '.jw-icon-playback',
+        '.html5-video-player .ytp-large-play-button',
+        'button[aria-label*="play" i]',
+        '[role="button"][aria-label*="play" i]'
+      ];
+
+      function visiblePlayerControl(element) {
+        if (!element || !element.getBoundingClientRect) return false;
+        var rect = element.getBoundingClientRect();
+        var style = window.getComputedStyle(element);
+        return rect.width >= 20 && rect.height >= 20 &&
+          style.display !== 'none' && style.visibility !== 'hidden' &&
+          Number(style.opacity || 1) > 0 && rect.bottom > 0 && rect.right > 0 &&
+          rect.top < window.innerHeight && rect.left < window.innerWidth;
+      }
+
+      function startVisiblePlayers() {
+        try {
+          document.querySelectorAll('video').forEach(function (video) {
+            if (startAttempted && startAttempted.has(video)) return;
+            if (startAttempted) startAttempted.add(video);
+            if (video.paused && video.readyState >= 1) {
+              var result = video.play();
+              if (result && result.catch) result.catch(function () {});
+            }
+          });
+
+          for (var i = 0; i < startSelectors.length; i++) {
+            var controls = document.querySelectorAll(startSelectors[i]);
+            for (var j = 0; j < controls.length; j++) {
+              var control = controls[j];
+              if (startAttempted && startAttempted.has(control)) continue;
+              if (!visiblePlayerControl(control)) continue;
+              if (startAttempted) startAttempted.add(control);
+              try { control.click(); } catch (e) {}
+            }
+          }
+        } catch (e) {}
+      }
+
       function scanDom() {
         try {
           document.querySelectorAll('video, audio, source').forEach(function (element) {
@@ -1570,6 +1616,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
             queue(raw, element.getAttribute('type') || '', {});
           });
           performance.getEntriesByType('resource').forEach(function (entry) { queue(entry.name, '', {}); });
+          startVisiblePlayers();
         } catch (e) {}
       }
 
