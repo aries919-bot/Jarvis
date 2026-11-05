@@ -97,9 +97,14 @@ private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: Stri
         val prefix = connection.inputStream.use { input ->
             val bytes = ByteArray(8192)
             val count = input.read(bytes)
-            if (count <= 0) "" else String(bytes, 0, count, Charsets.UTF_8).trimStart()
+            if (count <= 0) "" else String(bytes, 0, count, Charsets.UTF_8)
+                .removePrefix("\uFEFF")
+                .trimStart()
         }
-        if (isHls) prefix.startsWith("#EXTM3U") else prefix.contains("<MPD", ignoreCase = true)
+        // Some valid manifests include a UTF-8 BOM or XML declarations.
+        // Accept those while still checking the actual manifest signature.
+        if (isHls) prefix.startsWith("#EXTM3U", ignoreCase = true)
+        else prefix.contains("<MPD", ignoreCase = true)
     } catch (_: Exception) { false } finally { connection.disconnect() }
 }
 private data class AriesSeason(val number: Int, val episodes: Int)
