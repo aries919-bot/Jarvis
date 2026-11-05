@@ -49,8 +49,14 @@ internal object AriesMediaSourceCatalog {
         if (clean.isBlank()) return ""
         // Keep results scoped to actual candidate source domains. The previous
         // unscoped OR branch caused catalogue pages to outrank source pages.
+        // Episode-specific pages are inconsistently indexed, so also search the
+        // base series title while keeping the same source-domain restriction.
+        val seriesBase = clean.replace(Regex("\\s+\\d+\\.\\s*sezon\\b.*$"), "").trim()
+        val titleTerms = if (seriesBase.isNotBlank() && seriesBase != clean) {
+            "($clean OR $seriesBase)"
+        } else clean
         val siteFilters = searchDomains.joinToString(" OR ") { "site:$it" }
-        return "$clean ($siteFilters)"
+        return "$titleTerms ($siteFilters)"
     }
 
     fun hostOf(url: String): String =
