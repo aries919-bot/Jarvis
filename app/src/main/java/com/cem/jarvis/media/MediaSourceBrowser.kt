@@ -170,6 +170,7 @@ fun MediaSourceBrowser(
     var trailerPlaying by remember { mutableStateOf(false) }
     var playerError by remember { mutableStateOf<String?>(null) }
     var autoPlayedMediaUrl by remember { mutableStateOf<String?>(null) }
+    var mediaWasDetected by remember { mutableStateOf(false) }
     var sourceScanExhausted by remember { mutableStateOf(false) }
     val attemptedSourceUrls = remember { mutableStateListOf<String>() }
     val mediaCandidates = remember { mutableStateListOf<AriesMediaCandidate>() }
@@ -269,6 +270,7 @@ fun MediaSourceBrowser(
         trailerPlaying = false
         playerError = null
         autoPlayedMediaUrl = null
+        mediaWasDetected = false
         mediaCandidates.clear()
         failedMediaUrls.clear()
         playbackCandidateUrl = null
@@ -357,8 +359,8 @@ fun MediaSourceBrowser(
 
             if (candidate == null) {
                 if (mediaCandidates.isNotEmpty() && failedMediaUrls.size >= mediaCandidates.size) {
-                    status = "Bu sayfadaki akışlar açılamadı; sıradaki kaynak deneniyor…"
-                    openNextAutoSource()
+                    sourceScanExhausted = true
+                    status = "Bu sayfadaki video akışları Aries oynatıcısında açılamadı. Aynı kaynak sayfası açık bırakıldı."
                 }
                 return@LaunchedEffect
             }
@@ -412,15 +414,18 @@ fun MediaSourceBrowser(
         }
     }
 
-    // If no manifest or media URL is found after the page has had time to start its player,
-    // move to the next search result but keep the current page as a fallback when exhausted.
-    LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, results.size, sourceScanExhausted) {
+    // Keep the current source page open if no playable stream is detected.
+    LaunchedEffect(activeSite?.url, watching, autoPlayedMediaUrl, sourceScanExhausted, mediaWasDetected) {
         val current = activeSite
-        if (watching != null && current != null && autoPlayedMediaUrl == null && !sourceScanExhausted) {
+        if (watching != null && current != null && autoPlayedMediaUrl == null &&
+            !mediaWasDetected && !sourceScanExhausted
+        ) {
             kotlinx.coroutines.delay(18000)
-            if (activeSite?.url == current.url && autoPlayedMediaUrl == null && !sourceScanExhausted) {
-                status = "Bu kaynakta akış bulunamadı; sıradaki kaynak deneniyor…"
-                openNextAutoSource()
+            if (activeSite?.url == current.url && autoPlayedMediaUrl == null &&
+                !mediaWasDetected && !sourceScanExhausted
+            ) {
+                sourceScanExhausted = true
+                status = "Bu sayfada doğrudan video akışı bulunamadı. Kaynak sayfası açık bırakıldı."
             }
         }
     }
@@ -493,6 +498,7 @@ fun MediaSourceBrowser(
                                     val normalizedUrl = mediaUrl.trim()
                                     val score = ariesMediaCandidateScore(normalizedUrl, detectedMime)
                                     if (score > 0 && failedMediaUrls.none { it == normalizedUrl }) {
+                                         mediaWasDetected = true
                                         val index = mediaCandidates.indexOfFirst { it.url == normalizedUrl }
                                         if (index < 0) {
                                             mediaCandidates.add(
