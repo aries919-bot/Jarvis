@@ -157,7 +157,7 @@ private fun ariesDdgUrl(term: String): String {
     val clean = term.trim()
     // Search the two requested catalogues first while keeping a general fallback
     // in the same result set so a temporary source outage does not empty search.
-    val query = "\"$clean\" (site:yabancidizi.tv OR site:dizilla.now OR site:dizilla.club) OR \"$clean\" izle"
+    val query = "\"$clean\" (site:yabancidizi.tv OR site:yabancidizi.fan OR site:dizilla.now OR site:dizilla.club) OR \"$clean\" izle"
     return "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(query, "UTF-8")
 }
 
@@ -1959,6 +1959,7 @@ private fun ariesPreferredSourcePriority(url: String): Int {
     return when {
         host == "yabancidizi.tv" || host.endsWith(".yabancidizi.tv") -> 100
         host == "dizilla.now" || host.endsWith(".dizilla.now") -> 90
+        host == "yabancidizi.fan" || host.endsWith(".yabancidizi.fan") -> 88
         host == "dizilla.club" || host.endsWith(".dizilla.club") -> 85
         else -> 0
     }
