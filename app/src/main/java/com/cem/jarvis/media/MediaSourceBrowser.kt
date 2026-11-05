@@ -111,12 +111,15 @@ private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: Stri
             .removePrefix("\uFEFF")
             .trimStart()
 
-        if (isHls) {
-            return@withContext if (prefixText.startsWith("#EXTM3U", ignoreCase = true)) "application/x-mpegURL" else null
+        // Trust a validated manifest signature even when a host labels the
+        // extensionless response as application/octet-stream.
+        if (prefixText.startsWith("#EXTM3U", ignoreCase = true)) {
+            return@withContext "application/x-mpegURL"
         }
-        if (isDash) {
-            return@withContext if (prefixText.contains("<MPD", ignoreCase = true)) "application/dash+xml" else null
+        if (prefixText.contains("<MPD", ignoreCase = true)) {
+            return@withContext "application/dash+xml"
         }
+        if (isHls || isDash) return@withContext null
 
         val responseMime = inferAriesMimeType(mediaUrl, contentType)
         if (contentType.startsWith("video/") && responseMime != null) return@withContext responseMime
