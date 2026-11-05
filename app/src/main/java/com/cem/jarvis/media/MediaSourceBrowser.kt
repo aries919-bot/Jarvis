@@ -687,8 +687,11 @@ fun MediaSourceBrowser(
                             )
                             if (!sourcePageVisible) {
                                 Column(
-                                    modifier = Modifier.align(Alignment.Center).padding(18.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    modifier = Modifier.fillMaxSize()
+                                        .clickable(enabled = !sourcePageVisible) { }
+                                        .padding(18.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
                                     if (!sourceScanExhausted) {
                                         CircularProgressIndicator(color = Color.White)
