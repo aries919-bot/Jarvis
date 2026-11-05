@@ -7,7 +7,7 @@ on:
     branches: [ film-dizi-v2 ]
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  group: android-apk-${{ github.event.pull_request.head.ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
