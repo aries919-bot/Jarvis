@@ -1589,11 +1589,14 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         try {
           document.querySelectorAll('video').forEach(function (video) {
             if (startAttempted && startAttempted.has(video)) return;
-            if (startAttempted) startAttempted.add(video);
-            if (video.paused && video.readyState >= 1) {
-              var result = video.play();
-              if (result && result.catch) result.catch(function () {});
+            if (!video.paused) {
+              if (startAttempted) startAttempted.add(video);
+              return;
             }
+            if (video.readyState < 1) return;
+            if (startAttempted) startAttempted.add(video);
+            var result = video.play();
+            if (result && result.catch) result.catch(function () {});
           });
 
           for (var i = 0; i < startSelectors.length; i++) {
