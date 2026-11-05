@@ -384,7 +384,9 @@ fun MediaSourceBrowser(
         if (selectedSite != null && currentWatch != null &&
             playbackCandidateUrl == null && !sourceScanExhausted
         ) {
-            kotlinx.coroutines.delay(3200)
+            // Start quickly after a burst of network requests. New candidates restart this window,
+            // so late manifests can still replace an earlier low-quality MP4 candidate.
+            kotlinx.coroutines.delay(1300)
             if (activeSite?.url != selectedSite.url || watching != currentWatch ||
                 playbackCandidateUrl != null || sourceScanExhausted
             ) return@LaunchedEffect
@@ -1544,7 +1546,9 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
 
       var candidates = [];
       var flushTimer = null;
-      var sentUrls = Object.create(null);
+      // Store the last payload per URL so a later request can enrich an early
+      // header-less discovery with Referer/Cookie/Authorization headers.
+      var sentSnapshots = Object.create(null);
       var observedDocuments = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
       var scanQueued = false;
 
@@ -1601,6 +1605,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         if (u.indexOf('.mp4') >= 0 || u.indexOf('.m4v') >= 0 || m.indexOf('video/mp4') >= 0) return 85;
         if (u.indexOf('.webm') >= 0 || m.indexOf('video/webm') >= 0) return 80;
         if (u.indexOf('.mov') >= 0 || m.indexOf('video/quicktime') >= 0) return 75;
+        if (u.indexOf('.mkv') >= 0 || m.indexOf('matroska') >= 0) return 70;
         return 0;
       }
 
@@ -1624,11 +1629,16 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         if (!candidates.length) return;
         candidates.sort(function (a, b) { return b.score - a.score; });
         candidates.forEach(function (item) {
-          if (sentUrls[item.url]) return;
-          sentUrls[item.url] = true;
+          var headers = item.headers || {};
+          var headerKeys = Object.keys(headers).sort();
+          var stableHeaders = {};
+          headerKeys.forEach(function (key) { stableHeaders[key] = headers[key]; });
+          var snapshot = String(item.mime || '') + '|' + JSON.stringify(stableHeaders);
+          if (sentSnapshots[item.url] === snapshot) return;
           try {
             if (window.AriesMediaBridge && window.AriesMediaBridge.found) {
-              window.AriesMediaBridge.found(item.url, item.mime || '', JSON.stringify(item.headers || {}));
+              window.AriesMediaBridge.found(item.url, item.mime || '', JSON.stringify(stableHeaders));
+              sentSnapshots[item.url] = snapshot;
             }
           } catch (e) {}
         });
@@ -1779,7 +1789,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
       });
       observeDocument(document);
       // A modest fallback catches late player initialization when observers are unavailable.
-      setInterval(scanDom, 1000);
+      setInterval(scanDom, 2500);
       window.__ariesScanMedia = scanDom;
     })();
     """.trimIndent()
@@ -1907,37 +1917,29 @@ private fun WebView.configureAriesWebView() {
 }
 
 private val ARIES_PAID_SUBSCRIPTION_HOSTS = setOf(
-    "netflix.com", "primevideo.com", "amazon.com", "amazon.co.uk",
+    "netflix.com", "primevideo.com",
     "disneyplus.com", "disneyplus.com.tr", "max.com", "hbomax.com",
-    "tv.apple.com", "apple.com", "paramountplus.com", "hulu.com",
-    "peacocktv.com", "mubi.com", "tod.tv", "blutv.com", "tabii.com",
-    "discoveryplus.com", "crunchyroll.com", "funimation.com", "starz.com",
-    "showtime.com", "fubo.tv", "sling.com"
-)
-
-private val ARIES_PAID_SUBSCRIPTION_BRANDS = listOf(
-    "netflix", "prime video", "amazon prime video", "disney+", "disney plus",
-    "hbo max", "paramount+", "paramount plus", "apple tv+", "apple tv plus",
-    "hulu", "peacock", "mubi", "tod", "blu tv", "tabii", "discovery+",
-    "discovery plus", "crunchyroll", "funimation", "starz", "showtime", "fubo",
-    "sling tv"
+    "tv.apple.com", "paramountplus.com", "hulu.com", "peacocktv.com",
+    "mubi.com", "tod.tv", "blutv.com", "tabii.com", "discoveryplus.com",
+    "crunchyroll.com", "funimation.com", "starz.com", "showtime.com",
+    "fubo.tv", "sling.com"
 )
 
 private fun isAriesPaidSubscriptionHost(url: String): Boolean {
-    val host = runCatching {
-        Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.")
-    }.getOrDefault("")
-    return ARIES_PAID_SUBSCRIPTION_HOSTS.any { host == it || host.endsWith(".$it") }
+    val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+    val host = uri.host.orEmpty().lowercase().removePrefix("www.")
+    // amazon.com is also a general retail domain; only hide its video routes.
+    val isAmazonVideo = (host == "amazon.com" || host.endsWith(".amazon.com")) &&
+        uri.path.orEmpty().lowercase().let { path ->
+            path.startsWith("/gp/video") || path.startsWith("/primevideo") || path.startsWith("/video/")
+        }
+    return isAmazonVideo || ARIES_PAID_SUBSCRIPTION_HOSTS.any { host == it || host.endsWith(".$it") }
 }
 
-private fun isAriesPaidSubscriptionResult(title: String, url: String, snippet: String): Boolean {
-    if (isAriesPaidSubscriptionHost(url)) return true
-    val text = "$title $snippet".lowercase()
-    return ARIES_PAID_SUBSCRIPTION_BRANDS.any { brand ->
-        Regex("(^|[^\\p{L}\\p{N}])" + Regex.escape(brand) + "([^\\p{L}\\p{N}]|$)")
-            .containsMatchIn(text)
-    }
-}
+// Do not filter by title/snippet keywords: a free source page may mention a paid
+// service in an article or comparison. Filter only the actual destination host.
+private fun isAriesPaidSubscriptionResult(title: String, url: String, snippet: String): Boolean =
+    isAriesPaidSubscriptionHost(url)
 
 private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
     val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
