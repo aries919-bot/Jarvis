@@ -73,39 +73,81 @@ private data class AriesMediaCandidate(
     val score: Int
 )
 
-/** Small ranged-GET sanity check; it does not bypass DRM or access controls. */
-private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: String?, headers: Map<String, String>): Boolean = withContext(Dispatchers.IO) {
-    val uri = runCatching { Uri.parse(mediaUrl) }.getOrNull() ?: return@withContext false
-    if (!isAriesPublicMediaUrl(uri)) return@withContext false
-    val path = uri.path.orEmpty().lowercase()
-    val connection = runCatching { URL(mediaUrl).openConnection() as? HttpURLConnection }.getOrNull() ?: return@withContext false
+/** Small ranged-GET probe. It validates the response type/signature and never bypasses DRM or access controls. */
+private suspend fun validateAriesMediaCandidate(mediaUrl: String, mimeType: String?, headers: Map<String, String>): String? = withContext(Dispatchers.IO) {
+    val uri = runCatching { Uri.parse(mediaUrl) }.getOrNull() ?: return@withContext null
+    if (!isAriesPublicMediaUrl(uri)) return@withContext null
+    val pathMime = inferAriesMimeType(mediaUrl)
+    val connection = runCatching { URL(mediaUrl).openConnection() as? HttpURLConnection }.getOrNull() ?: return@withContext null
     try {
         connection.requestMethod = "GET"
-        connection.connectTimeout = 5000
-        connection.readTimeout = 5000
+        connection.connectTimeout = 7000
+        connection.readTimeout = 10000
         connection.instanceFollowRedirects = true
         connection.setRequestProperty("Range", "bytes=0-8191")
         connection.setRequestProperty("Accept-Encoding", "identity")
         headers.forEach { (name, value) ->
-            if (isAriesForwardableHeader(name) && value.isNotBlank() && !name.equals("host", true) && !name.equals("content-length", true)) connection.setRequestProperty(name, value)
+            if (isAriesForwardableHeader(name) && value.isNotBlank() &&
+                !name.equals("host", true) && !name.equals("content-length", true)
+            ) connection.setRequestProperty(name, value)
         }
-        if (connection.responseCode !in 200..299) return@withContext false
-        val contentType = connection.contentType.orEmpty().substringBefore(";").lowercase()
-        val isHls = path.endsWith(".m3u8") || mimeType.orEmpty().contains("mpegurl", true) || contentType.contains("mpegurl")
-        val isDash = path.endsWith(".mpd") || mimeType.orEmpty().contains("dash+xml", true) || contentType.contains("dash+xml")
-        if (!isHls && !isDash) return@withContext contentType.startsWith("video/") || path.endsWith(".mp4") || path.endsWith(".m4v") || path.endsWith(".webm") || path.endsWith(".mov") || path.endsWith(".mkv") || contentType == "application/octet-stream"
-        val prefix = connection.inputStream.use { input ->
-            val bytes = ByteArray(8192)
+        if (connection.responseCode !in 200..299) return@withContext null
+
+        val contentType = connection.contentType.orEmpty().substringBefore(";").trim().lowercase()
+        val declaredType = mimeType.orEmpty().substringBefore(";").trim().lowercase()
+        val isHls = pathMime == "application/x-mpegURL" ||
+            declaredType.contains("mpegurl") || contentType.contains("mpegurl")
+        val isDash = pathMime == "application/dash+xml" ||
+            declaredType.contains("dash+xml") || contentType.contains("dash+xml")
+
+        // Read only a tiny prefix. This also lets us recognize extensionless URLs
+        // whose server reports application/octet-stream instead of video/mp4.
+        val prefixBytes = connection.inputStream.use { input ->
+            val bytes = ByteArray(96)
             val count = input.read(bytes)
-            if (count <= 0) "" else String(bytes, 0, count, Charsets.UTF_8)
-                .removePrefix("\uFEFF")
-                .trimStart()
+            if (count <= 0) ByteArray(0) else bytes.copyOf(count)
         }
-        // Some valid manifests include a UTF-8 BOM or XML declarations.
-        // Accept those while still checking the actual manifest signature.
-        if (isHls) prefix.startsWith("#EXTM3U", ignoreCase = true)
-        else prefix.contains("<MPD", ignoreCase = true)
-    } catch (_: Exception) { false } finally { connection.disconnect() }
+        val prefixText = String(prefixBytes, Charsets.UTF_8)
+            .removePrefix("\uFEFF")
+            .trimStart()
+
+        if (isHls) {
+            return@withContext if (prefixText.startsWith("#EXTM3U", ignoreCase = true)) "application/x-mpegURL" else null
+        }
+        if (isDash) {
+            return@withContext if (prefixText.contains("<MPD", ignoreCase = true)) "application/dash+xml" else null
+        }
+
+        val responseMime = inferAriesMimeType(mediaUrl, contentType)
+        if (contentType.startsWith("video/") && responseMime != null) return@withContext responseMime
+
+        val isOctetStream = contentType == "application/octet-stream" ||
+            contentType == "binary/octet-stream" || contentType.isBlank()
+        if (!isOctetStream) return@withContext null
+
+        // ISO base media (MP4/MOV) carries an ftyp box near the start.
+        if (prefixBytes.size >= 8 && String(prefixBytes, 4, 4, Charsets.US_ASCII) == "ftyp") {
+            val brand = if (prefixBytes.size >= 12) String(prefixBytes, 8, 4, Charsets.US_ASCII) else ""
+            return@withContext if (brand == "qt  ") "video/quicktime" else "video/mp4"
+        }
+        // WebM and Matroska both use the EBML header. WebM identifies itself
+        // with its DocType in the same initial bytes.
+        val isEbml = prefixBytes.size >= 4 &&
+            prefixBytes[0] == 0x1A.toByte() && prefixBytes[1] == 0x45.toByte() &&
+            prefixBytes[2] == 0xDF.toByte() && prefixBytes[3] == 0xA3.toByte()
+        if (isEbml) {
+            val header = String(prefixBytes, Charsets.ISO_8859_1).lowercase()
+            return@withContext if (header.contains("webm")) "video/webm" else "video/x-matroska"
+        }
+
+        // A generic MIME hint is not enough by itself: reject HTML/error pages.
+        if (declaredType.contains("video/mp4") && pathMime == "video/mp4") return@withContext "video/mp4"
+        pathMime?.takeIf { it.startsWith("video/") }
+    } catch (_: Exception) {
+        null
+    } finally {
+        connection.disconnect()
+    }
 }
 /**
  * Reject local/private destinations before probing a media URL discovered in an
@@ -237,6 +279,10 @@ fun MediaSourceBrowser(
     var autoPlayedMediaUrl by remember { mutableStateOf<String?>(null) }
     var mediaWasDetected by remember { mutableStateOf(false) }
     var sourceScanExhausted by remember { mutableStateOf(false) }
+    // Keep source pages loaded for passive media discovery, but do not show the
+    // external site in the player viewport unless automatic playback is exhausted
+    // or the user explicitly asks to inspect that page.
+    var sourcePageVisible by remember { mutableStateOf(false) }
     val attemptedSourceUrls = remember { mutableStateListOf<String>() }
     val mediaCandidates = remember { mutableStateListOf<AriesMediaCandidate>() }
     var mediaCandidateRevision by remember { mutableIntStateOf(0) }
@@ -342,6 +388,7 @@ fun MediaSourceBrowser(
         failedMediaUrls.clear()
         playbackCandidateUrl = null
         sourceScanExhausted = false
+        sourcePageVisible = false
         attemptedSourceUrls.add(site.url)
         activeSite = site
         pageTitle = site.title
@@ -472,11 +519,15 @@ fun MediaSourceBrowser(
             }
 
             status = "Video kaynağı doğrulanıyor…"
-            val candidateValid = validateAriesMediaCandidate(candidate.url, candidate.mime ?: inferAriesMimeType(candidate.url), headers)
+            val validatedMime = validateAriesMediaCandidate(
+                candidate.url,
+                candidate.mime ?: inferAriesMimeType(candidate.url),
+                headers
+            )
             if (activeSite?.url != selectedSite.url || watching != currentWatch) return@LaunchedEffect
-            if (!candidateValid) {
+            if (validatedMime == null) {
                 if (!failedMediaUrls.contains(candidate.url)) failedMediaUrls.add(candidate.url)
-                status = "Bu bağlantı doğrulanamadı; diğer kaynak deneniyor…"
+                status = "Video yanıtı doğrulanamadı; diğer akış deneniyor…"
                 return@LaunchedEffect
             }
 
@@ -492,7 +543,7 @@ fun MediaSourceBrowser(
 
             onPlayMedia(
                 candidate.url,
-                candidate.mime ?: inferAriesMimeType(candidate.url),
+                validatedMime,
                 headers,
                 playableItem,
                 currentWatch.season ?: 0,
@@ -584,58 +635,76 @@ fun MediaSourceBrowser(
                 video = {
                     val selectedSite = activeSite
                     when {
-                        selectedSite != null -> AriesSiteWeb(
-                            url = selectedSite.url,
-                            modifier = Modifier.fillMaxSize(),
-                            onTitle = { pageTitle = it },
-                            onUrl = { pageUrl = it },
-                            onStatus = { status = it },
-                            onShowCustom = onShowCustomCb,
-                            onHideCustom = onHideCustomCb,
-                            onCreated = { siteView = it },
-                            onGone = { v -> if (siteView === v) siteView = null },
-                            onMediaFound = { mediaUrl, detectedMime, capturedHeaders ->
-                                if (isSupportedMediaUrl(mediaUrl) || isAriesMediaMime(detectedMime)) {
-                                    val normalizedUrl = mediaUrl.trim()
-                                    val score = ariesMediaCandidateScore(normalizedUrl, detectedMime)
-                                    if (score > 0) {
-                                        mediaWasDetected = true
-                                        // A late manifest can appear after the empty-source timeout.
-                                        // Re-open the scan and retry a failed URL only when its
-                                        // MIME type, score, or request headers have actually improved.
-                                        sourceScanExhausted = false
-                                        val index = mediaCandidates.indexOfFirst { it.url == normalizedUrl }
-                                        if (index < 0) {
-                                            if (failedMediaUrls.none { it == normalizedUrl }) {
-                                                mediaCandidates.add(
-                                                    AriesMediaCandidate(
-                                                        url = normalizedUrl,
-                                                        mime = detectedMime ?: inferAriesMimeType(normalizedUrl),
-                                                        headers = capturedHeaders,
-                                                        score = score
+                        selectedSite != null -> Box(Modifier.fillMaxSize()) {
+                            AriesSiteWeb(
+                                url = selectedSite.url,
+                                modifier = Modifier.fillMaxSize().alpha(if (sourcePageVisible) 1f else 0f),
+                                onTitle = { pageTitle = it },
+                                onUrl = { pageUrl = it },
+                                onStatus = { status = it },
+                                onShowCustom = onShowCustomCb,
+                                onHideCustom = onHideCustomCb,
+                                onCreated = { siteView = it },
+                                onGone = { v -> if (siteView === v) siteView = null },
+                                onMediaFound = { mediaUrl, detectedMime, capturedHeaders ->
+                                    if (isSupportedMediaUrl(mediaUrl) || isAriesMediaMime(detectedMime)) {
+                                        val normalizedUrl = mediaUrl.trim()
+                                        val score = ariesMediaCandidateScore(normalizedUrl, detectedMime)
+                                        if (score > 0) {
+                                            mediaWasDetected = true
+                                            sourceScanExhausted = false
+                                            val index = mediaCandidates.indexOfFirst { it.url == normalizedUrl }
+                                            if (index < 0) {
+                                                if (failedMediaUrls.none { it == normalizedUrl }) {
+                                                    mediaCandidates.add(
+                                                        AriesMediaCandidate(
+                                                            url = normalizedUrl,
+                                                            mime = detectedMime ?: inferAriesMimeType(normalizedUrl),
+                                                            headers = capturedHeaders,
+                                                            score = score
+                                                        )
                                                     )
+                                                    mediaCandidateRevision++
+                                                    status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
+                                                }
+                                            } else {
+                                                val old = mediaCandidates[index]
+                                                val updated = old.copy(
+                                                    mime = detectedMime ?: old.mime,
+                                                    headers = old.headers + capturedHeaders,
+                                                    score = maxOf(old.score, score)
                                                 )
-                                                mediaCandidateRevision++
-                                                status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
-                                            }
-                                        } else {
-                                            val old = mediaCandidates[index]
-                                            val updated = old.copy(
-                                                mime = detectedMime ?: old.mime,
-                                                headers = old.headers + capturedHeaders,
-                                                score = maxOf(old.score, score)
-                                            )
-                                            if (updated != old) {
-                                                failedMediaUrls.remove(normalizedUrl)
-                                                mediaCandidates[index] = updated
-                                                mediaCandidateRevision++
-                                                status = "Video isteği bilgileri güncellendi; kaynak yeniden deneniyor…"
+                                                if (updated != old) {
+                                                    failedMediaUrls.remove(normalizedUrl)
+                                                    mediaCandidates[index] = updated
+                                                    mediaCandidateRevision++
+                                                    status = "Video isteği bilgileri güncellendi; kaynak yeniden deneniyor…"
+                                                }
                                             }
                                         }
                                     }
                                 }
+                            )
+                            if (!sourcePageVisible) {
+                                Column(
+                                    modifier = Modifier.align(Alignment.Center).padding(18.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (!sourceScanExhausted) {
+                                        CircularProgressIndicator(color = Color.White)
+                                        Spacer(Modifier.height(10.dp))
+                                    }
+                                    Text(
+                                        if (sourceScanExhausted) "Otomatik oynatma denenemedi." else "Video bağlantısı aranıyor…",
+                                        color = Color.White,
+                                        fontSize = 13.sp
+                                    )
+                                    TextButton(onClick = { sourcePageVisible = true }) {
+                                        Text("Kaynak sitesini göster", color = Color.White)
+                                    }
+                                }
                             }
-                        )
+                        }
                         trailerPlaying && info?.trailerUrl != null -> AriesSiteWeb(
                             url = info!!.trailerUrl!!,
                             modifier = Modifier.fillMaxSize(),
@@ -1671,10 +1740,14 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         return 0;
       }
 
-      function queue(raw, mime, requestHeaders) {
+      function queue(raw, mime, requestHeaders, allowOpaque) {
         var url = absolute(raw);
         if (!url || !/^https?:\/\//i.test(url)) return;
         var s = score(url, mime);
+        // Some players use extensionless endpoints (for example /stream?id=...).
+        // Only allow this weak candidate when it is the active source of a media
+        // element; the native HTTP probe must confirm a real media response.
+        if (!s && allowOpaque) s = 40;
         if (!s) return;
         var previous = candidates.find(function (item) { return item.url === url; });
         if (previous) {
@@ -1712,7 +1785,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         if (body.indexOf('#EXTM3U') === 0) queue(url, 'application/vnd.apple.mpegurl', requestHeaders);
         else if (/<MPD(?:\s|>)/i.test(body)) queue(url, 'application/dash+xml', requestHeaders);
         var bodyText = String(text).slice(0, 1000000);
-        var regex = /(?:https?:)?\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?|(?:\.\.\/|\.\/|\/)?[A-Za-z0-9_~%+./-]+\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?/ig;
+        var regex = /(?:https?:)?\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4|m4v|webm|mov|mkv)(?:\?[^"'\\\s<>]*)?|(?:\.\.\/|\.\/|\/)?[A-Za-z0-9_~%+./-]+\.(?:m3u8|mpd|mp4|m4v|webm|mov|mkv)(?:\?[^"'\\\s<>]*)?/ig;
         var match;
         while ((match = regex.exec(bodyText)) !== null) {
           try { queue(new URL(match[0], url || location.href).href, '', requestHeaders); } catch (e) {}
@@ -1728,7 +1801,11 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         try {
           doc.querySelectorAll('video, audio, source').forEach(function (element) {
             var raw = element.currentSrc || element.src || element.getAttribute('src') || '';
-            queue(raw, element.getAttribute('type') || '', {});
+            var media = element.tagName === 'SOURCE' ? element.parentElement : element;
+            var activeMedia = !!(media && raw && (
+              media.currentSrc || media.readyState > 0 || media.networkState === 2
+            ));
+            queue(raw, element.getAttribute('type') || '', {}, activeMedia);
           });
         } catch (e) {}
         try {
@@ -2061,7 +2138,7 @@ private fun isAriesMediaMime(mime: String?): Boolean =
         mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") ||
             mime.contains("dash+xml") || mime.contains("video/mp4") ||
             mime.contains("video/webm") || mime.contains("video/quicktime") ||
-            mime.contains("matroska")
+            mime.contains("matroska") || mime.contains("octet-stream")
     )
 
 private fun inferAriesMimeType(url: String, responseType: String? = null): String? {
@@ -2099,6 +2176,7 @@ private fun ariesMediaCandidateScore(url: String, mime: String?): Int {
         path.endsWith(".webm") || type.contains("video/webm") -> 80
         path.endsWith(".mov") || type.contains("video/quicktime") -> 75
         path.endsWith(".mkv") || type.contains("matroska") -> 70
+        type.contains("octet-stream") -> 40
         else -> 0
     }
 }
