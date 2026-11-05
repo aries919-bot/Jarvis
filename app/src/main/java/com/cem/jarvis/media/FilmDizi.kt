@@ -58,13 +58,13 @@ data class Page(val results: List<Item>)
 data class Video(val key: String, val site: String, val type: String)
 data class Videos(val results: List<Video>)
 data class Provider(val provider_name: String)
-data class Region(val link: String?, val free: List<Provider>?, val ads: List<Provider>? = null)
+data class Region(val link: String?, val free: List<Provider>?, val ads: List<Provider>? = null, val flatrate: List<Provider>? = null)
 data class Providers(val results: Map<String, Region>?)
 
 interface Tmdb {
-    @GET("trending/all/week") suspend fun trending(@Query("language") l: String = "tr-TR"): Page
+    @GET("trending/all/week") suspend fun trending(@Query("language") l: String = "tr-TR", @Query("page") p: Int = 1): Page
     @GET("movie/popular") suspend fun movies(@Query("language") l: String = "tr-TR"): Page
-    @GET("tv/popular") suspend fun series(@Query("language") l: String = "tr-TR"): Page
+    @GET("tv/popular") suspend fun series(@Query("language") l: String = "tr-TR", @Query("page") p: Int = 1): Page
     @GET("discover/tv") suspend fun anime(
         @Query("with_genres") g: String = "16", @Query("with_original_language") o: String = "ja",
         @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR"
@@ -99,8 +99,8 @@ class MediaVM : ViewModel() {
         tab = i; searching = false
         fetch {
             when (i) {
-                0 -> Page(tvmazePage(0))
-                2 -> Page(tvmazePage(1))
+                0 -> api.trending()
+                2 -> api.series()
                 else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
                         else if (i == 1) api.movies() else api.anime()
             }
@@ -115,7 +115,7 @@ class MediaVM : ViewModel() {
             val tm = if (BuildConfig.TMDB_TOKEN.isNotBlank()) runCatching {
                 api.search(q).results.filter { it.media_type != "person" && it.poster_path != null }
             }.getOrDefault(emptyList()) else emptyList()
-            Page(if (tm.isNotEmpty()) tm else webSearch(q))
+            Page(tm)
         }
     }
 
@@ -124,7 +124,7 @@ class MediaVM : ViewModel() {
         val t = tab
         viewModelScope.launch {
             try {
-                val extra = if (t == 0 || t == 2) tvmazePage(pageNo + (if (t == 2) 5 else 0)) else emptyList()
+                val extra = when (t) { 0 -> api.trending(p = pageNo + 1).results; 2 -> api.series(p = pageNo + 1).results; else -> emptyList() }
                 pageNo++
                 list = list + extra.filter { n -> list.none { it.id == n.id } }
             } catch (e: Exception) { }
@@ -313,14 +313,14 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
             }
             Spacer(Modifier.height(10.dp))
-            val freeNames = region?.free.orEmpty().map { it.provider_name }
+            val subscriptionNames = region?.flatrate.orEmpty().map { it.provider_name }
+            val freeNames = region?.free.orEmpty().map { "${it.provider_name} (ücretsiz)" }
             val adNames = region?.ads.orEmpty().map { "${it.provider_name} (reklamlı)" }
-            val names = (freeNames + adNames).distinct().joinToString()
-            val hasFreeOrAdSupported = freeNames.isNotEmpty() || adNames.isNotEmpty()
+            val names = (subscriptionNames + freeNames + adNames).distinct().joinToString()
             OutlinedButton(
                 onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
-                enabled = region?.link != null && hasFreeOrAdSupported, modifier = Modifier.fillMaxWidth()
-            ) { Text(if (names.isBlank()) "Ücretsiz yasal yayın bulunamadı" else "Ücretsiz nerede izlenir: $names") }
+                enabled = region?.link != null && names.isNotBlank(), modifier = Modifier.fillMaxWidth()
+            ) { Text(if (names.isBlank()) "Yasal platform bilgisi bulunamadı" else "Yasal izleme seçenekleri: $names") }
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
