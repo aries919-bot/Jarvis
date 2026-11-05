@@ -398,14 +398,14 @@ fun MediaSourceBrowser(
 
             onPlayMedia(
                 candidate.url,
-                candidate.mime ?: inferAriesMimeType(candidate.url),
+                candidate.mime?.takeIf { it.isNotBlank() } ?: inferAriesMimeType(candidate.url),
                 headers,
                 playableItem,
                 currentWatch.season ?: 0,
                 currentWatch.episode
             ) { failedUrl ->
                 if (activeSite?.url == selectedSite.url && playbackCandidateUrl == failedUrl) {
-                    if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl)
+                    if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl); if (failedMediaUrls.size >= 5) sourceScanExhausted = true
                     playbackCandidateUrl = null
                     autoPlayedMediaUrl = null
                     status = "Bu video akışı açılamadı; başka bir akış deneniyor…"

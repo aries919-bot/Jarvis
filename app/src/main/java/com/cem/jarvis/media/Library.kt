@@ -286,7 +286,7 @@ fun ResumePlayer(
             .build()
             .apply {
                 val mediaItem = MediaItem.Builder().setUri(url).apply {
-                    mimeType?.let { setMimeType(it) }
+                    mimeType?.takeIf { it.isNotBlank() }?.let { setMimeType(it) }
                 }.build()
                 setMediaItem(mediaItem)
                 prepare()
