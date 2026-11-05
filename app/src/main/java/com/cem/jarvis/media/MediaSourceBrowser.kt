@@ -170,13 +170,17 @@ private val AriesWatchSel = Color(0xFF6E6E6E)
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
 private const val ARIES_TMDB_KEY_FALLBACK = ""
 
-private fun ariesDdgUrl(term: String): String {
+private fun ariesSourceQuery(term: String): String {
     val clean = term.trim()
-    // Search the two requested catalogues first while keeping a general fallback
-    // in the same result set so a temporary source outage does not empty search.
-    val query = "\"$clean\" (site:yabancidizi.tv OR site:yabancidizi.fan OR site:dizilla.now OR site:dizilla.club) OR \"$clean\" izle"
-    return "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(query, "UTF-8")
+    // Search the requested catalogues first, then retain a general fallback.
+    return "\"$clean\" (site:yabancidizi.fan OR site:yabancidizi.tv OR site:dizilla.now OR site:dizilla.club) OR \"$clean\" izle"
 }
+
+private fun ariesDdgUrl(term: String): String =
+    "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(ariesSourceQuery(term), "UTF-8")
+
+private fun ariesBingUrl(term: String): String =
+    "https://www.bing.com/search?q=" + URLEncoder.encode(ariesSourceQuery(term), "UTF-8")
 
 private fun ariesChipLabels(count: Int): List<String> {
     if (count <= 0) return emptyList()
@@ -216,6 +220,7 @@ fun MediaSourceBrowser(
     var pageUrl by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Film ve dizi siteleri aranıyor…") }
     var searching by remember { mutableStateOf(true) }
+    var searchFallbackUsed by remember { mutableStateOf(false) }
     val results = remember { mutableStateListOf<AriesSiteResult>() }
     var searchView by remember { mutableStateOf<WebView?>(null) }
     var siteView by remember { mutableStateOf<WebView?>(null) }
@@ -304,7 +309,8 @@ fun MediaSourceBrowser(
         webTerm = term
         results.clear()
         searching = true
-        status = "\"$term\" için siteler aranıyor…"
+        searchFallbackUsed = false
+        status = "\"$term\" için kaynaklar aranıyor…"
         searchView?.loadUrl(ariesDdgUrl(term))
     }
 
@@ -796,16 +802,22 @@ fun MediaSourceBrowser(
                             }
                         },
                         onSearchFinished = {
-                            searching = false
-                            if (watching != null && results.isNotEmpty()) {
-                                attemptedSourceUrls.clear()
-                                sourceScanExhausted = false
-                                status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
-                                openNextAutoSource()
+                            if (results.isEmpty() && !searchFallbackUsed) {
+                                searchFallbackUsed = true
+                                status = "İlk arama motoru sonuç vermedi; alternatif kaynak aranıyor…"
+                                searchView?.loadUrl(ariesBingUrl(webTerm))
                             } else {
-                                status = if (results.isEmpty())
-                                    "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
-                                else "${results.size} site sonucu bulundu"
+                                searching = false
+                                if (watching != null && results.isNotEmpty()) {
+                                    attemptedSourceUrls.clear()
+                                    sourceScanExhausted = false
+                                    status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
+                                    openNextAutoSource()
+                                } else {
+                                    status = if (results.isEmpty())
+                                        "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
+                                    else "${results.size} site sonucu bulundu"
+                                }
                             }
                         }
                     ).also {
