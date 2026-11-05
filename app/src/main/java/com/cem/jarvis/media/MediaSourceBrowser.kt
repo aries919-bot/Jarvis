@@ -295,7 +295,7 @@ fun MediaSourceBrowser(
         val key = ariesTmdbKey()
         val found = withContext(Dispatchers.IO) {
             val tmdb = if (key.isNotBlank()) runCatching { fetchAriesTitleInfo(activeQuery, key) }.getOrNull() else null
-            tmdb ?: runCatching { fetchAriesTvMazeTitleInfo(activeQuery) }.getOrNull()
+            tmdb
         }
         if (found == null) {
             infoNote = "Katalog bilgisi bulunamadı. Web sonuçlarını aşağıdaki kartlardan açabilirsin."
@@ -1067,7 +1067,7 @@ private fun AriesWatchScreen(
                             currentUrl != null -> "Açık sayfanın ağ istekleri ve oynatıcı kaynakları taranıyor."
                             searching -> "Aries izleme kaynaklarını arıyor…"
                             sources.isNotEmpty() -> "Kaynaklar bulundu. İlk sayfa otomatik açılıyor; akış bulunamazsa sonraki kaynak deneniyor."
-                            else -> "Katalog bilgileri (TVmaze/TMDB) video kaynağı değildir. Kaynak aramasını aşağıdan yenileyebilirsin."
+                            else -> "Katalog bilgileri video akışı değildir. Kaynak aramasını aşağıdan yenileyebilirsin."
                         },
                         color = AriesMuted,
                         fontSize = 12.sp,
@@ -1504,67 +1504,6 @@ private fun createWebQueryItem(query: String, requestedMovie: Boolean): Item {
         first_air_date = null,
         release_date = null,
         source = "web-query"
-    )
-}
-
-private fun fetchAriesTvMazeTitleInfo(rawQuery: String): AriesTitleInfo? {
-    val cleaned = rawQuery.replace(Regex("(?i)(\\s+(izle|dizi|film|full|hd))+$"), "").trim().ifBlank { rawQuery.trim() }
-    val searchUrl = "https://api.tvmaze.com/search/shows?q=" + URLEncoder.encode(cleaned, "UTF-8")
-    val search = (URL(searchUrl).openConnection() as HttpURLConnection).run {
-        connectTimeout = 8000; readTimeout = 8000
-        try { inputStream.bufferedReader().use { it.readText() } } finally { disconnect() }
-    }
-    val arr = org.json.JSONArray(search)
-    if (arr.length() == 0) return null
-    val normalized = cleaned.replace(Regex("[^\\p{L}0-9]"), "").lowercase()
-    var chosen: JSONObject? = null
-    for (i in 0 until arr.length()) {
-        val candidate = arr.optJSONObject(i)?.optJSONObject("show") ?: continue
-        if (chosen == null) chosen = candidate
-        val name = candidate.optString("name").replace(Regex("[^\\p{L}0-9]"), "").lowercase()
-        if (name == normalized || name.contains(normalized) || normalized.contains(name)) { chosen = candidate; break }
-    }
-    val show = chosen ?: return null
-    val id = show.optInt("id", -1)
-    if (id <= 0) return null
-    val detailUrl = "https://api.tvmaze.com/shows/$id"
-    val detailText = (URL(detailUrl).openConnection() as HttpURLConnection).run {
-        connectTimeout = 8000; readTimeout = 8000
-        try { inputStream.bufferedReader().use { it.readText() } } finally { disconnect() }
-    }
-    val d = JSONObject(detailText)
-    val seasonUrl = "https://api.tvmaze.com/shows/$id/seasons"
-    val seasonText = (URL(seasonUrl).openConnection() as HttpURLConnection).run {
-        connectTimeout = 8000; readTimeout = 8000
-        try { inputStream.bufferedReader().use { it.readText() } } finally { disconnect() }
-    }
-    val seasonArr = org.json.JSONArray(seasonText)
-    val seasons = ArrayList<AriesSeason>()
-    var totalEpisodes = 0
-    for (i in 0 until seasonArr.length()) {
-        val season = seasonArr.optJSONObject(i) ?: continue
-        val number = season.optInt("number", 0)
-        if (number <= 0) continue
-        val count = season.optInt("episodeOrder", 0)
-        seasons.add(AriesSeason(number, count))
-        totalEpisodes += count
-    }
-    val image = d.optJSONObject("image")
-    val poster = image?.optString("medium")?.takeIf { !it.isNullOrBlank() && it != "null" }
-    val genresArray = d.optJSONArray("genres")
-    val genres = buildList {
-        if (genresArray != null) for (i in 0 until genresArray.length()) {
-            genresArray.optString(i).takeIf { it.isNotBlank() }?.let(::add)
-        }
-    }.take(3).joinToString(" · ")
-    val date = d.optString("premiered").takeIf { it != "null" }.orEmpty()
-    val overview = d.optString("summary").replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim()
-    return AriesTitleInfo(
-        id = id, title = d.optString("name").ifBlank { cleaned }, isTv = true,
-        year = date.take(4), genres = genres, overview = overview, posterUrl = poster,
-        trailerUrl = null, rating = d.optJSONObject("rating")?.optDouble("average", 0.0) ?: 0.0,
-        seasons = seasons, totalEpisodes = totalEpisodes, runtimeMin = d.optInt("runtime", 0),
-        source = "tvmaze"
     )
 }
 
