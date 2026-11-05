@@ -18,8 +18,7 @@ internal object AriesMediaSourceCatalog {
         "yabancidizi.fan",
         "yabancidizi.tv",
         "dizilla.now",
-        "dizilla.club",
-        "justwatch.com"
+        "dizilla.club"
     )
 
     private val priorities = listOf(
@@ -48,8 +47,10 @@ internal object AriesMediaSourceCatalog {
             .take(120)
             .trim()
         if (clean.isBlank()) return ""
+        // Keep results scoped to actual candidate source domains. The previous
+        // unscoped OR branch caused catalogue pages to outrank source pages.
         val siteFilters = searchDomains.joinToString(" OR ") { "site:$it" }
-        return "\"$clean\" ($siteFilters) OR \"$clean\" izle"
+        return "$clean ($siteFilters)"
     }
 
     fun hostOf(url: String): String =
