@@ -1747,7 +1747,10 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         // Some players use extensionless endpoints (for example /stream?id=...).
         // Only allow this weak candidate when it is the active source of a media
         // element; the native HTTP probe must confirm a real media response.
-        if (!s && allowOpaque) s = 40;
+        if (!s && allowOpaque) {
+          s = 40;
+          if (!mime) mime = 'application/octet-stream';
+        }
         if (!s) return;
         var previous = candidates.find(function (item) { return item.url === url; });
         if (previous) {
