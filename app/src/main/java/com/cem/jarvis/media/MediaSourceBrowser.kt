@@ -359,8 +359,9 @@ fun MediaSourceBrowser(
 
             if (candidate == null) {
                 if (mediaCandidates.isNotEmpty() && failedMediaUrls.size >= mediaCandidates.size) {
-                    sourceScanExhausted = true
-                    status = "Bu sayfadaki video akışları Aries oynatıcısında açılamadı. Aynı kaynak sayfası açık bırakıldı."
+                    playerError = "Bu kaynaktaki akışlar açılamadı; sıradaki kaynak deneniyor."
+                    status = playerError.orEmpty()
+                    openNextAutoSource()
                 }
                 return@LaunchedEffect
             }
@@ -405,10 +406,10 @@ fun MediaSourceBrowser(
                 currentWatch.episode
             ) { failedUrl ->
                 if (activeSite?.url == selectedSite.url && playbackCandidateUrl == failedUrl) {
-                    if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl); if (failedMediaUrls.size >= 5) sourceScanExhausted = true
+                    if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl)
                     playbackCandidateUrl = null
                     autoPlayedMediaUrl = null
-                    status = "Bu video akışı açılamadı; başka bir akış deneniyor…"
+                    status = "Bu video akışı açılamadı; aynı kaynaktaki diğer akış deneniyor…"
                 }
             }
         }
@@ -420,12 +421,13 @@ fun MediaSourceBrowser(
         if (watching != null && current != null && autoPlayedMediaUrl == null &&
             !mediaWasDetected && !sourceScanExhausted
         ) {
-            kotlinx.coroutines.delay(30000)
+            kotlinx.coroutines.delay(18000)
             if (activeSite?.url == current.url && autoPlayedMediaUrl == null &&
                 !mediaWasDetected && !sourceScanExhausted
             ) {
-                sourceScanExhausted = true
-                status = "Bu sayfada doğrudan video akışı bulunamadı. Kaynak sayfası açık bırakıldı."
+                playerError = "Bu sayfada oynatılabilir akış bulunamadı; sıradaki kaynak deneniyor."
+                status = playerError.orEmpty()
+                openNextAutoSource()
             }
         }
     }
