@@ -2095,3 +2095,9 @@ private fun isAriesMediaMime(mime: String?): Boolean =
 
 private fun inferAriesMimeType(url: String, responseType: String? = null): String? =
     AriesMediaPolicy.inferMimeType(url, responseType)
+
+private fun ariesMediaCandidateScore(url: String, mime: String?): Int =
+    AriesMediaPolicy.candidateScore(url, mime)
+
+private fun isSupportedMediaUrl(url: String): Boolean =
+    AriesMediaPolicy.isSupportedMediaUrl(url)
