@@ -308,7 +308,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     }
     if (web) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(media.label, { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure ->
+            MediaSourceBrowser(media.label + if (type == "movie") " film" else " dizi", { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure ->
                 play = PlayReq(url, item, season, episode, headers, mime, onFailure)
             }
             play?.let { pr ->
@@ -354,7 +354,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
             Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
-            if (type == "tv" && media.poster_path?.startsWith("http") != true) EpisodeList(media, lib)
+            if (type == "tv" && media.source != "wikipedia") EpisodeList(media, lib)
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
             Text("Benzerler", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
