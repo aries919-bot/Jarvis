@@ -173,7 +173,7 @@ class CareerActivity : Activity() {
         .replace(Regex("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", RegexOption.IGNORE_CASE), "[E-POSTA]")
         .replace(Regex("\\b\\d{11}\\b"), "[KIMLIK NUMARASI]")
         .replace(Regex("\\bTR\\d{2}(?:\\s?\\d{4}){5}\\s?\\d{2}\\b", RegexOption.IGNORE_CASE), "[IBAN]")
-        .replace(Regex("(\\+?90\\s?)?\\(?0?5\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
+        .replace(Regex("(\\+?90\\s?)?\\(?0?[2345]\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
 
     private fun saveJob(hit: Net.Hit) {
         val list = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
