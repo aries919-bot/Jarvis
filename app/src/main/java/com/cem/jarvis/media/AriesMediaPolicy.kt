@@ -36,7 +36,7 @@ internal object AriesMediaPolicy {
         if (parsed.scheme?.lowercase(Locale.ROOT) !in setOf("http", "https")) return false
         if (parsed.host.isNullOrBlank() || isDiscoveryOnlyHost(raw)) return false
         val path = parsed.path.orEmpty().lowercase(Locale.ROOT)
-        if (mediaExtensions.any(path::endsWith)) return true
+        if (mediaExtensions.any { extension -> path.endsWith(extension) }) return true
         if (inferMimeType(raw, mimeType) != null) return true
 
         val formatValues = runCatching {
@@ -50,7 +50,7 @@ internal object AriesMediaPolicy {
         return listOf(
             "m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4",
             "video/webm", "video/quicktime", "matroska"
-        ).any(formatValues::contains)
+        ).any { value -> formatValues.contains(value) }
     }
 
     fun inferMimeType(raw: String, responseType: String? = null): String? {
