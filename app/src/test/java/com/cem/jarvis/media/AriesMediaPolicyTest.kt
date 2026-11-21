@@ -74,7 +74,7 @@ class AriesMediaPolicyTest {
         assertNull(
             AriesMediaPolicy.validatedMimeFromPrefix(
                 "https://cdn.example/episode.mp4", "video/mp4",
-                "text/html", "<html>not a video</html>".toByteArray()
+                "video/mp4", "<html>not a video</html>".toByteArray()
             )
         )
     }
