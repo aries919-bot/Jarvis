@@ -129,9 +129,9 @@ private fun ariesChipLabels(count: Int): List<String> {
 }
 
 private fun ariesWatchQuery(w: AriesWatch): String = when {
-    w.season != null -> "${w.title} ${w.season}. sezon ${w.episode}. bölüm"
-    w.isMovie -> "${w.title} film"
-    else -> w.title
+    w.season != null -> "${w.title} ${w.season}. sezon ${w.episode}. bölüm izle"
+    w.isMovie -> "${w.title} film izle"
+    else -> "${w.title} dizi izle"
 }
 
 private fun ariesCleanTitle(raw: String): String {
