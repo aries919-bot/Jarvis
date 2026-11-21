@@ -65,7 +65,8 @@ private fun showItem(sh: JSONObject): Item? {
     val r = sh.optJSONObject("rating")?.optDouble("average") ?: Double.NaN
     return Item(sh.getInt("id"), null, sh.optString("name"),
         sh.optString("summary").replace(Regex("<[^>]*>"), ""), im,
-        if (r.isNaN()) null else r, null, "tv", sh.optString("premiered"), null)
+        if (r.isNaN()) null else r, null, "tv", sh.optString("premiered"), null,
+        source = "tvmaze")
 }
 
 suspend fun tvmazeSchedule(country: String): List<Item> = withContext(Dispatchers.IO) {
@@ -102,7 +103,8 @@ suspend fun webSearch(q: String, mediaType: String? = null): List<Item> = withCo
                 out += Item(pg.getInt("pageid"),
                     if (mediaType == "movie") pg.optString("title") else null,
                     if (mediaType == "movie") null else pg.optString("title"),
-                    pg.optString("extract"), th, null, null, mediaType ?: "tv", null, null)
+                    pg.optString("extract"), th, null, null, mediaType ?: "tv", null, null,
+                    source = "wikipedia")
         }
     }
     out
@@ -161,6 +163,26 @@ fun WebDialog(query: String, onClose: () -> Unit) {
             }
         }
     }
+}
+
+suspend fun tvmazeSeasonCount(showId: Int): Int = withContext(Dispatchers.IO) {
+    val arr = JSONArray(getJson("https://api.tvmaze.com/shows/$showId/seasons"))
+    (0 until arr.length()).count { arr.optJSONObject(it)?.optInt("number", 0)?.let { n -> n > 0 } == true }
+        .coerceAtLeast(1)
+}
+
+suspend fun tvmazeEpisodesForSeason(showId: Int, season: Int): List<Ep> = withContext(Dispatchers.IO) {
+    val arr = JSONArray(getJson("https://api.tvmaze.com/shows/$showId/episodes?specials=0"))
+    buildList {
+        for (i in 0 until arr.length()) {
+            val episode = arr.optJSONObject(i) ?: continue
+            if (episode.optInt("season", -1) != season) continue
+            val number = episode.optInt("number", 0)
+            if (number <= 0) continue
+            add(Ep(number, episode.optString("name").takeIf { it.isNotBlank() && it != "null" },
+                episode.optInt("runtime", 0).takeIf { it > 0 }))
+        }
+    }.sortedBy { it.episode_number }
 }
 
 suspend fun tvmazePage(page: Int): List<Item> = withContext(Dispatchers.IO) {
