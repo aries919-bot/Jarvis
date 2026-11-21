@@ -3,6 +3,7 @@ package com.cem.jarvis.media
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -264,7 +265,8 @@ fun ResumePlayer(
     onEpisodes: () -> Unit = onClose,
     requestHeaders: Map<String, String> = emptyMap(),
     mimeType: String? = null,
-    onPlaybackError: (PlaybackException) -> Unit = {}
+    onPlaybackError: (PlaybackException) -> Unit = {},
+    onPlaybackTimeout: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
     val owner = LocalLifecycleOwner.current
@@ -297,6 +299,22 @@ fun ResumePlayer(
     }
     fun save() { if (player.duration > 0) lib.saveProgress(item, season, episode, player.currentPosition, player.duration, ended) }
 
+    LaunchedEffect(player) {
+        var bufferingSince = 0L
+        while (true) {
+            if (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING) {
+                if (bufferingSince == 0L) bufferingSince = SystemClock.elapsedRealtime()
+                if (SystemClock.elapsedRealtime() - bufferingSince >= 25_000L) {
+                    android.widget.Toast.makeText(ctx, "Video uzun süre yüklenemedi; başka kaynak deneniyor.", android.widget.Toast.LENGTH_SHORT).show()
+                    onPlaybackTimeout()
+                    break
+                }
+            } else {
+                bufferingSince = 0L
+            }
+            delay(1000)
+        }
+    }
     LaunchedEffect(player) { while (true) { delay(5000); save() } }          // 5 sn'de bir
     LaunchedEffect(banner) { if (banner) { delay(6000); banner = false } }
 
