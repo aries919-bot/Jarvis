@@ -1573,7 +1573,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         if (body.indexOf('#EXTM3U') === 0) queue(url, 'application/vnd.apple.mpegurl', requestHeaders);
         else if (/<MPD(?:\s|>)/i.test(body)) queue(url, 'application/dash+xml', requestHeaders);
         var bodyText = String(text).slice(0, 1000000);
-        var regex = /(?:https?:)?\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?|(?:\.\.\/|\.\/|\/)?[A-Za-z0-9_~%+./-]+\.(?:m3u8|mpd|mp4)(?:\?[^"'\\\s<>]*)?/ig;
+        var regex = /(?:https?:)?\/\/[^"'\\\s<>]+?\.(?:m3u8|mpd|mp4|m4v|webm|mov|mkv)(?:\?[^"'\\\s<>]*)?|(?:\.\.\/|\.\/|\/)?[A-Za-z0-9_~%+./-]+\.(?:m3u8|mpd|mp4|m4v|webm|mov|mkv)(?:\?[^"'\\\s<>]*)?/ig;
         var match;
         while ((match = regex.exec(bodyText)) !== null) {
           try { queue(new URL(match[0], url || location.href).href, '', requestHeaders); } catch (e) {}
