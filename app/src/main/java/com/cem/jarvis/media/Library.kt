@@ -2,6 +2,7 @@ package com.cem.jarvis.media
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -303,7 +304,9 @@ fun ResumePlayer(
         val l = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) { if (state == Player.STATE_ENDED) { ended = true; save() } }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                android.widget.Toast.makeText(ctx, "${error.errorCodeName}\n$mimeType\n${url.take(120)}", android.widget.Toast.LENGTH_LONG).show()
+                val host = runCatching { Uri.parse(url).host.orEmpty() }.getOrDefault("video kaynağı")
+                val kind = mimeType ?: "Tür otomatik"
+                android.widget.Toast.makeText(ctx, "Oynatma başarısız: " + error.errorCodeName + "\n" + host + "\n" + kind, android.widget.Toast.LENGTH_LONG).show()
                 onPlaybackError(error)
             }
         }
