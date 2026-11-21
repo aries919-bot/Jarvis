@@ -2,6 +2,7 @@ package com.cem.jarvis.media
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -195,6 +196,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     var q by remember { mutableStateOf("") }
     var web2 by remember { mutableStateOf(false) }
     var play2 by remember { mutableStateOf<PlayReq?>(null) }
+    BackHandler(enabled = play2 != null) { play2 = null }
     if (web2) {
         Box(Modifier.fillMaxSize()) {
             MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure ->
@@ -298,6 +300,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     var region by remember(media.id) { mutableStateOf<Region?>(null) }
     var web by remember(media.id) { mutableStateOf(false) }
     var play by remember(media.id) { mutableStateOf<PlayReq?>(null) }
+    BackHandler(enabled = play != null) { play = null }
     LaunchedEffect(media.id) {
         if (media.poster_path?.startsWith("http") == true) return@LaunchedEffect
         runCatching { trailerKey = api.videos(type, media.id).results.firstOrNull { it.site == "YouTube" && it.type == "Trailer" }?.key }
