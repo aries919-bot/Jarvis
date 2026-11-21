@@ -284,7 +284,9 @@ fun MediaSourceBrowser(
 
     fun openNextAutoSource() {
         val next = results.firstOrNull {
-            it.url !in attemptedSourceUrls && !isAriesDiscoveryOnlyHost(it.url)
+            it.url !in attemptedSourceUrls &&
+                !isAriesDiscoveryOnlyHost(it.url) &&
+                !isAriesSubscriptionHost(it.url)
         }
         if (next != null) {
             openSite(next)
@@ -292,7 +294,9 @@ fun MediaSourceBrowser(
         }
         // If every remaining result is a catalogue/search page, leave one in the
         // in-app browser as a fallback instead of treating it as a playable host.
-        val fallback = results.firstOrNull { it.url !in attemptedSourceUrls }
+        val fallback = results.firstOrNull {
+            it.url !in attemptedSourceUrls && !isAriesSubscriptionHost(it.url)
+        }
         if (activeSite == null && fallback != null) {
             attemptedSourceUrls.add(fallback.url)
             activeSite = fallback
@@ -1436,6 +1440,7 @@ private fun createAriesSearchWebView(
             fun add(title: String, url: String, snippet: String) {
                 if (!url.startsWith("http://") && !url.startsWith("https://")) return
                 if (hostOfAries(url).contains("duckduckgo.com")) return
+                if (isAriesSubscriptionHost(url)) return
                 val result = AriesSiteResult(
                     title = title.take(180).ifBlank { hostOfAries(url) },
                     url = url.take(2000),
@@ -1527,6 +1532,7 @@ private val ARIES_MEDIA_SNIFFER_SCRIPT = """
         if (u.indexOf('.mpd') >= 0 || m.indexOf('dash+xml') >= 0) return 95;
         if (u.indexOf('.mp4') >= 0 || u.indexOf('.m4v') >= 0 || m.indexOf('video/mp4') >= 0) return 85;
         if (u.indexOf('.webm') >= 0 || m.indexOf('video/webm') >= 0) return 80;
+        if (u.indexOf('.mkv') >= 0 || m.indexOf('matroska') >= 0) return 70;
         if (u.indexOf('.mov') >= 0 || m.indexOf('video/quicktime') >= 0) return 75;
         return 0;
       }
@@ -1864,6 +1870,19 @@ private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
     ).any { host == it || host.endsWith(".$it") }
 }
 
+private fun isAriesSubscriptionHost(url: String): Boolean {
+    val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+    val host = uri.host.orEmpty().lowercase().removePrefix("www.")
+    val blocked = listOf(
+        "netflix.com", "primevideo.com", "disneyplus.com", "max.com",
+        "hbomax.com", "hulu.com", "paramountplus.com", "peacocktv.com",
+        "tv.apple.com", "crunchyroll.com", "mubi.com", "blutv.com", "tod.tv"
+    )
+    if (blocked.any { host == it || host.endsWith(".$it") }) return true
+    return (host == "amazon.com" || host.endsWith(".amazon.com")) &&
+        uri.path.orEmpty().lowercase().let { it.startsWith("/gp/video") || it.startsWith("/prime-video") }
+}
+
 private fun hostOfAries(url: String): String =
     runCatching { Uri.parse(url).host?.removePrefix("www.") ?: url }.getOrDefault(url)
 
@@ -1905,7 +1924,7 @@ private fun isAriesMediaMime(mime: String?): Boolean =
     !mime.isNullOrBlank() && (
         mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") ||
             mime.contains("dash+xml") || mime.contains("video/mp4") ||
-            mime.contains("video/webm") || mime.contains("video/quicktime")
+            mime.contains("video/webm") || mime.contains("video/quicktime") || mime.contains("matroska")
     )
 
 private fun inferAriesMimeType(url: String, responseType: String? = null): String? {
