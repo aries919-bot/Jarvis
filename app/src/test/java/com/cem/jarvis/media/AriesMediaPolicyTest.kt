@@ -67,7 +67,7 @@ class AriesMediaPolicyTest {
         assertEquals(
             "video/mp4",
             AriesMediaPolicy.validatedMimeFromPrefix(
-                "https://cdn.example/episode", "application/octet-stream",
+                "https://cdn.example/episode.mp4", "application/octet-stream",
                 "application/octet-stream", mp4
             )
         )
