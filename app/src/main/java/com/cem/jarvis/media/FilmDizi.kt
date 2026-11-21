@@ -324,21 +324,24 @@ fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
 
 @Composable
 fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit, onTrailer: (String) -> Unit) {
-    val ctx = LocalContext.current
     val type = if (media.media_type == "movie" || media.title != null) "movie" else "tv"
     var trailerKey by remember(media.id) { mutableStateOf<String?>(null) }
-    var region by remember(media.id) { mutableStateOf<Region?>(null) }
     var web by remember(media.id) { mutableStateOf(false) }
+    var initialWatch by remember(media.id) { mutableStateOf<AriesInitialWatch?>(null) }
     var play by remember(media.id) { mutableStateOf<PlayReq?>(null) }
     BackHandler(enabled = play != null) { play = null }
     LaunchedEffect(media.id) {
         if (media.poster_path?.startsWith("http") == true) return@LaunchedEffect
         runCatching { trailerKey = api.videos(type, media.id).results.firstOrNull { it.site == "YouTube" && it.type == "Trailer" }?.key }
-        runCatching { region = api.providers(type, media.id).results?.get("TR") }
     }
     if (web) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(media.label + if (type == "movie") " film" else " dizi", { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure, totalEpisodes, isMovie, onNextEpisode ->
+            MediaSourceBrowser(
+                query = media.label,
+                onBack = { web = false; initialWatch = null },
+                playerOverlay = play != null,
+                initialWatch = initialWatch
+            ) { url, mime, headers, item, season, episode, onFailure, totalEpisodes, isMovie, onNextEpisode ->
                 play = PlayReq(url, item, season, episode, headers, mime, totalEpisodes, isMovie, onFailure, onNextEpisode)
             }
             play?.let { pr ->
@@ -380,15 +383,24 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
             }
             Spacer(Modifier.height(10.dp))
-            val names = region?.flatrate?.joinToString { it.provider_name }
             OutlinedButton(
-                onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
-                enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
-            ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
-            Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+                onClick = {
+                    initialWatch = if (type == "movie") AriesInitialWatch(media.label, null, 0, 0, true)
+                        else AriesInitialWatch(media.label, 1, 1, 0, false)
+                    web = true
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("▶ İzleme yeri · ${if (type == "tv") "1. bölümü aç" else "Kaynakları ara"}") }
+            Text("Aries önce doğrudan video kaynaklarını arar. Web sitesi yalnızca kaynak adına dokununca açılır.",
+                color = Color(0xFF9AA1B2), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
-            if (type == "tv" && media.source != "wikipedia") EpisodeList(media, lib)
+            if (type == "tv" && media.source != "wikipedia") {
+                EpisodeList(media, lib) { season, episode, total ->
+                    initialWatch = AriesInitialWatch(media.label, season, episode, total, false)
+                    web = true
+                }
+            }
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
             Text("Benzerler", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))

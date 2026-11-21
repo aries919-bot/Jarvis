@@ -213,9 +213,13 @@ fun FavoritesRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
     }
 }
 
-// ---------- Bölüm listesi + izledim işareti ----------
+// ---------- Bölüm listesi + oynatma ve izleme işareti ----------
 @Composable
-fun EpisodeList(item: Item, lib: LibraryVM) {
+fun EpisodeList(
+    item: Item,
+    lib: LibraryVM,
+    onPlay: (season: Int, episode: Int, totalEpisodes: Int) -> Unit
+) {
     var seasons by remember(item.id, item.source) { mutableIntStateOf(1) }
     var season by remember(item.id, item.source) { mutableIntStateOf(lib.get(item.id)?.season ?: 1) }
     var eps by remember(item.id, item.source, season) { mutableStateOf<List<Ep>>(emptyList()) }
@@ -232,6 +236,9 @@ fun EpisodeList(item: Item, lib: LibraryVM) {
         }
     }
     val watched = lib.get(item.id)?.watched.orEmpty()
+    // Identical runtimes across every episode can be a generic show default; do not show them as episode data.
+    val distinctEpisodeRuntimes = eps.mapNotNull { it.runtime?.takeIf { runtime -> runtime > 0 } }.distinct()
+    val showEpisodeRuntime = distinctEpisodeRuntimes.size > 1
 
     Column {
         Text("Bölümler", color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
@@ -240,19 +247,34 @@ fun EpisodeList(item: Item, lib: LibraryVM) {
                 FilterChip(selected = s == season, onClick = { season = s }, label = { Text("Sezon $s") })
             }
         }
+        if (eps.isEmpty()) {
+            Text("Bu sezonun bölüm bilgileri yüklenemedi.", color = Color(0xFF9AA1B2), fontSize = 13.sp,
+                modifier = Modifier.padding(vertical = 12.dp))
+        }
         eps.forEach { ep ->
             val done = "s${season}e${ep.episode_number}" in watched
-            Row(Modifier.fillMaxWidth().clickable { lib.toggleWatched(item, season, ep.episode_number) }.padding(vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(if (done) Color(0xFF3A7D5C) else Color(0xFF202433)), Alignment.Center) {
+            Row(
+                Modifier.fillMaxWidth()
+                    .clickable { onPlay(season, ep.episode_number, eps.size) }
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(38.dp).clip(RoundedCornerShape(10.dp))
+                    .background(if (done) Color(0xFF3A7D5C) else Color(0xFF202433)), Alignment.Center) {
                     Text(if (done) "✓" else "${ep.episode_number}", color = Color.White)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(ep.name ?: "Bölüm ${ep.episode_number}", color = if (done) Color(0xFF9AA1B2) else Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    ep.runtime?.let { Text("$it dk", color = Color(0xFF9AA1B2), fontSize = 12.sp) }
+                    Text(ep.name ?: "Bölüm ${ep.episode_number}", color = Color.White,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (showEpisodeRuntime) ep.runtime?.takeIf { it > 0 }?.let {
+                        Text("$it dk", color = Color(0xFF9AA1B2), fontSize = 12.sp)
+                    }
+                    Text("Oynatmak için dokun", color = Color(0xFF8FB4FF), fontSize = 11.sp)
                 }
-                Text(if (done) "İzlendi" else "İzledim", color = Color(0xFF8FB4FF), fontSize = 12.sp)
+                TextButton(onClick = { lib.toggleWatched(item, season, ep.episode_number) }) {
+                    Text(if (done) "İzlendi ✓" else "İşaretle", fontSize = 12.sp)
+                }
             }
         }
     }
