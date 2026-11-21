@@ -105,36 +105,48 @@ internal object AriesMediaPolicy {
         prefixBytes: ByteArray
     ): String? {
         if (!isSupportedMediaUrl(rawUrl, declaredMime ?: responseMime)) return null
-        val pathMime = inferMimeType(rawUrl)
+
         val declared = declaredMime.orEmpty().substringBefore(";").trim().lowercase(Locale.ROOT)
         val contentType = responseMime.orEmpty().substringBefore(";").trim().lowercase(Locale.ROOT)
         val prefixText = String(prefixBytes, Charsets.UTF_8).removePrefix("\uFEFF").trimStart()
+        if (
+            contentType.contains("text/html") ||
+            prefixText.startsWith("<!doctype html", ignoreCase = true) ||
+            prefixText.startsWith("<html", ignoreCase = true)
+        ) return null
 
-        if (prefixText.startsWith("#EXTM3U", ignoreCase = true)) return "application/x-mpegURL"
-        if (prefixText.contains("<MPD", ignoreCase = true)) return "application/dash+xml"
+        // HLS and DASH are accepted only when the response actually contains a manifest.
+        if (prefixText.startsWith("#EXTM3U", ignoreCase = true)) {
+            return "application/x-mpegURL"
+        }
+        if (prefixText.contains("<MPD", ignoreCase = true)) {
+            return "application/dash+xml"
+        }
+        if (
+            inferMimeType(rawUrl) == "application/x-mpegURL" ||
+            inferMimeType(rawUrl) == "application/dash+xml" ||
+            declared.contains("mpegurl") ||
+            declared.contains("dash+xml") ||
+            contentType.contains("mpegurl") ||
+            contentType.contains("dash+xml")
+        ) return null
 
-        val isHls = pathMime == "application/x-mpegURL" ||
-            declared.contains("mpegurl") || contentType.contains("mpegurl")
-        val isDash = pathMime == "application/dash+xml" ||
-            declared.contains("dash+xml") || contentType.contains("dash+xml")
-        if (isHls || isDash) return null
-
-        val responseVideoMime = inferMimeType(rawUrl, contentType)
-        if (contentType.startsWith("video/") && responseVideoMime != null) return responseVideoMime
-
-        val isOctetStream = contentType == "application/octet-stream" ||
-            contentType == "binary/octet-stream" || contentType.isBlank()
-        if (!isOctetStream) return null
-
-        if (prefixBytes.size >= 8 &&
-            String(prefixBytes, 4, 4, Charsets.US_ASCII) == "ftyp"
-        ) {
-            val brand = if (prefixBytes.size >= 12) {
-                String(prefixBytes, 8, 4, Charsets.US_ASCII)
+        // ISO base media files (MP4/MOV) contain an ftyp box near the beginning.
+        val ftypIndex = (4 until (prefixBytes.size - 3).coerceAtLeast(4))
+            .firstOrNull { index ->
+                prefixBytes[index] == 'f'.code.toByte() &&
+                    prefixBytes[index + 1] == 't'.code.toByte() &&
+                    prefixBytes[index + 2] == 'y'.code.toByte() &&
+                    prefixBytes[index + 3] == 'p'.code.toByte()
+            }
+        if (ftypIndex != null) {
+            val brand = if (prefixBytes.size >= ftypIndex + 8) {
+                String(prefixBytes, ftypIndex + 4, 4, Charsets.US_ASCII)
             } else ""
             return if (brand == "qt  ") "video/quicktime" else "video/mp4"
         }
 
+        // WebM and Matroska use the EBML document header.
         val isEbml = prefixBytes.size >= 4 &&
             prefixBytes[0] == 0x1A.toByte() &&
             prefixBytes[1] == 0x45.toByte() &&
@@ -145,7 +157,7 @@ internal object AriesMediaPolicy {
             return if (header.contains("webm")) "video/webm" else "video/x-matroska"
         }
 
-        // A path extension or MIME hint alone is not enough for generic binary content.
+        // MIME and file extensions alone are insufficient evidence of a playable file.
         return null
     }
 }
