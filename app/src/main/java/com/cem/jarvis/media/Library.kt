@@ -30,6 +30,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
@@ -301,6 +303,14 @@ fun ResumePlayer(
         val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
         ExoPlayer.Builder(ctx)
             .setMediaSourceFactory(mediaSourceFactory)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build(),
+                true
+            )
+            .setHandleAudioBecomingNoisy(true)
             .build()
             .apply {
                 val mediaItem = MediaItem.Builder().setUri(url).apply {
