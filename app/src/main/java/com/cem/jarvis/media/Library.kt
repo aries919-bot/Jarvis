@@ -286,11 +286,11 @@ fun ResumePlayer(
     val ctx = LocalContext.current
     val owner = LocalLifecycleOwner.current
     // İlk 30 sn içinde kalındıysa baştan başlar; aksi halde 5 sn geriden devam eder.
-    val saved = remember {
+    val saved = remember(item.id, season, episode) {
         lib.get(item.id)?.takeIf { it.season == season && it.episode == episode && it.positionMs > 30_000 && it.progress < 0.9f }
     }
-    var banner by remember { mutableStateOf(saved != null) }
-    var ended by remember { mutableStateOf(false) }
+    var banner by remember(item.id, season, episode) { mutableStateOf(saved != null) }
+    var ended by remember(item.id, season, episode) { mutableStateOf(false) }
     var videoSize by remember { mutableStateOf("Büyük") }
 
     val player = remember(url, requestHeaders, mimeType) {
