@@ -141,7 +141,7 @@ class MediaVM : ViewModel() {
                     0 -> tvmazePage(requestedPage)
                     2 -> tvmazePage(requestedPage)
                     1 -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.movies(page = requestedPage).results else emptyList()
-                    else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime(p = requestedPage).results else emptyList()
+                    else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime(page = requestedPage).results else emptyList()
                 }
                 list = list + extra.filter { n -> list.none { it.id == n.id } }
                 nextPage = requestedPage + 1
