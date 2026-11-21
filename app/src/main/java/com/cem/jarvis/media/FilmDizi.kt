@@ -243,8 +243,17 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                 }
             }
             item {
-                Text(if (vm.searching) "Sonuçlar" else "Popülerlik Sıralaması", color = Color.White, fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Text(
+                    if (vm.searching) "Sonuçlar"
+                    else if (BuildConfig.TMDB_TOKEN.isBlank() && (vm.tab == 1 || vm.tab == 3)) "Ücretsiz açık katalog"
+                    else "Popülerlik Sıralaması",
+                    color = Color.White, fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
+                if (!vm.searching && BuildConfig.TMDB_TOKEN.isBlank() && (vm.tab == 1 || vm.tab == 3)) {
+                    Text("TMDB anahtarı ayarlı değil. Açık web katalog sonuçları kullanılıyor; içerik ve poster bilgileri sınırlı olabilir.",
+                        color = Color(0xFFFFD18B), fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                }
                 if (!vm.searching) LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(vm.tabs.size) { i ->
                         Text(vm.tabs[i], fontSize = 16.sp, fontWeight = if (i == vm.tab) FontWeight.Bold else FontWeight.Normal,
