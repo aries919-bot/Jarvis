@@ -464,6 +464,20 @@ fun MediaSourceBrowser(
         runWebSearch(ariesWatchQuery(next, info?.year))
     }
 
+    fun retrySourceSearch() {
+        val currentWatch = watching ?: return
+        showSourcePage = false
+        activeSite = null
+        playerError = null
+        autoPlayedMediaUrl = null
+        mediaCandidates.clear()
+        failedMediaUrls.clear()
+        playbackCandidateUrl = null
+        attemptedSourceUrls.clear()
+        sourceScanExhausted = false
+        runWebSearch(ariesWatchQuery(currentWatch, info?.year))
+    }
+
     LaunchedEffect(initialWatch) {
         initialWatch?.let { request ->
             enterWatch(request.title, request.season, request.episode, request.totalEpisodes, request.isMovie)
@@ -639,6 +653,7 @@ fun MediaSourceBrowser(
                         else "${results.size} site bulundu"
                 },
                 onSelectEpisode = { selectEpisode(it) },
+                onRetrySearch = { retrySourceSearch() },
                 onSelectSource = { openSite(it, displayPage = true) },
                 onSimilar = { startSearch(it) },
                 video = {
@@ -1008,6 +1023,7 @@ private fun AriesWatchScreen(
     onPlayTrailer: () -> Unit,
     onBack: () -> Unit,
     onSelectEpisode: (Int) -> Unit,
+    onRetrySearch: () -> Unit,
     onSelectSource: (AriesSiteResult) -> Unit,
     onSimilar: (String) -> Unit,
     video: @Composable () -> Unit
@@ -1123,16 +1139,21 @@ private fun AriesWatchScreen(
                     )
                     Text(
                         when {
-                            currentUrl != null && scanExhausted -> "Doğrudan video adresi bulunamadı. Açık web sayfası Aries içinde bırakıldı."
-                            currentUrl != null -> "Açık sayfanın ağ istekleri ve oynatıcı kaynakları taranıyor."
-                            searching -> "Aries izleme kaynaklarını arıyor…"
-                            sources.isNotEmpty() -> "Kaynaklar bulundu. İlk sayfa otomatik açılıyor; akış bulunamazsa sonraki kaynak deneniyor."
-                            else -> "Bu arama için kaynak bulunamadı. Başlığı veya bölüm numarasını değiştirerek tekrar deneyebilirsin."
+                            currentUrl != null && scanExhausted -> "Bu sayfadan doğrulanmış video akışı alınamadı. Siteyi kendin açabilir veya başka kaynak arayabilirsin."
+                            currentUrl != null -> "Kaynak sayfası arka planda taranıyor; doğrudan video bulunursa Aries oynatıcısı açılır."
+                            searching -> "Aries üç arama motorunda izleme kaynaklarını arıyor…"
+                            sources.isNotEmpty() -> "Kaynaklar bulundu. Aries her akışı oynatmadan önce doğrular."
+                            else -> "Uygun kaynak bulunamadı. Başlığı veya bölüm numarasını değiştirerek yeniden arayabilirsin."
                         },
                         color = AriesMuted,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 5.dp)
                     )
+                    if (scanExhausted || (!searching && sources.isEmpty())) {
+                        TextButton(onClick = onRetrySearch) {
+                            Text("Tekrar ara", color = Color(0xFF8FB4FF))
+                        }
+                    }
                 }
             }
             if (watch.total > 0) {
