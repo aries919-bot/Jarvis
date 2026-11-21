@@ -84,6 +84,7 @@ private suspend fun validateAriesMediaCandidate(
     if (!isAriesPublicMediaUrl(firstUri)) return@withContext null
     val initialScheme = firstUri.scheme?.lowercase()
     var currentUrl = mediaUrl
+    var requestHeaders = headers
 
     // Follow only a few public redirects. Validate every destination and reject HTTPS downgrades.
     for (redirectIndex in 0..4) {
@@ -101,7 +102,7 @@ private suspend fun validateAriesMediaCandidate(
             connection.instanceFollowRedirects = false
             connection.setRequestProperty("Range", "bytes=0-8191")
             connection.setRequestProperty("Accept-Encoding", "identity")
-            headers.forEach { (name, value) ->
+            requestHeaders.forEach { (name, value) ->
                 if (
                     isAriesForwardableHeader(name) &&
                     value.isNotBlank() &&
@@ -127,6 +128,7 @@ private suspend fun validateAriesMediaCandidate(
                     return@withContext null
                 }
                 if (!isAriesPublicMediaUrl(nextUri)) return@withContext null
+                requestHeaders = AriesMediaPolicy.headersForRedirect(currentUrl, nextUrl, requestHeaders)
                 currentUrl = nextUrl
                 continue
             }
