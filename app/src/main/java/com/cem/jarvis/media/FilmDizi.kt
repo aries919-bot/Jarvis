@@ -199,12 +199,16 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     BackHandler(enabled = play2 != null) { play2 = null }
     if (web2) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure ->
-                play2 = PlayReq(url, item, season, episode, headers, mime, onFailure)
+            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure, totalEpisodes, isMovie, onNextEpisode ->
+                play2 = PlayReq(url, item, season, episode, headers, mime, totalEpisodes, isMovie, onFailure, onNextEpisode)
             }
             play2?.let { p ->
                 ResumePlayer(
-                    p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
+                    p.url, p.item, p.season, p.episode, lib,
+                    hasNext = !p.isMovie && p.totalEpisodes > p.episode,
+                    onNext = { play2 = null; p.onNextEpisode() },
+                    onClose = { play2 = null },
+                    onEpisodes = { play2 = null },
                     requestHeaders = p.headers,
                     mimeType = p.mimeType,
                     onPlaybackError = {
@@ -317,12 +321,16 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
     }
     if (web) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(media.label + if (type == "movie") " film" else " dizi", { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure ->
-                play = PlayReq(url, item, season, episode, headers, mime, onFailure)
+            MediaSourceBrowser(media.label + if (type == "movie") " film" else " dizi", { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure, totalEpisodes, isMovie, onNextEpisode ->
+                play = PlayReq(url, item, season, episode, headers, mime, totalEpisodes, isMovie, onFailure, onNextEpisode)
             }
             play?.let { pr ->
                 ResumePlayer(
-                    pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
+                    pr.url, pr.item, pr.season, pr.episode, lib,
+                    hasNext = !pr.isMovie && pr.totalEpisodes > pr.episode,
+                    onNext = { play = null; pr.onNextEpisode() },
+                    onClose = { play = null },
+                    onEpisodes = { play = null },
                     requestHeaders = pr.headers,
                     mimeType = pr.mimeType,
                     onPlaybackError = {
@@ -404,5 +412,8 @@ data class PlayReq(
     val episode: Int,
     val headers: Map<String, String> = emptyMap(),
     val mimeType: String? = null,
-    val onFailure: (String) -> Unit = {}
+    val totalEpisodes: Int = 0,
+    val isMovie: Boolean = false,
+    val onFailure: (String) -> Unit = {},
+    val onNextEpisode: () -> Unit = {}
 )
