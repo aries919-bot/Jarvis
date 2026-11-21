@@ -436,20 +436,20 @@ fun MediaSourceBrowser(
         }
     }
 
-    BackHandler(enabled = activeSite != null && watching == null) {
+    BackHandler(enabled = activeSite != null && watching == null && !playerOverlay) {
         siteView?.stopLoading()
         activeSite = null
         status = if (results.isEmpty()) "Arama sonucu bekleniyor" else "${results.size} site bulundu"
     }
 
-    BackHandler(enabled = watching != null) {
+    BackHandler(enabled = watching != null && !playerOverlay) {
         siteView?.stopLoading()
         watching = null
         activeSite = null
         status = if (results.isEmpty()) "Arama sonucu bekleniyor" else "${results.size} site bulundu"
     }
 
-    BackHandler(enabled = fullscreenView != null) { exitFullscreen() }
+    BackHandler(enabled = fullscreenView != null && !playerOverlay) { exitFullscreen() }
 
     DisposableEffect(Unit) {
         onDispose {
