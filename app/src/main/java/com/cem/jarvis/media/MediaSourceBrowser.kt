@@ -238,6 +238,12 @@ private const val ARIES_TMDB_KEY_FALLBACK = ""
 private fun ariesDdgUrl(term: String): String =
     "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(term.trim(), "UTF-8")
 
+private fun ariesBingUrl(term: String): String =
+    "https://www.bing.com/search?q=" + URLEncoder.encode(term.trim(), "UTF-8")
+
+private fun ariesGoogleUrl(term: String): String =
+    "https://www.google.com/search?q=" + URLEncoder.encode(term.trim(), "UTF-8")
+
 private fun ariesChipLabels(count: Int): List<String> {
     if (count <= 0) return emptyList()
     if (count <= 6) return (1..count).map { it.toString() }
@@ -280,6 +286,7 @@ fun MediaSourceBrowser(
     var pageUrl by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Film ve dizi siteleri aranıyor…") }
     var searching by remember { mutableStateOf(true) }
+    var searchEnginePass by remember { mutableIntStateOf(0) }
     val results = remember { mutableStateListOf<AriesSiteResult>() }
     var searchView by remember { mutableStateOf<WebView?>(null) }
     var siteView by remember { mutableStateOf<WebView?>(null) }
@@ -369,7 +376,8 @@ fun MediaSourceBrowser(
         webTerm = term
         results.clear()
         searching = true
-        status = "\"$term\" için siteler aranıyor…"
+        searchEnginePass = 0
+        status = "\"$term\" için kaynaklar aranıyor…"
         searchView?.loadUrl(ariesDdgUrl(term))
     }
 
@@ -879,19 +887,37 @@ fun MediaSourceBrowser(
                         onLoading = { },
                         onStatus = { },
                         onResult = { result ->
-                            if (!isAriesDiscoveryOnlyHost(result.url) && results.none { it.url == result.url }) results.add(result)
+                            if (!isAriesDiscoveryOnlyHost(result.url) &&
+                                !isAriesSubscriptionHost(result.url) &&
+                                results.none { it.url == result.url }
+                            ) results.add(result)
                         },
                         onSearchFinished = {
-                            searching = false
-                            if (watching != null && results.isNotEmpty()) {
-                                attemptedSourceUrls.clear()
-                                sourceScanExhausted = false
-                                status = "${results.size} kaynak bulundu. İlk kaynak otomatik deneniyor…"
-                                openNextAutoSource()
-                            } else {
-                                status = if (results.isEmpty())
-                                    "Bu aramada site sonucu alınamadı. Başka kelimeler deneyebilirsin."
-                                else "${results.size} site sonucu bulundu"
+                            // Merge distinct results from three engines before selecting a source.
+                            when (searchEnginePass) {
+                                0 -> {
+                                    searchEnginePass = 1
+                                    status = "Bing de kaynakları tarıyor…"
+                                    searchView?.loadUrl(ariesBingUrl(webTerm))
+                                }
+                                1 -> {
+                                    searchEnginePass = 2
+                                    status = "Google da kaynakları tarıyor…"
+                                    searchView?.loadUrl(ariesGoogleUrl(webTerm))
+                                }
+                                else -> {
+                                    searching = false
+                                    if (watching != null && results.isNotEmpty()) {
+                                        attemptedSourceUrls.clear()
+                                        sourceScanExhausted = false
+                                        status = "${results.size} uygun kaynak sayfası bulundu. İlk kaynak kontrol ediliyor…"
+                                        openNextAutoSource()
+                                    } else {
+                                        status = if (results.isEmpty())
+                                            "Üç arama motorunda uygun kaynak bulunamadı. Başka bir başlık deneyebilirsin."
+                                        else "${results.size} uygun kaynak sayfası bulundu"
+                                    }
+                                }
                             }
                         }
                     ).also {
@@ -1645,19 +1671,37 @@ private fun createAriesSearchWebView(
                       function txt(el) {
                         return (el && (el.innerText || el.textContent) || '').trim();
                       }
-                      var anchors = document.querySelectorAll('a.result__a, a[data-testid="result-title-a"]');
-                      anchors.forEach(function(a) {
+                      var seen = Object.create(null);
+                      function addAnchor(a) {
+                        if (!a) return;
+                        var row = a.closest('.result, [data-testid="result"], li.b_algo, .web-result') || a.parentElement;
+                        if (row && (row.matches('.result--ad, [data-testid="ad"], article[data-testid="ad"]') ||
+                            row.querySelector('.result--ad, [data-testid="ad"], article[data-testid="ad"]'))) return;
                         var u = a.href || '';
                         try {
                           var parsed = new URL(u, location.href);
                           if (parsed.searchParams.has('uddg')) u = parsed.searchParams.get('uddg');
-                          else u = parsed.href;
+                          else if ((parsed.hostname === 'www.google.com' || parsed.hostname === 'google.com') &&
+                                   parsed.pathname === '/url' && parsed.searchParams.has('q')) {
+                            u = parsed.searchParams.get('q');
+                          } else u = parsed.href;
                         } catch(e) {}
-                        if (!/^https?:\/\//i.test(u)) return;
-                        var row = a.closest('.result') || a.closest('[data-testid="result"]') || a.parentElement;
-                        var sn = row ? row.querySelector('.result__snippet, [data-result="snippet"]') : null;
+                        if (!/^https?:\/\//i.test(u) || seen[u]) return;
+                        seen[u] = true;
+                        var sn = row ? row.querySelector('.result__snippet, [data-result="snippet"], .b_caption p') : null;
                         AriesSearchBridge.add(txt(a), u, txt(sn));
+                      }
+                      // DuckDuckGo, Bing and Google organic results; paid ads are skipped.
+                      var anchors = Array.prototype.slice.call(document.querySelectorAll(
+                        'a.result__a, a[data-testid="result-title-a"], a.result__title, ' +
+                        'article[data-testid="result"] h2 a, div[data-testid="result"] h2 a, ' +
+                        '#b_results li.b_algo h2 a, li.b_algo h2 a, .web-result h2 a'
+                      ));
+                      document.querySelectorAll('h3').forEach(function(heading) {
+                        var link = heading.closest('a[href]');
+                        if (link) anchors.push(link);
                       });
+                      anchors.forEach(addAnchor);
                       AriesSearchBridge.done();
                     })();
                 """.trimIndent()
