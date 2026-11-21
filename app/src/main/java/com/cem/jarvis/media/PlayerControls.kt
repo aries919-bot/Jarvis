@@ -2,6 +2,7 @@ package com.cem.jarvis.media
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import androidx.core.view.WindowCompat
@@ -43,7 +44,12 @@ fun PlayerControls(
     onFullscreen: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
-    val act = ctx as? Activity
+    val act = remember(ctx) {
+        var current: Context = ctx
+        while (current !is Activity && current is ContextWrapper) current = current.baseContext
+        current as? Activity
+    }
+    val originalBrightness = remember(act) { act?.window?.attributes?.screenBrightness ?: -1f }
     val prefs = remember { ctx.getSharedPreferences("aries_player", Context.MODE_PRIVATE) }
     val am = remember { ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
@@ -63,7 +69,12 @@ fun PlayerControls(
         act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         onDispose {
             act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            act?.window?.let { WindowCompat.getInsetsController(it, it.decorView).show(WindowInsetsCompat.Type.systemBars()) }
+            act?.window?.let { window ->
+                val attributes = window.attributes
+                attributes.screenBrightness = originalBrightness
+                window.attributes = attributes
+                WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+            }
         }
     }
     DisposableEffect(fullscreen) {
