@@ -73,6 +73,114 @@ private data class AriesMediaCandidate(
     val score: Int
 )
 
+/** Validate the actual response before handing a candidate to Media3. No DRM or access-control bypass is attempted. */
+private suspend fun validateAriesMediaCandidate(
+    mediaUrl: String,
+    mimeType: String?,
+    headers: Map<String, String>
+): String? = withContext(Dispatchers.IO) {
+    val firstUri = runCatching { Uri.parse(mediaUrl) }.getOrNull()
+        ?: return@withContext null
+    if (!isAriesPublicMediaUrl(firstUri)) return@withContext null
+    val initialScheme = firstUri.scheme?.lowercase()
+    var currentUrl = mediaUrl
+
+    // Follow only a few public redirects. Validate every destination and reject HTTPS downgrades.
+    for (redirectIndex in 0..4) {
+        val uri = runCatching { Uri.parse(currentUrl) }.getOrNull()
+            ?: return@withContext null
+        if (!isAriesPublicMediaUrl(uri)) return@withContext null
+        val connection = runCatching {
+            URL(currentUrl).openConnection() as? HttpURLConnection
+        }.getOrNull() ?: return@withContext null
+
+        try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 7000
+            connection.readTimeout = 10000
+            connection.instanceFollowRedirects = false
+            connection.setRequestProperty("Range", "bytes=0-8191")
+            connection.setRequestProperty("Accept-Encoding", "identity")
+            headers.forEach { (name, value) ->
+                if (
+                    isAriesForwardableHeader(name) &&
+                    value.isNotBlank() &&
+                    !name.equals("host", true) &&
+                    !name.equals("content-length", true) &&
+                    !name.equals("range", true) &&
+                    !name.equals("accept-encoding", true)
+                ) {
+                    connection.setRequestProperty(name, value)
+                }
+            }
+
+            val responseCode = connection.responseCode
+            if (responseCode in 300..399) {
+                val location = connection.getHeaderField("Location")
+                    ?: return@withContext null
+                val nextUrl = runCatching {
+                    URL(URL(currentUrl), location).toString()
+                }.getOrNull() ?: return@withContext null
+                val nextUri = runCatching { Uri.parse(nextUrl) }.getOrNull()
+                    ?: return@withContext null
+                if (initialScheme == "https" && nextUri.scheme != "https") {
+                    return@withContext null
+                }
+                if (!isAriesPublicMediaUrl(nextUri)) return@withContext null
+                currentUrl = nextUrl
+                continue
+            }
+            if (responseCode !in 200..299) return@withContext null
+
+            val responseMime = connection.contentType.orEmpty()
+                .substringBefore(";").trim().lowercase()
+            val prefixBytes = connection.inputStream.use { input ->
+                val bytes = ByteArray(8192)
+                val count = input.read(bytes)
+                if (count <= 0) ByteArray(0) else bytes.copyOf(count)
+            }
+
+            return@withContext AriesMediaPolicy.validatedMimeFromPrefix(
+                currentUrl,
+                mimeType,
+                responseMime,
+                prefixBytes
+            )
+        } catch (_: Exception) {
+            return@withContext null
+        } finally {
+            connection.disconnect()
+        }
+    }
+    null
+}
+
+/** Do not send locally-addressed, loopback or link-local URLs to the player probe. */
+private fun isAriesPublicMediaUrl(uri: Uri): Boolean {
+    if (uri.scheme != "https" && uri.scheme != "http") return false
+    if (!uri.userInfo.isNullOrBlank()) return false
+    val host = uri.host?.lowercase()?.removeSuffix(".") ?: return false
+    if (host == "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return false
+
+    val addresses = runCatching { java.net.InetAddress.getAllByName(host) }.getOrNull()
+        ?: return false
+    if (addresses.isEmpty()) return false
+    return addresses.all { address ->
+        val bytes = address.address
+        val uniqueLocalIpv6 = bytes.size == 16 && (bytes[0].toInt() and 0xFE) == 0xFC
+        val sharedIpv4 = bytes.size == 4 &&
+            (bytes[0].toInt() and 0xFF) == 100 &&
+            ((bytes[1].toInt() and 0xC0) == 0x40)
+        !address.isAnyLocalAddress &&
+            !address.isLoopbackAddress &&
+            !address.isLinkLocalAddress &&
+            !address.isSiteLocalAddress &&
+            !address.isMulticastAddress &&
+            !uniqueLocalIpv6 &&
+            !sharedIpv4
+    }
+}
+
 private data class AriesSeason(val number: Int, val episodes: Int)
 
 private data class AriesSimilar(val title: String, val posterUrl: String?, val isTv: Boolean)
@@ -136,10 +244,13 @@ private fun ariesChipLabels(count: Int): List<String> {
     return listOf("1", "2", "…", (count - 1).toString(), count.toString())
 }
 
-private fun ariesWatchQuery(w: AriesWatch): String = when {
-    w.season != null -> "${w.title} ${w.season}. sezon ${w.episode}. bölüm izle"
-    w.isMovie -> "${w.title} film izle"
-    else -> "${w.title} dizi izle"
+private fun ariesWatchQuery(w: AriesWatch, year: String? = null): String {
+    val yearTerm = year?.takeIf { it.matches(Regex("\\d{4}")) }?.let { " $it" }.orEmpty()
+    return when {
+        w.season != null -> "${w.title}$yearTerm ${w.season}. sezon ${w.episode}. bölüm izle"
+        w.isMovie -> "${w.title}$yearTerm film izle"
+        else -> "${w.title}$yearTerm dizi izle"
+    }
 }
 
 private fun ariesCleanTitle(raw: String): String {
@@ -184,6 +295,7 @@ fun MediaSourceBrowser(
     var sourceScanExhausted by remember { mutableStateOf(false) }
     val attemptedSourceUrls = remember { mutableStateListOf<String>() }
     val mediaCandidates = remember { mutableStateListOf<AriesMediaCandidate>() }
+    var mediaCandidateRevision by remember { mutableIntStateOf(0) }
     val failedMediaUrls = remember { mutableStateListOf<String>() }
     var playbackCandidateUrl by remember { mutableStateOf<String?>(null) }
     var fullscreenView by remember { mutableStateOf<View?>(null) }
@@ -304,17 +416,6 @@ fun MediaSourceBrowser(
             openSite(next)
             return
         }
-        // If every remaining result is a catalogue/search page, leave one in the
-        // in-app browser as a fallback instead of treating it as a playable host.
-        val fallback = results.firstOrNull {
-            it.url !in attemptedSourceUrls && !isAriesSubscriptionHost(it.url)
-        }
-        if (activeSite == null && fallback != null) {
-            attemptedSourceUrls.add(fallback.url)
-            activeSite = fallback
-            pageTitle = fallback.title
-            pageUrl = fallback.url
-        }
         sourceScanExhausted = true
         status = "Otomatik tarama tamamlandı. Doğrudan akış bulunamadı; açık sayfa Aries içinde bırakıldı."
     }
@@ -336,7 +437,7 @@ fun MediaSourceBrowser(
         failedMediaUrls.clear()
         playbackCandidateUrl = null
         attemptedSourceUrls.clear()
-        runWebSearch(ariesWatchQuery(w))
+        runWebSearch(ariesWatchQuery(w, info?.year))
     }
 
     fun selectEpisode(episode: Int) {
@@ -352,7 +453,7 @@ fun MediaSourceBrowser(
         failedMediaUrls.clear()
         playbackCandidateUrl = null
         attemptedSourceUrls.clear()
-        runWebSearch(ariesWatchQuery(next))
+        runWebSearch(ariesWatchQuery(next, info?.year))
     }
 
     LaunchedEffect(initialWatch) {
@@ -364,7 +465,7 @@ fun MediaSourceBrowser(
     // Collect a short burst of requests, prefer a master HLS manifest, and hand off only one
     // candidate at a time. A failed candidate is remembered so the next one can be tried.
     LaunchedEffect(
-        activeSite?.url, watching, mediaCandidates.size, playbackCandidateUrl,
+        activeSite?.url, watching, mediaCandidates.size, mediaCandidateRevision, playbackCandidateUrl,
         failedMediaUrls.size, sourceScanExhausted
     ) {
         val selectedSite = activeSite
@@ -383,9 +484,13 @@ fun MediaSourceBrowser(
 
             if (candidate == null) {
                 if (mediaCandidates.isNotEmpty() && failedMediaUrls.size >= mediaCandidates.size) {
-                    playerError = "Bu kaynaktaki akışlar açılamadı; sıradaki kaynak deneniyor."
+                    playerError = "Bulunan akışlar doğrulanamadı; sıradaki kaynak deneniyor."
                     status = playerError.orEmpty()
-                    openNextAutoSource()
+                    sourceScanExhausted = true
+                    kotlinx.coroutines.delay(350)
+                    if (activeSite?.url == selectedSite.url && watching == currentWatch) {
+                        openNextAutoSource()
+                    }
                 }
                 return@LaunchedEffect
             }
@@ -411,9 +516,24 @@ fun MediaSourceBrowser(
                 if (!cookie.isNullOrBlank()) headers["Cookie"] = cookie
             }
 
+            status = "Video kaynağı doğrulanıyor…"
+            val validatedMime = validateAriesMediaCandidate(
+                candidate.url,
+                candidate.mime ?: inferAriesMimeType(candidate.url),
+                headers
+            )
+            if (activeSite?.url != selectedSite.url || watching != currentWatch) {
+                return@LaunchedEffect
+            }
+            if (validatedMime == null) {
+                if (!failedMediaUrls.contains(candidate.url)) failedMediaUrls.add(candidate.url)
+                status = "Video yanıtı doğrulanamadı; diğer akış deneniyor…"
+                return@LaunchedEffect
+            }
+
             playbackCandidateUrl = candidate.url
             autoPlayedMediaUrl = candidate.url
-            status = "Video akışı bulundu; Aries oynatıcısına aktarılıyor…"
+            status = "Video akışı doğrulandı; Aries oynatıcısına aktarılıyor…"
             siteView?.evaluateJavascript(
                 "document.querySelectorAll('video,audio').forEach(function(v){try{v.pause();}catch(e){}});",
                 null
@@ -423,7 +543,7 @@ fun MediaSourceBrowser(
 
             onPlayMedia(
                 candidate.url,
-                candidate.mime?.takeIf { it.isNotBlank() } ?: inferAriesMimeType(candidate.url),
+                validatedMime,
                 headers,
                 playableItem,
                 currentWatch.season ?: 0,
@@ -492,7 +612,7 @@ fun MediaSourceBrowser(
         if (currentWatch != null) {
             AriesWatchScreen(
                 watch = currentWatch,
-                sources = results.toList(),
+                sources = results.filterNot { isAriesDiscoveryOnlyHost(it.url) || isAriesSubscriptionHost(it.url) },
                 searching = searching,
                 currentUrl = activeSite?.url,
                 scanExhausted = sourceScanExhausted,
@@ -544,6 +664,7 @@ fun MediaSourceBrowser(
                                                         score = score
                                                     )
                                                 )
+                                                mediaCandidateRevision++
                                                 status = "Video akışı bulundu; en uygun kaynak seçiliyor…"
                                             } else {
                                                 val old = mediaCandidates[index]
@@ -552,6 +673,7 @@ fun MediaSourceBrowser(
                                                     headers = old.headers + capturedHeaders,
                                                     score = maxOf(old.score, score)
                                                 )
+                                                mediaCandidateRevision++
                                             }
                                         }
                                     }
@@ -757,7 +879,7 @@ fun MediaSourceBrowser(
                         onLoading = { },
                         onStatus = { },
                         onResult = { result ->
-                            if (results.none { it.url == result.url }) results.add(result)
+                            if (!isAriesDiscoveryOnlyHost(result.url) && results.none { it.url == result.url }) results.add(result)
                         },
                         onSearchFinished = {
                             searching = false
@@ -1911,15 +2033,8 @@ private fun WebView.configureAriesWebView() {
     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 }
 
-private fun isAriesDiscoveryOnlyHost(url: String): Boolean {
-    val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
-    return listOf(
-        "justwatch.com", "themoviedb.org", "imdb.com", "tvmaze.com",
-        "thetvdb.com", "wikipedia.org", "rottentomatoes.com",
-        "metacritic.com", "trakt.tv", "letterboxd.com",
-        "youtube.com", "youtu.be", "youtube-nocookie.com", "googlevideo.com"
-    ).any { host == it || host.endsWith(".$it") }
-}
+private fun isAriesDiscoveryOnlyHost(url: String): Boolean =
+    AriesMediaPolicy.isDiscoveryOnlyHost(url)
 
 private fun isAriesSubscriptionHost(url: String): Boolean {
     val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
@@ -1978,52 +2093,5 @@ private fun isAriesMediaMime(mime: String?): Boolean =
             mime.contains("video/webm") || mime.contains("video/quicktime") || mime.contains("matroska")
     )
 
-private fun inferAriesMimeType(url: String, responseType: String? = null): String? {
-    val mime = responseType?.lowercase().orEmpty()
-    return when {
-        mime.contains("mpegurl") || mime.contains("vnd.apple.mpegurl") -> "application/x-mpegURL"
-        mime.contains("dash+xml") -> "application/dash+xml"
-        mime.contains("video/mp4") -> "video/mp4"
-        mime.contains("video/webm") -> "video/webm"
-        mime.contains("video/quicktime") -> "video/quicktime"
-        mime.contains("matroska") -> "video/x-matroska"
-        else -> {
-            val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
-            when {
-                path.endsWith(".m3u8") -> "application/x-mpegURL"
-                path.endsWith(".mpd") -> "application/dash+xml"
-                path.endsWith(".mp4") || path.endsWith(".m4v") -> "video/mp4"
-                path.endsWith(".webm") -> "video/webm"
-                path.endsWith(".mov") -> "video/quicktime"
-                path.endsWith(".mkv") -> "video/x-matroska"
-                else -> null
-            }
-        }
-    }
-}
-
-private fun ariesMediaCandidateScore(url: String, mime: String?): Int {
-    val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
-    val type = mime.orEmpty().lowercase()
-    return when {
-        path.endsWith("master.m3u8") -> 110
-        path.endsWith(".m3u8") || type.contains("mpegurl") -> 100
-        path.endsWith(".mpd") || type.contains("dash+xml") -> 95
-        path.endsWith(".mp4") || path.endsWith(".m4v") || type.contains("video/mp4") -> 85
-        path.endsWith(".webm") || type.contains("video/webm") -> 80
-        path.endsWith(".mov") || type.contains("video/quicktime") -> 75
-        path.endsWith(".mkv") -> 70
-        else -> 0
-    }
-}
-
-private fun isSupportedMediaUrl(url: String): Boolean {
-    if (!url.startsWith("https://", ignoreCase = true) && !url.startsWith("http://", ignoreCase = true)) return false
-    val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
-    val path = uri.path.orEmpty().lowercase()
-    if (listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }) return true
-    val format = listOf("format", "type", "mime", "ext", "output").mapNotNull { uri.getQueryParameter(it) }
-        .joinToString(" ").lowercase()
-    return listOf("m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm", "video/quicktime", "matroska")
-        .any { format.contains(it) }
-}
+private fun inferAriesMimeType(url: String, responseType: String? = null): String? =
+    AriesMediaPolicy.inferMimeType(url, responseType)
