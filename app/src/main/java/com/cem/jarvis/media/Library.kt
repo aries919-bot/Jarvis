@@ -81,12 +81,13 @@ data class Entry(
     val watched: List<String>? = null,            // "s1e3"
     val updatedAt: Long = 0,
     val upNext: Boolean = false,                  // bölüm bitti, sıradaki bekliyor
-    val dismissed: Boolean = false                // "Devam et"ten kaldırıldı
+    val dismissed: Boolean = false,               // "Devam et"ten kaldırıldı
+    val source: String? = null
 ) {
     val progress get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     val hasProgress get() = updatedAt > 0
     fun toItem() = Item(id, if (type == "movie") title else null, if (type == "tv") title else null,
-        null, poster, null, null, type, null, null)
+        null, poster, null, null, type, null, null, source = source)
 }
 
 // ---------- Depolama ----------
@@ -121,8 +122,12 @@ class LibraryVM(app: Application) : AndroidViewModel(app) {
 
     private fun update(item: Item, change: (Entry) -> Entry) {
         val type = if (item.media_type == "movie" || item.title != null) "movie" else "tv"
-        val base = get(item.id) ?: Entry(item.id, type, item.label, item.poster_path)
-        val next = change(base).copy(title = item.label.ifBlank { base.title }, poster = item.poster_path ?: base.poster)
+        val base = get(item.id) ?: Entry(item.id, type, item.label, item.poster_path, source = item.source)
+        val next = change(base).copy(
+            title = item.label.ifBlank { base.title },
+            poster = item.poster_path ?: base.poster,
+            source = item.source ?: base.source
+        )
         val list = listOf(next) + entries.filter { it.id != item.id }
         entries = list
         viewModelScope.launch { ds.edit { it[KEY] = gson.toJson(list) } }
@@ -212,8 +217,18 @@ fun EpisodeList(item: Item, lib: LibraryVM) {
     var seasons by remember(item.id) { mutableIntStateOf(1) }
     var season by remember(item.id) { mutableIntStateOf(lib.get(item.id)?.season ?: 1) }
     var eps by remember(item.id, season) { mutableStateOf<List<Ep>>(emptyList()) }
-    LaunchedEffect(item.id) { runCatching { seasons = api.tvInfo(item.id).number_of_seasons ?: 1 } }
-    LaunchedEffect(item.id, season) { runCatching { eps = api.season(item.id, season).episodes.orEmpty() } }
+    LaunchedEffect(item.id, item.source) {
+        runCatching {
+            seasons = if (item.source == "tvmaze") tvmazeSeasonCount(item.id)
+                else api.tvInfo(item.id).number_of_seasons ?: 1
+        }
+    }
+    LaunchedEffect(item.id, season, item.source) {
+        runCatching {
+            eps = if (item.source == "tvmaze") tvmazeEpisodesForSeason(item.id, season)
+                else api.season(item.id, season).episodes.orEmpty()
+        }
+    }
     val watched = lib.get(item.id)?.watched.orEmpty()
 
     Column {
