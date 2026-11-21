@@ -55,6 +55,30 @@ internal object AriesMediaPolicy {
         ).any { value -> formatValues.contains(value) }
     }
 
+    /**
+     * Preserve credentials only when a redirect stays on the exact same origin.
+     * Custom x-* headers may contain tokens, so they are stripped cross-origin too.
+     */
+    fun headersForRedirect(
+        fromUrl: String,
+        toUrl: String,
+        headers: Map<String, String>
+    ): Map<String, String> {
+        val from = uri(fromUrl) ?: return emptyMap()
+        val to = uri(toUrl) ?: return emptyMap()
+        val sameOrigin =
+            from.scheme.equals(to.scheme, ignoreCase = true) &&
+                from.host.equals(to.host, ignoreCase = true) &&
+                from.port == to.port
+        if (sameOrigin) return headers
+
+        val blocked = setOf("authorization", "cookie", "proxy-authorization", "x-api-key", "x-auth-token")
+        return headers.filterKeys { key ->
+            val normalized = key.trim().lowercase(Locale.ROOT)
+            normalized !in blocked && !normalized.startsWith("x-")
+        }
+    }
+
     fun inferMimeType(raw: String, responseType: String? = null): String? {
         val mime = responseType.orEmpty().substringBefore(";").trim().lowercase(Locale.ROOT)
         when {
