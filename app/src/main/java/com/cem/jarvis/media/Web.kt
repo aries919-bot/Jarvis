@@ -188,6 +188,9 @@ suspend fun tvmazeEpisodesForSeason(showId: Int, season: Int): List<Ep> = withCo
 suspend fun tvmazePage(page: Int): List<Item> = withContext(Dispatchers.IO) {
     val arr = JSONArray(getJson("https://api.tvmaze.com/shows?page=$page"))
     val out = mutableListOf<Item>()
-    for (i in 0 until arr.length()) showItem(arr.getJSONObject(i))?.let { out += it }
+    for (i in 0 until arr.length()) {
+        showItem(arr.getJSONObject(i))?.let { out += it }
+        if (out.size >= 30) break
+    }
     out.sortedByDescending { it.vote_average ?: 0.0 }
 }
