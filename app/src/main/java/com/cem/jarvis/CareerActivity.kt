@@ -230,7 +230,7 @@ class CareerActivity : Activity() {
         setPadding(dp(10), dp(8), dp(10), dp(8)); setBackgroundColor(Color.rgb(31, 37, 53))
         if (multi) { minLines = 5; maxLines = 10; gravity = Gravity.TOP
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
-        } else { singleLine = true; inputType = android.text.InputType.TYPE_CLASS_TEXT }
+        } else { setSingleLine(true); inputType = android.text.InputType.TYPE_CLASS_TEXT }
     }
 
     private fun button(value: String, action: () -> Unit) = Button(this).apply {
