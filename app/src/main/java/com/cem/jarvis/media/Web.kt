@@ -37,9 +37,14 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 private const val TMDB_IMG = "https://image.tmdb.org/t/p/w342"
-private val webHttp = OkHttpClient()
+private val webHttp = OkHttpClient.Builder()
+    .connectTimeout(8, TimeUnit.SECONDS)
+    .readTimeout(12, TimeUnit.SECONDS)
+    .callTimeout(15, TimeUnit.SECONDS)
+    .build()
 
 fun webImg(p: String?): String = when {
     p.isNullOrBlank() -> ""
@@ -49,7 +54,10 @@ fun webImg(p: String?): String = when {
 
 private fun getJson(url: String): String =
     webHttp.newCall(Request.Builder().url(url).header("User-Agent", "AriesApp/1.0").build())
-        .execute().use { it.body?.string().orEmpty() }
+        .execute().use { response ->
+            if (!response.isSuccessful) throw java.io.IOException("HTTP " + response.code)
+            response.body?.string().orEmpty()
+        }
 
 private fun showItem(sh: JSONObject): Item? {
     val im = sh.optJSONObject("image")?.optString("medium")
@@ -74,9 +82,9 @@ suspend fun tvmazeSchedule(country: String): List<Item> = withContext(Dispatcher
     out
 }
 
-suspend fun webSearch(q: String): List<Item> = withContext(Dispatchers.IO) {
+suspend fun webSearch(q: String, mediaType: String? = null): List<Item> = withContext(Dispatchers.IO) {
     val out = mutableListOf<Item>()
-    runCatching {
+    if (mediaType != "movie") runCatching {
         val arr = JSONArray(getJson("https://api.tvmaze.com/search/shows?q=" + Uri.encode(q)))
         for (i in 0 until minOf(arr.length(), 10)) {
             showItem(arr.getJSONObject(i).getJSONObject("show"))?.let { out += it }
@@ -91,7 +99,10 @@ suspend fun webSearch(q: String): List<Item> = withContext(Dispatchers.IO) {
             val pg = pages.getJSONObject(k)
             val th = pg.optJSONObject("thumbnail")?.optString("source")
             if (!th.isNullOrBlank())
-                out += Item(pg.getInt("pageid"), null, pg.optString("title"), pg.optString("extract"), th, null, null, "tv", null, null)
+                out += Item(pg.getInt("pageid"),
+                    if (mediaType == "movie") pg.optString("title") else null,
+                    if (mediaType == "movie") null else pg.optString("title"),
+                    pg.optString("extract"), th, null, null, mediaType ?: "tv", null, null)
         }
     }
     out
