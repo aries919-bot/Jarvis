@@ -964,6 +964,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             }
             p.addView(r, LinearLayout.LayoutParams(-1, -2))
         }
+        add(p, Ui.button(this, "💼  İş ve Kariyer") {
+            closeSide()
+            startActivity(Intent(this, CareerActivity::class.java))
+        })
         val ttl = Ui.text(this, "Sohbetler", 20f, Pal.WHITE)
         ttl.setPadding(0, dp(14), 0, 0)
         p.addView(ttl)
