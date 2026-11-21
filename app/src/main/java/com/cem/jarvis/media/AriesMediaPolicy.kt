@@ -26,15 +26,17 @@ internal object AriesMediaPolicy {
 
     fun isDiscoveryOnlyHost(raw: String): Boolean {
         val parsed = uri(raw) ?: return false
-        if (parsed.scheme?.lowercase(Locale.ROOT) !in setOf("http", "https")) return false
+        val scheme = parsed.scheme?.lowercase(Locale.ROOT) ?: return false
+        if (scheme != "http" && scheme != "https") return false
         val host = parsed.host?.lowercase(Locale.ROOT)?.removePrefix("www.") ?: return false
         return discoveryOnlyDomains.any { host == it || host.endsWith(".$it") }
     }
 
     fun isSupportedMediaUrl(raw: String, mimeType: String? = null): Boolean {
         val parsed = uri(raw) ?: return false
-        if (parsed.scheme?.lowercase(Locale.ROOT) !in setOf("http", "https")) return false
-        if (parsed.host.isNullOrBlank() || isDiscoveryOnlyHost(raw)) return false
+        val scheme = parsed.scheme?.lowercase(Locale.ROOT) ?: return false
+        if (scheme != "http" && scheme != "https") return false
+        if (parsed.host.isNullOrBlank() || parsed.rawUserInfo != null || isDiscoveryOnlyHost(raw)) return false
         val path = parsed.path.orEmpty().lowercase(Locale.ROOT)
         if (mediaExtensions.any { extension -> path.endsWith(extension) }) return true
         if (inferMimeType(raw, mimeType) != null) return true
@@ -102,7 +104,7 @@ internal object AriesMediaPolicy {
         responseMime: String?,
         prefixBytes: ByteArray
     ): String? {
-        if (!isSupportedMediaUrl(rawUrl)) return null
+        if (!isSupportedMediaUrl(rawUrl, declaredMime ?: responseMime)) return null
         val pathMime = inferMimeType(rawUrl)
         val declared = declaredMime.orEmpty().substringBefore(";").trim().lowercase(Locale.ROOT)
         val contentType = responseMime.orEmpty().substringBefore(";").trim().lowercase(Locale.ROOT)
