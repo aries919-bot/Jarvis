@@ -150,7 +150,7 @@ fun MediaSourceBrowser(
     query: String,
     onBack: () -> Unit,
     playerOverlay: Boolean = false,
-    onPlayMedia: (String, String?, Map<String, String>, Item, Int, Int, (String) -> Unit) -> Unit
+    onPlayMedia: (String, String?, Map<String, String>, Item, Int, Int, (String) -> Unit, Int, Boolean, () -> Unit) -> Unit
 ) {
     var searchText by remember(query) { mutableStateOf(query) }
     var activeQuery by remember(query) { mutableStateOf(query) }
@@ -407,13 +407,20 @@ fun MediaSourceBrowser(
                 headers,
                 playableItem,
                 currentWatch.season ?: 0,
-                currentWatch.episode
-            ) { failedUrl ->
-                if (activeSite?.url == selectedSite.url && playbackCandidateUrl == failedUrl) {
-                    if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl)
-                    playbackCandidateUrl = null
-                    autoPlayedMediaUrl = null
-                    status = "Bu video akışı açılamadı; aynı kaynaktaki diğer akış deneniyor…"
+                currentWatch.episode,
+                { failedUrl ->
+                    if (activeSite?.url == selectedSite.url && playbackCandidateUrl == failedUrl) {
+                        if (!failedMediaUrls.contains(failedUrl)) failedMediaUrls.add(failedUrl)
+                        playbackCandidateUrl = null
+                        autoPlayedMediaUrl = null
+                        status = "Bu video akışı açılamadı; aynı kaynaktaki diğer akış deneniyor…"
+                    }
+                },
+                currentWatch.total,
+                currentWatch.isMovie
+            ) {
+                if (!currentWatch.isMovie && currentWatch.total > currentWatch.episode) {
+                    selectEpisode(currentWatch.episode + 1)
                 }
             }
         }
