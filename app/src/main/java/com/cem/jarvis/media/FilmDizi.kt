@@ -206,8 +206,11 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                     requestHeaders = p.headers,
                     mimeType = p.mimeType,
                     onPlaybackError = {
-                        // Do not abandon the WebView page: tell its stream queue to try
-                        // the next manifest/URL captured from the same source.
+                        // Keep the source page mounted and advance the captured stream queue.
+                        play2 = null
+                        p.onFailure(p.url)
+                    },
+                    onPlaybackTimeout = {
                         play2 = null
                         p.onFailure(p.url)
                     }
@@ -311,6 +314,10 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                     requestHeaders = pr.headers,
                     mimeType = pr.mimeType,
                     onPlaybackError = {
+                        play = null
+                        pr.onFailure(pr.url)
+                    },
+                    onPlaybackTimeout = {
                         play = null
                         pr.onFailure(pr.url)
                     }
