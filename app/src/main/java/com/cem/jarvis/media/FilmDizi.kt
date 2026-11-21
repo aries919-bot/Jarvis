@@ -65,11 +65,15 @@ data class Providers(val results: Map<String, Region>?)
 
 interface Tmdb {
     @GET("trending/all/week") suspend fun trending(@Query("language") l: String = "tr-TR"): Page
-    @GET("movie/popular") suspend fun movies(@Query("language") l: String = "tr-TR"): Page
+    @GET("movie/popular") suspend fun movies(
+        @Query("language") l: String = "tr-TR",
+        @Query("page") page: Int = 1
+    ): Page
     @GET("tv/popular") suspend fun series(@Query("language") l: String = "tr-TR"): Page
     @GET("discover/tv") suspend fun anime(
         @Query("with_genres") g: String = "16", @Query("with_original_language") o: String = "ja",
-        @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR"
+        @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR",
+        @Query("page") page: Int = 1
     ): Page
     @GET("search/multi") suspend fun search(@Query("query") q: String, @Query("language") l: String = "tr-TR"): Page
     @GET("tv/{id}") suspend fun tvInfo(@Path("id") id: Int, @Query("language") l: String = "tr-TR"): TvInfo
@@ -95,14 +99,14 @@ class MediaVM : ViewModel() {
     var history by mutableStateOf(listOf<String>())
     var searching by mutableStateOf(false)
     private var loadJob: Job? = null
-    private var nextTvMazePage = 1
+    private var nextPage = 2
 
     init { load(0) }
 
     fun load(i: Int) {
         tab = i
         searching = false
-        nextTvMazePage = if (i == 2) 2 else 1
+        nextPage = if (i == 0) 1 else if (i == 2) 2 else 2
         fetch {
             when (i) {
                 0 -> Page(tvmazePage(0))
@@ -128,14 +132,19 @@ class MediaVM : ViewModel() {
     }
 
     fun more() {
-        if (loading || searching || (tab != 0 && tab != 2)) return
-        val requestedPage = nextTvMazePage
+        if (loading || searching || (tab !in 0..3)) return
+        val requestedPage = nextPage
         viewModelScope.launch {
             loading = true
             try {
-                val extra = tvmazePage(requestedPage)
+                val extra = when (tab) {
+                    0 -> tvmazePage(requestedPage)
+                    2 -> tvmazePage(requestedPage)
+                    1 -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.movies(page = requestedPage).results else emptyList()
+                    else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime(p = requestedPage).results else emptyList()
+                }
                 list = list + extra.filter { n -> list.none { it.id == n.id } }
-                nextTvMazePage = requestedPage + 1
+                nextPage = requestedPage + 1
                 error = null
             } catch (e: Exception) {
                 error = "Daha fazla içerik yüklenemedi. Tekrar deneyebilirsin."
@@ -271,7 +280,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
             if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Color(0xFF9AA1B2), modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
             else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
-            if (!vm.searching && vm.list.size >= 20) item {
+            if (!vm.searching && vm.list.size >= 20 && (vm.tab == 0 || vm.tab == 2 || BuildConfig.TMDB_TOKEN.isNotBlank())) item {
                 Button(onClick = { vm.more() }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Daha fazla göster") }
             }
         }
