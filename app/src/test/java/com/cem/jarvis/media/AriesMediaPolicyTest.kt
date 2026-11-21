@@ -42,6 +42,32 @@ class AriesMediaPolicyTest {
     }
 
     @Test
+    fun stripsCredentialsWhenAStreamRedirectsToAnotherOrigin() {
+        val headers = mapOf(
+            "Authorization" to "Bearer secret",
+            "Cookie" to "session=secret",
+            "X-Api-Key" to "secret",
+            "X-Custom-Token" to "secret",
+            "User-Agent" to "AriesTest",
+            "Accept" to "*/*"
+        )
+        val sameOrigin = AriesMediaPolicy.headersForRedirect(
+            "https://cdn.example/one", "https://cdn.example/two", headers
+        )
+        assertEquals(headers, sameOrigin)
+
+        val crossOrigin = AriesMediaPolicy.headersForRedirect(
+            "https://cdn.example/one", "https://media.example/two", headers
+        )
+        assertFalse(crossOrigin.containsKey("Authorization"))
+        assertFalse(crossOrigin.containsKey("Cookie"))
+        assertFalse(crossOrigin.containsKey("X-Api-Key"))
+        assertFalse(crossOrigin.containsKey("X-Custom-Token"))
+        assertEquals("AriesTest", crossOrigin["User-Agent"])
+        assertEquals("*/*", crossOrigin["Accept"])
+    }
+
+    @Test
     fun validatesHlsAndDashUsingTheirManifestSignatures() {
         assertEquals(
             "application/x-mpegURL",
