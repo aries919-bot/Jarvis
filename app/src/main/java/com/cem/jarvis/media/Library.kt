@@ -216,9 +216,9 @@ fun FavoritesRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
 // ---------- Bölüm listesi + izledim işareti ----------
 @Composable
 fun EpisodeList(item: Item, lib: LibraryVM) {
-    var seasons by remember(item.id) { mutableIntStateOf(1) }
-    var season by remember(item.id) { mutableIntStateOf(lib.get(item.id)?.season ?: 1) }
-    var eps by remember(item.id, season) { mutableStateOf<List<Ep>>(emptyList()) }
+    var seasons by remember(item.id, item.source) { mutableIntStateOf(1) }
+    var season by remember(item.id, item.source) { mutableIntStateOf(lib.get(item.id)?.season ?: 1) }
+    var eps by remember(item.id, item.source, season) { mutableStateOf<List<Ep>>(emptyList()) }
     LaunchedEffect(item.id, item.source) {
         runCatching {
             seasons = if (item.source == "tvmaze") tvmazeSeasonCount(item.id)
