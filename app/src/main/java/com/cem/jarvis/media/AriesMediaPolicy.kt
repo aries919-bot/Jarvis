@@ -31,12 +31,13 @@ internal object AriesMediaPolicy {
         return discoveryOnlyDomains.any { host == it || host.endsWith(".$it") }
     }
 
-    fun isSupportedMediaUrl(raw: String): Boolean {
+    fun isSupportedMediaUrl(raw: String, mimeType: String? = null): Boolean {
         val parsed = uri(raw) ?: return false
         if (parsed.scheme?.lowercase(Locale.ROOT) !in setOf("http", "https")) return false
         if (parsed.host.isNullOrBlank() || isDiscoveryOnlyHost(raw)) return false
         val path = parsed.path.orEmpty().lowercase(Locale.ROOT)
         if (mediaExtensions.any(path::endsWith)) return true
+        if (inferMimeType(raw, mimeType) != null) return true
 
         val formatValues = runCatching {
             parsed.rawQuery.orEmpty().split("&").mapNotNull { part ->
