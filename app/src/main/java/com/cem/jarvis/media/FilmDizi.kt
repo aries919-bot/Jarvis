@@ -84,8 +84,16 @@ interface Tmdb {
 
 internal val api: Tmdb = Retrofit.Builder()
     .baseUrl("https://api.themoviedb.org/3/")
-    .client(OkHttpClient.Builder().addInterceptor { c ->
-        c.proceed(c.request().newBuilder().addHeader("Authorization", "Bearer ${BuildConfig.TMDB_TOKEN}").build())
+    .client(OkHttpClient.Builder().addInterceptor { chain ->
+        val token = BuildConfig.TMDB_TOKEN.trim()
+        val original = chain.request()
+        val builder = original.newBuilder()
+        if (token.length > 40) {
+            builder.header("Authorization", "Bearer " + token)
+        } else if (token.isNotBlank()) {
+            builder.url(original.url.newBuilder().addQueryParameter("api_key", token).build())
+        }
+        chain.proceed(builder.build())
     }.build())
     .addConverterFactory(GsonConverterFactory.create())
     .build().create(Tmdb::class.java)
