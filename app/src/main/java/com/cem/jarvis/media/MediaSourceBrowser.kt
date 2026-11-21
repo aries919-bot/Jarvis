@@ -1942,6 +1942,7 @@ private fun inferAriesMimeType(url: String, responseType: String? = null): Strin
         mime.contains("video/mp4") -> "video/mp4"
         mime.contains("video/webm") -> "video/webm"
         mime.contains("video/quicktime") -> "video/quicktime"
+        mime.contains("matroska") -> "video/x-matroska"
         else -> {
             val path = runCatching { Uri.parse(url).path.orEmpty().lowercase() }.getOrDefault("")
             when {
@@ -1950,6 +1951,7 @@ private fun inferAriesMimeType(url: String, responseType: String? = null): Strin
                 path.endsWith(".mp4") || path.endsWith(".m4v") -> "video/mp4"
                 path.endsWith(".webm") -> "video/webm"
                 path.endsWith(".mov") -> "video/quicktime"
+                path.endsWith(".mkv") -> "video/x-matroska"
                 else -> null
             }
         }
@@ -1978,6 +1980,6 @@ private fun isSupportedMediaUrl(url: String): Boolean {
     if (listOf(".m3u8", ".mp4", ".mpd", ".webm", ".m4v", ".mov", ".mkv").any { path.endsWith(it) }) return true
     val format = listOf("format", "type", "mime", "ext", "output").mapNotNull { uri.getQueryParameter(it) }
         .joinToString(" ").lowercase()
-    return listOf("m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm", "video/quicktime")
+    return listOf("m3u8", "mpd", "mpegurl", "dash+xml", "video/mp4", "video/webm", "video/quicktime", "matroska")
         .any { format.contains(it) }
 }
