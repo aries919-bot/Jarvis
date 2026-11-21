@@ -33,6 +33,7 @@ import com.cem.jarvis.BuildConfig
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -92,17 +93,23 @@ class MediaVM : ViewModel() {
     var error by mutableStateOf<String?>(null)
     var history by mutableStateOf(listOf<String>())
     var searching by mutableStateOf(false)
+    private var loadJob: Job? = null
+    private var nextTvMazePage = 1
 
     init { load(0) }
 
     fun load(i: Int) {
-        tab = i; searching = false
+        tab = i
+        searching = false
+        nextTvMazePage = if (i == 2) 2 else 1
         fetch {
             when (i) {
                 0 -> Page(tvmazePage(0))
                 2 -> Page(tvmazePage(1))
-                else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
-                        else if (i == 1) api.movies() else api.anime()
+                1 -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.movies()
+                     else Page(webSearch("2026 2025 notable feature films movies", "movie"))
+                else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime()
+                       else Page(webSearch("popular Japanese anime television series", "tv"))
             }
         }
     }
@@ -119,24 +126,40 @@ class MediaVM : ViewModel() {
         }
     }
 
-    private var pageNo = 1
     fun more() {
-        val t = tab
+        if (loading || searching || (tab != 0 && tab != 2)) return
+        val requestedPage = nextTvMazePage
         viewModelScope.launch {
+            loading = true
             try {
-                val extra = if (t == 0 || t == 2) tvmazePage(pageNo + (if (t == 2) 5 else 0)) else emptyList()
-                pageNo++
+                val extra = tvmazePage(requestedPage)
                 list = list + extra.filter { n -> list.none { it.id == n.id } }
-            } catch (e: Exception) { }
+                nextTvMazePage = requestedPage + 1
+                error = null
+            } catch (e: Exception) {
+                error = "Daha fazla içerik yüklenemedi. Tekrar deneyebilirsin."
+            } finally {
+                loading = false
+            }
         }
     }
 
     fun removeHistory(q: String) { history = history - q }
 
-    private fun fetch(block: suspend () -> Page) = viewModelScope.launch {
-        loading = true; error = null
-        try { list = block().results } catch (e: Exception) { error = if (e.message == "tmdb") "Filmler ve Anime listesi için TMDB anahtarı gerekli. Arama anahtarsız çalışır." else "Bağlantı kurulamadı. İnternetini kontrol et." }
-        loading = false
+    private fun fetch(block: suspend () -> Page) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            loading = true
+            error = null
+            try {
+                list = block().results
+            } catch (e: Exception) {
+                error = "Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene."
+                list = emptyList()
+            } finally {
+                loading = false
+            }
+        }
     }
 }
 
