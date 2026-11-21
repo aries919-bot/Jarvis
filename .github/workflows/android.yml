@@ -2,7 +2,7 @@ name: Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master, film-dizi-v2, kariyer-modulu ]
+    branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-media-hardening ]
 
 concurrency:
   group: android-apk-${{ github.ref }}
@@ -31,6 +31,8 @@ jobs:
           else
             echo "İmza anahtarı tanımlı değil; Android debug imzası kullanılacak."
           fi
+      - name: Birim testleri
+        run: gradle testDebugUnitTest --no-daemon
       - name: APK derle
         run: gradle assembleDebug --no-daemon
         env:
