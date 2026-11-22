@@ -824,7 +824,7 @@ object CareerRecruitmentTracker {
                 stage?.startsWith("NİHAİ SONUÇ") == true
         val markerPattern = when {
             isResultStage -> Regex(
-                """(?i)(?:kura(?:sı)?\\s+sonuç(?:ları|lari|lar|u)?|sınav\\s+sonuç(?:ları|lari|lar|u)?|sinav\\s+sonuc(?:lari|lar|u)?|mülakat\\s+sonuç(?:ları|lari|lar|u)?|mulakat\\s+sonuc(?:lari|lar|u)?|nihai\\s+sonuç(?:ları|lari|lar|u)?|yerleştirme\\s+sonuç(?:ları|lari|lar|u)?|yerlestirme\\s+sonuc(?:lari|lar|u)?|sonuçların\\s+açıklanacağı|sonuclarin\\s+aciklanacagi)"""
+                """(?i)(?:kura(?:sı)?\s+sonuç(?:ları|lari|lar|u)?|sınav\s+sonuç(?:ları|lari|lar|u)?|sinav\s+sonuc(?:lari|lar|u)?|mülakat\s+sonuç(?:ları|lari|lar|u)?|mulakat\s+sonuc(?:lari|lar|u)?|nihai\s+sonuç(?:ları|lari|lar|u)?|yerleştirme\s+sonuç(?:ları|lari|lar|u)?|yerlestirme\s+sonuc(?:lari|lar|u)?|sonuçların\s+açıklanacağı|sonuclarin\s+aciklanacagi)"""
             )
             stage?.startsWith("BAŞVURU") == true ->
                 Regex("""(?i)(?:son\s+başvuru(?:\s+tarihi)?|son\s+müracaat(?:\s+tarihi)?|başvuruların\s+son\s+günü|son\s+basvuru(?:\s+tarihi)?)""")
