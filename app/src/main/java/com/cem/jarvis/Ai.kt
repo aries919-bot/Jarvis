@@ -187,23 +187,25 @@ object Net {
     }
 
     internal fun parseDuckDuckGoHtml(html: String, maxResults: Int = 8): List<Hit> {
-        val anchors = Regex("""(?is)<a\b([^>]*)>(.*?)</a\s*>""").findAll(html)
+        val allAnchors = Regex("""(?is)<a\b([^>]*)>(.*?)</a\s*>""").findAll(html).toList()
+        val resultAnchors = allAnchors.filter { anchor ->
+            val classes = attribute(anchor.groupValues[1], "class").orEmpty()
+            classes.split(Regex("\\s+")).any { it == "result__a" }
+        }
         val output = ArrayList<Hit>()
         val seen = HashSet<String>()
-        for (anchor in anchors) {
+        for ((index, anchor) in resultAnchors.withIndex()) {
             if (output.size >= maxResults.coerceIn(1, 15)) break
             val attrs = anchor.groupValues[1]
-            val classes = attribute(attrs, "class").orEmpty()
-            if (!classes.split(Regex("\\s+")).any { it == "result__a" }) continue
-            val rawUrl = attribute(attrs, "href").orEmpty()
-            val href = resolveDdgUrl(rawUrl)
+            val href = resolveDdgUrl(attribute(attrs, "href").orEmpty())
             val title = stripTags(anchor.groupValues[2])
             if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
             val key = href.substringBefore("#")
             if (!seen.add(key)) continue
-            val blockStart = (anchor.range.first - 1400).coerceAtLeast(0)
-            val blockEnd = (anchor.range.last + 1800).coerceAtMost(html.length)
-            val localBlock = html.substring(blockStart, blockEnd)
+            val blockStart = anchor.range.last + 1
+            val blockEnd = resultAnchors.getOrNull(index + 1)?.range?.first
+                ?: (blockStart + 2200).coerceAtMost(html.length)
+            val localBlock = html.substring(blockStart.coerceAtMost(html.length), blockEnd.coerceAtMost(html.length))
             output += Hit(title, href, extractSnippet(localBlock, "result__snippet"))
         }
         return output
@@ -212,19 +214,20 @@ object Net {
     internal fun parseBingHtml(html: String, maxResults: Int = 8): List<Hit> {
         val headings = Regex(
             """(?is)<h2\b[^>]*>\s*<a\b([^>]*)>(.*?)</a\s*>\s*</h2\s*>"""
-        ).findAll(html)
+        ).findAll(html).toList()
         val output = ArrayList<Hit>()
         val seen = HashSet<String>()
-        for (heading in headings) {
+        for ((index, heading) in headings.withIndex()) {
             if (output.size >= maxResults.coerceIn(1, 15)) break
             val href = resolveBingUrl(attribute(heading.groupValues[1], "href").orEmpty())
             val title = stripTags(heading.groupValues[2])
             if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
             val key = href.substringBefore("#")
             if (!seen.add(key)) continue
-            val blockStart = (heading.range.first - 1200).coerceAtLeast(0)
-            val blockEnd = (heading.range.last + 2400).coerceAtMost(html.length)
-            val block = html.substring(blockStart, blockEnd)
+            val blockStart = heading.range.last + 1
+            val blockEnd = headings.getOrNull(index + 1)?.range?.first
+                ?: (blockStart + 2600).coerceAtMost(html.length)
+            val block = html.substring(blockStart.coerceAtMost(html.length), blockEnd.coerceAtMost(html.length))
             val caption = Regex(
                 """(?is)<(?:div|p)\b[^>]*class=["'][^"']*(?:b_caption|b_snippet|b_lineclamp)[^"']*["'][^>]*>(.*?)</(?:div|p)\s*>"""
             ).find(block)?.groupValues?.getOrNull(1).orEmpty()
