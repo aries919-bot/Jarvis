@@ -25,7 +25,7 @@ class CareerActivity : Activity() {
     private lateinit var category: Spinner
     private lateinit var results: LinearLayout
     private lateinit var search: Button
-    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "Kamu işçisi · KPSSsiz / belediye / İŞKUR", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
+    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
     private val muted = Color.rgb(154, 161, 178)
     private lateinit var monitorStatus: TextView
 
@@ -120,7 +120,7 @@ class CareerActivity : Activity() {
         search.isEnabled = false
         search.text = "Resmî kaynaklar taranıyor…"
         results.removeAllViews()
-        results.addView(label("Kamu, İŞKUR, belediye ve şirket kariyer alanları birleştirilerek aranıyor…", 13f, false, muted))
+        results.addView(label("Kamu, belediye, İŞKUR üzerinden işveren ilanları ve şirket kariyer kaynakları aranıyor…", 13f, false, muted))
         Thread {
             val hits = try { CareerSearchEngine.search(category.selectedItemPosition, r, p) } catch (_: Exception) { null }
             runOnUiThread {
