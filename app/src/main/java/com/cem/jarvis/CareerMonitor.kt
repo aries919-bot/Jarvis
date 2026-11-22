@@ -1448,6 +1448,47 @@ object CareerMonitorScheduler {
         )
     }
 
+    /** User-selected follow-up reminder for a saved application; no reminder is created automatically. */
+    fun scheduleApplicationFollowUp(
+        context: Context,
+        title: String,
+        url: String,
+        status: String,
+        reminderAt: Long
+    ): Boolean {
+        val delay = reminderAt - System.currentTimeMillis()
+        if (title.isBlank() || !url.startsWith("https://") || delay <= 0L) return false
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(url.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }.take(24)
+        val request = androidx.work.OneTimeWorkRequestBuilder<CareerApplicationFollowUpWorker>()
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(
+                androidx.work.workDataOf(
+                    "application_title" to title,
+                    "application_url" to url,
+                    "application_status" to status,
+                    "reminder_at" to reminderAt
+                )
+            )
+            .build()
+        androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
+            "aries-application-follow-up-" + key,
+            androidx.work.ExistingWorkPolicy.REPLACE,
+            request
+        )
+        return true
+    }
+
+    fun cancelApplicationFollowUp(context: Context, url: String) {
+        if (!url.startsWith("https://")) return
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(url.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }.take(24)
+        androidx.work.WorkManager.getInstance(context)
+            .cancelUniqueWork("aries-application-follow-up-" + key)
+    }
+
     fun notifyProcessUpdates(context: Context, events: List<CareerProcessEvent>) {
         if (events.isEmpty()) return
         ensureChannel(context)
@@ -1551,6 +1592,49 @@ class CareerProcessReminderWorker(context: Context, params: androidx.work.Worker
             .setContentTitle("Aries · " + stage)
             .setContentText(message)
             .setStyle(Notification.BigTextStyle().bigText(title + "\n" + message + "\nKaynak: " + url))
+            .setAutoCancel(true)
+            .setContentIntent(pending)
+        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(requestCode, builder.build())
+        return androidx.work.ListenableWorker.Result.success()
+    }
+}
+
+class CareerApplicationFollowUpWorker(context: Context, params: androidx.work.WorkerParameters) :
+    androidx.work.Worker(context, params) {
+
+    override fun doWork(): androidx.work.ListenableWorker.Result {
+        val title = inputData.getString("application_title").orEmpty()
+        val url = inputData.getString("application_url").orEmpty()
+        val status = inputData.getString("application_status").orEmpty()
+        val reminderAt = inputData.getLong("reminder_at", 0L)
+        if (title.isBlank() || !url.startsWith("https://") || reminderAt <= 0L) {
+            return androidx.work.ListenableWorker.Result.failure()
+        }
+        CareerMonitorScheduler.ensureChannel(applicationContext)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            applicationContext.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return androidx.work.ListenableWorker.Result.success()
+
+        val date = java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
+            .format(java.util.Date(reminderAt))
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val requestCode = (url.hashCode() and 0x7fffffff).coerceAtLeast(1)
+        val pending = PendingIntent.getActivity(
+            applicationContext, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+        val message = "Kayıtlı başvuru durumunu kontrol et. Son durum: " +
+            status.ifBlank { "Kaydedildi" } + " · Hatırlatma: " + date
+        val builder = if (Build.VERSION.SDK_INT >= 26) {
+            Notification.Builder(applicationContext, CareerMonitorScheduler.CHANNEL_ID)
+        } else {
+            Notification.Builder(applicationContext)
+        }
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("Aries · Başvuru takip hatırlatması")
+            .setContentText(title)
+            .setStyle(Notification.BigTextStyle().bigText(message + "\nİlanı açıp başvuru/sonuç durumunu güncelle."))
             .setAutoCancel(true)
             .setContentIntent(pending)
         val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
