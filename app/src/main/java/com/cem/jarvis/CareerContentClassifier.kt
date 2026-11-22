@@ -77,10 +77,11 @@ object CareerContentClassifier {
             )
         }
 
+        // Generic application-opening language alone is not proof of a job vacancy:
+        // event, course, grant and student programme registrations use the same wording.
         val explicitJobLanguage = vacancyPattern.containsMatchIn(text) ||
             vacancyTerms.any(text::contains) ||
             listOf(
-                "basvuruya acildi", "basvurular basladi",
                 "personel alim ilan", "isci alim ilan", "memur alim ilan",
                 "teknisyen alim ilan", "tekniker alim ilan",
                 "ise alim basvurulari", "recruitment opening", "job vacancy"
