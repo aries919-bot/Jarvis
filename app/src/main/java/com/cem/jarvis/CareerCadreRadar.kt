@@ -116,6 +116,8 @@ object CareerCadreRadar {
             if (host != "osym.gov.tr" && !host.endsWith(".osym.gov.tr")) return@forEach
 
             val path = uri.path.orEmpty().lowercase(Locale.ROOT)
+            // A search result or announcement page is not itself the cadre table.
+            if (!path.endsWith(".pdf")) return@forEach
             val rawText = (hit.title + " " + hit.snippet).lowercase(Locale("tr", "TR"))
             val normalized = rawText
                 .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
