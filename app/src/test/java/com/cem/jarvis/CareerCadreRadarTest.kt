@@ -38,7 +38,8 @@ class CareerCadreRadarTest {
         assertEquals(3290, CareerCadreRadar.P93_ELECTRIC_PROGRAM_CODE)
         assertTrue(CareerCadreRadar.P93_ELECTRIC_TEDAS_NOTE.contains("Elektrik veya Elektrik Teknolojisi"))
         assertTrue(CareerCadreRadar.P93_ELECTRIC_TEDAS_NOTE.contains("Mezuniyet"))
-        assertTrue(CareerCadreRadar.P94_ELECTRIC_CODE_NOTE.contains("2023 kodu"))
+        assertTrue(CareerCadreRadar.P94_ELECTRIC_CODE_NOTE.contains("2023"))
+        assertTrue(CareerCadreRadar.P94_ELECTRIC_CODE_NOTE.contains("Elektrik-Elektronik Teknolojisi"))
     }
 
     @Test
