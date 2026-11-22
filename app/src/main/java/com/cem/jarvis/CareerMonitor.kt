@@ -45,6 +45,8 @@ object CareerSourceCatalog {
         Source("İŞKUR Staj Portalı – lise öğrencileri", "https://stajportali.iskur.gov.tr/", "İŞKUR / lise stajı"),
         Source("İŞKUR Staj Portalı – genel giriş", "https://staj.iskur.gov.tr/", "İŞKUR / staj platformu"),
         Source("Ulusal Staj Programı – üniversite öğrencileri", "https://ulusalstajprogrami.iskur.gov.tr/", "İŞKUR / üniversite stajı"),
+        Source("Adalet Bakanlığı – Ulusal Staj Programı duyurusu", "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi20112026014736", "Kamu / üniversite stajı · son tarih kurum duyurusunda"),
+        Source("İŞKUR GÜÇ – Geleceğim Meslekte / MYO son sınıf", "https://guc.iskur.gov.tr/", "Öğrenci / MYO son sınıf kariyer danışmanlığı"),
         Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
         Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
         Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
@@ -679,6 +681,8 @@ object CareerSearchEngine {
         val studentPrograms = listOf(
             "site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx İŞKUR Gençlik Programı üniversite öğrenci il kontenjan başvuru $year",
             "site:guc.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci başvuru hizmetleri $year",
+            "site:edb.adalet.gov.tr \"Ulusal Staj Programı\" üniversite yüksekokul öğrenci staj başvuru son tarihi $year",
+            "site:guc.iskur.gov.tr \"Geleceğim Meslekte\" meslek yüksekokulu MYO son sınıf danışmanlık işveren $year",
             "site:ulusalstajprogrami.iskur.gov.tr OR site:staj.iskur.gov.tr OR site:stajportali.iskur.gov.tr üniversite öğrencisi lise ve üniversite Ulusal Staj Programı teknik staj $year",
             "site:esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx NEET İşgücü Uyum Programı İUP ilçe başvuru $year",
             "elektrik öğrencisi zorunlu staj Malatya Elazığ Adıyaman üniversite kurum işyeri başvurusu $year"

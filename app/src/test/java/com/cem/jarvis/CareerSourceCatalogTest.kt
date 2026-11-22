@@ -199,4 +199,21 @@ class CareerSourceCatalogTest {
         )
     }
 
+
+    @Test
+    fun includesCurrentUniversityInternshipAndVocationalCollegeCareerSources() {
+        val sourceByName = CareerSourceCatalog.sources.associateBy { it.name }
+        val ministryInternship = sourceByName["Adalet Bakanlığı – Ulusal Staj Programı duyurusu"]
+        assertEquals(
+            "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi20112026014736",
+            ministryInternship?.url
+        )
+        assertTrue(CareerSourceCatalog.isTrustedUrl(ministryInternship!!.url))
+        assertTrue(CareerSourceCatalog.categoryFor(ministryInternship.url).contains("Kamu"))
+
+        val vocationalCareer = sourceByName["İŞKUR GÜÇ – Geleceğim Meslekte / MYO son sınıf"]
+        assertEquals("https://guc.iskur.gov.tr/", vocationalCareer?.url)
+        assertTrue(CareerSourceCatalog.isTrustedUrl(vocationalCareer!!.url))
+    }
+
 }
