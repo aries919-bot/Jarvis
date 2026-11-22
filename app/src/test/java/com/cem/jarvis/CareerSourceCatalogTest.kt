@@ -216,4 +216,34 @@ class CareerSourceCatalogTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl(vocationalCareer!!.url))
     }
 
+
+    @Test
+    fun keepsInternshipsAndYouthProgramsOutOfPublicStaffAppointmentBuckets() {
+        val adalet = "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi"
+        assertEquals(
+            "Öğrenci / staj / gençlik programı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Ulusal Staj Programı başvuruları",
+                "Üniversite ve yüksekokul öğrencilerinin kayıtlarını tamamlaması gerekmektedir.",
+                adalet
+            )
+        )
+        assertEquals(
+            "Öğrenci / staj / gençlik programı",
+            CareerSourceCatalog.recruitmentGroup(
+                "İŞKUR Gençlik Programı",
+                "Üniversite öğrencileri için program başvurusu",
+                "https://esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx"
+            )
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sözleşmeli personel alımı",
+                "Başvuru duyurusu",
+                "https://www.dsi.gov.tr/duyurular"
+            )
+        )
+    }
+
 }

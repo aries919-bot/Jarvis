@@ -212,4 +212,23 @@ class CareerListingIntelligenceTest {
         assertTrue(p93.requirementSignals.any { it == "KPSS puan türü: P93 · ön lisans" })
     }
 
+
+    @Test
+    fun labelsStudentInternshipsAsProgrammesNotPublicVacancies() {
+        val facts = CareerListingIntelligence.analyze(
+            "Ulusal Staj Programı başvuruları",
+            "Üniversite ve yüksekokul öğrencilerinin kayıtlarını 14.12.2026 tarihine kadar tamamlaması gerekmektedir.",
+            CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL
+        )
+        assertEquals("Öğrenci / staj / gençlik programı", facts.employerGroup)
+        assertEquals("Öğrenci / staj / gençlik programı", facts.noticeType)
+        assertTrue(facts.applicationStatus.startsWith("SON TARİH BULUNDU"))
+        assertTrue(CareerEligibility.assess(
+            "Ulusal Staj Programı",
+            "Elektrik öğrencisi staj başvurusu",
+            CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL,
+            false
+        ).startsWith("ÖĞRENCİ / STAJ PROGRAMI"))
+    }
+
 }

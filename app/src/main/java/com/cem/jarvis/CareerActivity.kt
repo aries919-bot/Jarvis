@@ -772,7 +772,7 @@ class CareerActivity : Activity() {
     }
 
 
-    private val sectorFilterLabels = listOf("Tümü", "Kamu", "Kura", "KPSS", "KPSS'siz", "Özel", "Doğrula")
+    private val sectorFilterLabels = listOf("Tümü", "Kamu", "Kura", "KPSS", "KPSS'siz", "Özel", "Doğrula", "Öğrenci / staj")
     private fun matchesSectorFilter(title: String, snippet: String, url: String, filter: Int): Boolean {
         val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
         val publicGroups = setOf(
@@ -791,6 +791,7 @@ class CareerActivity : Activity() {
                 group == "Platform / sektör doğrulanmalı" ||
                 group.contains("doğrulanmalı") ||
                 group == "KPSS / şartı doğrulanmalı"
+            7 -> group == "Öğrenci / staj / gençlik programı"
             else -> true
         }
     }
@@ -802,7 +803,8 @@ class CareerActivity : Activity() {
         "KPSS ile kamu alımı", "KPSS / şartı doğrulanmalı" -> 3
         "KPSS'siz kamu alımı" -> 4
         "Savunma sanayii / şirket alımı", "Özel sektör" -> 5
-        else -> 6
+        "Öğrenci / staj / gençlik programı" -> 6
+        else -> 7
     }
 
     private fun addRecruitmentGroupHeading(parent: LinearLayout, group: String, count: Int) {
@@ -817,6 +819,7 @@ class CareerActivity : Activity() {
             "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU İŞÇİSİ / ALIMI"
             "Savunma sanayii / şirket alımı" -> "SAVUNMA SANAYİİ ŞİRKETLERİ · İŞVEREN ALIMI"
             "Özel sektör" -> "ÖZEL SEKTÖR / İŞVEREN KARİYER PORTALI"
+            "Öğrenci / staj / gençlik programı" -> "ÖĞRENCİ / STAJ / GENÇLİK PROGRAMI · MEMUR ATAMASI DEĞİLDİR"
             "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İŞVEREN DOĞRULANMALI"
             else -> "DİĞER / KAYNAK DOĞRULANMALI"
         }
@@ -1013,6 +1016,7 @@ class CareerActivity : Activity() {
             "KPSS / şartı doğrulanmalı" -> "KPSS İBARESİ VAR · başvuru şartını ilanda doğrula"
             "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İşverenin kamu/özel statüsünü ilanda doğrula"
             "Üniversite / statü doğrulanmalı" -> "ÜNİVERSİTE İLANI · Devlet/vakıf statüsünü ve başvuru kurumunu doğrula"
+            "Öğrenci / staj / gençlik programı" -> "ÖĞRENCİ PROGRAMI · memur/işçi ataması değil; öğrenci koşullarını kontrol et"
             else -> "KAYNAK SINIFLANDIRMASI DOĞRULANMALI · " + CareerSourceCatalog.sourceName(hit.url)
         }
         card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })

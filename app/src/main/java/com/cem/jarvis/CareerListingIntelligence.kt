@@ -29,6 +29,7 @@ object CareerListingIntelligence {
         val host = runCatching { URI(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
             .getOrDefault("")
         val employerGroup = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
+        val studentProgram = CareerSourceCatalog.isStudentProgram(title, snippet, url)
         val stage = CareerRecruitmentTracker.detectStage(title, snippet)
         val deadlineSource = CareerListingParser.noticeText(title, snippet)
         val deadline = CareerListingParser.deadlineDate(deadlineSource)
@@ -36,6 +37,7 @@ object CareerListingIntelligence {
         val processOnly = !stage.isNullOrBlank() && stage != "BAŞVURU / YENİ ALIM"
         val noticeType = when {
             processOnly -> "İşe alım süreci / sonuç duyurusu"
+            studentProgram -> "Öğrenci / staj / gençlik programı"
             stage == "BAŞVURU / YENİ ALIM" -> "Yeni alım / başvuru duyurusu"
             CareerSourceCatalog.isLikelyJobResult(title, snippet) -> "İlan adayı"
             else -> "Kariyer veya kurum duyurusu"
@@ -46,6 +48,8 @@ object CareerListingIntelligence {
             processOnly -> "SÜREÇ DUYURUSU · Bu kayıt yeni başvuru açıldığını göstermez."
             deadline != null ->
                 "SON TARİH BULUNDU · $deadline · Başvurunun hâlâ açık olduğu kaynak sayfasında teyit edilmeli."
+            studentProgram ->
+                "PROGRAM DURUMU BİLİNMİYOR · Öğrenci/staj başvurularının açık olup olmadığı resmî portalda teyit edilmeli."
             stage == "BAŞVURU / YENİ ALIM" || CareerSourceCatalog.isLikelyJobResult(title, snippet) ->
                 "BAŞVURU DURUMU BİLİNMİYOR · Arama özeti aktif başvuruyu kanıtlamaz."
             else -> "AKTİFLİK BİLİNMİYOR · Kaynak sayfasını kontrol et."

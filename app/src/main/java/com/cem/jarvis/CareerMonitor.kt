@@ -234,6 +234,29 @@ object CareerSourceCatalog {
     }
 
 
+    /** Student internships and youth employment programmes are not civil-service appointments. */
+    fun isStudentProgram(title: String, snippet: String, url: String = ""): Boolean {
+        val text = (title + " " + snippet + " " + url).lowercase(Locale("tr", "TR"))
+            .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+            .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+            .replace(Regex("[^a-z0-9 ]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        val studentTerms = listOf(
+            "ulusal staj",
+            "staj program",
+            "stajyer",
+            "staj basvur",
+            "iskur genclik program",
+            "genclik programi",
+            "isgucu uyum program",
+            "gelecegim meslekte",
+            "student internship",
+            "internship program"
+        )
+        return studentTerms.any(text::contains)
+    }
+
     /**
      * Separates public recruitment, lottery rounds, KPSS placements and private employers.
      * Generic job boards are deliberately not guessed as public or private.
@@ -289,6 +312,10 @@ object CareerSourceCatalog {
             publicCategory.contains("kamu") || publicCategory.contains("belediye") ||
             publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
             host.endsWith(".turkiye.gov.tr") || namedPublicEmployer || publicUniversityByName
+
+        // An internship or youth-program notice is not a staff appointment even when the
+        // publishing institution is public. Keep it out of KPSS/kura/public-job buckets.
+        if (isStudentProgram(title, snippet, url)) return "Öğrenci / staj / gençlik programı"
 
         // Defence-industry employers and KİT portals recruit as employers; their career
         // pages are not automatically ÖSYM central placement or ordinary civil-service posts.
@@ -383,6 +410,10 @@ object CareerEligibility {
         val p94 = Regex("\\bp\\s*94\\b").containsMatchIn(text)
         if (requiresKpss && (p3 || p93) && !p94) {
             return "PUAN TÜRÜ UYUŞMUYOR · İlan P3/P93 istiyor; ortaöğretim P94 puanın bu puan türlerinin yerine geçmez."
+        }
+
+        if (CareerSourceCatalog.isStudentProgram(title, snippet, url)) {
+            return "ÖĞRENCİ / STAJ PROGRAMI · Bu bir memur/işçi kadrosu değildir. Aktif öğrenci kaydı, öğrenim düzeyi, bölüm ve programın diğer kabul şartlarını resmî portalda doğrula."
         }
 
         if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes && !isAssociateDegreeGraduate) {
