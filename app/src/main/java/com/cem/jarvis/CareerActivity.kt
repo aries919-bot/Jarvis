@@ -345,7 +345,7 @@ class CareerActivity : Activity() {
 
     private fun buildDefaultCvText(): String = """
         PROFİL ÖZETİ
-        Elektrik ön lisans programında eğitimine devam eden teknik personel adayıyım. Elektrik bakım, pano montajı ve üretim alanlarında çalışmayı hedefliyorum. Elektrik bakım, pano montajı ve üretim alanlarında kendimi geliştirmeyi hedefliyorum.
+        Elektrik ön lisans programında eğitimine devam eden teknik personel adayıyım. Elektrik bakım, pano montajı ve üretim alanlarında çalışmayı hedefliyorum.
 
         EĞİTİM
         Lise adı: [OKULUN TAM ADINI EKLE]
