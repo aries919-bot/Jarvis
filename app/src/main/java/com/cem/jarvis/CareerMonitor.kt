@@ -21,7 +21,11 @@ object CareerSourceCatalog {
     data class Source(val name: String, val url: String, val category: String, val official: Boolean = true)
 
     val sources = listOf(
-        Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/arama?aranan=kamu+al%C4%B1m", "Kamu / e-Devlet hizmetleri"),
+        Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama", "Kamu / e-Devlet hizmetleri"),
+        Source("Kariyer Kapısı – açık kamu ilanları", "https://kariyerkapisi.gov.tr/isealim", "Kamu / başvuru ve değerlendirme"),
+        Source("İŞKUR Gençlik Programı", "https://engelsiz.iskur.gov.tr/faaliyetlerimiz/iskur-genclik-programi", "Öğrenci / üniversite programı"),
+        Source("İŞKUR İşgücü Uyum Programı (İUP)", "https://engelsiz.iskur.gov.tr/faaliyetlerimiz/isguecue-uyum-programi", "İŞKUR / uyum programı"),
+        Source("GÜÇ – Gençliğin Üretim Çağı programları", "https://guc.iskur.gov.tr/guckatanlar/", "Öğrenci / genç istihdam programları"),
         Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
         Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
         Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
@@ -71,7 +75,7 @@ object CareerSourceCatalog {
         Source("Malatya Büyükşehir Belediyesi", "https://www.malatya.bel.tr/", "Belediye"),
         Source("Battalgazi Belediyesi", "https://www.battalgazi.bel.tr/", "Belediye"),
         Source("Yeşilyurt Belediyesi", "https://yesilyurt.bel.tr/", "Belediye"),
-        Source("Malatya TSO – canlı İŞKUR listesi", "https://www.malatyatso.org.tr/", "İŞKUR keşif", false),
+        Source("Malatya TSO – İŞKUR açık iş keşfi", "https://www.malatyatso.org.tr/iskur-ilanlari", "İŞKUR keşif · ikincil kaynak", false),
         Source("Malatya Merkez 1. OSB – personel duyuruları", "https://malorsa.org.tr/", "Malatya OSB", false),
         Source("Kariyer.net", "https://www.kariyer.net/is-ilanlari", "İlan platformu", false),
         Source("Eleman.net", "https://www.eleman.net/is-ilanlari", "İlan platformu", false),
@@ -169,31 +173,42 @@ object CareerSourceCatalog {
     }
 
     fun categoryFor(url: String): String {
-        val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT) }.getOrDefault("")
+        val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
+            .getOrDefault("")
+        val defenceDomains = listOf("aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com")
+        val kitDomains = listOf(
+            "mke.gov.tr", "tcdd.gov.tr", "tcddtasimacilik.gov.tr", "teias.gov.tr",
+            "euas.gov.tr", "botas.gov.tr", "etimaden.gov.tr", "turkseker.gov.tr",
+            "dhmi.gov.tr", "dmo.gov.tr", "ptt.gov.tr", "kiyiemniyeti.gov.tr", "ilbank.gov.tr"
+        )
+        fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
         return when {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
             host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") -> "Kamu / e-Devlet hizmetleri"
+            host == "osym.gov.tr" || host.endsWith(".osym.gov.tr") ||
+                host == "kariyerkapisi.gov.tr" || host.endsWith(".kariyerkapisi.gov.tr") ||
+                host.endsWith(".cbiko.gov.tr") || host == "kamuilan.sbb.gov.tr" ->
+                "Kamu / KPSS ve merkezi yerleştirme"
+            host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") -> "İŞKUR / açık iş ve program"
             listOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
                 .any { host == it || host.endsWith(".$it") } -> "Üniversite / kamu personel alımı"
-            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
-                host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
-                host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
-            host.endsWith(".bel.tr") || host.contains("malatya.bel.tr") ||
-                host.contains("battalgazi.bel.tr") || host.contains("yesilyurt.bel.tr") -> "Belediye / kamu"
-            host.endsWith(".gov.tr") || host.contains("csb.gov.tr") -> "Kamu / resmî kurum"
-            host.contains("ogm.gov.tr") || host.contains("kgm.gov.tr") || host.contains("ant.gov.tr") -> "Kamu / kura ve işçi alımı"
-            host.contains("tcdd") || host.contains("teias.gov.tr") || host.contains("euas.gov.tr") ||
-                host.contains("mke.gov.tr") || host.contains("etimaden.gov.tr") ||
-                host.contains("botas.gov.tr") || host.contains("turkseker.gov.tr") -> "Kamu kurumu / kamu şirketi"
-            host.contains("iskur.gov.tr") -> "İŞKUR / açık iş"
+            host.endsWith(".bel.tr") || host == "malatya.bel.tr" ||
+                host.endsWith(".malatya.bel.tr") || host.endsWith(".battalgazi.bel.tr") ||
+                host.endsWith(".yesilyurt.bel.tr") -> "Belediye / kamu"
+            inDomains(defenceDomains) -> "Savunma sanayii / işveren kariyer portalı"
+            inDomains(kitDomains) -> "Kamu şirketi / KİT kariyer portalı"
+            host.endsWith(".gov.tr") -> "Kamu / resmî kurum"
+            host.endsWith(".edu.tr") -> "Üniversite / kamu personel alımı"
+            host.contains("tga.gov.tr") -> "Kamu bağlantılı kurum / kariyer"
             host.contains("tusas") || host.contains("roketsan") || host.contains("aselsan") ||
                 host.contains("havelsan") || host.contains("tupras") || host.contains("vestel") ||
                 host.contains("turkcell") || host.contains("vodafone") || host.contains("migros") ||
                 host.contains("kockariyerim") || host.contains("koccareers") || host.contains("sabanci") ||
                 host.contains("myworkdayjobs") || host.contains("borusan") ||
                 host.contains("eczacibasi") || host.contains("anadolukariyerim") || host.contains("calik") ||
-                host.contains("careerscci") || host.contains("sutas") || host.contains("tirsan") -> "İşveren kariyer portalı"
+                host.contains("careerscci") || host.contains("sutas") || host.contains("tirsan") ->
+                "İşveren kariyer portalı"
             else -> "Özel sektör / büyük şirket"
         }
     }
@@ -211,6 +226,17 @@ object CareerSourceCatalog {
             .replace(Regex("\\s+"), " ")
             .trim()
         val host = normalizedHost(url).orEmpty()
+        val defenceDomains = listOf("aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com")
+        val kitDomains = listOf(
+            "mke.gov.tr", "tcdd.gov.tr", "tcddtasimacilik.gov.tr", "teias.gov.tr",
+            "euas.gov.tr", "botas.gov.tr", "etimaden.gov.tr", "turkseker.gov.tr",
+            "dhmi.gov.tr", "dmo.gov.tr", "ptt.gov.tr", "kiyiemniyeti.gov.tr", "ilbank.gov.tr"
+        )
+        fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
+        val isDefenceEmployer = inDomains(defenceDomains) ||
+            listOf("aselsan", "tusas", "roketsan", "havelsan").any(text::contains)
+        val isKitEmployer = inDomains(kitDomains) ||
+            listOf("tcdd", "teias", "euas", "botas", "eti maden", "turkseker", "mke").any(text::contains)
         val kuraTerms = listOf(
             "noter kurasi", "kura cekimi", "kura cekilisi", "kura tarihi",
             "kuraya katilacak", "kura sonucu", "kura sonuclari",
@@ -221,15 +247,7 @@ object CareerSourceCatalog {
             "kpss puani aranmayacaktir", "kpss puani istenmez",
             "kpss puani bulunma sarti aranmaz"
         )
-        val publicLinkedDomains = listOf(
-            "gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr",
-            "aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com",
-            "mke.gov.tr", "teias.gov.tr", "euas.gov.tr", "tcdd.gov.tr",
-            "tcddtasimacilik.gov.tr", "dsi.gov.tr", "dhmi.gov.tr", "dmo.gov.tr",
-            "etimaden.gov.tr", "botas.gov.tr", "turkseker.gov.tr",
-            "kiyiemniyeti.gov.tr", "ptt.gov.tr", "ilbank.gov.tr", "tga.gov.tr",
-            "tubitak.gov.tr"
-        )
+        val publicLinkedDomains = listOf("gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr")
         val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
         val namedPublicEmployer = listOf(
             "orman genel mudurlugu", "karayollari genel mudurlugu",
@@ -245,9 +263,17 @@ object CareerSourceCatalog {
             publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
             host.endsWith(".turkiye.gov.tr") || namedPublicEmployer
 
-        if (publicLinked && noKpssTerms.any(text::contains)) {
-            return "KPSS'siz kamu alımı"
+        // Defence-industry employers and KİT portals recruit as employers; their career
+        // pages are not automatically ÖSYM central placement or ordinary civil-service posts.
+        if (isDefenceEmployer) {
+            return if (kuraTerms.any(text::contains)) "Kura duyurusu · şirket süreci doğrulanmalı"
+            else "Savunma sanayii / şirket alımı"
         }
+        if (isKitEmployer) {
+            return if (kuraTerms.any(text::contains)) "Kura ile kamu alımı"
+            else "KİT / kamu şirketi alımı · usul doğrulanmalı"
+        }
+        if (publicLinked && noKpssTerms.any(text::contains)) return "KPSS'siz kamu alımı"
         if (kuraTerms.any(text::contains)) {
             return if (publicLinked) "Kura ile kamu alımı"
             else "Kura duyurusu · statü doğrulanmalı"
@@ -257,13 +283,12 @@ object CareerSourceCatalog {
             "kpss merkezi yerlestirme", "kpss yerles"
         )
         val hasKpssRequirement = kpssRequirementTerms.any(text::contains) ||
-            Regex("""kpss p\d{1,2}""").containsMatchIn(text) ||
+            Regex("""kpss p\\d{1,2}""").containsMatchIn(text) ||
             host.contains("osym.gov.tr") ||
             host.contains("kariyerkapisi.gov.tr") ||
             host.contains("cbiko.gov.tr")
         if (hasKpssRequirement) {
-            return if (publicLinked) "KPSS ile kamu alımı"
-            else "KPSS / şartı doğrulanmalı"
+            return if (publicLinked) "KPSS ile kamu alımı" else "KPSS / şartı doğrulanmalı"
         }
         if (publicLinked) return "Kamu / kamu bağlantılı"
         if (isSecondary(url)) return "Platform / sektör doğrulanmalı"
