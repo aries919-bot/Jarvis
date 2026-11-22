@@ -618,7 +618,7 @@ object CareerSearchEngine {
         val studentPrograms = listOf(
             "site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx İŞKUR Gençlik Programı üniversite öğrenci il kontenjan başvuru $year",
             "site:guc.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci başvuru hizmetleri $year",
-            "site:ulusalstajprogrami.iskur.gov.tr OR site:staj.iskur.gov.tr üniversite öğrencisi Ulusal Staj Programı teknik staj $year",
+            "site:ulusalstajprogrami.iskur.gov.tr OR site:staj.iskur.gov.tr OR site:stajportali.iskur.gov.tr üniversite öğrencisi lise ve üniversite Ulusal Staj Programı teknik staj $year",
             "site:esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx NEET İşgücü Uyum Programı İUP ilçe başvuru $year",
             "elektrik öğrencisi zorunlu staj Malatya Elazığ Adıyaman üniversite kurum işyeri başvurusu $year"
         )
