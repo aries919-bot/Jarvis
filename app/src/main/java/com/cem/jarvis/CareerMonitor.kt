@@ -132,16 +132,19 @@ object CareerEligibility {
 
     fun assess(title: String, snippet: String, url: String = ""): String {
         val text = normalize("$title $snippet $url")
+
+        // A hard disqualifying field code must not be overwritten by a soft skill/title match.
         val hasCodeContext = listOf("nitelik kod", "ozel sart kod", "aranan nitelik kod").any(text::contains)
-        if (hasCodeContext) {
-            val codes = extractQualificationCodes(text)
-            if (codes.isNotEmpty()) {
-                val codeAssessment = assessQualificationCodes(codes)
-                if (codeAssessment.startsWith("ALAN KODU UYUŞMUYOR") ||
-                    codeAssessment.startsWith("ALAN KODU EŞLEŞİYOR") ||
-                    codeAssessment.startsWith("ORTAÖĞRETİM KODU EŞLEŞİYOR")) return codeAssessment
-            }
+        val codes = if (hasCodeContext) extractQualificationCodes(text) else emptySet()
+        if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
+            return assessQualificationCodes(codes)
         }
+        val qualificationNote = when {
+            QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes -> assessQualificationCodes(setOf(QUALIFICATION_CODE_ELECTRIC_ELECTRONICS))
+            QUALIFICATION_CODE_ANY_HIGH_SCHOOL in codes -> assessQualificationCodes(setOf(QUALIFICATION_CODE_ANY_HIGH_SCHOOL))
+            else -> null
+        }
+
         if (hasExplicitAssociateRequirement(text)) {
             return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. 2027’de mezuniyetin tamamlanmadan bu şartı karşılamazsın."
         }
@@ -162,15 +165,17 @@ object CareerEligibility {
                 return "PUAN ŞARTI UYUŞMUYOR · İlanda açıkça $minScore puan alt sınırı görünüyor; P94 puanın 63,23366."
             }
             if (p94 || text.contains("ortaogretim") || text.contains("orta ogretim")) {
-                return if (minScore == null) {
+                val base = if (minScore == null) {
                     "P94 İLE TERCİH DEĞERLENDİRMESİ · Merkezi yerleştirmede herkese uygulanan sabit bir taban puan varsayılmaz. 63,23366 puanınla tercih hakkın, ilgili nitelik kodları ve kontenjan/puan sıralamasına bağlıdır."
                 } else {
                     "İLK PUAN KONTROLÜ GEÇİLDİ · İlanda görünen P94 alt sınırı 63,23366 puanını aşmıyor; öğrenim, nitelik kodu ve diğer şartlar ayrıca kontrol edilmeli."
                 }
+                return if (qualificationNote == null) base else "$base $qualificationNote"
             }
             return "KPSS ŞARTI BELİRSİZ · Puan türü ve varsa alt sınır ilanın tam metninden doğrulanmalı; uygunluk kesinleştirilmedi."
         }
 
+        if (qualificationNote != null) return qualificationNote
         if (listOf("elektrik", "pano", "kablolama", "bakim", "teknisyen", "teknik lise")
                 .any(text::contains)) {
             return "ALAN EŞLEŞMESİ VAR · Elektrik lise dalınla ilişkili. Diploma dalı, deneyim, vardiya, ehliyet ve sertifika şartları tam metinden kontrol edilmeli."
@@ -358,16 +363,29 @@ object CareerSearchEngine {
         return batch.hits
     }
 
-    fun dailySearchBatch(): CareerScanBatch {
-        val queries = listOf(
+    fun dailySearchBatch(role: String, city: String): CareerScanBatch {
+        val profileRole = role.ifBlank {
+            "elektrik teknisyeni pano montaj bakım üretim operatör depo satış işçi personel"
+        }
+        val preferredCities = city.split(',', ';')
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !it.contains("servis", true) && !it.contains("konaklama", true) }
+        val primaryCity = preferredCities.firstOrNull() ?: "Malatya"
+        val profileQueries = listOf(
+            "$profileRole $primaryCity lise mezunu iş ilanı başvuru 2026",
+            "$profileRole $primaryCity KPSS'siz işçi teknisyen açık iş 2026",
+            "$profileRole Malatya Battalgazi Yeşilyurt Elazığ Adıyaman elektrik bakım pano üretim 2026",
+            "$profileRole Türkiye geneli servis lojman konaklama teknisyen üretim 2026"
+        )
+        val officialQueries = listOf(
             "site:osym.gov.tr KPSS-2026/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise 2026 tercih nitelik kodları",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı 2026",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS 2026",
             "site:ilan.gov.tr personel alımı lise KPSS 2026",
             "site:resmigazete.gov.tr atama personel alımı 2026",
-            "site:esube.iskur.gov.tr Malatya elektrik teknisyen bakım işçi açık iş ilanı 2026",
-            "site:acikisharita.iskur.gov.tr Malatya açık iş ilanları 2026",
+            "site:esube.iskur.gov.tr $primaryCity elektrik teknisyen bakım işçi açık iş ilanı 2026",
+            "site:acikisharita.iskur.gov.tr $primaryCity açık iş ilanları 2026",
             "site:malatyatso.org.tr/iskur-ilanlari Malatya İŞKUR ilanları elektrik işçi 2026",
             "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr işçi personel alımı 2026",
             "site:yerelyonetimler.csb.gov.tr belediye personel alımı işçi 2026",
@@ -381,11 +399,11 @@ object CareerSearchEngine {
             "site:sisecam.com/tr/kariyer OR site:turktelekomkariyer.com.tr açık pozisyon üretim teknisyen 2026",
             "site:enerjisa.com.tr/tr/enerjisa-hakkinda/kariyer elektrik teknisyen personel 2026"
         )
-        return collect(queries, 90)
+        return collect((profileQueries + officialQueries).distinct(), 120, city)
     }
 
-    fun dailySearch(): List<Net.Hit> {
-        val batch = dailySearchBatch()
+    fun dailySearch(role: String = "", city: String = "Malatya"): List<Net.Hit> {
+        val batch = dailySearchBatch(role, city)
         if (!batch.hasAnySuccessfulQuery) throw java.io.IOException("Günlük kaynak taramasında hiçbir arama sorgusu başarıyla tamamlanmadı.")
         return batch.hits
     }
@@ -490,7 +508,15 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
         val prefs = applicationContext.getSharedPreferences("j", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("career_monitor_enabled", false)) return androidx.work.ListenableWorker.Result.success()
         return try {
-            val batch = CareerSearchEngine.dailySearchBatch()
+            val role = prefs.getString(
+                "career_role",
+                "elektrik teknisyeni pano montaj bakım üretim operatör depo satış işçi personel"
+            ).orEmpty()
+            val city = prefs.getString(
+                "career_place",
+                "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman"
+            ).orEmpty()
+            val batch = CareerSearchEngine.dailySearchBatch(role, city)
             if (!batch.hasAnySuccessfulQuery) {
                 prefs.edit()
                     .putString("career_monitor_last_error",
@@ -500,14 +526,29 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
 
             val hits = batch.hits
-            val previous = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty()
-            val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
-            val seen = previous.toMutableSet()
-            val fresh = if (firstRun) hits else hits.filter { hit ->
-                seen.add(CareerSearchEngine.fingerprint(hit.title, hit.url))
+            val orderedSeen = LinkedHashSet<String>()
+            val oldOrder = runCatching {
+                org.json.JSONArray(prefs.getString("career_monitor_seen_order", "[]"))
+            }.getOrDefault(org.json.JSONArray())
+            for (index in 0 until oldOrder.length()) {
+                val fingerprint = oldOrder.optString(index)
+                if (fingerprint.isNotBlank()) orderedSeen.add(fingerprint)
             }
-            hits.forEach { hit -> seen.add(CareerSearchEngine.fingerprint(hit.title, hit.url)) }
-            val boundedSeen = seen.sorted().takeLast(2000).toSet()
+            prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty().forEach { orderedSeen.add(it) }
+            val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
+            val fresh = if (firstRun) hits else hits.filter { hit ->
+                val fingerprint = CareerSearchEngine.fingerprint(hit.title, hit.url)
+                val isNew = fingerprint !in orderedSeen
+                orderedSeen.add(fingerprint)
+                isNew
+            }
+            hits.forEach { hit -> orderedSeen.add(CareerSearchEngine.fingerprint(hit.title, hit.url)) }
+            while (orderedSeen.size > 2000) {
+                val oldest = orderedSeen.firstOrNull() ?: break
+                orderedSeen.remove(oldest)
+            }
+            val boundedSeen = orderedSeen.toSet()
+            val seenOrderJson = org.json.JSONArray().apply { orderedSeen.forEach { put(it) } }
 
             val json = JSONArray()
             hits.take(60).forEach { hit ->
@@ -532,6 +573,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
             prefs.edit()
                 .putStringSet("career_monitor_seen", boundedSeen)
+                .putString("career_monitor_seen_order", seenOrderJson.toString())
                 .putString("career_monitor_results", json.toString())
                 .putLong("career_monitor_last_scan", System.currentTimeMillis())
                 .putInt("career_monitor_new_count", fresh.size)
