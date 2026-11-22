@@ -1050,11 +1050,22 @@ object CareerMonitorScheduler {
         // Aynı duyurunun tarihi değişirse eski hatırlatma iptal edilip yenisi kurulur.
         workManager.cancelUniqueWork(baseName + "-day")
         workManager.cancelUniqueWork(baseName + "-hour")
+        workManager.cancelUniqueWork(baseName + "-result")
+        workManager.cancelUniqueWork(baseName + "-dayof")
 
         val eventAt = event.eventAt ?: return
         enqueueProcessReminder(context, event, baseName + "-day", eventAt - TimeUnit.DAYS.toMillis(1))
-        if (event.hasExplicitTime) {
+        val isResultStage = event.stage.startsWith("NOTER KURASI SONUCU") ||
+            event.stage.startsWith("SINAV SONUCU") ||
+            event.stage.startsWith("NİHAİ SONUÇ")
+        if (isResultStage) {
+            // Alert at the published result date; when no hour was supplied this is a
+            // morning check-in, not a claim that the institution announced 09:00.
+            enqueueProcessReminder(context, event, baseName + "-result", eventAt)
+        } else if (event.hasExplicitTime) {
             enqueueProcessReminder(context, event, baseName + "-hour", eventAt - TimeUnit.HOURS.toMillis(1))
+        } else {
+            enqueueProcessReminder(context, event, baseName + "-dayof", eventAt)
         }
     }
 
@@ -1171,6 +1182,9 @@ class CareerProcessReminderWorker(context: Context, params: androidx.work.Worker
         } else "Tarih kaynak duyurusunda ayrıca kontrol edilmeli"
         val message = when (reminderKind) {
             "hour" -> "Etkinliğe yaklaşık 1 saat kaldı: " + time
+            "result" -> "Bugün sonuç duyurusu bekleniyor: " + time +
+                if (hasExplicitTime) "" else " · Kurum saat belirtmedi; bu yalnızca günlük kontrol hatırlatmasıdır."
+            "dayof" -> "Bugün takip günü: " + time + " · Duyuruda saat belirtilmemiş."
             else -> "Yarın için takip hatırlatması: " + time +
                 if (hasExplicitTime) "" else " · Duyuruda saat belirtilmemiş."
         }
