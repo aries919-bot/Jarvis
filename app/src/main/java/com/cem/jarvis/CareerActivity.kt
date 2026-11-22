@@ -2004,12 +2004,12 @@ class CareerActivity : Activity() {
             textSize = 14f
             setTextColor(primaryText)
             setLineSpacing(dp(5).toFloat(), 1.05f)
-            textIsSelectable = true
+            setTextIsSelectable(true)
             autoLinkMask = android.text.util.Linkify.WEB_URLS
             movementMethod = android.text.method.LinkMovementMethod.getInstance()
             text = android.text.Html.fromHtml(markdownToHtml(markdown), android.text.Html.FROM_HTML_MODE_COMPACT)
         }
-        scroll.addView(textView, ScrollView.LayoutParams(-1, -2))
+        scroll.addView(textView, android.view.ViewGroup.LayoutParams(-1, -2))
         val dialog = AlertDialog.Builder(this)
             .setTitle("İlan ve şirket değerlendirmesi")
             .setView(scroll)
