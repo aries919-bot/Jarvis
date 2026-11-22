@@ -75,7 +75,7 @@ object Net {
     class Hit(val title: String, val url: String, val snippet: String)
 
     private fun attribute(attributes: String, name: String): String? {
-        val pattern = Regex("(?is)\\\\b" + Regex.escape(name) + "\\\\s*=\\\\s*(?:\\\"([^\\\"]*)\\\"|\'([^\']*)\'|([^\\\\s>]+))")
+        val pattern = Regex("""(?is)\b""" + Regex.escape(name) + """\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))""")
         val match = pattern.find(attributes) ?: return null
         return (1..3).firstNotNullOfOrNull { index -> match.groups[index]?.value }
     }
