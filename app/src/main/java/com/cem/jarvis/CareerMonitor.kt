@@ -721,12 +721,16 @@ object CareerRecruitmentTracker {
             "(?i)(?:kura|noter|sinav|sınav|mulakat|mülakat|basvuru|başvuru|evrak|belge)"
         ).find(text) ?: return null
         val tail = text.substring(stageMarker.range.first).take(650)
-        val dateMatch = Regex(
-            """(?i)(\d{1,2}[./-]\d{1,2}[./-]\d{4})"""
-        ).find(tail) ?: return null
-        val dateText = dateMatch.groupValues[1].replace('/', '.').replace('-', '.')
-        val dateParser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
-        val parsedDate = runCatching { dateParser.parse(dateText) }.getOrNull() ?: return null
+        val numericDate = Regex("""(?i)(\d{1,2}[./-]\d{1,2}[./-]\d{4})""").find(tail)
+        val monthDate = Regex(
+            """(?i)(\d{1,2}\s+(?:ocak|şubat|subat|mart|nisan|mayıs|mayis|haziran|temmuz|ağustos|agustos|eylül|eylul|ekim|kasım|kasim|aralık|aralik)\s+\d{4})"""
+        ).find(tail)
+        val dateMatch = numericDate ?: monthDate ?: return null
+        val dateText = dateMatch.groupValues[1]
+        val dateFormat = if (numericDate != null) "dd.MM.yyyy" else "d MMMM yyyy"
+        val normalizedDate = dateText.replace('/', '.').replace('-', '.')
+        val dateParser = java.text.SimpleDateFormat(dateFormat, Locale("tr", "TR")).apply { isLenient = false }
+        val parsedDate = runCatching { dateParser.parse(normalizedDate) }.getOrNull() ?: return null
         val afterDate = tail.substring(dateMatch.range.last + 1).take(100)
         val timeText = Regex("""(?i)(?:saat\s*)?([01]?\d|2[0-3])[:.]([0-5]\d)""")
             .find(afterDate)
