@@ -1,8 +1,10 @@
 name: Android APK
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ kariyer-modulu ]
   push:
-    branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor, career-ui-dedup-separation, is/kamu-kariyer-arama-ayristirma, is/kadro-radari-ve-kpss-2026-2, is/kariyer-platform-derinlestirme, is/1-18-kariyer-guvenilirlik-ve-akilli-tarih ]
+    branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor, career-ui-dedup-separation, is/kamu-kariyer-arama-ayristirma, is/kadro-radari-ve-kpss-2026-2, is/kariyer-platform-derinlestirme, is/1-18-kariyer-guvenilirlik-ve-akilli-tarih, is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi ]
 
 concurrency:
   # Keep only the newest verification for a branch; obsolete commits should not occupy runners.
