@@ -314,7 +314,7 @@ class CareerActivity : Activity() {
         filtersCard.addView(quickChipRow(listOf("Malatya", "Elazığ", "Adıyaman", "Türkiye geneli")) { selected ->
             place.setText(selected)
         }, params(-1, dp(46), 0, 2, 0, 10))
-        filtersCard.addView(label("İlan türü", 12f, true, muted))
+        filtersCard.addView(label("İlan türü / özel içerik", 12f, true, muted))
         category = Spinner(this)
         category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filters).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -326,16 +326,16 @@ class CareerActivity : Activity() {
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
         filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
         filtersCard.addView(quickChipRow(
-            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye", "Öğrenci · staj")
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / sonuçlar", "Büyük kurumlar", "Özel sektör", "Belediye", "Staj / program")
         ) { selected ->
             val target = when (selected) {
                 "Kamu · KPSS" -> 1
                 "KPSS'siz kamu" -> 2
-                "Kura / noter" -> 6
+                "Kura / sonuçlar" -> 6
                 "Büyük kurumlar" -> 4
                 "Özel sektör" -> 3
                 "Belediye" -> 8
-                "Öğrenci · staj" -> 9
+                "Staj / program" -> 9
                 else -> 0
             }
             category.setSelection(target)
@@ -722,6 +722,11 @@ class CareerActivity : Activity() {
         val r = role.text.toString().trim()
         val p = place.text.toString().trim()
         val selectedCategory = category.selectedItemPosition
+        if (selectedCategory == 6 || selectedCategory == 9) {
+            newsFilter = if (selectedCategory == 6) 1 else 2
+            renderPage(5)
+            return
+        }
         if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
         saveCv(showToast = false)
         search.isEnabled = false
