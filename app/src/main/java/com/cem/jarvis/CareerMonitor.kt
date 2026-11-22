@@ -754,7 +754,17 @@ object CareerSearchEngine {
         initialFailedQueries: Int = 0,
         initialTotalQueries: Int = 0
     ): CareerScanBatch {
-        if (queries.isEmpty() && initialHits.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
+        if (queries.isEmpty()) {
+            val filtered = deduplicateHits(initialHits.filter(::isEligibleSearchResult))
+                .sortedByDescending { CareerEligibility.relevance(it.title, it.snippet, city) }
+            return CareerScanBatch(
+                hits = filtered,
+                successfulQueries = initialSuccessfulQueries,
+                failedQueries = initialFailedQueries,
+                totalQueries = initialTotalQueries,
+                errorMessages = initialErrors
+            )
+        }
         val executor = Executors.newFixedThreadPool(minOf(4, queries.size))
         return try {
             val futures = executor.invokeAll(
