@@ -52,6 +52,7 @@ class CareerActivity : Activity() {
     private var searchHits: List<Net.Hit> = emptyList()
     private var searchPage = 0
     private var searchFilter = 0
+    private var searchSectorFilter = 0
     private var hasSearchRun = false
     private var searchDiagnostic = ""
     private var searchFailure: String? = null
@@ -59,6 +60,7 @@ class CareerActivity : Activity() {
     private var dailyItems: List<JSONObject> = emptyList()
     private var dailyPage = 0
     private var dailyFilter = 0
+    private var dailySectorFilter = 0
     private val pageSize = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -691,6 +693,7 @@ class CareerActivity : Activity() {
                 searchHits = batch?.hits?.take(60).orEmpty()
                 searchPage = 0
                 searchFilter = 0
+                searchSectorFilter = 0
                 hasSearchRun = true
                 searchFailure = failure
                 searchDiagnostic = if (batch == null) {
@@ -702,6 +705,37 @@ class CareerActivity : Activity() {
                 renderSearchResults(failure != null)
             }
         }.start()
+    }
+
+
+    private val sectorFilterLabels = listOf("Tümü", "Kamu", "Kura", "KPSS", "Özel", "Diğer")
+
+    private fun matchesSectorFilter(title: String, snippet: String, url: String, filter: Int): Boolean {
+        val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
+        return when (filter) {
+            1 -> group == "Kamu / kamu bağlantılı"
+            2 -> group == "Kura ile kamu alımı"
+            3 -> group == "KPSS ile kamu alımı"
+            4 -> group == "Özel sektör"
+            5 -> group == "Diğer / doğrulanmalı" || group == "Platform / sektör doğrulanmalı"
+            else -> true
+        }
+    }
+
+    private fun addSectorFilterRow(parent: LinearLayout, selected: Int, onSelected: (Int) -> Unit) {
+        val horizontal = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+        }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        sectorFilterLabels.forEachIndexed { index, title ->
+            row.addView(chipButton(title, selected == index) { onSelected(index) },
+                LinearLayout.LayoutParams(-2, dp(42)).apply {
+                    setMargins(dp(3), dp(2), dp(3), dp(2))
+                })
+        }
+        horizontal.addView(row)
+        parent.addView(horizontal, params(-1, dp(48), 0, 4, 0, 4))
     }
 
     private fun renderSearchResults(failed: Boolean = false) {
@@ -748,6 +782,13 @@ class CareerActivity : Activity() {
 
         val expiredCount = searchHits.count(::isExpired)
         val unknownCount = searchHits.count { CareerListingParser.deadlineStatus(it.snippet).isNullOrBlank() }
+        addSectorFilterRow(results, searchSectorFilter) { selected ->
+            searchSectorFilter = selected
+            searchPage = 0
+            renderSearchResults()
+        }
+        val sectorCount = searchHits.count { matchesSectorFilter(it.title, it.snippet, it.url, searchSectorFilter) }
+        results.addView(label("Kategori: " + sectorFilterLabels[searchSectorFilter] + " · " + sectorCount + " kayıt", 11f, true, accentBlue))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         listOf("Kontrol listesi", "Tümü", "Süresi geçmiş").forEachIndexed { index, title ->
             val chip = chipButton(title, searchFilter == index) {
@@ -766,10 +807,11 @@ class CareerActivity : Activity() {
             11f, false, muted
         ))
 
+        val sectorHits = searchHits.filter { matchesSectorFilter(it.title, it.snippet, it.url, searchSectorFilter) }
         val visibleHits = when (searchFilter) {
-            2 -> searchHits.filter(::isExpired)
-            1 -> searchHits
-            else -> searchHits.filterNot(::isExpired)
+            2 -> sectorHits.filter(::isExpired)
+            1 -> sectorHits
+            else -> sectorHits.filterNot(::isExpired)
         }
         if (visibleHits.isEmpty()) {
             results.addView(label("Bu filtrede ilan yok.", 12f, false, muted))
@@ -830,15 +872,14 @@ class CareerActivity : Activity() {
         }, LinearLayout.LayoutParams(dp(34), dp(34)).apply { setMargins(0, 0, dp(9), 0) })
         titleRow.addView(label(hit.title, 15f, true, primaryText), LinearLayout.LayoutParams(0, -2, 1f))
         card.addView(titleRow)
-        val sourceLabel = when {
-            CareerSourceCatalog.isSecondary(hit.url) ->
-                "İkincil ilan/keşif platformu: " + CareerSourceCatalog.sourceName(hit.url) + " · İlan ve başvuruyu platform/işveren sayfasında doğrula"
-            category.contains("İşveren kariyer") || category.contains("Özel sektör") ->
-                "İşveren/özel sektör sayfası: " + CareerSourceCatalog.sourceName(hit.url) + " · Devlet ilanı değildir"
-            category.contains("Kamu") || category.contains("Belediye") || category.contains("İŞKUR") ->
-                "Resmî kamu/İŞKUR kaynağı: " + CareerSourceCatalog.sourceName(hit.url)
-            else ->
-                "Kurumsal kaynak: " + CareerSourceCatalog.sourceName(hit.url) + " · İlan durumu kaynak sayfasında doğrulanmalı"
+        val recruitmentGroup = CareerSourceCatalog.recruitmentGroup(hit.title, hit.snippet, hit.url)
+        val sourceLabel = when (recruitmentGroup) {
+            "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
+            "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
+            "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI · " + CareerSourceCatalog.sourceName(hit.url)
+            "Özel sektör" -> "ÖZEL SEKTÖR · " + CareerSourceCatalog.sourceName(hit.url)
+            "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İşverenin kamu/özel statüsünü ilanda doğrula"
+            else -> "KAYNAK SINIFLANDIRMASI DOĞRULANMALI · " + CareerSourceCatalog.sourceName(hit.url)
         }
         card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })
         if (!storedCategory.isNullOrBlank()) {
@@ -902,6 +943,15 @@ class CareerActivity : Activity() {
             saved.isBlank() && CareerListingParser.deadlineStatus(it.optString("snippet")).isNullOrBlank()
         }
 
+        addSectorFilterRow(parent, dailySectorFilter) { selected ->
+            dailySectorFilter = selected
+            dailyPage = 0
+            showDailyResults(parent)
+        }
+        val sectorItems = allItems.filter {
+            matchesSectorFilter(it.optString("title"), it.optString("snippet"), it.optString("url"), dailySectorFilter)
+        }
+        parent.addView(label("Kategori: " + sectorFilterLabels[dailySectorFilter] + " · " + sectorItems.size + " kayıt", 11f, true, accentBlue))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val filterLabels = listOf("Kontrol listesi", "Tümü", "Süresi geçmiş")
         filterLabels.forEachIndexed { index, title ->
@@ -922,9 +972,9 @@ class CareerActivity : Activity() {
         ))
 
         dailyItems = when (dailyFilter) {
-            2 -> allItems.filter(::isExpired)
-            1 -> allItems
-            else -> allItems.filterNot(::isExpired)
+            2 -> sectorItems.filter(::isExpired)
+            1 -> sectorItems
+            else -> sectorItems.filterNot(::isExpired)
         }.sortedWith(compareByDescending<JSONObject> {
             it.optInt("profileMatchScore", 0)
         }.thenByDescending {
