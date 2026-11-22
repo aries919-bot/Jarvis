@@ -481,12 +481,25 @@ object CareerSearchEngine {
         ) + publicKpss.take(2) + publicNoKpss.take(2) +
             kuraQueries.take(2) + privateSector.take(2) + platforms.take(2) + listOf(extra)
 
+        val dailyPrivate = privateSector + platforms + listOf(
+            "günlük işçi alımı üretim paketleme depo vardiyalı personel $year $c",
+            "servis yemek sigorta sunulan fabrika üretim iş ilanı $year $c"
+        )
+        val municipal = publicNoKpss.filter { it.contains("bel.tr") || it.contains("yerelyonetimler") } +
+            listOf(
+                "site:bel.tr belediye şirketi işçi personel alımı $year $c",
+                "site:bel.tr zabıta destek personeli temizlik şoför alımı $year $c",
+                "site:gov.tr belediye iştiraki personel alımı başvuru $year $c"
+            )
         return when (category) {
             1 -> publicKpss + kuraQueries + listOf(extra)
             2 -> publicNoKpss + kuraQueries + listOf(extra)
             3 -> privateSector.take(10) + platforms.take(5) + listOf(extra)
             4 -> privateSector.take(12) + kuraQueries + listOf(extra)
             5 -> postAssociate
+            6 -> kuraQueries + publicKpss.take(3) + listOf(extra)
+            7 -> dailyPrivate + listOf(extra)
+            8 -> municipal + kuraQueries.take(3) + listOf(extra)
             else -> generalQuick
         }.distinct()
     }
