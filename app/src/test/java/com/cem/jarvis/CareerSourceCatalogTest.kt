@@ -211,7 +211,7 @@ class CareerSourceCatalogTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl(ministryInternship!!.url))
         assertTrue(CareerSourceCatalog.categoryFor(ministryInternship.url).contains("Kamu"))
 
-        val vocationalCareer = sourceByName["İŞKUR GÜÇ – Geleceğim Meslekte / MYO son sınıf"]
+        val vocationalCareer = sourceByName["GÜÇ – Gençliğin Üretim Çağı / Geleceğim Meslekte"]
         assertEquals("https://guc.iskur.gov.tr/", vocationalCareer?.url)
         assertTrue(CareerSourceCatalog.isTrustedUrl(vocationalCareer!!.url))
     }
