@@ -26,6 +26,17 @@ class CareerContentClassifierTest {
     }
 
     @Test
+    fun recognizesCommonJobBoardDetailUrls() {
+        val result = CareerContentClassifier.classify(
+            "Elektrik Teknisyeni",
+            "Görev tanımı, aranan nitelikler ve başvuru koşulları.",
+            "https://www.kariyer.net/is-ilani/elektrik-teknisyeni-12345"
+        )
+        assertEquals(CareerContentType.JOB_LISTING, result.type)
+        assertTrue(result.isJobListing)
+    }
+
+    @Test
     fun putsKuraExamAndFinalResultNoticesOutsideTheJobListingFeed() {
         val examples = listOf(
             "Noter kurası sonuçları açıklandı" to "Asıl ve yedek aday listesi yayımlandı.",
