@@ -36,6 +36,13 @@ class CareerListingIntelligenceTest {
         )
         assertEquals("30.11.2026", labelled.explicitDeadline)
         assertTrue(labelled.applicationStatus.contains("Başvurunun hâlâ açık olduğu"))
+        val titleDeadline = CareerListingIntelligence.analyze(
+            "Teknisyen alımı · Son başvuru tarihi: 30.11.2026",
+            "Elektrik teknisyeni ve bakım personeli",
+            "https://kariyerkapisi.gov.tr/isealim",
+            date("23.11.2026")
+        )
+        assertEquals("30.11.2026", titleDeadline.explicitDeadline)
         val publicationDateOnly = CareerListingIntelligence.analyze(
             "Elektrik teknisyeni alımı",
             "Duyuru tarihi: 20.11.2026",
