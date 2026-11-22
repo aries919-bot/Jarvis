@@ -88,6 +88,14 @@ class CareerActivity : Activity() {
         body.addView(button("Takip kaynaklarını görüntüle") { showSources() }, params(-1, dp(44), 0, 4, 0, 4))
         manualScanButton = button("Benim için şimdi tüm kaynakları ara") { queueManualScan() }
         body.addView(manualScanButton, params(-1, dp(48), 0, 0, 0, 12))
+        body.addView(button("Bildirim ve pil ayarlarını kontrol et") {
+            runCatching {
+                startActivity(Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + packageName)
+                ))
+            }.onFailure { toast("Uygulama ayarları açılamadı.") }
+        }, params(-1, dp(42), 0, 0, 0, 10))
 
         body.addView(label("Aranacak pozisyon", 15f, true))
         role = field(prefs.getString("career_role", "Elektrik teknisyeni / pano montajı / bakım-onarım / üretim / depo / operatör / satış / beden işçisi").orEmpty(), "Örn. elektrik teknisyeni", false)
@@ -325,7 +333,10 @@ class CareerActivity : Activity() {
     override fun onResume() {
         super.onResume()
         CareerMonitorScheduler.scheduleIfEnabled(this)
-        if (::monitorStatus.isInitialized) refreshMonitorStatus()
+        if (::monitorStatus.isInitialized) {
+            refreshMonitorStatus()
+            if (::dailyResultsContainer.isInitialized) showDailyResults(dailyResultsContainer)
+        }
     }
 
     private fun refreshMonitorStatus() {
