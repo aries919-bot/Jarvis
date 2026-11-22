@@ -23,11 +23,11 @@ class CareerMonitorPolicyTest {
     }
 
     @Test
-    fun explicitP94CutoffAboveCandidateScoreIsFlagged() {
-        assertTrue(
-            CareerEligibility.assess("Personel alımı", "KPSS P94 en az 70 puan şartı aranıyor.")
-                .startsWith("PUAN ŞARTI UYUŞMUYOR")
-        )
+    fun p94CutoffIsNotJudgedWithoutAUserConfirmedScore() {
+        val result = CareerEligibility.assess("Personel alımı", "KPSS P94 en az 70 puan şartı aranıyor.")
+        assertTrue(result.startsWith("P94 PUAN ŞARTI VAR"))
+        assertTrue(result.contains("doğrulanmadığı"))
+        assertFalse(result.startsWith("PUAN ŞARTI UYUŞMUYOR"))
     }
 
     @Test
