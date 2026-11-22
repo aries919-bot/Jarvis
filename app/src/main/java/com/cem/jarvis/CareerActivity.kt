@@ -222,7 +222,13 @@ class CareerActivity : Activity() {
             "Tercih tarihleri açıklandı. Hangi kurumda hangi unvanın ve kaç kontenjanın olacağı resmî tercih kılavuzu yayımlandığında kesinleşecek.",
             12f, false, muted
         ))
-        cadreRadarCard.addView(label("Durum: KADRO KILAVUZU BEKLENİYOR · Geçmiş unvanlar gelecek alım garantisi değildir.", 11f, true, warningColor))
+        val hasP94Guide = !prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").isNullOrBlank()
+        val hasP93Guide = !prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").isNullOrBlank()
+        cadreRadarCard.addView(label(
+            CareerCadreRadar.kpss2026_2CadreStatus(hasP94Guide, hasP93Guide),
+            11f, true, if (hasP94Guide || hasP93Guide) accentColor else warningColor
+        ))
+        cadreRadarCard.addView(label("Geçmiş unvanlar gelecek alım garantisi değildir.", 10f, false, muted))
         cadreRadarCard.addView(primaryButton("Kadro radarını ve unvan rehberini aç") { showCadreRadar() },
             params(-1, dp(48), 0, 8, 0, 5))
         cadreRadarCard.addView(button("ÖSYM tercih takvimini aç") {
@@ -739,6 +745,11 @@ class CareerActivity : Activity() {
                 search.isEnabled = true
                 search.text = "İlanları yeniden ara"
                 searchHits = CareerSearchEngine.deduplicateHits(batch?.hits.orEmpty()).take(60)
+                val discoveredTables = CareerCadreRadar.detect2026_2GuideTables(batch?.hits.orEmpty())
+                prefs.edit().apply {
+                    discoveredTables.p94Url?.let { putString(CareerCadreRadar.P94_GUIDE_PREF_KEY, it) }
+                    discoveredTables.p93Url?.let { putString(CareerCadreRadar.P93_GUIDE_PREF_KEY, it) }
+                }.apply()
                 searchPage = 0
                 searchFilter = 0
                 searchSectorFilter = 0
@@ -1380,11 +1391,27 @@ class CareerActivity : Activity() {
 
         val status = panel()
         status.addView(label("KPSS-2026/2 · " + CareerCadreRadar.PREFERENCE_WINDOW, 16f, true, primaryText))
-        status.addView(label(CareerCadreRadar.kpss2026_2CadreStatus(false), 12f, false, muted))
+        val detectedP94Url = prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").orEmpty()
+        val detectedP93Url = prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").orEmpty()
+        val hasP94Guide = detectedP94Url.isNotBlank()
+        val hasP93Guide = detectedP93Url.isNotBlank()
+        status.addView(label(CareerCadreRadar.kpss2026_2CadreStatus(hasP94Guide, hasP93Guide), 12f, true, if (hasP94Guide || hasP93Guide) accentColor else muted))
         status.addView(label(
-            "ÖSYM kılavuzu yayımlanana kadar kurum, unvan, kontenjan, nitelik kodu ve taban puan uydurulmaz.",
+            "Yalnızca ÖSYM alan adında bulunan 2026/2 TABLO-1 ve TABLO-2 belgeleri tespit edilmiş sayılır. Kadro, kontenjan, puan türü ve nitelik kodları doğrudan resmî tabloda kontrol edilmelidir.",
             11f, true, warningColor
         ))
+        if (hasP94Guide) {
+            status.addView(button("Bulunan resmî P94 · TABLO-1 belgesini aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP94Url))) }
+                    .onFailure { toast("P94 kılavuzu açılamadı.") }
+            }, params(-1, dp(44), 0, 6, 0, 0))
+        }
+        if (hasP93Guide) {
+            status.addView(button("Bulunan resmî P93 · TABLO-2 belgesini aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP93Url))) }
+                    .onFailure { toast("P93 kılavuzu açılamadı.") }
+            }, params(-1, dp(44), 0, 6, 0, 0))
+        }
         status.addView(button("ÖSYM takvimini aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
                 .onFailure { toast("ÖSYM sayfası açılamadı.") }
