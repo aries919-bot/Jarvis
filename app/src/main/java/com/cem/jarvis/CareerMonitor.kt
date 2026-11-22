@@ -197,7 +197,6 @@ object CareerSourceCatalog {
 }
 
 object CareerEligibility {
-    const val KPSS_P94 = 63.23366
     const val HIGH_SCHOOL_FIELD_CODE_ELECTRIC_ELECTRONICS = 6013
     const val HIGH_SCHOOL_BRANCH_CODE_PANEL_MOUNTING = 3
     const val QUALIFICATION_CODE_ELECTRIC_ELECTRONICS = 2023
@@ -249,14 +248,11 @@ object CareerEligibility {
             val minScore = Regex(
                 "(?:en az|asgari|taban|en dusuk|min(?:imum)?)\\s*(?:kpss\\s*)?(?:p\\s*94\\s*)?(?:puan(?:i)?\\s*)?(\\d{2,3}(?:[.,]\\d+)?)\\s*puan?"
             ).find(text)?.groupValues?.getOrNull(1)?.replace(',', '.')?.toDoubleOrNull()
-            if (minScore != null && minScore > KPSS_P94) {
-                return "PUAN ŞARTI UYUŞMUYOR · İlanda açıkça $minScore puan alt sınırı görünüyor; P94 puanın 63,23366."
-            }
             if (p94 || text.contains("ortaogretim") || text.contains("orta ogretim")) {
                 val base = if (minScore == null) {
-                    "P94 İLE TERCİH DEĞERLENDİRMESİ · Merkezi yerleştirmede herkese uygulanan sabit bir taban puan varsayılmaz. 63,23366 puanınla tercih hakkın, ilgili nitelik kodları ve kontenjan/puan sıralamasına bağlıdır."
+                    "P94 İLE TERCİH DEĞERLENDİRMESİ · İlan ortaöğretim KPSS/P94 ifadesi içeriyor. Kullanıcı puanı uygulamada doğrulanmadığı için puan sıralaması veya yerleşme ihtimali hesaplanmadı; nitelik kodları ve diğer şartlar ayrıca kontrol edilmeli."
                 } else {
-                    "İLK PUAN KONTROLÜ GEÇİLDİ · İlanda görünen P94 alt sınırı 63,23366 puanını aşmıyor; öğrenim, nitelik kodu ve diğer şartlar ayrıca kontrol edilmeli."
+                    "P94 PUAN ŞARTI VAR · İlanda açıkça en az $minScore puan şartı yazıyor. Kullanıcı KPSS puanı uygulama profilinde doğrulanmadığı için bu şartın karşılanıp karşılanmadığı belirlenemiyor; kendi sonuç belgenle karşılaştır."
                 }
                 return if (qualificationNote == null) base else "$base $qualificationNote"
             }
