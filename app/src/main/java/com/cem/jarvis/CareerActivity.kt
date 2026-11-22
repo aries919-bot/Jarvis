@@ -77,7 +77,7 @@ class CareerActivity : Activity() {
         body.addView(button("Takip kaynaklarını görüntüle") { showSources() }, params(-1, dp(44), 0, 4, 0, 12))
 
         body.addView(label("Aranacak pozisyon", 15f, true))
-        role = field(prefs.getString("career_role", "Elektrik teknisyeni / elektrik bakım personeli").orEmpty(), "Örn. elektrik teknisyeni", false)
+        role = field(prefs.getString("career_role", "Elektrik teknisyeni / pano montajı / bakım-onarım / üretim / depo / operatör / satış / beden işçisi").orEmpty(), "Örn. elektrik teknisyeni", false)
         body.addView(role, params(-1, dp(50), 0, 4, 0, 8))
         body.addView(label("Şehir / bölge", 15f, true))
         place = field(prefs.getString("career_place", "Türkiye geneli").orEmpty(), "Örn. Malatya veya Türkiye geneli", false)
