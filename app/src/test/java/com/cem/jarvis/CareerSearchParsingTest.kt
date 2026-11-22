@@ -105,6 +105,15 @@ class CareerSearchParsingTest {
         val formatted = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(java.util.Date(parsed.first))
         assertEquals("08.10.2026 11:00", formatted)
 
+        val namedMonth = CareerRecruitmentTracker.parseEventTime(
+            "Noter kurası tarihi",
+            "Kura çekimi 23 Kasım 2026 Pazartesi saat 09:30'da yapılacaktır."
+        )
+        assertNotNull(namedMonth)
+        val namedMonthFormatted = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
+            .format(java.util.Date(namedMonth!!.first))
+        assertEquals("23.11.2026 09:30", namedMonthFormatted)
+
         val noDate = CareerRecruitmentTracker.parseEventTime(
             "Kura sonuçları yayımlandı",
             "Asıl ve yedek aday listesi erişime açılmıştır."
