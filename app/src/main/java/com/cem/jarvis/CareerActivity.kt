@@ -197,8 +197,25 @@ class CareerActivity : Activity() {
         parent: LinearLayout = results,
         storedCategory: String? = null,
         storedEligibility: String? = null,
-        listingStatus: String? = null
+        listingStatus: String? = null,
+        storedScore: Int? = null,
+        storedReason: String? = null,
+        storedDeadline: String? = null
     ) {
+        val category = storedCategory ?: CareerSourceCatalog.categoryFor(hit.url)
+        val eligibility = storedEligibility ?: CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+        val matchScore = storedScore ?: CareerEligibility.profileMatchScore(
+            hit.title, hit.snippet,
+            if (::role.isInitialized) role.text.toString() else "",
+            if (::place.isInitialized) place.text.toString() else "",
+            eligibility
+        )
+        val matchReason = storedReason ?: CareerEligibility.profileMatchReason(
+            hit.title, hit.snippet,
+            if (::role.isInitialized) role.text.toString() else "",
+            if (::place.isInitialized) place.text.toString() else "",
+            eligibility
+        )
         val card = LinearLayout(this).apply {
             orientation = 1
             setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -206,23 +223,32 @@ class CareerActivity : Activity() {
         }
         card.addView(label(index.toString() + ". " + hit.title, 15f, true))
         val sourceLabel = when {
-            CareerSourceCatalog.isSecondary(hit.url) -> "İkincil keşif kaynağı: Malatya TSO · İŞKUR e-Şube ile ayrıca doğrula"
-            else -> "Kaynak: " + CareerSourceCatalog.sourceName(hit.url) + " · Resmî/kurumsal alan adı"
+            CareerSourceCatalog.isSecondary(hit.url) ->
+                "İkincil ilan/keşif platformu: " + CareerSourceCatalog.sourceName(hit.url) + " · Başvuruyu ve ilanı kaynağında doğrula"
+            category.contains("İşveren kariyer") ->
+                "İşverenin kariyer portalı: " + CareerSourceCatalog.sourceName(hit.url)
+            else ->
+                "Resmî/kurumsal kaynak: " + CareerSourceCatalog.sourceName(hit.url)
         }
         card.addView(label(sourceLabel, 11f, true, Color.rgb(150, 190, 255)))
         if (!storedCategory.isNullOrBlank()) {
-            card.addView(label("Liste: " + storedCategory, 11f, true, Color.rgb(150, 190, 255)))
+            card.addView(label("Liste: " + category, 11f, true, Color.rgb(150, 190, 255)))
         }
         if (hit.snippet.isNotBlank()) card.addView(label(hit.snippet, 12f, false, muted))
-        card.addView(label(storedEligibility ?: CareerEligibility.assess(hit.title, hit.snippet, hit.url),
-            12f, true, Color.rgb(255, 207, 120)))
+        card.addView(label(eligibility, 12f, true, Color.rgb(255, 207, 120)))
         if (!listingStatus.isNullOrBlank()) {
             card.addView(label(listingStatus, 11f, true, Color.rgb(255, 190, 110)))
         }
-        card.addView(label("CV kelime eşleşmesi: %" + score(cv.text.toString(), hit.title + " " + hit.snippet) +
-            " · Bu oran işe kabul olasılığı değildir; tam ilan metni yerine geçmez.", 11f, false, Color.rgb(150, 190, 255)))
+        val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
+        if (deadline.isNotBlank()) {
+            card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
+        }
+        card.addView(label(
+            "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
+            11f, false, Color.rgb(150, 190, 255)
+        ))
         val actions = LinearLayout(this).apply { orientation = 0 }
-        actions.addView(button("Resmî sayfayı aç") {
+        actions.addView(button("İlan sayfasını aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
                 .onFailure { toast("Bağlantı açılamadı.") }
         }, LinearLayout.LayoutParams(0, dp(42), 1f))
@@ -233,17 +259,25 @@ class CareerActivity : Activity() {
     }
 
     private fun showDailyResults(parent: LinearLayout) {
-        val data = runCatching { JSONArray(prefs.getString("career_monitor_results", "[]")) }.getOrDefault(JSONArray())
+        parent.removeAllViews()
+        val data = runCatching { JSONArray(prefs.getString("career_monitor_results", "[]")) }
+            .getOrDefault(JSONArray())
         if (data.length() == 0) {
-            parent.addView(label("Otomatik tarama henüz sonuç üretmedi. Günlük takip açıkken ilk başarılı kontrol sonrasında burada listelenir.", 12f, false, muted))
+            val reason = prefs.getString("career_monitor_empty_reason", null)
+            parent.addView(label(
+                reason ?: "Henüz tarama sonucu yok. Günlük otomatik takip açıkken sabah/akşam, ayrıca manuel düğmeyle her zaman tarama yapılabilir.",
+                12f, false, muted
+            ))
             return
         }
+
         val groups = linkedMapOf(
             "Kamu · KPSS ve merkezi yerleştirme" to mutableListOf<JSONObject>(),
             "Belediye ve yerel yönetimler" to mutableListOf<JSONObject>(),
-            "İŞKUR · KPSS'siz işçi alımları" to mutableListOf<JSONObject>(),
+            "İŞKUR ve Malatya kaynakları" to mutableListOf<JSONObject>(),
             "Kamu kurumları ve kamu şirketleri" to mutableListOf<JSONObject>(),
-            "Özel sektör · büyük şirketler" to mutableListOf<JSONObject>(),
+            "İşverenlerin kariyer sayfaları" to mutableListOf<JSONObject>(),
+            "İlan platformları · ikincil keşif" to mutableListOf<JSONObject>(),
             "Ön lisans mezuniyetinden sonra" to mutableListOf<JSONObject>()
         )
         for (i in 0 until data.length()) {
@@ -255,18 +289,20 @@ class CareerActivity : Activity() {
             val eligibility = item.optString("eligibility", CareerEligibility.assess(title, item.optString("snippet"), url))
             val bucket = when {
                 eligibility.startsWith("MEZUNİYET SONRASI") -> "Ön lisans mezuniyetinden sonra"
-                category.contains("İŞKUR") -> "İŞKUR · KPSS'siz işçi alımları"
+                category.contains("Malatya") || category.contains("İŞKUR") -> "İŞKUR ve Malatya kaynakları"
                 category.contains("Belediye") -> "Belediye ve yerel yönetimler"
                 category.contains("Kamu / KPSS") -> "Kamu · KPSS ve merkezi yerleştirme"
                 category.contains("Kamu kurumu") -> "Kamu kurumları ve kamu şirketleri"
-                else -> "Özel sektör · büyük şirketler"
+                category.contains("İlan platformu") -> "İlan platformları · ikincil keşif"
+                else -> "İşverenlerin kariyer sayfaları"
             }
             groups[bucket]?.add(item)
         }
+
         var displayed = 0
         for ((heading, items) in groups) {
             if (items.isEmpty()) continue
-            parent.addView(label("\${heading} (\${items.size})", 15f, true))
+            parent.addView(label("$heading (${items.size})", 15f, true))
             items.forEach { item ->
                 val title = item.optString("title")
                 val url = item.optString("url")
@@ -276,7 +312,10 @@ class CareerActivity : Activity() {
                     parent,
                     item.optString("category", CareerSourceCatalog.categoryFor(url)),
                     item.optString("eligibility", null),
-                    item.optString("listingStatus", null)
+                    item.optString("listingStatus", null),
+                    item.optInt("profileMatchScore", -1).takeIf { it >= 0 },
+                    item.optString("profileMatchReason", null),
+                    item.optString("deadlineStatus", null)
                 )
             }
         }
@@ -292,17 +331,28 @@ class CareerActivity : Activity() {
     private fun refreshMonitorStatus() {
         if (!::monitorStatus.isInitialized) return
         val enabled = prefs.getBoolean("career_monitor_enabled", false)
+        val running = prefs.getBoolean("career_monitor_is_running", false)
         val last = prefs.getLong("career_monitor_last_scan", 0L)
         val count = prefs.getInt("career_monitor_new_count", 0)
+        val resultCount = prefs.getInt("career_monitor_result_count", 0)
         val error = prefs.getString("career_monitor_last_error", null)
+        val lastType = prefs.getString("career_monitor_last_run_type", "").orEmpty()
+        val lastSlot = prefs.getString("career_monitor_last_slot", "").orEmpty()
         val time = if (last > 0L) SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(last)) else "Henüz tarama yapılmadı"
+        val notificationsAllowed = Build.VERSION.SDK_INT < 33 ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         monitorStatus.text = buildString {
-            append(if (enabled) "Durum: Açık" else "Durum: Kapalı")
-            append(" · Son kontrol: ").append(time)
-            if (last > 0L && error.isNullOrBlank()) append(" · Son kontrolde yeni: ").append(count)
+            append(if (enabled) "Otomatik takip: Açık (08.30 + 20.30)" else "Otomatik takip: Kapalı")
+            if (running) append("\nŞu anda ").append(prefs.getString("career_monitor_running_slot", "Kaynaklar")).append(" taraması sürüyor…")
+            append("\nSon kontrol: ").append(time)
+            if (last > 0L) {
+                append(" · ").append(lastType).append(" / ").append(lastSlot)
+                append("\nSon sonuç: ").append(resultCount).append(" bağlantı, ").append(count).append(" yeni")
+            }
             val ok = prefs.getInt("career_monitor_successful_queries", 0)
             val total = prefs.getInt("career_monitor_total_queries", 0)
-            if (total > 0) append(" · Sorgu: ").append(ok).append("/").append(total)
+            if (total > 0) append("\nBaşarılı arama sorguları: ").append(ok).append("/").append(total)
+            if (!notificationsAllowed) append("\nBildirim izni kapalı; yeni ilan uyarıları ekrana düşmeyebilir.")
             if (!error.isNullOrBlank()) append("\n").append(error)
         }
     }
