@@ -102,6 +102,12 @@ class CareerSearchParsingTest {
         assertTrue(stages.contains("NOTER KURASI SONUCU · ASIL / YEDEK"))
         assertTrue(stages.contains("SINAV / MÜLAKAT TARİHİ"))
 
+        val notaryListStages = CareerRecruitmentTracker.detectStages(
+            "Noter kurasına katılacak aday listesi açıklandı",
+            "Kura çekilişi 08.10.2026 saat 11:00'da yapılacaktır."
+        )
+        assertTrue(notaryListStages.contains("KURA TARİHİ / KURAYA KATILACAKLAR"))
+
         val examAnnouncementDeadline = CareerRecruitmentTracker.parseEventTime(
             title,
             snippet,
