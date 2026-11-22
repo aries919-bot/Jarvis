@@ -268,6 +268,7 @@ object CareerSourceCatalog {
             "kpss puani bulunma sarti aranmaz"
         )
         val publicLinkedDomains = listOf("gov.tr", "bel.tr")
+        val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
         val publicUniversityByName = listOf(
             "malatya turgut ozal universitesi",
             "inonu universitesi",
