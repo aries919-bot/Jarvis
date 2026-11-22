@@ -74,102 +74,218 @@ object Net {
 
     class Hit(val title: String, val url: String, val snippet: String)
 
-    private fun stripTags(s: String): String =
-        s.replace(Regex("<[^>]*>"), "")
-            .replace("&amp;", "&").replace("&quot;", "\"").replace("&#x27;", "'")
-            .replace("&#39;", "'").replace("&lt;", "<").replace("&gt;", ">").replace("&nbsp;", " ")
-            .replace(Regex("\\s+"), " ").trim()
-
-    // Anahtarsız web araması: DuckDuckGo'nun yazı tabanlı sayfasından sonuçları çeker.
-    fun webSearch(query: String, maxResults: Int = 5): List<Hit> {
-        val url = "https://html.duckduckgo.com/html/?kl=tr-tr&q=" + URLEncoder.encode(query, "UTF-8")
-        val c = URL(url).openConnection() as HttpURLConnection
-        c.requestMethod = "GET"
-        c.connectTimeout = 8000
-        c.readTimeout = 10000
-        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36")
-        c.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9")
-        val code = c.responseCode
-        if (code !in 200..299) throw IOException("Arama hatası: $code")
-        val html = c.inputStream.bufferedReader().use { it.readText() }
-        val links = Regex("<a[^>]*class=\"result__a\"[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL).findAll(html).toList()
-        val snips = Regex("<a[^>]*class=\"result__snippet\"[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL).findAll(html).toList()
-        val out = ArrayList<Hit>()
-        for (i in links.indices) {
-            if (out.size >= maxResults.coerceIn(1, 15)) break
-            var href = links[i].groupValues[1].replace("&amp;", "&")
-            val m = Regex("[?&]uddg=([^&]+)").find(href)
-            if (m != null) href = java.net.URLDecoder.decode(m.groupValues[1], "UTF-8")
-            if (href.startsWith("//")) href = "https:$href"
-            val title = stripTags(links[i].groupValues[2])
-            val snip = if (i < snips.size) stripTags(snips[i].groupValues[1]) else ""
-            if (title.isNotEmpty() && href.startsWith("http")) out.add(Hit(title, href, snip))
-        }
-        return out
+    private fun attribute(attributes: String, name: String): String? {
+        val pattern = Regex("""(?is)\b\${Regex.escape(name)}\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""")
+        val match = pattern.find(attributes) ?: return null
+        return (1..3).firstNotNullOfOrNull { index -> match.groups[index]?.value }
     }
 
-    // Bing is a bounded fallback when DuckDuckGo returns too few useful results.
-    fun webSearchBing(query: String, maxResults: Int = 5): List<Hit> {
-        val address = "https://www.bing.com/search?setlang=tr&cc=tr&q=" +
-            URLEncoder.encode(query, "UTF-8")
-        val connection = URL(address).openConnection() as HttpURLConnection
+    private fun stripTags(value: String): String {
+        var clean = value
+            .replace(Regex("(?is)<script[^>]*>.*?</script>"), " ")
+            .replace(Regex("(?is)<style[^>]*>.*?</style>"), " ")
+            .replace(Regex("(?i)<br\s*/?>|</p>|</div>|</li>"), " ")
+            .replace(Regex("<[^>]*>"), " ")
+            .replace("&amp;", "&")
+            .replace("&quot;", "\"")
+            .replace("&#x27;", "'")
+            .replace("&#39;", "'")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&nbsp;", " ")
+        clean = clean.replace(Regex("&#(\\d+);")) { match ->
+            match.groupValues[1].toIntOrNull()?.takeIf { it in 1..65535 }?.toChar()?.toString() ?: match.value
+        }
+        clean = clean.replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.takeIf { it in 1..65535 }?.toChar()?.toString() ?: match.value
+        }
+        return clean.replace(Regex("\\s+"), " ").trim()
+    }
+
+    private fun searchConnection(url: String, provider: String): String {
+        val connection = URL(url).openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
-        connection.connectTimeout = 8000
-        connection.readTimeout = 10000
+        connection.instanceFollowRedirects = true
+        connection.connectTimeout = 7000
+        connection.readTimeout = 11000
         connection.setRequestProperty(
             "User-Agent",
-            "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36"
+            "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36"
         )
-        connection.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9")
+        connection.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9,en;q=0.7")
+        connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
         try {
             val code = connection.responseCode
-            if (code !in 200..299) throw IOException("Bing arama hatası: $code")
-            val html = connection.inputStream.bufferedReader().use { it.readText() }
-            val blocks = Regex("""<li[^>]+class=["'][^"']*b_algo[^"']*["'][^>]*>.*?</li>""", RegexOption.DOT_MATCHES_ALL)
-                .findAll(html)
-            val results = ArrayList<Hit>()
-            val seen = HashSet<String>()
-            for (block in blocks) {
-                if (results.size >= maxResults.coerceIn(1, 15)) break
-                val anchor = Regex(
-                    """<h2[^>]*>\s*<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>""",
-                    RegexOption.DOT_MATCHES_ALL
-                ).find(block.value) ?: continue
-                var href = anchor.groupValues[1].replace("&amp;", "&")
-                if (href.contains("bing.com/ck/a", ignoreCase = true)) {
-                    val wrapped = Regex("[?&]u=([^&]+)").find(href)?.groupValues?.getOrNull(1)
-                    if (wrapped != null) {
-                        val decoded = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
-                        val token = decoded.removePrefix("a1")
-                        val target = runCatching {
-                            String(
-                                android.util.Base64.decode(
-                                    token,
-                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
-                                ),
-                                Charsets.UTF_8
-                            )
-                        }.getOrDefault(decoded)
-                        if (target.startsWith("http")) href = target
-                    }
-                }
-                if (href.startsWith("//")) href = "https:$href"
-                if (!href.startsWith("https://") && !href.startsWith("http://")) continue
-                val title = stripTags(anchor.groupValues[2])
-                val caption = Regex(
-                    """<div[^>]+class=["'][^"']*b_caption[^"']*["'][^>]*>(.*?)</div>""",
-                    RegexOption.DOT_MATCHES_ALL
-                ).find(block.value)?.groupValues?.getOrNull(1).orEmpty()
-                val snippet = Regex("""<p[^>]*>(.*?)</p>""", RegexOption.DOT_MATCHES_ALL)
-                    .find(caption)?.groupValues?.getOrNull(1)?.let(::stripTags).orEmpty()
-                if (title.isNotBlank() && seen.add(href.substringBefore("#"))) {
-                    results += Hit(title, href, snippet)
-                }
-            }
-            return results
+            if (code !in 200..299) throw IOException("$provider HTTP $code")
+            val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            if (body.isBlank()) throw IOException("$provider boş yanıt döndürdü.")
+            val lower = body.lowercase(Locale.ROOT)
+            if (listOf(
+                    "anomaly-modal", "captcha", "verify you are human",
+                    "unusual traffic", "automated requests", "security challenge"
+                ).any(lower::contains)
+            ) throw IOException("$provider arama isteğini güvenlik kontrolüne taktı.")
+            return body
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun isExplicitNoResults(html: String): Boolean {
+        val lower = stripTags(html).lowercase(Locale.ROOT)
+        return listOf(
+            "no results found", "no results for", "no results.", "sonuç bulunamadı",
+            "sonuc bulunamadi", "eşleşme bulunamadı", "eslesme bulunamadi"
+        ).any(lower::contains)
+    }
+
+    private fun resolveDdgUrl(raw: String): String {
+        var href = raw.replace("&amp;", "&")
+        val wrapped = Regex("[?&]uddg=([^&]+)").find(href)?.groupValues?.getOrNull(1)
+        if (wrapped != null) {
+            href = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
+        }
+        if (href.startsWith("//")) href = "https:$href"
+        return href
+    }
+
+    private fun resolveBingUrl(raw: String): String {
+        var href = raw.replace("&amp;", "&")
+        if (href.contains("bing.com/ck/a", ignoreCase = true)) {
+            val wrapped = Regex("[?&]u=([^&]+)").find(href)?.groupValues?.getOrNull(1)
+            if (wrapped != null) {
+                val decoded = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
+                val token = decoded.removePrefix("a1")
+                val target = runCatching {
+                    String(
+                        android.util.Base64.decode(
+                            token,
+                            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                        ),
+                        Charsets.UTF_8
+                    )
+                }.getOrDefault(decoded)
+                if (target.startsWith("http://") || target.startsWith("https://")) href = target
+            }
+        }
+        if (href.startsWith("//")) href = "https:$href"
+        return href
+    }
+
+    private fun extractSnippet(html: String, classMarker: String): String {
+        val elements = Regex(
+            """(?is)<(?:a|div|p|span)\b([^>]*)>(.*?)</(?:a|div|p|span)\s*>"""
+        ).findAll(html)
+        for (element in elements) {
+            val classes = attribute(element.groupValues[1], "class").orEmpty()
+            if (classes.contains(classMarker, ignoreCase = true)) {
+                val text = stripTags(element.groupValues[2])
+                if (text.isNotBlank()) return text
+            }
+        }
+        return ""
+    }
+
+    internal fun parseDuckDuckGoHtml(html: String, maxResults: Int = 8): List<Hit> {
+        val anchors = Regex("""(?is)<a\b([^>]*)>(.*?)</a\s*>""").findAll(html)
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for (anchor in anchors) {
+            if (output.size >= maxResults.coerceIn(1, 15)) break
+            val attrs = anchor.groupValues[1]
+            val classes = attribute(attrs, "class").orEmpty()
+            if (!classes.split(Regex("\\s+")).any { it == "result__a" }) continue
+            val rawUrl = attribute(attrs, "href").orEmpty()
+            val href = resolveDdgUrl(rawUrl)
+            val title = stripTags(anchor.groupValues[2])
+            if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
+            val key = href.substringBefore("#")
+            if (!seen.add(key)) continue
+            output += Hit(title, href, extractSnippet(html, "result__snippet"))
+        }
+        return output
+    }
+
+    internal fun parseBingHtml(html: String, maxResults: Int = 8): List<Hit> {
+        val headings = Regex(
+            """(?is)<h2\b[^>]*>\s*<a\b([^>]*)>(.*?)</a\s*>\s*</h2\s*>"""
+        ).findAll(html)
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for (heading in headings) {
+            if (output.size >= maxResults.coerceIn(1, 15)) break
+            val href = resolveBingUrl(attribute(heading.groupValues[1], "href").orEmpty())
+            val title = stripTags(heading.groupValues[2])
+            if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
+            val key = href.substringBefore("#")
+            if (!seen.add(key)) continue
+            val blockStart = (heading.range.first - 1200).coerceAtLeast(0)
+            val blockEnd = (heading.range.last + 2400).coerceAtMost(html.length)
+            val block = html.substring(blockStart, blockEnd)
+            val caption = Regex(
+                """(?is)<(?:div|p)\b[^>]*class=["'][^"']*(?:b_caption|b_snippet|b_lineclamp)[^"']*["'][^>]*>(.*?)</(?:div|p)\s*>"""
+            ).find(block)?.groupValues?.getOrNull(1).orEmpty()
+            val snippet = stripTags(caption).ifBlank {
+                Regex("""(?is)<p\b[^>]*>(.*?)</p\s*>""")
+                    .find(block)?.groupValues?.getOrNull(1)?.let(::stripTags).orEmpty()
+            }
+            output += Hit(title, href, snippet)
+        }
+        return output
+    }
+
+    internal fun parseBraveHtml(html: String, maxResults: Int = 8): List<Hit> {
+        val anchors = Regex("""(?is)<a\b([^>]*)>(.*?)</a\s*>""").findAll(html)
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for (anchor in anchors) {
+            if (output.size >= maxResults.coerceIn(1, 15)) break
+            val attrs = anchor.groupValues[1]
+            val classes = attribute(attrs, "class").orEmpty()
+            val testId = attribute(attrs, "data-testid").orEmpty()
+            if (!classes.contains("snippet-title", true) &&
+                !classes.contains("result-title", true) &&
+                !testId.contains("result-title", true)
+            ) continue
+            val href = attribute(attrs, "href").orEmpty().replace("&amp;", "&")
+            val title = stripTags(anchor.groupValues[2])
+            if (title.isBlank() || !href.startsWith("https://")) continue
+            if (!seen.add(href.substringBefore("#"))) continue
+            output += Hit(title, href, extractSnippet(html, "snippet-description"))
+        }
+        return output
+    }
+
+    private fun validateParsedResults(provider: String, html: String, hits: List<Hit>) {
+        if (hits.isNotEmpty() || isExplicitNoResults(html)) return
+        throw IOException("$provider sayfası açıldı ancak sonuç bağlantıları okunamadı; arama sayfasının yapısı değişmiş veya sonuçlar engellenmiş olabilir.")
+    }
+
+    // DuckDuckGo ana arama sağlayıcısı; HTML nitelikleri sırası değişse de sonuç bağlantılarını okur.
+    fun webSearch(query: String, maxResults: Int = 8): List<Hit> {
+        val address = "https://html.duckduckgo.com/html/?kl=tr-tr&q=" + URLEncoder.encode(query, "UTF-8")
+        val html = searchConnection(address, "DuckDuckGo")
+        val results = parseDuckDuckGoHtml(html, maxResults)
+        validateParsedResults("DuckDuckGo", html, results)
+        return results
+    }
+
+    // Bing bağımsız ikinci sağlayıcıdır; ilk sağlayıcı engellendiğinde ya da sonuç vermediğinde kullanılır.
+    fun webSearchBing(query: String, maxResults: Int = 8): List<Hit> {
+        val address = "https://www.bing.com/search?setlang=tr&cc=tr&q=" + URLEncoder.encode(query, "UTF-8")
+        val html = searchConnection(address, "Bing")
+        val results = parseBingHtml(html, maxResults)
+        validateParsedResults("Bing", html, results)
+        return results
+    }
+
+    // Brave üçüncü sağlayıcı olarak yalnızca ilk iki sağlayıcı yeterli sonuç üretmediğinde denenir.
+    fun webSearchBrave(query: String, maxResults: Int = 6): List<Hit> {
+        val address = "https://search.brave.com/search?q=" + URLEncoder.encode(query, "UTF-8") + "&source=web"
+        val html = searchConnection(address, "Brave")
+        val results = parseBraveHtml(html, maxResults)
+        validateParsedResults("Brave", html, results)
+        return results
     }
 
     fun quote(sym: String, token: String): String {
