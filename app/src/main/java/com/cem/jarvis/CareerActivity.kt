@@ -38,6 +38,9 @@ class CareerActivity : Activity() {
     private var currentPage = 0
     private var searchHits: List<Net.Hit> = emptyList()
     private var searchPage = 0
+    private var searchFilter = 0
+    private var hasSearchRun = false
+    private var savedPage = 0
     private var dailyItems: List<JSONObject> = emptyList()
     private var dailyPage = 0
     private var dailyFilter = 0
@@ -177,7 +180,13 @@ class CareerActivity : Activity() {
         val cvCard = panel()
         cvCard.addView(label("CV metni", 15f, true))
         val starter = buildDefaultCvText()
-        cv = field(prefs.getString("career_cv", starter).orEmpty(), "CV bilgilerini buraya yaz", true).apply {
+        val legacyStarter = "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim (beklenen mezuniyet 2027). Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim."
+        val storedCv = prefs.getString("career_cv", null)
+        val cvValue = if (storedCv == null || storedCv == legacyStarter) starter else storedCv
+        if (storedCv == null || storedCv == legacyStarter) {
+            prefs.edit().putString("career_cv", cvValue).apply()
+        }
+        cv = field(cvValue, "CV bilgilerini buraya yaz", true).apply {
             minLines = 16
             maxLines = 60
             setHorizontallyScrolling(false)
@@ -376,7 +385,7 @@ class CareerActivity : Activity() {
                         showDailyResults(dailyResultsContainer)
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
-                        manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
+                        manualScanButton.text = "Tüm kaynakları şimdi tara"
                         val count = prefs.getInt("career_monitor_result_count", 0)
                         toast("Tarama tamamlandı. $count bağlantı sonucu değerlendirildi.")
                         live.removeObserver(this)
@@ -424,6 +433,8 @@ class CareerActivity : Activity() {
                 search.text = "İlanları şimdi ara"
                 searchHits = hits?.take(50).orEmpty()
                 searchPage = 0
+                searchFilter = 0
+                hasSearchRun = true
                 renderSearchResults(hits == null)
             }
         }.start()
@@ -436,19 +447,65 @@ class CareerActivity : Activity() {
             results.addView(label("Tarama tamamlanamadı. İnternet bağlantısını kontrol edip yeniden dene.", 13f, false, muted))
             return
         }
+        if (!hasSearchRun) {
+            results.addView(label("Arama yaptığında ilanlar burada görünecek. Her sayfada en fazla beş ilan gösterilir.", 13f, false, muted))
+            return
+        }
         if (searchHits.isEmpty()) {
             results.addView(label("Bu aramada ilan adayı bulunamadı. Bazı siteler giriş gerektirebilir veya arama motorunda listelenmiyor olabilir.", 13f, false, muted))
             return
         }
+
+        fun isExpired(hit: Net.Hit): Boolean =
+            CareerListingParser.deadlineStatus(hit.snippet)?.startsWith("SÜRESİ GEÇMİŞ", true) == true
+
+        val expiredCount = searchHits.count(::isExpired)
+        val unknownCount = searchHits.count { CareerListingParser.deadlineStatus(it.snippet).isNullOrBlank() }
+        val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        listOf("Kontrol listesi", "Tümü", "Süresi geçmiş").forEachIndexed { index, title ->
+            val chip = button(title) {
+                searchFilter = index
+                searchPage = 0
+                renderSearchResults()
+            }
+            chip.textSize = 9f
+            chip.setTextColor(if (searchFilter == index) Color.rgb(8, 20, 29) else Color.WHITE)
+            chip.setBackground(rounded(
+                if (searchFilter == index) Color.rgb(89, 220, 210) else Color.rgb(39, 52, 72),
+                Color.TRANSPARENT
+            ))
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(40), 1f).apply {
+                setMargins(dp(2), 0, dp(2), 0)
+            })
+        }
+        results.addView(filterRow, params(-1, dp(40), 0, 2, 0, 6))
         results.addView(label(
-            searchHits.size.toString() + " sonuç adayı · Sayfa " + (searchPage + 1) + "/" + ((searchHits.size + pageSize - 1) / pageSize),
+            searchHits.size.toString() + " aday · " + expiredCount + " geçmiş tarihli · " +
+                unknownCount + " son tarihi bulunamayan. İlanın açık olduğu kaynak sayfasında doğrulanmalı.",
+            11f, false, muted
+        ))
+
+        val visibleHits = when (searchFilter) {
+            2 -> searchHits.filter(::isExpired)
+            1 -> searchHits
+            else -> searchHits.filterNot(::isExpired)
+        }
+        if (visibleHits.isEmpty()) {
+            results.addView(label("Bu filtrede ilan yok.", 12f, false, muted))
+            return
+        }
+
+        val totalPages = (visibleHits.size + pageSize - 1) / pageSize
+        searchPage = searchPage.coerceIn(0, totalPages - 1)
+        results.addView(label(
+            visibleHits.size.toString() + " kayıt · Sayfa " + (searchPage + 1) + "/" + totalPages,
             12f, true, Color.rgb(116, 207, 220)
         ))
         val start = searchPage * pageSize
-        searchHits.drop(start).take(pageSize).forEachIndexed { index, hit ->
+        visibleHits.drop(start).take(pageSize).forEachIndexed { index, hit ->
             showHit(start + index + 1, hit)
         }
-        addPager(results, searchPage, (searchHits.size + pageSize - 1) / pageSize) { next ->
+        addPager(results, searchPage, totalPages) { next ->
             searchPage = next
             renderSearchResults()
             pageScroll.post { pageScroll.smoothScrollTo(0, results.top) }
@@ -508,6 +565,8 @@ class CareerActivity : Activity() {
         val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
         if (deadline.isNotBlank()) {
             card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
+        } else {
+            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, Color.rgb(255, 190, 110)))
         }
         card.addView(label(
             "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
@@ -834,12 +893,11 @@ class CareerActivity : Activity() {
         )
         prefs.edit().putString("career_jobs", list.toString()).apply()
         toast("İlan takip listene kaydedildi.")
-        if (::dailyResultsContainer.isInitialized) refreshSavedList()
+        if (::dailyResultsContainer.isInitialized || currentPage == 3) refreshSavedList()
     }
 
     private fun refreshSavedList() {
-        // Rebuild the saved section by recreating this screen; the records remain in local preferences.
-        recreate()
+        renderPage(currentPage)
     }
 
     private fun updateJobStatus(url: String, status: String) {
@@ -854,7 +912,7 @@ class CareerActivity : Activity() {
             updated.put(item)
         }
         prefs.edit().putString("career_jobs", updated.toString()).apply()
-        recreate()
+        renderPage(currentPage)
     }
 
     private fun chooseJobStatus(url: String, current: String) {
@@ -874,18 +932,24 @@ class CareerActivity : Activity() {
             parent.addView(label("Henüz kaydedilmiş ilan yok. Beğendiğin ilanlarda Kaydet düğmesini kullan.", 12f, false, muted))
             return
         }
-        for (i in list.length() - 1 downTo 0) {
-            val item = list.optJSONObject(i) ?: continue
+        val items = (list.length() - 1 downTo 0).mapNotNull { list.optJSONObject(it) }
+        val totalPages = (items.size + pageSize - 1) / pageSize
+        savedPage = savedPage.coerceIn(0, (totalPages - 1).coerceAtLeast(0))
+        parent.addView(label(items.size.toString() + " kayıt · Sayfa " + (savedPage + 1) + "/" + totalPages, 12f, true, Color.rgb(116, 207, 220)))
+        val start = savedPage * pageSize
+        items.drop(start).take(pageSize).forEach { item ->
             val url = item.optString("url")
             val title = item.optString("title")
             val status = item.optString("status", "Kaydedildi")
             val card = LinearLayout(this).apply {
                 orientation = 1
-                setPadding(dp(10), dp(8), dp(10), dp(8))
-                setBackgroundColor(Color.rgb(27, 34, 51))
+                setPadding(dp(12), dp(10), dp(12), dp(10))
+                setBackground(rounded(Color.rgb(22, 31, 47), Color.rgb(43, 59, 82)))
             }
             card.addView(label(title, 14f, true))
-            card.addView(label("Başvuru aşaması: $status", 12f, true, Color.rgb(150, 190, 255)))
+            card.addView(label("Başvuru aşaması: $status", 12f, true, Color.rgb(116, 207, 220)))
+            val deadline = CareerListingParser.deadlineStatus(item.optString("snippet")).orEmpty()
+            if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
             val actions = LinearLayout(this).apply { orientation = 0 }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
@@ -896,7 +960,12 @@ class CareerActivity : Activity() {
             }, LinearLayout.LayoutParams(0, dp(42), 1f))
             actions.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(0, dp(42), 1f))
             card.addView(actions)
-            parent.addView(card, params(-1, -2, 0, 2, 0, 6))
+            parent.addView(card, params(-1, -2, 0, 2, 0, 7))
+        }
+        addPager(parent, savedPage, totalPages) { next ->
+            savedPage = next
+            showSaved(parent)
+            pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
         }
     }
 
@@ -908,7 +977,7 @@ class CareerActivity : Activity() {
             if (item.optString("url") != url) fresh.put(item)
         }
         prefs.edit().putString("career_jobs", fresh.toString()).apply()
-        recreate()
+        renderPage(currentPage)
     }
 
     private fun score(cvText: String, description: String): Int {
