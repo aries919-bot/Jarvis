@@ -504,6 +504,16 @@ class CareerActivity : Activity() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreGuide.OSYM_CALENDAR_URL)))
             }.onFailure { toast("ÖSYM takvimi açılamadı.") }
         }, params(-1, dp(46), 0, 8, 0, 0))
+        calendarCard.addView(button("KPSS-2026/2 P94 kadro ve nitelik kılavuzunu ara") {
+            renderPage(0)
+            if (::role.isInitialized && ::category.isInitialized) {
+                role.setText("KPSS-2026/2 ortaöğretim P94 tercih kılavuzu kadro pozisyon kontenjan nitelik kodları")
+                category.setSelection(1)
+                searchJobs()
+            } else {
+                toast("Arama ekranı hazırlanamadı; tekrar dene.")
+            }
+        }, params(-1, dp(48), 0, 6, 0, 0))
         pageContent.addView(calendarCard, params(-1, -2, 0, 3, 0, 10))
 
         val profileCard = panel()
