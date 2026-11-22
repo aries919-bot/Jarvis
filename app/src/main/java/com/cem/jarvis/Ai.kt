@@ -520,6 +520,47 @@ object Ai {
         return Answer(j.getString("answer"), src)
     }
 
+    private const val CAREER_SEARCH_URL = "https://jarvis-cloud.aydincem919.workers.dev/kariyer-ara"
+
+    fun kariyerAra(
+        token: String,
+        role: String,
+        city: String,
+        category: Int,
+        daily: Boolean
+    ): CareerScanBatch {
+        val body = JSONObject()
+            .put("role", role.take(150))
+            .put("city", city.take(120))
+            .put("category", category.coerceIn(0, 8))
+            .put("daily", daily)
+        val (code, txt) = Net.post(
+            CAREER_SEARCH_URL,
+            mapOf("Authorization" to "Bearer $token"),
+            body
+        )
+        if (code != 200) throw ApiError(code, errText("Aries Kariyer Arama", code))
+        val json = JSONObject(txt)
+        val rows = json.optJSONArray("results") ?: JSONArray()
+        val hits = ArrayList<Net.Hit>()
+        for (i in 0 until rows.length()) {
+            val item = rows.optJSONObject(i) ?: continue
+            val title = item.optString("title").trim()
+            val url = item.optString("url").trim()
+            val snippet = item.optString("content").trim()
+            if (title.isNotBlank() && url.startsWith("https://") && snippet.isNotBlank()) {
+                hits += Net.Hit(title, url, snippet)
+            }
+        }
+        return CareerScanBatch(
+            hits = hits,
+            successfulQueries = json.optInt("successfulQueries", 0),
+            failedQueries = json.optInt("failedQueries", 0),
+            totalQueries = json.optInt("totalQueries", 0),
+            errorMessages = emptyList()
+        )
+    }
+
     private fun callProvider(who: String, key: String, model: String, sys: String, hist: List<Pair<String, String>>, json: Boolean = true): String {
         if (who == "bulut") return bulut(key, sys, hist)
         return if (who == "gemini") {

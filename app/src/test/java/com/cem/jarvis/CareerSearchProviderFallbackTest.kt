@@ -1,5 +1,6 @@
 package com.cem.jarvis
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,6 +14,33 @@ class CareerSearchProviderFallbackTest {
             "Kurum ana sayfası"
         )
         assertFalse(CareerSearchEngine.containsUsableJobResult(listOf(homepage)))
+    }
+
+    @Test
+    fun secondaryJobBoardListingIsAcceptedButStillMarkedAsUnverifiedSector() {
+        val listing = Net.Hit(
+            "Elektrik teknisyeni iş ilanı",
+            "https://www.kariyer.net/is-ilani/elektrik-teknisyeni",
+            "Elektrik bakım teknisyeni için başvuru ve son tarih bilgileri."
+        )
+
+        assertTrue(CareerSearchEngine.isEligibleSearchResult(listing))
+        assertTrue(CareerSearchEngine.containsUsableJobResult(listOf(listing)))
+        assertEquals(
+            "Platform / sektör doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup(listing.title, listing.snippet, listing.url)
+        )
+    }
+
+    @Test
+    fun secondaryHomepageWithoutJobContentDoesNotCountAsUsableResult() {
+        val homepage = Net.Hit(
+            "Kariyer.net",
+            "https://www.kariyer.net/",
+            "İş arayanlar için kariyer platformu."
+        )
+
+        assertFalse(CareerSearchEngine.isEligibleSearchResult(homepage))
     }
 
     @Test

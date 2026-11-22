@@ -28,6 +28,7 @@ class CareerActivity : Activity() {
     private lateinit var manualScanButton: Button
     private lateinit var dailyResultsContainer: LinearLayout
     private lateinit var processEventsContainer: LinearLayout
+    private lateinit var finishedApplicationsContainer: LinearLayout
     private var processPage = 0
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
@@ -146,7 +147,8 @@ class CareerActivity : Activity() {
             Triple("⌕", "İlanlar", "İlan ara"),
             Triple("▤", "CV'im", "CV düzenle"),
             Triple("◷", "Takip", "Otomatik takip"),
-            Triple("✓", "Başvurular", "Başvuru listem")
+            Triple("✓", "Başvurular", "Kaydedilen ve devam eden başvurular"),
+            Triple("◈", "Sonuçlar", "Kura, sınav ve başvuru sonuçları")
         )
         tabs.forEachIndexed { index, tab ->
             val selected = currentPage == index
@@ -163,7 +165,7 @@ class CareerActivity : Activity() {
             item.addView(label(tab.first, 19f, true, if (selected) accentColor else muted).apply {
                 gravity = Gravity.CENTER
             }, LinearLayout.LayoutParams(-1, dp(25)))
-            item.addView(label(tab.second, 10f, selected, if (selected) primaryText else muted).apply {
+            item.addView(label(tab.second, 9f, selected, if (selected) primaryText else muted).apply {
                 gravity = Gravity.CENTER
             }, LinearLayout.LayoutParams(-1, dp(20)))
             navBar.addView(item, LinearLayout.LayoutParams(0, -1, 1f).apply {
@@ -175,7 +177,7 @@ class CareerActivity : Activity() {
     private fun renderPage(page: Int) {
         if (!::pageContent.isInitialized) return
         saveCv(showToast = false)
-        currentPage = page.coerceIn(0, 3)
+        currentPage = page.coerceIn(0, 4)
         pageContent.removeAllViews()
         pageScroll.scrollTo(0, 0)
         renderNavigation()
@@ -184,7 +186,8 @@ class CareerActivity : Activity() {
             0 -> buildListingsPage()
             1 -> buildCvPage()
             2 -> buildTrackingPage()
-            else -> buildSavedPage()
+            3 -> buildSavedPage()
+            4 -> buildResultsPage()
         }
     }
 
@@ -280,6 +283,22 @@ class CareerActivity : Activity() {
         category.setPadding(dp(10), dp(2), dp(10), dp(2))
         category.contentDescription = "İlan kategorisini seç"
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
+        filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
+        filtersCard.addView(quickChipRow(
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye")
+        ) { selected ->
+            val target = when (selected) {
+                "Kamu · KPSS" -> 1
+                "KPSS'siz kamu" -> 2
+                "Kura / noter" -> 6
+                "Büyük kurumlar" -> 4
+                "Özel sektör" -> 3
+                "Belediye" -> 8
+                else -> 0
+            }
+            category.setSelection(target)
+            searchJobs()
+        }, params(-1, dp(46), 0, 2, 0, 8))
         search = primaryButton("⌕  İlanları şimdi ara") { searchJobs() }
         filtersCard.addView(search, params(-1, dp(52), 0, 6, 0, 0))
         pageContent.addView(filtersCard, params(-1, -2, 0, 10, 0, 12))
@@ -425,26 +444,38 @@ class CareerActivity : Activity() {
         pageContent.addView(dailyResultsContainer, params(-1, -2, 0, 6, 0, 14))
         showDailyResults(dailyResultsContainer)
 
-        pageContent.addView(label("Kura · sınav · sonuç takvimi", 18f, true, primaryText))
-        pageContent.addView(label(
-            "Başvuru → evrak kontrolü → kuraya katılacaklar → noter kurası → asıl/yedek → sınav/mülakat → nihai sonuç. Aries yeni duyuruları bu aşamalara göre ayırır; kurumun asıl metni her zaman geçerlidir.",
-            12f, false, muted
-        ))
-        processEventsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 8))
-        showProcessEvents(processEventsContainer)
+        pageContent.addView(button("Kura, sınav ve sonuç duyurularını gör") {
+            renderPage(4)
+        }, params(-1, dp(48), 0, 0, 0, 12))
         queueFirstAutomaticScanIfNeeded()
     }
 
     private fun buildSavedPage() {
-        pageContent.addView(label("Başvuru takip listem", 21f, true, primaryText))
+        pageContent.addView(label("Başvurularım", 21f, true, primaryText))
         pageContent.addView(label(
-            "Kaydedilen ilanları, aktif başvuruları ve sonuçlanan süreçleri ayrı bölümlerde yönet.",
+            "Kaydettiğin ve başvuru sürecinde olan ilanlar burada. Kura, sınav ve tamamlanan başvuru sonuçları ayrı sekmede gösterilir.",
             12f, false, muted
         ))
         val savedContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         pageContent.addView(savedContainer, params(-1, -2, 0, 8, 0, 8))
         showSaved(savedContainer)
+    }
+
+    private fun buildResultsPage() {
+        pageContent.addView(label("Sonuç ve duyuru merkezi", 21f, true, primaryText))
+        pageContent.addView(label(
+            "Kura tarihi, kuraya katılacak aday listesi, noter kurası, asıl/yedek, sınav ve nihai sonuç duyuruları başvurularından ayrı tutulur.",
+            12f, false, muted
+        ))
+        pageContent.addView(label("Kura · sınav · yerleştirme duyuruları", 17f, true, primaryText))
+        processEventsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 12))
+        showProcessEvents(processEventsContainer)
+
+        pageContent.addView(label("Başvurularımın sonuçları", 17f, true, primaryText))
+        finishedApplicationsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(finishedApplicationsContainer, params(-1, -2, 0, 4, 0, 8))
+        showFinishedApplications(finishedApplicationsContainer)
     }
 
     private fun buildDefaultCvText(): String = """
@@ -618,7 +649,8 @@ class CareerActivity : Activity() {
                     }
                     androidx.work.WorkInfo.State.SUCCEEDED -> {
                         showDailyResults(dailyResultsContainer)
-                        if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                        if (currentPage == 4 && ::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                        if (currentPage == 4 && ::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
                         manualScanButton.text = "Tüm kaynakları şimdi tara"
@@ -673,7 +705,7 @@ class CareerActivity : Activity() {
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(selectedCategory, r, p)
+                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty())
             } catch (error: Exception) {
                 exceptionMessage = error.message
                 null
@@ -1263,7 +1295,10 @@ class CareerActivity : Activity() {
             queueFirstAutomaticScanIfNeeded()
             refreshMonitorStatus()
             if (::dailyResultsContainer.isInitialized) showDailyResults(dailyResultsContainer)
+        }
+        if (currentPage == 4) {
             if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+            if (::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
         }
     }
     private fun refreshMonitorStatus() {
@@ -1453,7 +1488,7 @@ class CareerActivity : Activity() {
         )
         prefs.edit().putString("career_jobs", list.toString()).apply()
         toast("İlan takip listene eklendi.")
-        if (currentPage == 3) refreshSavedList()
+        if (currentPage == 3 || currentPage == 4) refreshSavedList()
     }
 
     private fun refreshSavedList() {
@@ -1497,18 +1532,14 @@ class CareerActivity : Activity() {
             status !in finishedStatuses && status !in queuedStatuses
         }
         val queuedCount = allItems.count { it.optString("status", "Kaydedildi") in queuedStatuses }
-        val finishedCount = allItems.count { it.optString("status", "Kaydedildi") in finishedStatuses }
-
         val summary = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         summary.addView(statCard("KAYDEDİLEN", queuedCount.toString(), "Henüz başvurulmadı"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, dp(4), 0) })
         summary.addView(statCard("SÜREÇTE", activeCount.toString(), "Başvuru / kura / sınav"),
-            LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
-        summary.addView(statCard("SONUÇLANAN", finishedCount.toString(), "Teklif / atama / sonuç"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(4), 0, 0, 0) })
         parent.addView(summary, params(-1, -2, 0, 4, 0, 10))
 
-        val choices = listOf("Başvuru süreci", "Kaydedilenler", "Sonuçlanan", "Tümü")
+        val choices = listOf("Tümü", "Başvuru süreci", "Kaydedilenler")
         val horizontal = HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             overScrollMode = android.view.View.OVER_SCROLL_NEVER
@@ -1527,25 +1558,23 @@ class CareerActivity : Activity() {
         parent.addView(horizontal, params(-1, dp(48), 0, 0, 0, 8))
 
         val items = when (savedFilter) {
-            0 -> allItems.filter {
+            1 -> allItems.filter {
                 val status = it.optString("status", "Kaydedildi")
                 status !in queuedStatuses && status !in finishedStatuses
             }
-            1 -> allItems.filter { it.optString("status", "Kaydedildi") in queuedStatuses }
-            2 -> allItems.filter { it.optString("status", "Kaydedildi") in finishedStatuses }
-            else -> allItems
+            2 -> allItems.filter { it.optString("status", "Kaydedildi") in queuedStatuses }
+            else -> allItems.filter { it.optString("status", "Kaydedildi") !in finishedStatuses }
         }
         if (items.isEmpty()) {
             val emptyCard = panel()
             val message = when (savedFilter) {
-                0 -> "Henüz başvuruya dönüştürdüğün bir kayıt yok. Bir ilanı kaydettikten sonra durumunu “Başvuruldu” veya ilgili kura/sınav aşamasına getir."
-                1 -> "Kaydedilmiş bekleyen ilan yok. İlanlar sekmesinde beğendiğin fırsatın “Kaydet” düğmesine dokun."
-                2 -> "Henüz sonuçlanmış başvuru bulunmuyor. Atama, teklif, olumsuz sonuç ve vazgeçilen kayıtlar burada toplanır."
-                else -> "Takip listesi henüz boş. İlanlar sekmesinden bir fırsatı kaydedebilirsin."
+                1 -> "Henüz başvuru aşamasına taşıdığın kayıt yok. Bir ilanı kaydedip durumunu “Başvuruldu” veya ilgili kura/sınav aşamasına getir."
+                2 -> "Kaydedilmiş bekleyen ilan yok. İlanlar sekmesinde ilgilendiğin fırsatın “Kaydet” düğmesine dokun."
+                else -> "Takip listesi henüz boş. İlanlar sekmesinden bir fırsatı kaydet; tamamlanan süreçler Sonuçlar sekmesinde görünür."
             }
             emptyCard.addView(label("Bu bölüm şu an boş", 15f, true, primaryText))
             emptyCard.addView(label(message, 12f, false, muted))
-            if (savedFilter == 1 || savedFilter == 3) {
+            if (savedFilter == 0 || savedFilter == 2) {
                 emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(46), 0, 8, 0, 0))
             }
             parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
@@ -1590,6 +1619,53 @@ class CareerActivity : Activity() {
             savedPage = next
             showSaved(parent)
             pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
+        }
+    }
+
+    private fun showFinishedApplications(parent: LinearLayout) {
+        parent.removeAllViews()
+        val finishedStatuses = setOf("Teklif alındı", "Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
+        val stored = savedJobs()
+        val items = (stored.length() - 1 downTo 0)
+            .mapNotNull { stored.optJSONObject(it) }
+            .filter { it.optString("status", "Kaydedildi") in finishedStatuses }
+
+        if (items.isEmpty()) {
+            val empty = panel()
+            empty.addView(label("Henüz tamamlanan başvuru yok", 14f, true, primaryText))
+            empty.addView(label(
+                "Bir başvurunun durumu “Teklif alındı”, “Yerleşti / atandı”, “Olumsuz” veya “Vazgeçildi” olduğunda bu bölümde görünür.",
+                12f, false, muted
+            ))
+            parent.addView(empty, params(-1, -2, 0, 2, 0, 8))
+            return
+        }
+
+        parent.addView(label(items.size.toString() + " tamamlanan başvuru", 11f, true, accentColor))
+        items.take(30).forEach { item ->
+            val url = item.optString("url")
+            val title = item.optString("title")
+            val status = item.optString("status", "Kaydedildi")
+            val updatedAt = item.optLong("updatedAt", 0L)
+            val card = panel()
+            card.addView(label(title, 14f, true, primaryText))
+            card.addView(label("SONUÇ · $status", 11f, true, if (status == "Yerleşti / atandı" || status == "Teklif alındı") successColor else muted))
+            if (updatedAt > 0L) {
+                card.addView(label(
+                    "Güncellenme: " + SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(updatedAt)),
+                    10f, false, muted
+                ))
+            }
+            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            actions.addView(button("İlanı aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+                    .onFailure { toast("İlan bağlantısı açılamadı.") }
+            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(4), 0) })
+            actions.addView(button("Durumu değiştir") {
+                chooseJobStatus(url, status)
+            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(4), 0, 0, 0) })
+            card.addView(actions)
+            parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
     }
 
