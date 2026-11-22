@@ -41,6 +41,8 @@ object CareerSourceCatalog {
         Source("Indeed Türkiye", "https://tr.indeed.com/", "İlan platformu", false),
         Source("LinkedIn İş İlanları", "https://www.linkedin.com/jobs/", "İlan platformu", false),
         Source("İşbul.net", "https://www.isbul.net/", "İlan platformu", false),
+        Source("Manpower Türkiye", "https://www.manpower.com.tr/", "İşe alım platformu", false),
+        Source("Jooble Türkiye", "https://tr.jooble.org/", "İlan platformu", false),
         Source("Koç Kariyerim", "https://www.koccareers.com/", "İşveren grubu"),
         Source("Sabancı Kariyer", "https://www.sabanci.com/en/career/", "İşveren grubu"),
         Source("Borusan Kariyer", "https://careers.borusan.com/", "İşveren grubu"),
@@ -83,7 +85,8 @@ object CareerSourceCatalog {
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
         "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
-        "indeed.com", "linkedin.com", "isbul.net", "kockariyerim.com", "koccareers.com", "sabanci.com",
+        "indeed.com", "linkedin.com", "isbul.net", "manpower.com.tr", "jooble.org",
+        "pladis.wd3.myworkdayjobs.com", "kockariyerim.com", "koccareers.com", "sabanci.com",
         "borusan.com", "eczacibasi.com", "anadolukariyerim.com", "calik.com", "zorlu.com.tr", "vestelkariyer.com",
         "vestel.com.tr", "migroskurumsal.com", "careerscci.com", "turkcell.com.tr",
         "vodafone.com", "sutas.com.tr", "tirsan.com.tr"
@@ -109,7 +112,8 @@ object CareerSourceCatalog {
             .getOrDefault("")
         val secondaryDomains = listOf(
             "malatyatso.org.tr", "malorsa.org.tr", "kariyer.net", "eleman.net",
-            "secretcv.com", "yenibiris.com", "indeed.com", "linkedin.com", "isbul.net"
+            "secretcv.com", "yenibiris.com", "indeed.com", "linkedin.com", "isbul.net",
+            "manpower.com.tr", "jooble.org"
         )
         return secondaryDomains.any { host == it || host.endsWith(".$it") }
     }
@@ -131,7 +135,8 @@ object CareerSourceCatalog {
             host.contains("tusas") || host.contains("roketsan") || host.contains("aselsan") ||
                 host.contains("havelsan") || host.contains("tupras") || host.contains("vestel") ||
                 host.contains("turkcell") || host.contains("vodafone") || host.contains("migros") ||
-                host.contains("kockariyerim") || host.contains("koccareers") || host.contains("sabanci") || host.contains("borusan") ||
+                host.contains("kockariyerim") || host.contains("koccareers") || host.contains("sabanci") ||
+                host.contains("myworkdayjobs") || host.contains("borusan") ||
                 host.contains("eczacibasi") || host.contains("anadolukariyerim") || host.contains("calik") ||
                 host.contains("careerscci") || host.contains("sutas") || host.contains("tirsan") -> "İşveren kariyer portalı"
             else -> "Özel sektör / büyük şirket"
@@ -543,7 +548,9 @@ object CareerSearchEngine {
             "site:yenibiris.com/is-ilanlari $role $primaryCity",
             "site:tr.indeed.com/jobs $role $primaryCity",
             "site:linkedin.com/jobs/view $role $primaryCity Türkiye",
-            "site:isbul.net $role $primaryCity iş ilanı"
+            "site:isbul.net $role $primaryCity iş ilanı",
+            "site:manpower.com.tr $role $primaryCity",
+            "site:tr.jooble.org $role $primaryCity"
         )
         return collect(
             (profileQueries + kpssQueries + iskUrAndLocal + employerQueries + platformQueries).distinct(),
