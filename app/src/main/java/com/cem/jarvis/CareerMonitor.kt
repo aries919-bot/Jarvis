@@ -263,7 +263,7 @@ object CareerEligibility {
         if (qualificationNote != null) return qualificationNote
         if (listOf("elektrik", "pano", "kablolama", "bakim", "teknisyen", "teknik lise")
                 .any(text::contains)) {
-            return "ALAN EŞLEŞMESİ VAR · Elektrik lise dalınla ilişkili. Diploma dalı, deneyim, vardiya, ehliyet ve sertifika şartları tam metinden kontrol edilmeli."
+            return "TEKNİK ALAN İFADESİ VAR · İlan başlık/özetinde elektrik veya teknik görev geçiyor. Diploma alanı/dalı, istenen öğrenim düzeyi, deneyim, vardiya, ehliyet ve sertifika şartlarını tam metinden karşılaştır."
         }
         return "ŞARTLARI DOĞRULA · Başlık/özet tek başına yeterli değil; eğitim, şehir, deneyim ve son başvuru tarihi kaynak sayfasında kontrol edilmeli."
     }
