@@ -8,11 +8,11 @@ class CareerCadreGuideTest {
     @Test
     fun extractsTheFullRangeOfQualificationCodesWithoutTreatingSpecialConditionsAsFieldCodes() {
         val codes = CareerEligibility.extractQualificationCodes(
-            "Aranan nitelik kodları: 2001, 2023, 2061, 2065, 2086, 2111, 2119. Özel koşul: 7324."
+            "KPSS-2026/2 tercih dönemi; aranan nitelik kodları: 2001, 2023, 2061, 2065, 2086, 2111, 2119. Özel koşul: 7324."
         )
 
         assertTrue(codes.containsAll(setOf(2001, 2023, 2061, 2065, 2086, 2111, 2119)))
-        assertFalse(codes.contains(7324))
+        assertFalse(codes.contains(7324))\n        assertFalse(codes.contains(2026))
     }
 
     @Test
