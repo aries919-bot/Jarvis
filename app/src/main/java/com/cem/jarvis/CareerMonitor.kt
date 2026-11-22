@@ -451,7 +451,7 @@ object CareerSearchEngine {
             "site:esube.iskur.gov.tr $r $c açık iş ilanı $year",
             "site:iskur.gov.tr $r $c işçi alımı başvuru $year"
         ) + publicKpss.take(2) + publicNoKpss.take(2) +
-            privateSector.take(3) + platforms.take(2) + kuraQueries.take(2) + listOf(extra)
+            kuraQueries.take(2) + privateSector.take(2) + platforms.take(2) + listOf(extra)
 
         return when (category) {
             1 -> publicKpss + kuraQueries + listOf(extra)
