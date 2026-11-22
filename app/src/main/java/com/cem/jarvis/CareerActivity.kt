@@ -212,10 +212,13 @@ class CareerActivity : Activity() {
         val cvCard = panel()
         cvCard.addView(label("CV metni", 15f, true))
         val starter = buildDefaultCvText()
-        val legacyStarter = "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim (beklenen mezuniyet 2027). Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim."
+        val legacyStarters = setOf(
+            "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim (beklenen mezuniyet 2027). Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim.",
+            "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim. Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim."
+        )
         val storedCv = prefs.getString("career_cv", null)
-        val cvValue = if (storedCv == null || storedCv == legacyStarter) starter else storedCv
-        if (storedCv == null || storedCv == legacyStarter) {
+        val cvValue = if (storedCv == null || storedCv in legacyStarters) starter else storedCv
+        if (storedCv == null || storedCv in legacyStarters) {
             prefs.edit().putString("career_cv", cvValue).apply()
         }
         cv = field(cvValue, "CV bilgilerini buraya yaz", true).apply {
@@ -350,7 +353,7 @@ class CareerActivity : Activity() {
         Turgut Özal Üniversitesi – Arapgir MYO
         Program: Elektrik (ön lisans)
         Durum: 2. sınıf öğrencisi – eğitim devam ediyor
-        Beklenen mezuniyet: 2027
+        Beklenen mezuniyet: [BİLİYORSAN EKLE]
 
         TEKNİK BECERİLER
         [Yalnızca gerçekten uygulayabildiğin becerileri ekle. Örnekler:
@@ -370,7 +373,7 @@ class CareerActivity : Activity() {
         [Varsa ehliyet ve diğer belgeler]
 
         KPSS
-        Ortaöğretim KPSS P94: 63,23366
+        Ortaöğretim KPSS: Sınava girdim. Sonuç/puan: [SONUÇ BELGESİNDEKİ BİLGİYİ EKLE]
         [Kamu başvurularında puan türü ve geçerlilik bilgisini ilgili ilanla karşılaştır.]
 
         İŞ HEDEFİ VE TERCİH EDİLEN BÖLGE
@@ -456,6 +459,7 @@ class CareerActivity : Activity() {
     private fun searchJobs() {
         val r = role.text.toString().trim()
         val p = place.text.toString().trim()
+        val selectedCategory = category.selectedItemPosition
         if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
         saveCv(showToast = false)
         search.isEnabled = false
@@ -467,7 +471,7 @@ class CareerActivity : Activity() {
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(category.selectedItemPosition, r, p)
+                CareerSearchEngine.searchBatch(selectedCategory, r, p)
             } catch (error: Exception) {
                 exceptionMessage = error.message
                 null
