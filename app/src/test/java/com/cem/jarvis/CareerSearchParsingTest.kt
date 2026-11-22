@@ -94,6 +94,34 @@ class CareerSearchParsingTest {
     }
 
     @Test
+    fun recordsMultipleStagesFromOneAnnouncementWithoutConfusingPublicationDeadlineWithExamDate() {
+        val title = "Geçici işçi alımı noter kurası sonuçları"
+        val snippet = "Asıl ve yedek adaylar belirlendi. Sözlü sınavın yeri, tarihi ve saati 16.10.2026 tarihine kadar duyurulacaktır."
+
+        val stages = CareerRecruitmentTracker.detectStages(title, snippet)
+        assertTrue(stages.contains("NOTER KURASI SONUCU · ASIL / YEDEK"))
+        assertTrue(stages.contains("SINAV / MÜLAKAT TARİHİ"))
+
+        val examAnnouncementDeadline = CareerRecruitmentTracker.parseEventTime(
+            title,
+            snippet,
+            "SINAV / MÜLAKAT TARİHİ"
+        )
+        assertEquals(null, examAnnouncementDeadline)
+
+        val actualExamDate = CareerRecruitmentTracker.parseEventTime(
+            "Sözlü sınav tarihi açıklandı",
+            "Sözlü sınav 20.10.2026 saat 09:30'da yapılacaktır.",
+            "SINAV / MÜLAKAT TARİHİ"
+        )
+        assertNotNull(actualExamDate)
+        assertTrue(actualExamDate!!.second)
+        val formatted = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
+            .format(java.util.Date(actualExamDate.first))
+        assertEquals("20.10.2026 09:30", formatted)
+    }
+
+    @Test
     fun extractsOnlyExplicitKuraDateAndTimeForReminder() {
         val parsed = CareerRecruitmentTracker.parseEventTime(
             "Noter kurası tarihi açıklandı",
