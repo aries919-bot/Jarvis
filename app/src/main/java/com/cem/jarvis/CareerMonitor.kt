@@ -37,6 +37,14 @@ object CareerSourceCatalog {
         Source("Orman Genel Müdürlüğü – kura ve işçi alımı", "https://www.ogm.gov.tr/", "Kamu / kura ve işçi alımı"),
         Source("Karayolları Genel Müdürlüğü – kura ve işçi alımı", "https://www.kgm.gov.tr/", "Kamu / kura ve işçi alımı"),
         Source("ANT Başkanlığı – personel ve kura duyuruları", "https://www.ant.gov.tr/haberler.html", "Kamu / kura ve işçi alımı"),
+        Source("İçişleri Bakanlığı – duyurular", "https://www.icisleri.gov.tr/duyurular", "Kamu / bakanlık"),
+        Source("Millî Savunma Bakanlığı – Personel Temin Sistemi", "https://personeltemin.msb.gov.tr/", "Kamu / personel temin"),
+        Source("Jandarma Genel Komutanlığı – duyurular", "https://jandarma.gov.tr/duyurular", "Kamu / güvenlik personeli"),
+        Source("Sahil Güvenlik Komutanlığı", "https://www.sg.gov.tr/", "Kamu / güvenlik personeli"),
+        Source("Çalışma ve Sosyal Güvenlik Bakanlığı – duyurular", "https://www.csgb.gov.tr/duyurular/", "Kamu / bakanlık"),
+        Source("Kültür ve Turizm Bakanlığı – Personel Genel Müdürlüğü", "https://pgm.ktb.gov.tr/", "Kamu / personel genel müdürlüğü"),
+        Source("Savunma Sanayii Başkanlığı – duyurular", "https://www.ssb.gov.tr/duyurular", "Kamu / savunma sanayii"),
+        Source("Türkiye Turizm Tanıtım ve Geliştirme Ajansı – kariyer", "https://tga.gov.tr/kariyer", "Kamu bağlantılı / kurumsal kariyer"),
         Source("Sağlık Bakanlığı – personel duyuruları", "https://www.saglik.gov.tr/", "Kamu / bakanlık"),
         Source("Adalet Bakanlığı – personel duyuruları", "https://www.adalet.gov.tr/", "Kamu / bakanlık"),
         Source("Aile ve Sosyal Hizmetler Bakanlığı", "https://www.aile.gov.tr/", "Kamu / bakanlık"),
@@ -424,7 +432,9 @@ object CareerSearchEngine {
             "site:isealimkariyerkapisi.cbiko.gov.tr lise ortaöğretim personel alımı KPSS $year $c",
             "site:ilan.gov.tr personel alımı lise ortaöğretim KPSS $year $c",
             "site:resmigazete.gov.tr personel alımı atama ortaöğretim KPSS $year $c",
-            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B sözleşmeli personel alımı KPSS ortaöğretim $year"
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B sözleşmeli personel alımı KPSS ortaöğretim $year",
+            "site:icisleri.gov.tr OR site:personeltemin.msb.gov.tr OR site:jandarma.gov.tr OR site:sg.gov.tr personel temin memur işçi sınav kura sonuç $year",
+            "site:csgb.gov.tr OR site:pgm.ktb.gov.tr OR site:ssb.gov.tr sözleşmeli personel alımı başvuru sınav yedek sonuç $year"
         )
         val publicNoKpss = listOf(
             "site:esube.iskur.gov.tr açık iş ilanı $r $c $year",
@@ -441,7 +451,9 @@ object CareerSearchEngine {
             "site:bel.tr belediye şirketi personel işçi alımı başvuru $year $c",
             "site:malatyatso.org.tr İŞKUR açık iş ilanları $year",
             "site:malorsa.org.tr personel alım ilanı Malatya OSB $year",
-            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR kura personel işçi alımı sonuçları $year"
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR kura personel işçi alımı sonuçları $year",
+            "site:icisleri.gov.tr OR site:jandarma.gov.tr OR site:sg.gov.tr sözleşmeli destek personeli işçi alımı başvuru kura sonuç $year",
+            "site:personeltemin.msb.gov.tr uzman erbaş teknik sınıf personel temin başvuru sonuç $year"
         )
         val privateSector = listOf(
             "site:akariyer.aselsan.com teknisyen elektrik üretim açık pozisyon",
@@ -694,7 +706,9 @@ object CareerSearchEngine {
             "site:malorsa.org.tr Malatya Merkez 1 OSB personel alımı iş ilanı $year",
             "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr personel işçi alımı $year",
             "site:yerelyonetimler.csb.gov.tr belediye personel işçi alımı $year",
-            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR Gençlik Programı kura sonuçları personel alımı $year"
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR Gençlik Programı kura sonuçları personel alımı $year",
+            "site:icisleri.gov.tr OR site:csgb.gov.tr OR site:pgm.ktb.gov.tr OR site:ssb.gov.tr personel alım ilanı başvuru sınav sonuç yedek $year",
+            "site:personeltemin.msb.gov.tr OR site:jandarma.gov.tr OR site:sg.gov.tr personel temin kura sınav sonuç duyuru $year"
         )
         val kuraQueries = listOf(
             "site:ogm.gov.tr noter kurası işçi alımı kuraya katılacaklar kura sonuçları $year",
