@@ -504,19 +504,13 @@ class CareerActivity : Activity() {
     }
 
     private fun buildResultsPage() {
-        pageContent.addView(label("Sonuç ve duyuru merkezi", 21f, true, primaryText))
+        pageContent.addView(label("Başvuru sonuçlarım", 21f, true, primaryText))
         pageContent.addView(label(
-            "Kura tarihi, kuraya katılacak aday listesi, noter kurası, asıl/yedek, sınav ve nihai sonuç duyuruları başvurularından ayrı tutulur.",
+            "Yalnızca kaydettiğin veya başvurduğun ilanların kişisel sonuç takibi burada. Kurumların genel kura, sınav ve duyuruları Haber sekmesindeki süreç alanında tutulur.",
             12f, false, muted
         ))
-        pageContent.addView(label("Kura · sınav · yerleştirme duyuruları", 17f, true, primaryText))
-        processEventsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 12))
-        showProcessEvents(processEventsContainer)
-
-        pageContent.addView(label("Başvurularımın sonuçları", 17f, true, primaryText))
         finishedApplicationsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        pageContent.addView(finishedApplicationsContainer, params(-1, -2, 0, 4, 0, 8))
+        pageContent.addView(finishedApplicationsContainer, params(-1, -2, 0, 8, 0, 8))
         showFinishedApplications(finishedApplicationsContainer)
     }
 
@@ -1379,7 +1373,16 @@ class CareerActivity : Activity() {
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(4), 0, 0, 0) })
         pageContent.addView(actions, params(-1, dp(50), 0, 2, 0, 12))
 
-        pageContent.addView(label("İçerik türüne göre filtrele", 17f, true, primaryText))
+        pageContent.addView(label("Takip edilen kura ve sınav süreçleri", 17f, true, primaryText))
+        pageContent.addView(label(
+            "Tarihi belirlenen kura, sınav, mülakat ve sonuç aşamaları hatırlatmalarla birlikte burada görünür.",
+            11f, false, muted
+        ))
+        processEventsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 12))
+        showProcessEvents(processEventsContainer)
+
+        pageContent.addView(label("Haber ve duyuru arşivi · içerik türüne göre filtrele", 17f, true, primaryText))
         val filters = listOf("Tümü", "Kura / sonuç", "Staj / program", "Kurum duyurusu", "Haber", "Doğrula")
         val filterScroll = HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
@@ -1630,11 +1633,11 @@ class CareerActivity : Activity() {
             if (::dailyResultsContainer.isInitialized) showDailyResults(dailyResultsContainer)
         }
         if (currentPage == 4) {
-            if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
             if (::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
         }
-        if (currentPage == 5 && ::newsResultsContainer.isInitialized) {
-            renderNewsResults(newsResultsContainer)
+        if (currentPage == 5) {
+            if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+            if (::newsResultsContainer.isInitialized) renderNewsResults(newsResultsContainer)
         }
     }
     private fun refreshCadreGuideStatus() {
