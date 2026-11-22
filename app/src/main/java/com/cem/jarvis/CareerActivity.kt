@@ -920,9 +920,10 @@ class CareerActivity : Activity() {
             1 -> sectorHits
             else -> sectorHits.filterNot(::isExpired)
         }
-        val visibleHits = if (searchSectorFilter == 0) {
-            eligibleHits.sortedBy { recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url)) }
-        } else eligibleHits
+        // Keep all result groups stable for every filter, not only the unfiltered view.
+        val visibleHits = eligibleHits.sortedBy {
+            recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url))
+        }
 
         if (visibleHits.isEmpty()) {
             results.addView(label("Bu filtrede gösterilecek ilan yok.", 12f, false, muted))
