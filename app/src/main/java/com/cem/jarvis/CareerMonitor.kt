@@ -308,14 +308,23 @@ object CareerEligibility {
         return phrases.any(text::contains)
     }
 
-    fun assess(title: String, snippet: String, url: String = ""): String {
+    fun assess(
+        title: String,
+        snippet: String,
+        url: String = "",
+        diplomaField: String = "",
+        diplomaBranch: String = "",
+        p94Score: Double? = null
+    ): String {
         val text = normalize("$title $snippet $url")
 
         val hasCodeContext = listOf("nitelik kod", "ozel sart kod", "aranan nitelik kod").any(text::contains)
         val codes = if (hasCodeContext) extractQualificationCodes(text) else emptySet()
         // A code can describe a required diploma field; it cannot prove the candidate's own field.
         // Keep the requirement visible until the diploma's exact field/branch has been confirmed.
-        val qualificationNote = codes.takeIf { it.isNotEmpty() }?.let(::assessQualificationCodes)
+        val qualificationNote = codes.takeIf { it.isNotEmpty() }?.let {
+            CareerCadreGuide.explainQualificationCodes(it, diplomaField, diplomaBranch)
+        }
 
         if (hasExplicitAssociateRequirement(text)) {
             return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. Henüz ön lisans mezunu değilsen bu şartı karşılamazsın."
@@ -334,10 +343,15 @@ object CareerEligibility {
                 "(?:en az|asgari|taban|en dusuk|min(?:imum)?)\\s*(?:kpss\\s*)?(?:p\\s*94\\s*)?(?:puan(?:i)?\\s*)?(\\d{2,3}(?:[.,]\\d+)?)\\s*puan?"
             ).find(text)?.groupValues?.getOrNull(1)?.replace(',', '.')?.toDoubleOrNull()
             if (p94 || text.contains("ortaogretim") || text.contains("orta ogretim")) {
-                val base = if (minScore == null) {
-                    "P94 İLE TERCİH DEĞERLENDİRMESİ · İlan ortaöğretim KPSS/P94 ifadesi içeriyor. Kullanıcı puanı uygulamada doğrulanmadığı için puan sıralaması veya yerleşme ihtimali hesaplanmadı; nitelik kodları ve diğer şartlar ayrıca kontrol edilmeli."
-                } else {
-                    "P94 PUAN ŞARTI VAR · İlanda açıkça en az $minScore puan şartı yazıyor. Kullanıcı KPSS puanı uygulama profilinde doğrulanmadığı için bu şartın karşılanıp karşılanmadığı belirlenemiyor; kendi sonuç belgenle karşılaştır."
+                val base = when {
+                    minScore != null && p94Score != null && p94Score >= minScore ->
+                        "P94 PUAN ŞARTI KARŞILANIYOR · Profiline beyan ettiğin ${"%.2f".format(Locale.US, p94Score)} puan, ilandaki en az $minScore puan şartını karşılıyor. Belge ve diğer şartlar kurum/kılavuz üzerinden doğrulanmalı."
+                    minScore != null && p94Score != null ->
+                        "P94 PUAN ŞARTI KARŞILANMIYOR · Profiline beyan ettiğin ${"%.2f".format(Locale.US, p94Score)} puan, ilandaki en az $minScore puan şartının altında. Diğer ilan şartları ayrıca kontrol edilmeli."
+                    minScore != null ->
+                        "P94 PUAN ŞARTI VAR · İlanda en az $minScore puan isteniyor. Profilinde P94 puanı girilmediği için eşleşme hesaplanmadı."
+                    else ->
+                        "P94 İLE TERCİH DEĞERLENDİRMESİ · İlan ortaöğretim KPSS/P94 ifadesi içeriyor ancak özetten asgari puan belirlenemedi. Profil puanın tek başına yerleşme ihtimalini göstermez; nitelik kodları ve tüm şartlar kontrol edilmeli."
                 }
                 return if (qualificationNote == null) base else "$base $qualificationNote"
             }
@@ -352,26 +366,11 @@ object CareerEligibility {
         return "ŞARTLARI DOĞRULA · Başlık/özet tek başına yeterli değil; eğitim, şehir, deneyim ve son başvuru tarihi kaynak sayfasında kontrol edilmeli."
     }
 
-    fun assessQualificationCodes(codes: Set<Int>): String {
-        val notes = mutableListOf<String>()
-        if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
-            notes += "2023 kodu için ÖSYM kılavuzunda yazan ortaöğretim alan/dal şartını lise diplomanla karşılaştır. Uygulama senin alanını doğrulamadı."
-        }
-        if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
-            notes += "2086 kodunun güncel kılavuzdaki tanımını ve istediği alan/dalı ayrıca kontrol et; uygulama bu kodu otomatik ret sebebi saymaz."
-        }
-        if (QUALIFICATION_CODE_ANY_HIGH_SCHOOL in codes) {
-            notes += "2001 kodu herhangi bir ortaöğretim alanından mezuniyet şartını ifade eder; mezuniyet belgen ve ilandaki diğer özel şartlar yine kontrol edilmeli."
-        }
-        return if (notes.isEmpty()) {
-            "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamını güncel ÖSYM kılavuzundaki açıklamalarla ve diploma bilgilerinle karşılaştır."
-        } else {
-            "NİTELİK KODU KONTROLÜ · " + notes.joinToString(" ")
-        }
-    }
+    fun assessQualificationCodes(codes: Set<Int>): String =
+        "NİTELİK KODU KONTROLÜ · " + CareerCadreGuide.explainQualificationCodes(codes)
 
     fun extractQualificationCodes(text: String): Set<Int> =
-        Regex("(?<!\\d)(2001|2023|2086)(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
+        CareerCadreGuide.extractQualificationCodes(text)
 
     fun normalizeForFingerprint(value: String): String = normalize(value)
         .replace(Regex("[^a-z0-9 ]"), " ")
@@ -393,6 +392,7 @@ object CareerEligibility {
         if (text.contains("son basvuru") || text.contains("basvuru tarihi")) score += 6
         if (eligibility.startsWith("PUAN TÜRÜ UYUŞMUYOR") ||
             eligibility.startsWith("PUAN ŞARTI UYUŞMUYOR") ||
+            eligibility.startsWith("P94 PUAN ŞARTI KARŞILANMIYOR") ||
             eligibility.startsWith("MEZUNİYET SONRASI") ||
             eligibility.startsWith("ALAN KODU UYUŞMUYOR")) score -= 35
         return score.coerceIn(0, 100)
