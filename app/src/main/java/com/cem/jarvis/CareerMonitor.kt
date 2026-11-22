@@ -491,12 +491,15 @@ object CareerSearchEngine {
             "işçi alımı sınav yeri sınav tarihi mülakat sonucu nihai liste $year"
         )
         val extra = "$r $c iş ilanı başvuru şartları son başvuru tarihi $year"
+        // Balanced quick search: include nationwide placements, nearby universities, IŞKUR,
+        // kura notices, one employer portal and one job board without exceeding the fast-search cap.
         val generalQuick = listOf(
             "$r $c güncel iş ilanı personel alımı başvuru $year",
             "site:esube.iskur.gov.tr $r $c açık iş ilanı $year",
             "site:iskur.gov.tr $r $c işçi alımı başvuru $year"
-        ) + publicKpss.take(2) + publicNoKpss.take(2) +
-            kuraQueries.take(2) + privateSector.take(2) + platforms.take(2) + listOf(extra)
+        ) + publicKpss.take(2) + publicKpss.drop(7).take(1) +
+            publicNoKpss.take(2) + kuraQueries.take(1) +
+            privateSector.take(1) + platforms.take(1) + listOf(extra)
 
         val dailyPrivate = privateSector + platforms + listOf(
             "günlük işçi alımı üretim paketleme depo vardiyalı personel $year $c",
