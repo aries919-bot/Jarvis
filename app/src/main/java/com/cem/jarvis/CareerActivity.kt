@@ -231,7 +231,15 @@ class CareerActivity : Activity() {
             setHorizontallyScrolling(false)
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
-        filtersCard.addView(role, params(-1, dp(64), 0, 4, 0, 10))
+        filtersCard.addView(role, params(-1, dp(64), 0, 4, 0, 6))
+        filtersCard.addView(label("HIZLI POZİSYON SEÇ", 10f, true, muted))
+        filtersCard.addView(quickChipRow(listOf("Elektrik teknisyeni", "Pano montajı", "Bakım-onarım", "Üretim")) { selected ->
+            val current = role.text.toString().split(',', ';').map { it.trim() }.filter { it.isNotBlank() }
+            if (current.none { it.equals(selected, ignoreCase = true) }) {
+                role.setText((current + selected).joinToString(", "))
+                role.setSelection(role.text.length)
+            }
+        }, params(-1, dp(46), 0, 2, 0, 10))
         filtersCard.addView(label("Şehir / bölge", 12f, true, muted))
         val oldPlaceDefault = "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
         val savedPlace = prefs.getString("career_place", null)
@@ -251,7 +259,11 @@ class CareerActivity : Activity() {
             setHorizontallyScrolling(false)
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
-        filtersCard.addView(place, params(-1, dp(64), 0, 4, 0, 10))
+        filtersCard.addView(place, params(-1, dp(64), 0, 4, 0, 6))
+        filtersCard.addView(label("HIZLI KONUM", 10f, true, muted))
+        filtersCard.addView(quickChipRow(listOf("Malatya", "Elazığ", "Adıyaman", "Türkiye geneli")) { selected ->
+            place.setText(selected)
+        }, params(-1, dp(46), 0, 2, 0, 10))
         filtersCard.addView(label("İlan türü", 12f, true, muted))
         category = Spinner(this)
         category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filters).apply {
@@ -519,10 +531,10 @@ class CareerActivity : Activity() {
         setTypeface(typeface, android.graphics.Typeface.BOLD)
         setTextColor(bgColor)
         setPadding(dp(12), dp(5), dp(12), dp(5))
-        background = android.graphics.drawable.GradientDrawable(
+        background = ripple(android.graphics.drawable.GradientDrawable(
             android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
             intArrayOf(accentColor, accentBlue)
-        ).apply { cornerRadius = dp(15).toFloat() }
+        ).apply { cornerRadius = dp(15).toFloat() })
         elevation = dp(2).toFloat()
         setOnClickListener { action() }
     }
@@ -530,14 +542,29 @@ class CareerActivity : Activity() {
     private fun chipButton(value: String, selected: Boolean, action: () -> Unit) = Button(this).apply {
         text = value
         textSize = 10f
-        minHeight = dp(42)
+        minHeight = dp(44)
         isAllCaps = false
         setTypeface(typeface, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
         setTextColor(if (selected) bgColor else primaryText)
-        setPadding(dp(6), dp(3), dp(6), dp(3))
-        background = rounded(if (selected) accentColor else surfaceRaised, if (selected) accentColor else borderColor)
+        setPadding(dp(9), dp(3), dp(9), dp(3))
+        background = ripple(rounded(if (selected) accentColor else surfaceRaised, if (selected) accentColor else borderColor))
         setOnClickListener { action() }
     }
+
+    private fun quickChipRow(values: List<String>, action: (String) -> Unit): HorizontalScrollView =
+        HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+            val row = LinearLayout(this@CareerActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            values.forEach { value ->
+                row.addView(chipButton(value, false) { action(value) },
+                    LinearLayout.LayoutParams(-2, dp(44)).apply { setMargins(0, 0, dp(7), 0) })
+            }
+            addView(row)
+        }
 
     private fun copyCvText() {
         if (!::cv.isInitialized) return
@@ -702,11 +729,11 @@ class CareerActivity : Activity() {
             emptyCard.addView(label("Arama servisleri yanıt verdi ancak güvenilir kaynaklardan uygun ilan bağlantısı çıkarılamadı. Bu, iş ilanı olmadığı anlamına gelmez.", 12f, false, muted))
             if (searchDiagnostic.isNotBlank()) emptyCard.addView(label(searchDiagnostic, 11f, false, muted))
             results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
-            results.addView(button("Daha geniş arama yap") {
+            results.addView(primaryButton("⌕  Daha geniş arama yap") {
                 role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
                 category.setSelection(0)
                 searchJobs()
-            }, params(-1, dp(44), 0, 6, 0, 6))
+            }, params(-1, dp(48), 0, 6, 0, 6))
             results.addView(button("Resmî ve kurumsal kaynakları aç") {
                 showSources()
             }, params(-1, dp(48), 0, 2, 0, 6))
@@ -911,7 +938,10 @@ class CareerActivity : Activity() {
             } else {
                 "Bu filtrede gösterilecek ilan yok."
             }
-            parent.addView(label(message, 12f, false, muted))
+            val emptyCard = panel()
+            emptyCard.addView(label(if (allItems.isEmpty()) "İlk tarama bekleniyor" else "Bu filtrede kayıt yok", 14f, true, primaryText))
+            emptyCard.addView(label(message, 12f, false, muted))
+            parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
 
@@ -1362,11 +1392,11 @@ class CareerActivity : Activity() {
     private fun button(value: String, action: () -> Unit) = Button(this).apply {
         text = value
         textSize = 12f
-        minHeight = dp(46)
+        minHeight = dp(48)
         isAllCaps = false
         setTextColor(primaryText)
         setPadding(dp(11), dp(5), dp(11), dp(5))
-        background = rounded(surfaceRaised, borderColor)
+        background = ripple(rounded(surfaceRaised, borderColor))
         elevation = dp(1).toFloat()
         setOnClickListener { action() }
     }
@@ -1379,6 +1409,13 @@ class CareerActivity : Activity() {
         setLineSpacing(dp(2).toFloat(), 1.0f)
         if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
     }
+
+    private fun ripple(content: android.graphics.drawable.Drawable): android.graphics.drawable.Drawable =
+        android.graphics.drawable.RippleDrawable(
+            android.content.res.ColorStateList.valueOf(Color.argb(56, 78, 220, 202)),
+            content,
+            rounded(Color.WHITE, Color.TRANSPARENT)
+        )
 
     private fun rounded(fill: Int, stroke: Int): android.graphics.drawable.GradientDrawable =
         android.graphics.drawable.GradientDrawable().apply {
