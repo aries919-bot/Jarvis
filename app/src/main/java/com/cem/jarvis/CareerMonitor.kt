@@ -323,7 +323,8 @@ object CareerEligibility {
         // A code can describe a required diploma field; it cannot prove the candidate's own field.
         // Keep the requirement visible until the diploma's exact field/branch has been confirmed.
         val qualificationNote = codes.takeIf { it.isNotEmpty() }?.let {
-            CareerCadreGuide.explainQualificationCodes(it, diplomaField, diplomaBranch)
+            "NİTELİK KODU KONTROLÜ · " +
+                CareerCadreGuide.explainQualificationCodes(it, diplomaField, diplomaBranch)
         }
 
         if (hasExplicitAssociateRequirement(text)) {
