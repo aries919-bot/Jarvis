@@ -117,24 +117,34 @@ object CareerSourceCatalog {
         "vodafone.com", "sutas.com.tr", "tirsan.com.tr"
     )
 
+    /** Parse a URL host without Android framework classes so policy tests run on the JVM too. */
+    private fun normalizedHost(url: String): String? {
+        val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return null
+        if (!uri.scheme.equals("https", ignoreCase = true) &&
+            !uri.scheme.equals("http", ignoreCase = true)
+        ) return null
+        return uri.host?.lowercase(Locale.ROOT)?.removePrefix("www.")?.trimEnd('.')?.takeIf { it.isNotBlank() }
+    }
+
     fun isTrustedUrl(url: String): Boolean {
-        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
-        if (uri.scheme != "https") return false
-        val host = uri.host?.lowercase()?.removePrefix("www.") ?: return false
+        val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return false
+        if (!uri.scheme.equals("https", ignoreCase = true)) return false
+        val host = normalizedHost(url) ?: return false
         return trustedDomains.any { host == it || host.endsWith(".$it") }
     }
 
     fun sourceName(url: String): String {
-        val host = runCatching { Uri.parse(url).host.orEmpty().lowercase().removePrefix("www.") }.getOrDefault("")
+        val host = normalizedHost(url).orEmpty()
+        if (host.isBlank()) return "Bilinmeyen kaynak"
         return sources.firstOrNull { source ->
-            val sourceHost = Uri.parse(source.url).host.orEmpty().lowercase().removePrefix("www.")
-            host == sourceHost || host.endsWith(".$sourceHost") || sourceHost.endsWith(".$host")
+            val sourceHost = normalizedHost(source.url).orEmpty()
+            sourceHost.isNotBlank() &&
+                (host == sourceHost || host.endsWith(".$sourceHost") || sourceHost.endsWith(".$host"))
         }?.name ?: host
     }
 
     fun isSecondary(url: String): Boolean {
-        val host = runCatching { Uri.parse(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
-            .getOrDefault("")
+        val host = normalizedHost(url).orEmpty()
         val secondaryDomains = listOf(
             "malatyatso.org.tr", "malorsa.org.tr", "kariyer.net", "eleman.net",
             "secretcv.com", "yenibiris.com", "indeed.com", "linkedin.com", "isbul.net",
