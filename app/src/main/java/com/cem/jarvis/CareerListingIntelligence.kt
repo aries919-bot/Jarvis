@@ -21,7 +21,7 @@ object CareerListingIntelligence {
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
         .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
-        .replace(Regex("\s+"), " ")
+        .replace(Regex("""\s+"""), " ")
         .trim()
 
     fun analyze(title: String, snippet: String, url: String, nowMillis: Long = System.currentTimeMillis()): CareerListingFacts {
@@ -72,9 +72,9 @@ object CareerListingIntelligence {
         }
         val quotaText = extractQuota(text)
         val requirements = buildList {
-            if (Regex("\bkpss\s*p\s*94\b").containsMatchIn(text) || text.contains("ortaogretim")) add("Ortaöğretim / KPSS P94")
-            if (Regex("\bkpss\s*p\s*93\b").containsMatchIn(text) || text.contains("on lisans")) add("Ön lisans / KPSS P93")
-            if (Regex("\bkpss\s*p\s*3\b").containsMatchIn(text) || text.contains("lisans mezunu")) add("Lisans / KPSS P3")
+            if (Regex("""\bkpss\s*p\s*94\b""").containsMatchIn(text) || text.contains("ortaogretim")) add("Ortaöğretim / KPSS P94")
+            if (Regex("""\bkpss\s*p\s*93\b""").containsMatchIn(text) || text.contains("on lisans")) add("Ön lisans / KPSS P93")
+            if (Regex("""\bkpss\s*p\s*3\b""").containsMatchIn(text) || text.contains("lisans mezunu")) add("Lisans / KPSS P3")
             if (text.contains("elektrik") || text.contains("elektrik elektronik")) add("Elektrik alanı/programı ifadesi · diploma kodu ayrıca kontrol edilmeli")
             if (text.contains("engelli")) add("Engelli aday şartı ifadesi · yalnızca ilgili ilan koşulları için")
             if (text.contains("eski hukumlu") || text.contains("eski hükümlü")) add("Eski hükümlü aday şartı ifadesi · yalnızca ilgili ilan koşulları için")
