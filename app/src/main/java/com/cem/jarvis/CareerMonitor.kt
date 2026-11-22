@@ -23,9 +23,13 @@ object CareerSourceCatalog {
     val sources = listOf(
         Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama", "Kamu / e-Devlet hizmetleri"),
         Source("Kariyer Kapısı – açık kamu ilanları", "https://kariyerkapisi.gov.tr/isealim", "Kamu / başvuru ve değerlendirme"),
-        Source("İŞKUR Gençlik Programı", "https://engelsiz.iskur.gov.tr/faaliyetlerimiz/iskur-genclik-programi", "Öğrenci / üniversite programı"),
-        Source("İŞKUR İşgücü Uyum Programı (İUP)", "https://engelsiz.iskur.gov.tr/faaliyetlerimiz/isguecue-uyum-programi", "İŞKUR / uyum programı"),
-        Source("GÜÇ – Gençliğin Üretim Çağı programları", "https://guc.iskur.gov.tr/guckatanlar/", "Öğrenci / genç istihdam programları"),
+        Source("İŞKUR Gençlik Programı", "https://esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx", "İŞKUR / üniversite programı"),
+        Source("İŞKUR İşgücü Uyum Programı (NEET İUP)", "https://esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx", "İŞKUR / uyum programı"),
+        Source("GÜÇ – Gençliğin Üretim Çağı programları", "https://guc.iskur.gov.tr/", "Öğrenci / genç istihdam programları"),
+        Source("GÜÇ – program ve hizmetler", "https://guc.iskur.gov.tr/hizmetlerimiz/", "İŞKUR / program rehberi"),
+        Source("İŞKUR Staj Portalı – lise öğrencileri", "https://stajportali.iskur.gov.tr/", "İŞKUR / lise stajı"),
+        Source("İŞKUR Staj Portalı – genel giriş", "https://staj.iskur.gov.tr/", "İŞKUR / staj platformu"),
+        Source("Ulusal Staj Programı – üniversite öğrencileri", "https://ulusalstajprogrami.iskur.gov.tr/", "İŞKUR / üniversite stajı"),
         Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
         Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
         Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
@@ -612,11 +616,11 @@ object CareerSearchEngine {
             "site:isbul.net $r $c iş ilanı $year"
         )
         val studentPrograms = listOf(
-            "site:engelsiz.iskur.gov.tr İŞKUR Gençlik Programı üniversite öğrencisi başvuru şartları $year",
-            "site:engelsiz.iskur.gov.tr İşgücü Uyum Programı İUP başvuru öğrenci uygunluk şartları $year",
-            "site:guc.iskur.gov.tr staj platformu öğrenci teknik staj programı başvuru $year",
-            "site:kariyerkapisi.gov.tr staj öğrenci elektrik teknik ön lisans başvuru $year",
-            "üniversite öğrencisi elektrik zorunlu staj Malatya Elazığ Adıyaman başvuru $year"
+            "site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx İŞKUR Gençlik Programı üniversite öğrenci il kontenjan başvuru $year",
+            "site:guc.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci başvuru hizmetleri $year",
+            "site:ulusalstajprogrami.iskur.gov.tr OR site:staj.iskur.gov.tr üniversite öğrencisi Ulusal Staj Programı teknik staj $year",
+            "site:esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx NEET İşgücü Uyum Programı İUP ilçe başvuru $year",
+            "elektrik öğrencisi zorunlu staj Malatya Elazığ Adıyaman üniversite kurum işyeri başvurusu $year"
         )
         val postAssociate = listOf(
             "elektrik teknikeri ön lisans mezunu KPSS P93 personel alımı $year",
