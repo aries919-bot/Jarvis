@@ -11,6 +11,7 @@ import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -167,11 +168,11 @@ object CareerEligibility {
     }
 
     fun assessQualificationCodes(codes: Set<Int>): String {
-        if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
-            return "ALAN KODU EŞLEŞİYOR · 2023 nitelik kodu Elektrik-Elektronik Teknolojisi alanı mezuniyetini kapsar; 6013/3 dalın bu alan içindedir. Diğer kodlar da ayrıca sağlanmalı."
-        }
         if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
             return "ALAN KODU UYUŞMUYOR · 2086 Raylı Sistemler alanı/dalı şartıdır; Elektrik Tesisatları ve Pano Montörlüğü dalınla aynı değildir."
+        }
+        if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
+            return "ALAN KODU EŞLEŞİYOR · 2023 nitelik kodu Elektrik-Elektronik Teknolojisi alanı mezuniyetini kapsar; 6013/3 dalın bu alan içindedir. Diğer kodlar da ayrıca sağlanmalı."
         }
         return "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamı ÖSYM kılavuzundaki açıklamalarıyla karşılaştırılmalı."
     }
@@ -486,7 +487,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             val previous = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty()
             val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
             val seen = previous.toMutableSet()
-            val fresh = if (firstRun) emptyList() else hits.filter { hit ->
+            val fresh = if (firstRun) hits else hits.filter { hit ->
                 seen.add(CareerSearchEngine.fingerprint(hit.title, hit.url))
             }
             hits.forEach { hit -> seen.add(CareerSearchEngine.fingerprint(hit.title, hit.url)) }
