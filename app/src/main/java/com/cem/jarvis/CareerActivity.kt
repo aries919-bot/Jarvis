@@ -139,6 +139,9 @@ class CareerActivity : Activity() {
         manualScanButton.isEnabled = false
         manualScanButton.text = "Tüm kaynaklar aranıyor…"
         monitorStatus.text = "Durum: Manuel tarama kuyruğa alındı. Resmî ilanlar ve iş platformları kontrol ediliyor."
+        if (!prefs.getBoolean("career_monitor_initialized", false)) {
+            prefs.edit().putBoolean("career_monitor_initial_scan_queued", true).apply()
+        }
         val workId = CareerMonitorScheduler.runManualNow(this)
         val live = androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(workId)
         val observer = object : androidx.lifecycle.Observer<androidx.work.WorkInfo?> {
@@ -163,6 +166,9 @@ class CareerActivity : Activity() {
                     }
                     androidx.work.WorkInfo.State.FAILED,
                     androidx.work.WorkInfo.State.CANCELLED -> {
+                        if (!prefs.getBoolean("career_monitor_initialized", false)) {
+                            prefs.edit().putBoolean("career_monitor_initial_scan_queued", false).apply()
+                        }
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
                         manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
@@ -353,8 +359,7 @@ class CareerActivity : Activity() {
         prefs.edit().putBoolean("career_monitor_initial_scan_queued", true).apply()
         CareerMonitorScheduler.ensureChannel(this)
         CareerMonitorScheduler.schedule(this)
-        CareerMonitorScheduler.runManualNow(this)
-        monitorStatus.text = "İlk tam kaynak taraması sıraya alındı. Sonuçlar geldiğinde burada listelenecek."
+        queueManualScan()
 
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
