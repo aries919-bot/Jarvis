@@ -217,8 +217,11 @@ class CareerActivity : Activity() {
             "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim. Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim."
         )
         val storedCv = prefs.getString("career_cv", null)
-        val cvValue = if (storedCv == null || storedCv in legacyStarters) starter else storedCv
-        if (storedCv == null || storedCv in legacyStarters) {
+        val oldGeneratedTemplate = !storedCv.isNullOrBlank() &&
+            storedCv.contains("63,23366") &&
+            storedCv.contains("Beklenen mezuniyet: 2027")
+        val cvValue = if (storedCv == null || storedCv in legacyStarters || oldGeneratedTemplate) starter else storedCv
+        if (storedCv == null || storedCv in legacyStarters || oldGeneratedTemplate) {
             prefs.edit().putString("career_cv", cvValue).apply()
         }
         cv = field(cvValue, "CV bilgilerini buraya yaz", true).apply {
