@@ -1677,8 +1677,23 @@ class CareerActivity : Activity() {
                 val reminderOwner = if (candidate.optLong("followUpAt", 0L) > old.optLong("followUpAt", 0L)) candidate else old
                 val reminderAt = maxOf(old.optLong("followUpAt", 0L), candidate.optLong("followUpAt", 0L))
                 if (reminderAt > 0L) {
+                    val mergedUrl = merged.optString("url")
+                    val reminderStatus = reminderOwner.optString("followUpStatus", retainedStatus)
                     merged.put("followUpAt", reminderAt)
-                        .put("followUpStatus", reminderOwner.optString("followUpStatus", retainedStatus))
+                        .put("followUpStatus", reminderStatus)
+                    if (reminderOwner.optString("url") != mergedUrl || reminderStatus != retainedStatus) {
+                        CareerMonitorScheduler.cancelApplicationFollowUp(this, old.optString("url"))
+                        CareerMonitorScheduler.cancelApplicationFollowUp(this, candidate.optString("url"))
+                        if (reminderAt > System.currentTimeMillis() && mergedUrl.startsWith("https://")) {
+                            CareerMonitorScheduler.scheduleApplicationFollowUp(
+                                this, merged.optString("title"), mergedUrl, retainedStatus, reminderAt
+                            )
+                            merged.put("followUpStatus", retainedStatus)
+                        } else {
+                            merged.remove("followUpAt")
+                            merged.remove("followUpStatus")
+                        }
+                    }
                 }
                 val timeline = ArrayList<JSONObject>()
                 listOf(old.optJSONArray("history"), candidate.optJSONArray("history")).forEach { events ->
