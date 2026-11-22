@@ -94,6 +94,10 @@ class CareerActivity : Activity() {
             12f, false, muted))
         results = LinearLayout(this).apply { orientation = 1 }
         body.addView(results, params(-1, -2, 0, 8, 0, 12))
+        body.addView(label("Son otomatik takip sonuçları", 18f, true))
+        val dailyResults = LinearLayout(this).apply { orientation = 1 }
+        body.addView(dailyResults, params(-1, -2, 0, 8, 0, 12))
+        showDailyResults(dailyResults)
         body.addView(label("Kaydedilmiş ilanlar", 18f, true))
         showSaved(body)
         scroll.addView(body)
@@ -134,7 +138,7 @@ class CareerActivity : Activity() {
             }
         }.start()
     }
-    private fun showHit(index: Int, hit: Net.Hit) {
+    private fun showHit(index: Int, hit: Net.Hit, parent: LinearLayout = results) {
         val card = LinearLayout(this).apply {
             orientation = 1
             setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -158,9 +162,23 @@ class CareerActivity : Activity() {
         actions.addView(button("Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(42), 1f))
         actions.addView(button("AI değerlendir") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(42), 1f))
         card.addView(actions)
-        results.addView(card, params(-1, -2, 0, 0, 0, 8))
+        parent.addView(card, params(-1, -2, 0, 0, 0, 8))
     }
 
+    private fun showDailyResults(parent: LinearLayout) {
+        val data = runCatching { JSONArray(prefs.getString("career_monitor_results", "[]")) }.getOrDefault(JSONArray())
+        if (data.length() == 0) {
+            parent.addView(label("Otomatik tarama henüz sonuç üretmedi. Günlük takip açıkken ilk kontrol sonrasında burada listelenir.", 12f, false, muted))
+            return
+        }
+        for (i in 0 until data.length()) {
+            val item = data.optJSONObject(i) ?: continue
+            val title = item.optString("title")
+            val url = item.optString("url")
+            if (title.isBlank() || url.isBlank()) continue
+            showHit(i + 1, Net.Hit(title, url, item.optString("snippet")), parent)
+        }
+    }
     override fun onResume() {
         super.onResume()
         CareerMonitorScheduler.scheduleIfEnabled(this)
