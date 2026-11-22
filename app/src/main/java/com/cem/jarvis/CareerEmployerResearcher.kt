@@ -26,7 +26,8 @@ data class CareerEmployerResearch(
     val companyResults: List<CareerResearchLink>,
     val registrySearchQuery: String?,
     val registryResults: List<CareerResearchLink>,
-    val limitations: String
+    val limitations: String,
+    val visibleText: String? = null
 ) {
     fun toPromptText(): String = buildString {
         appendLine("KAYNAK SAYFASI KONTROLÜ")
@@ -36,10 +37,17 @@ data class CareerEmployerResearch(
         appendLine("HTTP yanıtı: " + (httpStatus?.toString() ?: "alınamadı"))
         appendLine("Sayfa başlığı: " + (pageTitle ?: "çıkarılamadı"))
         appendLine("Sayfa açıklaması: " + (pageDescription ?: "çıkarılamadı"))
+        appendLine("Sayfadan alınan görünen metin (kısmi; sayfanın tamamı olmayabilir):")
+        appendLine(visibleText?.take(9000) ?: "Görünen metin alınamadı.")
         appendLine("Yapılandırılmış verideki işveren: " + (structuredEmployer ?: "bulunamadı"))
         appendLine("İşveren adı: " + (employerName ?: "doğrulanamadı"))
         appendLine("Kaynak değerlendirmesi: " + sourceAssessment)
         appendLine("İşveren değerlendirmesi: " + employerAssessment)
+        appendLine()
+        appendLine("RESMÎ ŞİRKET / TİCARET SİCİLİ BAĞLANTILARI")
+        appendLine("MERSİS · Ticaret Bakanlığı: https://mersis.ticaret.gov.tr/")
+        appendLine("Türkiye Ticaret Sicili Gazetesi · TOBB: https://www.ticaretsicil.gov.tr/")
+        appendLine("Bu portallar uygulama tarafından kullanıcı girişiyle sorgulanmış değildir; resmî kayıttan son kontrol için bağlantı olarak verilmiştir.")
         appendLine()
         appendLine("ŞİRKET / KURUM WEB ARAŞTIRMASI · sorgu: " + companySearchQuery)
         if (companyResults.isEmpty()) {
@@ -76,11 +84,14 @@ object CareerEmployerResearcher {
         val finalUrl: String?,
         val title: String?,
         val description: String?,
-        val structuredEmployer: String?
+        val structuredEmployer: String?,
+        val visibleText: String? = null
     )
 
-    private fun htmlText(value: String): String = value
+    private fun plainText(value: String): String = value
         .replace(Regex("(?is)<[^>]+>"), " ")
+        .replace("&nbsp;", " ")
+        .replace("&#160;", " ")
         .replace("&amp;", "&")
         .replace("&quot;", "\"")
         .replace("&#39;", "'")
@@ -88,7 +99,18 @@ object CareerEmployerResearcher {
         .replace("&gt;", ">")
         .replace(Regex("\\s+"), " ")
         .trim()
-        .take(700)
+
+    private fun htmlText(value: String): String = plainText(value).take(700)
+
+    private fun extractVisibleText(html: String): String? {
+        val body = Regex("""(?is)<body\b[^>]*>(.*?)</body\s*>""")
+            .find(html)?.groupValues?.getOrNull(1) ?: html
+        val readable = body.replace(
+            Regex("""(?is)<(script|style|noscript|svg|iframe|header|footer|nav)\b[^>]*>.*?</\1\s*>"""),
+            " "
+        )
+        return plainText(readable).take(9000).takeIf { it.isNotBlank() }
+    }
 
     private fun attribute(attributes: String, name: String): String? {
         val pattern = Regex(
@@ -130,7 +152,10 @@ object CareerEmployerResearcher {
                 if (description != null) break
             }
         }
-        return PageInspection(status, finalUrl, title, description, extractStructuredEmployer(html))
+        return PageInspection(
+            status, finalUrl, title, description,
+            extractStructuredEmployer(html), extractVisibleText(html)
+        )
     }
 
     private fun readPage(url: String): PageInspection {
