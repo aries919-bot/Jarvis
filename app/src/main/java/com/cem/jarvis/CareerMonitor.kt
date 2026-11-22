@@ -1245,6 +1245,14 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_LEGACY)
         scheduleSlot(context, UNIQUE_MORNING, "Sabah", 8, 30)
         scheduleSlot(context, UNIQUE_EVENING, "Akşam", 20, 30)
+        schedulePreferenceReminders(context)
+    }
+
+    /**
+     * KPSS tercih dönemi hatırlatması günlük ilan taramasından bağımsızdır.
+     * Kullanıcı günlük taramayı kapatsa da tercih tarihini kaçırmamak için saklanır.
+     */
+    fun schedulePreferenceReminders(context: Context) {
         scheduleKpss2026_2PreferenceReminders(context)
     }
 
@@ -1318,10 +1326,7 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_LEGACY)
         wm.cancelUniqueWork(UNIQUE_MORNING)
         wm.cancelUniqueWork(UNIQUE_EVENING)
-        listOf(KPSS_2026_2_START_REMINDER, KPSS_2026_2_END_REMINDER).forEach { prefix ->
-            wm.cancelUniqueWork(prefix + "-day")
-            wm.cancelUniqueWork(prefix + "-dayof")
-        }
+        // KPSS-2026/2 takvim hatırlatmaları, ilan taraması kapalı olsa bile korunur.
     }
 
     fun scheduleProcessReminders(context: Context, event: CareerProcessEvent) {
