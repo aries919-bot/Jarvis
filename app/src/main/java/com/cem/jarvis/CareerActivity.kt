@@ -342,26 +342,24 @@ class CareerActivity : Activity() {
         Elektrik-Elektronik Teknolojisi alanında mesleki lise eğitimi almış, Elektrik Tesisatları ve Pano Montörlüğü dalından mezun; Elektrik ön lisans eğitimine devam eden teknik personel adayıyım. Elektrik bakım, pano montajı ve üretim alanlarında kendimi geliştirmeyi hedefliyorum.
 
         EĞİTİM
-        Mesleki ve Teknik Anadolu Lisesi
+        Lise adı: [OKULUN TAM ADINI EKLE]
         Alan: Elektrik-Elektronik Teknolojisi
-        Dal: Elektrik Tesisatları ve Pano Montörlüğü (6013/3)
+        Dal: Elektrik Tesisatları ve Pano Montörlüğü
         Mezuniyet yılı: [YILI EKLE]
 
         Turgut Özal Üniversitesi – Arapgir MYO
         Program: Elektrik (ön lisans)
-        Durum: 2. sınıf öğrencisi, eğitim devam ediyor
+        Durum: 2. sınıf öğrencisi – eğitim devam ediyor
         Beklenen mezuniyet: 2027
 
         TEKNİK BECERİLER
-        • Pano montajı ve kablolama
-        • Kontaktör ve röle kumanda devreleri
-        • Temel PLC bilgisi
-        • Multimetre ile temel elektriksel ölçüm
-        • Teknik resim okuma
+        [Yalnızca gerçekten uygulayabildiğin becerileri ekle. Örnekler:
+        pano montajı, kablolama, kontaktör/röle kumanda devreleri,
+        temel PLC, multimetre ile ölçüm, teknik resim okuma.]
 
-        ATÖLYE / UYGULAMA BİLGİSİ
-        Mesleki eğitim kapsamında pano montajı, kablolama, kumanda devreleri ve temel ölçüm uygulamaları.
-        [Varsa yaptığın uygulama veya projeleri somut örneklerle ekle.]
+        ATÖLYE / UYGULAMA / PROJELER
+        [Tamamladığın uygulama veya projeyi, kendi görevini ve kullandığın araçları yaz.
+        Henüz deneyimin yoksa bu bölümü silebilirsin.]
 
         İŞ / STAJ DENEYİMİ
         [Kurum / firma – görev – başlangıç ve bitiş tarihleri – yaptığın işler]
