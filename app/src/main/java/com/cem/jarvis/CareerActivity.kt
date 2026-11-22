@@ -399,7 +399,7 @@ class CareerActivity : Activity() {
                         }
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
-                        manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
+                        manualScanButton.text = "Tüm kaynakları şimdi tara"
                         toast("Tarama tamamlanamadı. Durum bölümünü kontrol et.")
                         live.removeObserver(this)
                         manualScanObserver = null
@@ -565,6 +565,8 @@ class CareerActivity : Activity() {
         val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
         if (deadline.isNotBlank()) {
             card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
+        } else {
+            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, Color.rgb(255, 190, 110)))
         } else {
             card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, Color.rgb(255, 190, 110)))
         }
@@ -893,7 +895,7 @@ class CareerActivity : Activity() {
         )
         prefs.edit().putString("career_jobs", list.toString()).apply()
         toast("İlan takip listene kaydedildi.")
-        if (::dailyResultsContainer.isInitialized || currentPage == 3) refreshSavedList()
+        if (currentPage == 3) refreshSavedList()
     }
 
     private fun refreshSavedList() {
