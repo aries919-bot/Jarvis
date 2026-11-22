@@ -238,9 +238,9 @@ object CareerSourceCatalog {
         )
         fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
         val isDefenceEmployer = inDomains(defenceDomains) ||
-            Regex("""\\b(?:aselsan|tusas|roketsan|havelsan)\\b""").containsMatchIn(text)
+            Regex("""\b(?:aselsan|tusas|roketsan|havelsan)\\b""").containsMatchIn(text)
         val isKitEmployer = inDomains(kitDomains) ||
-            Regex("""\\b(?:mke|tcdd|tcddtasimacilik|teias|euas|botas|ptt|dhmi|dmo|ilbank)\\b""").containsMatchIn(text) ||
+            Regex("""\b(?:mke|tcdd|tcddtasimacilik|teias|euas|botas|ptt|dhmi|dmo|ilbank)\\b""").containsMatchIn(text) ||
             listOf("eti maden", "turkseker", "kiyi emniyeti").any(text::contains)
         val kuraTerms = listOf(
             "noter kurasi", "kura cekimi", "kura cekilisi", "kura tarihi",
