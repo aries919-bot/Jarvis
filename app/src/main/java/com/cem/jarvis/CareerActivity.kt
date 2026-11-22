@@ -1667,7 +1667,27 @@ class CareerActivity : Activity() {
                         .filter { it > 0L }.minOrNull() ?: 0L)
                     .put("updatedAt", maxOf(oldUpdated, newUpdated))
                     .put("note", old.optString("note").ifBlank { candidate.optString("note") })
+                    .put("noteUpdatedAt", maxOf(old.optLong("noteUpdatedAt", 0L), candidate.optLong("noteUpdatedAt", 0L)))
                     .put("fingerprint", CareerSearchEngine.fingerprint(merged.optString("title"), merged.optString("url")))
+                val reminderOwner = if (candidate.optLong("followUpAt", 0L) > old.optLong("followUpAt", 0L)) candidate else old
+                val reminderAt = maxOf(old.optLong("followUpAt", 0L), candidate.optLong("followUpAt", 0L))
+                if (reminderAt > 0L) {
+                    merged.put("followUpAt", reminderAt)
+                        .put("followUpStatus", reminderOwner.optString("followUpStatus", retainedStatus))
+                }
+                val timeline = ArrayList<JSONObject>()
+                listOf(old.optJSONArray("history"), candidate.optJSONArray("history")).forEach { events ->
+                    if (events != null) for (eventIndex in 0 until events.length()) {
+                        val event = events.optJSONObject(eventIndex) ?: continue
+                        timeline.add(JSONObject(event.toString()))
+                    }
+                }
+                val mergedTimeline = JSONArray()
+                timeline.distinctBy { it.optLong("at", 0L).toString() + "|" + it.optString("to") }
+                    .sortedBy { it.optLong("at", 0L) }
+                    .takeLast(15)
+                    .forEach { mergedTimeline.put(it) }
+                if (mergedTimeline.length() > 0) merged.put("history", mergedTimeline)
                 unique[duplicateIndex] = merged
             }
         }
