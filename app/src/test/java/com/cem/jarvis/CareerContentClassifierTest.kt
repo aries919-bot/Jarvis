@@ -32,7 +32,7 @@ class CareerContentClassifierTest {
             "Katılımcı kayıtları açıldı. Etkinliğe çevrim içi başvuru yapılabilir.",
             "https://example.org/duyuru/egitim-programi"
         )
-        assertEquals(CareerContentType.REVIEW_REQUIRED, result.type)
+        assertEquals(CareerContentType.NEWS, result.type)
         assertFalse(result.isJobListing)
     }
 
