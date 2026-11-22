@@ -680,6 +680,146 @@ object CareerSearchEngine {
     }
 }
 
+data class CareerProcessEvent(
+    val id: String,
+    val title: String,
+    val url: String,
+    val snippet: String,
+    val stage: String,
+    val detectedAt: Long,
+    val eventAt: Long?,
+    val hasExplicitTime: Boolean
+)
+
+object CareerRecruitmentTracker {
+    private val stageRules = listOf(
+        "NİHAİ SONUÇ / YERLEŞTİRME" to listOf("nihai sonuç", "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "işe başlama", "ise baslama"),
+        "SINAV SONUCU" to listOf("sınav sonucu", "sinav sonucu", "mülakat sonucu", "mulakat sonucu", "sözlü sınav sonucu", "yazılı sınav sonucu"),
+        "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurası sonuç", "noter kurasi sonuc", "kura sonuç", "kura sonuc", "asıl ve yedek", "asil ve yedek", "asil aday", "asıl aday", "yedek aday"),
+        "SINAV / MÜLAKAT TARİHİ" to listOf("sınav tarihi", "sinav tarihi", "sınava girecek", "sinava girecek", "sözlü sınav", "sozlu sinav", "yazılı sınav", "yazili sinav", "mülakat tarihi", "mulakat tarihi"),
+        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("noter kurası", "noter kurasi", "kura çekimi", "kura cekimi", "kura tarihi", "kuraya katılacak", "kuraya katilacak", "kura listesi"),
+        "EVRAK / BELGE KONTROLÜ" to listOf("evrak kontrol", "belge kontrol", "evrak teslim", "belgelerin teslim", "eksik evrak", "evrak inceleme"),
+        "BAŞVURU / YENİ ALIM" to listOf("personel alımı", "personel alimi", "işçi alımı", "isci alimi", "işkur başvuru", "iskur basvuru", "başvurular başladı", "basvurular basladi", "son başvuru", "son basvuru")
+    )
+
+    private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
+        .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+        .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+
+    fun detectStage(title: String, snippet: String): String? {
+        val text = normalize(title + " " + snippet)
+        return stageRules.firstOrNull { rule -> rule.second.any(text::contains) }?.first
+    }
+
+    fun parseEventTime(title: String, snippet: String): Pair<Long, Boolean>? {
+        val text = title + " " + snippet
+        val stageMarker = Regex(
+            "(?i)(?:kura|noter|sinav|sınav|mulakat|mülakat|basvuru|başvuru|evrak|belge)"
+        ).find(text) ?: return null
+        val tail = text.substring(stageMarker.range.first).take(650)
+        val dateMatch = Regex(
+            """(?i)(\d{1,2}[./-]\d{1,2}[./-]\d{4})"""
+        ).find(tail) ?: return null
+        val dateText = dateMatch.groupValues[1].replace('/', '.').replace('-', '.')
+        val dateParser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
+        val parsedDate = runCatching { dateParser.parse(dateText) }.getOrNull() ?: return null
+        val afterDate = tail.substring(dateMatch.range.last + 1).take(100)
+        val timeText = Regex("""(?i)(?:saat\s*)?([01]?\d|2[0-3])[:.]([0-5]\d)""")
+            .find(afterDate)
+        val calendar = Calendar.getInstance().apply {
+            time = parsedDate
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeText != null) {
+                set(Calendar.HOUR_OF_DAY, timeText.groupValues[1].toInt())
+                set(Calendar.MINUTE, timeText.groupValues[2].toInt())
+            } else {
+                set(Calendar.HOUR_OF_DAY, 9)
+                set(Calendar.MINUTE, 0)
+            }
+        }
+        return calendar.timeInMillis to (timeText != null)
+    }
+
+    fun read(prefs: android.content.SharedPreferences): List<CareerProcessEvent> {
+        val json = runCatching { JSONArray(prefs.getString("career_process_events", "[]")) }
+            .getOrDefault(JSONArray())
+        return (0 until json.length()).mapNotNull { index ->
+            val item = json.optJSONObject(index) ?: return@mapNotNull null
+            val id = item.optString("id")
+            val title = item.optString("title")
+            val url = item.optString("url")
+            val stage = item.optString("stage")
+            if (id.isBlank() || title.isBlank() || url.isBlank() || stage.isBlank()) return@mapNotNull null
+            CareerProcessEvent(
+                id = id,
+                title = title,
+                url = url,
+                snippet = item.optString("snippet"),
+                stage = stage,
+                detectedAt = item.optLong("detectedAt", 0L),
+                eventAt = item.optLong("eventAt", 0L).takeIf { it > 0L },
+                hasExplicitTime = item.optBoolean("hasExplicitTime", false)
+            )
+        }.sortedByDescending { it.detectedAt }
+    }
+
+    fun recordNew(
+        prefs: android.content.SharedPreferences,
+        hits: List<Net.Hit>
+    ): List<CareerProcessEvent> {
+        val seen = prefs.getStringSet("career_process_seen", emptySet()).orEmpty().toMutableSet()
+        val events = read(prefs).toMutableList()
+        val added = ArrayList<CareerProcessEvent>()
+        val now = System.currentTimeMillis()
+
+        hits.forEach { hit ->
+            val stage = detectStage(hit.title, hit.snippet) ?: return@forEach
+            val normalizedTitle = normalize(hit.title).replace(Regex("\s+"), " ").trim()
+            val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage
+            val id = java.security.MessageDigest.getInstance("SHA-256")
+                .digest(rawId.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+            if (!seen.add(id)) return@forEach
+
+            val parsed = parseEventTime(hit.title, hit.snippet)
+            val event = CareerProcessEvent(
+                id = id,
+                title = hit.title,
+                url = hit.url,
+                snippet = hit.snippet,
+                stage = stage,
+                detectedAt = now,
+                eventAt = parsed?.first,
+                hasExplicitTime = parsed?.second ?: false
+            )
+            added += event
+            events.add(0, event)
+        }
+
+        while (seen.size > 800) seen.remove(seen.firstOrNull() ?: break)
+        val stored = JSONArray()
+        events.distinctBy { it.id }.take(120).forEach { event ->
+            stored.put(
+                JSONObject()
+                    .put("id", event.id)
+                    .put("title", event.title)
+                    .put("url", event.url)
+                    .put("snippet", event.snippet)
+                    .put("stage", event.stage)
+                    .put("detectedAt", event.detectedAt)
+                    .put("eventAt", event.eventAt ?: 0L)
+                    .put("hasExplicitTime", event.hasExplicitTime)
+            )
+        }
+        prefs.edit()
+            .putStringSet("career_process_seen", seen)
+            .putString("career_process_events", stored.toString())
+            .apply()
+        return added
+    }
+}
+
 object CareerMonitorScheduler {
     const val CHANNEL_ID = "aries_career_alerts"
     private const val UNIQUE_LEGACY = "aries_daily_career_scan"
