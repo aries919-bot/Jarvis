@@ -294,6 +294,7 @@ object CareerEligibility {
     const val QUALIFICATION_CODE_ELECTRIC_ELECTRONICS = 2023
     const val QUALIFICATION_CODE_RAIL_SYSTEMS = 2086
     const val QUALIFICATION_CODE_ANY_HIGH_SCHOOL = 2001
+    const val QUALIFICATION_CODE_ELECTRIC_ASSOCIATE = 3290
 
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
@@ -309,18 +310,20 @@ object CareerEligibility {
         return phrases.any(text::contains)
     }
 
-    fun assess(title: String, snippet: String, url: String = ""): String {
+    fun assess(
+        title: String,
+        snippet: String,
+        url: String = "",
+        isAssociateDegreeGraduate: Boolean = false
+    ): String {
         val text = normalize("$title $snippet $url")
 
         val hasCodeContext = listOf("nitelik kod", "ozel sart kod", "aranan nitelik kod").any(text::contains)
         val codes = if (hasCodeContext) extractQualificationCodes(text) else emptySet()
         // A code can describe a required diploma field; it cannot prove the candidate's own field.
         // Keep the requirement visible until the diploma's exact field/branch has been confirmed.
-        val qualificationNote = codes.takeIf { it.isNotEmpty() }?.let(::assessQualificationCodes)
-
-        if (hasExplicitAssociateRequirement(text)) {
-            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. Henüz ön lisans mezunu değilsen bu şartı karşılamazsın."
-        }
+        val qualificationNote = codes.takeIf { it.isNotEmpty() }
+            ?.let { assessQualificationCodes(it, isAssociateDegreeGraduate) }
 
         val requiresKpss = text.contains("kpss")
         val p3 = Regex("\\bp\\s*3\\b").containsMatchIn(text)
@@ -328,6 +331,14 @@ object CareerEligibility {
         val p94 = Regex("\\bp\\s*94\\b").containsMatchIn(text)
         if (requiresKpss && (p3 || p93) && !p94) {
             return "PUAN TÜRÜ UYUŞMUYOR · İlan P3/P93 istiyor; ortaöğretim P94 puanın bu puan türlerinin yerine geçmez."
+        }
+
+        if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes && !isAssociateDegreeGraduate) {
+            return "MEZUNİYET SONRASI · 3290 kodu Elektrik veya Elektrik Teknolojisi ön lisans programından mezuniyet ister. Ön lisans mezuniyetin yoksa bu şartı karşılamazsın."
+        }
+
+        if (hasExplicitAssociateRequirement(text)) {
+            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. Henüz ön lisans mezunu değilsen bu şartı karşılamazsın."
         }
 
         if (requiresKpss) {
@@ -353,8 +364,14 @@ object CareerEligibility {
         return "ŞARTLARI DOĞRULA · Başlık/özet tek başına yeterli değil; eğitim, şehir, deneyim ve son başvuru tarihi kaynak sayfasında kontrol edilmeli."
     }
 
-    fun assessQualificationCodes(codes: Set<Int>): String {
+    fun assessQualificationCodes(
+        codes: Set<Int>,
+        isAssociateDegreeGraduate: Boolean = false
+    ): String {
         val notes = mutableListOf<String>()
+        if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes) {
+            notes += "3290 kodu Elektrik veya Elektrik Teknolojisi ön lisans programından mezuniyet ister; diploma program adını resmî nitelik koduyla karşılaştır."
+        }
         if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
             notes += "2023 kodu için ÖSYM kılavuzunda yazan ortaöğretim alan/dal şartını lise diplomanla karşılaştır. Uygulama senin alanını doğrulamadı."
         }
@@ -367,12 +384,17 @@ object CareerEligibility {
         return if (notes.isEmpty()) {
             "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamını güncel ÖSYM kılavuzundaki açıklamalarla ve diploma bilgilerinle karşılaştır."
         } else {
-            "NİTELİK KODU KONTROLÜ · " + notes.joinToString(" ")
+            val prefix = if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes && !isAssociateDegreeGraduate) {
+                "MEZUNİYET SONRASI · "
+            } else {
+                "NİTELİK KODU KONTROLÜ · "
+            }
+            prefix + notes.joinToString(" ")
         }
     }
 
     fun extractQualificationCodes(text: String): Set<Int> =
-        Regex("(?<!\\d)(2001|2023|2086)(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
+        Regex("(?<!\\d)(2001|2023|2086|3290)(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
 
     fun normalizeForFingerprint(value: String): String = normalize(value)
         .replace(Regex("[^a-z0-9 ]"), " ")
