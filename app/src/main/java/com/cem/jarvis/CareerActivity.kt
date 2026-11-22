@@ -567,8 +567,6 @@ class CareerActivity : Activity() {
             card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
         } else {
             card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, Color.rgb(255, 190, 110)))
-        } else {
-            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, Color.rgb(255, 190, 110)))
         }
         card.addView(label(
             "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
