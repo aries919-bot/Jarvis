@@ -1,16 +1,21 @@
 package com.cem.jarvis
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.content.pm.PackageManager
 import android.view.Gravity
 import android.widget.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
+import java.util.Date
+import java.text.SimpleDateFormat
 
 class CareerActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
@@ -20,115 +25,1159 @@ class CareerActivity : Activity() {
     private lateinit var category: Spinner
     private lateinit var results: LinearLayout
     private lateinit var search: Button
-    private val filters = listOf("Tüm ilanlar", "Kamu KPSS'li", "Kamu KPSS'siz", "Özel sektör", "İŞKUR")
-    private val muted = Color.rgb(154, 161, 178)
+    private lateinit var manualScanButton: Button
+    private lateinit var dailyResultsContainer: LinearLayout
+    private lateinit var processEventsContainer: LinearLayout
+    private var processPage = 0
+    private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
+    private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
+    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları")
+    // Kariyer ekranına özel tasarım paleti; ana Aries temasını değiştirmez.
+    private val bgColor = Color.rgb(7, 12, 24)
+    private val surfaceColor = Color.rgb(16, 25, 42)
+    private val surfaceRaised = Color.rgb(23, 35, 56)
+    private val borderColor = Color.rgb(43, 61, 86)
+    private val accentColor = Color.rgb(78, 220, 202)
+    private val accentBlue = Color.rgb(105, 157, 255)
+    private val primaryText = Color.rgb(241, 246, 253)
+    private val muted = Color.rgb(157, 173, 194)
+    private val successColor = Color.rgb(93, 211, 163)
+    private val warningColor = Color.rgb(255, 197, 111)
+    private val dangerColor = Color.rgb(255, 139, 132)
+    private lateinit var monitorStatus: TextView
+    private lateinit var pageScroll: ScrollView
+    private lateinit var pageContent: LinearLayout
+    private lateinit var navBar: LinearLayout
+    private var currentPage = 0
+    private var searchHits: List<Net.Hit> = emptyList()
+    private var searchPage = 0
+    private var searchFilter = 0
+    private var hasSearchRun = false
+    private var searchDiagnostic = ""
+    private var searchFailure: String? = null
+    private var savedPage = 0
+    private var dailyItems: List<JSONObject> = emptyList()
+    private var dailyPage = 0
+    private var dailyFilter = 0
+    private val pageSize = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ensureAutomaticTrackingDefault()
+
+        window.statusBarColor = bgColor
+        window.navigationBarColor = bgColor
+        window.decorView.systemUiVisibility = 0
+        window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
         val root = LinearLayout(this).apply {
-            orientation = 1
-            setPadding(dp(16), dp(18), dp(16), dp(12))
-            setBackgroundColor(Color.rgb(11, 13, 20))
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(8), dp(16), dp(10))
+            setBackgroundColor(bgColor)
+            clipToPadding = false
         }
-        val header = LinearLayout(this).apply { orientation = 0; gravity = Gravity.CENTER_VERTICAL }
-        header.addView(button("‹ Geri") { finish() }, LinearLayout.LayoutParams(dp(80), dp(46)))
-        header.addView(label("İş ve Kariyer", 22f, true), LinearLayout.LayoutParams(0, dp(46), 1f))
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(4), 0, dp(12))
+        }
+        val backButton = button("‹") { finish() }.apply {
+            textSize = 25f
+            contentDescription = "Önceki ekrana dön"
+        }
+        header.addView(backButton, LinearLayout.LayoutParams(dp(48), dp(46)).apply {
+            setMargins(0, 0, dp(10), 0)
+        })
+        val titleBlock = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(2), 0, 0)
+        }
+        titleBlock.addView(label("İş & Kariyer", 20f, true, primaryText))
+        titleBlock.addView(label("Fırsatlarını bul · süreci yönet", 11f, false, muted))
+        header.addView(titleBlock, LinearLayout.LayoutParams(0, -2, 1f))
+        val brandBadge = label("✦", 19f, true, accentColor).apply {
+            gravity = Gravity.CENTER
+            background = rounded(surfaceRaised, borderColor)
+        }
+        header.addView(brandBadge, LinearLayout.LayoutParams(dp(42), dp(42)))
         root.addView(header)
 
-        val scroll = ScrollView(this)
-        val body = LinearLayout(this).apply { orientation = 1; setPadding(0, dp(8), 0, dp(12)) }
-        body.addView(label("CV bilgilerin", 18f, true))
-        body.addView(label("CV cihazında saklanır. Yapay zekâya yalnızca açık onayınla gönderilir.", 12f, false, muted))
-        cv = field(prefs.getString("career_cv", "").orEmpty(), "CV metnini buraya yapıştır", true)
-        body.addView(cv, params(-1, dp(155), 0, 8, 0, 8))
-        body.addView(button("CV'yi cihazıma kaydet") { saveCv() }, params(-1, dp(46), 0, 0, 0, 12))
+        pageScroll = ScrollView(this).apply {
+            isFillViewport = true
+            clipToPadding = false
+            setVerticalScrollBarEnabled(false)
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+        }
+        pageContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(2), 0, dp(22))
+        }
+        pageScroll.addView(pageContent)
+        root.addView(pageScroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        body.addView(label("Aranacak pozisyon", 15f, true))
-        role = field(prefs.getString("career_role", "Elektrik teknisyeni / elektrik bakım personeli").orEmpty(), "Örn. elektrik teknisyeni", false)
-        body.addView(role, params(-1, dp(50), 0, 4, 0, 8))
-        body.addView(label("Şehir / bölge", 15f, true))
-        place = field(prefs.getString("career_place", "Türkiye geneli").orEmpty(), "Örn. Malatya veya Türkiye geneli", false)
-        body.addView(place, params(-1, dp(50), 0, 4, 0, 8))
-        body.addView(label("İlan türü", 15f, true))
-        category = Spinner(this)
-        category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, filters)
-        body.addView(category, params(-1, dp(48), 0, 0, 0, 8))
-        search = button("Ücretsiz ilan ara") { searchJobs() }
-        body.addView(search, params(-1, dp(48), 0, 4, 0, 12))
+        navBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(5), dp(5), dp(5), dp(5))
+            background = rounded(surfaceColor, borderColor)
+            elevation = dp(8).toFloat()
+        }
+        root.addView(navBar, LinearLayout.LayoutParams(-1, dp(70)).apply {
+            setMargins(0, dp(8), 0, 0)
+        })
 
-        body.addView(label("Arama sonuçları", 18f, true))
-        body.addView(label("Web sonuçları ilanın hâlâ açık olduğunu garanti etmez. Son başvuru tarihini ve koşulları kaynak sayfasında kontrol et.",
-            12f, false, muted))
-        results = LinearLayout(this).apply { orientation = 1 }
-        body.addView(results, params(-1, -2, 0, 8, 0, 12))
-        body.addView(label("Kaydedilmiş ilanlar", 18f, true))
-        showSaved(body)
-        scroll.addView(body)
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(root)
+        renderNavigation()
+        renderPage(0)
+        CareerMonitorScheduler.scheduleIfEnabled(this)
     }
 
-    private fun saveCv() {
-        prefs.edit().putString("career_cv", cv.text.toString().trim())
-            .putString("career_role", role.text.toString().trim())
-            .putString("career_place", place.text.toString().trim()).apply()
-        toast("CV ve arama tercihleri cihazına kaydedildi.")
+    private fun renderNavigation() {
+        if (!::navBar.isInitialized) return
+        navBar.removeAllViews()
+        val tabs = listOf(
+            Triple("⌕", "İlanlar", "İlan ara"),
+            Triple("▤", "CV'im", "CV düzenle"),
+            Triple("◷", "Takip", "Otomatik takip"),
+            Triple("✓", "Başvurular", "Başvuru listem")
+        )
+        tabs.forEachIndexed { index, tab ->
+            val selected = currentPage == index
+            val item = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(dp(2), dp(3), dp(2), dp(3))
+                background = if (selected) rounded(surfaceRaised, borderColor) else rounded(Color.TRANSPARENT, Color.TRANSPARENT)
+                contentDescription = tab.third
+                isFocusable = true
+                isClickable = true
+                setOnClickListener { renderPage(index) }
+            }
+            item.addView(label(tab.first, 19f, true, if (selected) accentColor else muted).apply {
+                gravity = Gravity.CENTER
+            }, LinearLayout.LayoutParams(-1, dp(25)))
+            item.addView(label(tab.second, 10f, selected, if (selected) primaryText else muted).apply {
+                gravity = Gravity.CENTER
+            }, LinearLayout.LayoutParams(-1, dp(20)))
+            navBar.addView(item, LinearLayout.LayoutParams(0, -1, 1f).apply {
+                setMargins(dp(3), 0, dp(3), 0)
+            })
+        }
+    }
+
+    private fun renderPage(page: Int) {
+        if (!::pageContent.isInitialized) return
+        saveCv(showToast = false)
+        currentPage = page.coerceIn(0, 3)
+        pageContent.removeAllViews()
+        pageScroll.scrollTo(0, 0)
+        renderNavigation()
+
+        when (currentPage) {
+            0 -> buildListingsPage()
+            1 -> buildCvPage()
+            2 -> buildTrackingPage()
+            else -> buildSavedPage()
+        }
+    }
+
+    private fun buildListingsPage() {
+        val welcome = panel()
+        welcome.addView(label("ARIES  /  KARİYER RADARI", 10f, true, accentColor))
+        welcome.addView(label("Sıradaki fırsatını keşfet.", 22f, true, primaryText).apply {
+            setPadding(0, dp(5), 0, dp(2))
+        })
+        welcome.addView(label(
+            "Kamu ilanlarını, özel sektör pozisyonlarını ve işe alım aşamalarını tek yerden takip et.",
+            12f, false, muted
+        ))
+        pageContent.addView(welcome, params(-1, -2, 0, 2, 0, 12))
+
+        val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val savedCount = savedJobs().length().toString()
+        val trackingValue = if (prefs.getBoolean("career_monitor_enabled", false)) "Açık" else "Kapalı"
+        val lastScan = prefs.getLong("career_monitor_last_scan", 0L)
+        val lastScanValue = if (lastScan > 0L) SimpleDateFormat("dd.MM HH:mm", Locale("tr", "TR")).format(Date(lastScan)) else "Henüz yok"
+        metrics.addView(statCard("KAYITLI İLAN", savedCount, "Takip listende"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, dp(5), 0) })
+        metrics.addView(statCard("OTOMATİK TAKİP", trackingValue, "Sabah · akşam"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+        metrics.addView(statCard("SON TARAMA", lastScanValue, "Kaynak kontrolü"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(5), 0, 0, 0) })
+        pageContent.addView(metrics, params(-1, -2, 0, 0, 0, 16))
+
+        pageContent.addView(label("İlanlarını filtrele", 18f, true, primaryText))
+        pageContent.addView(label(
+            "Pozisyonunu ve bölgeni seç. Sonuçlar beşer ilanlık sayfalara ayrılır; açık ilan ve son başvuru tarihi kaynak sayfasında doğrulanmalıdır.",
+            12f, false, muted
+        ))
+
+        val filtersCard = panel()
+        filtersCard.addView(label("ARAMA AYARLARI", 10f, true, accentColor))
+        filtersCard.addView(label("Aranacak pozisyon", 12f, true, muted))
+        val oldRoleDefault = "Elektrik teknisyeni / pano montajı / bakım-onarım / üretim / depo / operatör / satış / beden işçisi"
+        val savedRole = prefs.getString("career_role", null)
+        val roleValue = if (savedRole.isNullOrBlank() || savedRole == oldRoleDefault) {
+            "Elektrik teknisyeni, pano montajı, bakım, üretim"
+        } else savedRole
+        if (savedRole == oldRoleDefault || savedRole.isNullOrBlank()) {
+            prefs.edit().putString("career_role", roleValue).apply()
+        }
+        role = field(
+            roleValue,
+            "Örn. elektrik teknisyeni", false
+        ).apply {
+            setSingleLine(false)
+            minLines = 1
+            maxLines = 2
+            setHorizontallyScrolling(false)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        filtersCard.addView(role, params(-1, dp(64), 0, 4, 0, 6))
+        filtersCard.addView(label("HIZLI POZİSYON SEÇ", 10f, true, muted))
+        filtersCard.addView(quickChipRow(listOf("Elektrik teknisyeni", "Pano montajı", "Bakım-onarım", "Üretim")) { selected ->
+            val current = role.text.toString().split(',', ';').map { it.trim() }.filter { it.isNotBlank() }
+            if (current.none { it.equals(selected, ignoreCase = true) }) {
+                role.setText((current + selected).joinToString(", "))
+                role.setSelection(role.text.length)
+            }
+        }, params(-1, dp(46), 0, 2, 0, 10))
+        filtersCard.addView(label("Şehir / bölge", 12f, true, muted))
+        val oldPlaceDefault = "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
+        val savedPlace = prefs.getString("career_place", null)
+        val placeValue = if (savedPlace.isNullOrBlank() || savedPlace == oldPlaceDefault) {
+            "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman"
+        } else savedPlace
+        if (savedPlace == oldPlaceDefault || savedPlace.isNullOrBlank()) {
+            prefs.edit().putString("career_place", placeValue).apply()
+        }
+        place = field(
+            placeValue,
+            "Örn. Malatya veya Türkiye geneli", false
+        ).apply {
+            setSingleLine(false)
+            minLines = 1
+            maxLines = 2
+            setHorizontallyScrolling(false)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        filtersCard.addView(place, params(-1, dp(64), 0, 4, 0, 6))
+        filtersCard.addView(label("HIZLI KONUM", 10f, true, muted))
+        filtersCard.addView(quickChipRow(listOf("Malatya", "Elazığ", "Adıyaman", "Türkiye geneli")) { selected ->
+            place.setText(selected)
+        }, params(-1, dp(46), 0, 2, 0, 10))
+        filtersCard.addView(label("İlan türü", 12f, true, muted))
+        category = Spinner(this)
+        category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filters).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        category.setSelection(prefs.getInt("career_filter", 0).coerceIn(0, filters.lastIndex))
+        category.background = rounded(surfaceRaised, borderColor)
+        category.setPadding(dp(10), dp(2), dp(10), dp(2))
+        category.contentDescription = "İlan kategorisini seç"
+        filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
+        search = primaryButton("⌕  İlanları şimdi ara") { searchJobs() }
+        filtersCard.addView(search, params(-1, dp(52), 0, 6, 0, 0))
+        pageContent.addView(filtersCard, params(-1, -2, 0, 10, 0, 12))
+
+        pageContent.addView(label("Bulunan fırsatlar", 18f, true, primaryText))
+        results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(results, params(-1, -2, 0, 4, 0, 8))
+        renderSearchResults()
+    }
+
+    private fun buildCvPage() {
+        pageContent.addView(label("CV profilin", 21f, true, primaryText))
+        pageContent.addView(label(
+            "Bilgilerini düzenle, kaydet ve başvuru öncesi eksik alanlarını kontrol et. CV yalnızca sen onay verdiğinde AI değerlendirmesine gönderilir.",
+            12f, false, muted
+        ))
+
+        val cvCard = panel()
+        cvCard.addView(label("CV METNİ", 10f, true, accentColor))
+        val starter = buildDefaultCvText()
+        val legacyStarters = setOf(
+            "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim (beklenen mezuniyet 2027). Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim.",
+            "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim. Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim."
+        )
+        val storedCv = prefs.getString("career_cv", null)
+        val oldGeneratedTemplate = !storedCv.isNullOrBlank() &&
+            storedCv.contains("63,23366") &&
+            storedCv.contains("Beklenen mezuniyet: 2027")
+        val cvValue = if (storedCv == null || storedCv in legacyStarters || oldGeneratedTemplate) starter else storedCv
+        if (storedCv == null || storedCv in legacyStarters || oldGeneratedTemplate) {
+            prefs.edit().putString("career_cv", cvValue).apply()
+        }
+        cv = field(cvValue, "CV bilgilerini buraya yaz", true).apply {
+            minLines = 16
+            maxLines = 60
+            setHorizontallyScrolling(false)
+            isVerticalScrollBarEnabled = true
+            setLineSpacing(dp(3).toFloat(), 1.05f)
+            setBackground(rounded(bgColor, borderColor))
+        }
+        cvCard.addView(cv, params(-1, dp(420), 0, 8, 0, 8))
+        val counter = label("", 11f, false, muted)
+        fun updateCounter() {
+            val text = cv.text.toString().trim()
+            val words = text.split(Regex("\\s+")).count { it.isNotBlank() }
+            val missing = Regex("\\[[^\\]]+\\]").findAll(text).map { it.value }.distinct().count()
+            counter.text = "CV: $words kelime  ·  Tamamlanacak alan: $missing"
+        }
+        cv.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { updateCounter() }
+            override fun afterTextChanged(s: android.text.Editable?) { saveCv(showToast = false) }
+        })
+        updateCounter()
+        cvCard.addView(counter)
+        val cvActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        cvActions.addView(primaryButton("Kaydet") { saveCv() }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(0, 0, dp(4), 0) })
+        cvActions.addView(button("Kopyala") { copyCvText() }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(4), 0, 0, 0) })
+        cvCard.addView(cvActions, params(-1, dp(48), 0, 8, 0, 4))
+        cvCard.addView(button("Eksik alanları kontrol et") { showCvMissingFields() }, params(-1, dp(44), 0, 4, 0, 4))
+        cvCard.addView(button("Başlangıç CV taslağını yeniden yükle") {
+            AlertDialog.Builder(this)
+                .setTitle("CV taslağını yenile")
+                .setMessage("Mevcut CV metninin yerine bilinen eğitim ve teknik bilgilerinle hazırlanmış başlangıç taslağı yazılacak. Devam edilsin mi?")
+                .setNegativeButton("Vazgeç", null)
+                .setPositiveButton("Taslağı yükle") { _, _ -> cv.setText(starter) }
+                .show()
+        }, params(-1, dp(44), 0, 4, 0, 0))
+        pageContent.addView(cvCard, params(-1, -2, 0, 10, 0, 12))
+
+        val note = panel()
+        note.addView(label("Tamamlaman gereken bilgiler", 15f, true))
+        note.addView(label(
+            "• Ad-soyad ve iletişim bilgileri\n• Mezun olduğun lisenin tam adı ve mezuniyet yılı\n• Varsa staj / iş deneyimi, kurum ve tarihler\n• Varsa sertifikalar, ehliyet ve ek belgeler\n• Varsa tamamladığın projeler ve ölçülebilir görevler",
+            12f, false, muted
+        ))
+        pageContent.addView(note, params(-1, -2, 0, 0, 0, 12))
+    }
+
+    private fun buildTrackingPage() {
+        pageContent.addView(label("Takip merkezim", 21f, true, primaryText))
+        pageContent.addView(label(
+            "İlan taramalarını, kura duyurularını ve başvuru aşamalarını buradan yönet.",
+            12f, false, muted
+        ))
+
+        monitorStatus = label("", 13f, false, primaryText).apply {
+            setLineSpacing(dp(4).toFloat(), 1.05f)
+        }
+        val statusCard = panel().apply {
+            setPadding(dp(16), dp(15), dp(16), dp(15))
+        }
+        statusCard.addView(label("CANLI TAKİP DURUMU", 10f, true, accentColor))
+        statusCard.addView(monitorStatus, params(-1, -2, 0, 5, 0, 0))
+        pageContent.addView(statusCard, params(-1, -2, 0, 10, 0, 12))
+
+        val dailySwitch = Switch(this).apply {
+            text = "Sabah + akşam otomatik tarama"
+            setTextColor(primaryText)
+            textSize = 14f
+            isChecked = prefs.getBoolean("career_monitor_enabled", false)
+            if (Build.VERSION.SDK_INT >= 21) {
+                thumbTintList = android.content.res.ColorStateList.valueOf(accentColor)
+                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(53, 86, 107))
+            }
+            setOnCheckedChangeListener { _, enabled ->
+                prefs.edit().putBoolean("career_monitor_enabled", enabled).apply()
+                if (enabled) {
+                    CareerMonitorScheduler.ensureChannel(this@CareerActivity)
+                    CareerMonitorScheduler.schedule(this@CareerActivity)
+                    queueManualScan()
+                    if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 74031)
+                    toast("Sabah-akşam takibi açıldı; ilk tarama başlatıldı.")
+                } else {
+                    CareerMonitorScheduler.cancel(this@CareerActivity)
+                    toast("Günlük takip durduruldu.")
+                }
+                refreshMonitorStatus()
+            }
+        }
+        pageContent.addView(dailySwitch, params(-1, dp(52), 0, 0, 0, 4))
+        refreshMonitorStatus()
+
+        manualScanButton = primaryButton("↻  Tüm kaynakları şimdi tara") { queueManualScan() }
+        pageContent.addView(manualScanButton, params(-1, dp(52), 0, 8, 0, 7))
+        pageContent.addView(button("Takip edilen kaynakları görüntüle") { showSources() }, params(-1, dp(48), 0, 0, 0, 6))
+        pageContent.addView(button("Bildirim ve uygulama ayarlarını aç") {
+            runCatching {
+                startActivity(Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + packageName)
+                ))
+            }.onFailure { toast("Uygulama ayarları açılamadı.") }
+        }, params(-1, dp(44), 0, 0, 0, 12))
+
+        pageContent.addView(label("Son tarama sonuçları", 18f, true, primaryText))
+        pageContent.addView(label(
+            "Geçmiş son başvuru tarihi bulunan kayıtlar ayrı gösterilir. Tarih bulunamayan ilanların açık olduğu varsayılmaz.",
+            12f, false, muted
+        ))
+        dailyResultsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(dailyResultsContainer, params(-1, -2, 0, 6, 0, 14))
+        showDailyResults(dailyResultsContainer)
+
+        pageContent.addView(label("Kura · sınav · sonuç takvimi", 18f, true, primaryText))
+        pageContent.addView(label(
+            "Başvuru → evrak kontrolü → kuraya katılacaklar → noter kurası → asıl/yedek → sınav/mülakat → nihai sonuç. Aries yeni duyuruları bu aşamalara göre ayırır; kurumun asıl metni her zaman geçerlidir.",
+            12f, false, muted
+        ))
+        processEventsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 8))
+        showProcessEvents(processEventsContainer)
+        queueFirstAutomaticScanIfNeeded()
+    }
+
+    private fun buildSavedPage() {
+        val listCount = savedJobs().length()
+        pageContent.addView(label("Başvuru takip listem", 21f, true, primaryText))
+        pageContent.addView(label(
+            "Kaydettiğin ilanların başvuru durumunu güncelle. Başvuruyu sen yaparsın; Aries süreci düzenli tutmana yardımcı olur.",
+            12f, false, muted
+        ))
+        val overview = panel()
+        overview.addView(label("TAKİP ETTİĞİN İLAN", 10f, true, accentColor))
+        overview.addView(label(listCount.toString(), 28f, true, primaryText))
+        overview.addView(label("Kaydedilmiş fırsat ve başvuru kaydı", 11f, false, muted))
+        pageContent.addView(overview, params(-1, -2, 0, 10, 0, 12))
+        val savedContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(savedContainer, params(-1, -2, 0, 0, 0, 8))
+        showSaved(savedContainer)
+    }
+
+    private fun buildDefaultCvText(): String = """
+        PROFİL ÖZETİ
+        Elektrik ön lisans programında eğitimine devam eden teknik personel adayıyım. Elektrik bakım, pano montajı ve üretim alanlarında çalışmayı hedefliyorum.
+
+        EĞİTİM
+        Lise adı: [OKULUN TAM ADINI EKLE]
+        Alan: [DİPLOMADAKİ ALANI EKLE]
+        Dal: [DİPLOMADAKİ DALI EKLE]
+        Mezuniyet yılı: [YILI EKLE]
+
+        Turgut Özal Üniversitesi – Arapgir MYO
+        Program: Elektrik (ön lisans)
+        Durum: 2. sınıf öğrencisi – eğitim devam ediyor
+        Beklenen mezuniyet: [BİLİYORSAN EKLE]
+
+        TEKNİK BECERİLER
+        [Yalnızca gerçekten uygulayabildiğin becerileri ekle. Örnekler:
+        pano montajı, kablolama, kontaktör/röle kumanda devreleri,
+        temel PLC, multimetre ile ölçüm, teknik resim okuma.]
+
+        ATÖLYE / UYGULAMA / PROJELER
+        [Tamamladığın uygulama veya projeyi, kendi görevini ve kullandığın araçları yaz.
+        Henüz deneyimin yoksa bu bölümü silebilirsin.]
+
+        İŞ / STAJ DENEYİMİ
+        [Kurum / firma – görev – başlangıç ve bitiş tarihleri – yaptığın işler]
+        [Deneyimin yoksa bu başlığı silebilirsin.]
+
+        SERTİFİKALAR VE BELGELER
+        [Varsa sertifika adı – veren kurum – tarih]
+        [Varsa ehliyet ve diğer belgeler]
+
+        KPSS
+        Ortaöğretim KPSS: Sınava girdim. Sonuç/puan: [SONUÇ BELGESİNDEKİ BİLGİYİ EKLE]
+        [Kamu başvurularında puan türü ve geçerlilik bilgisini ilgili ilanla karşılaştır.]
+
+        İŞ HEDEFİ VE TERCİH EDİLEN BÖLGE
+        Elektrik teknisyenliği, pano montajı, bakım-onarım, üretim ve uygun diğer başlangıç pozisyonları.
+        Öncelik: Malatya, Battalgazi ve Yeşilyurt; servis veya konaklama sunulursa Elazığ, Adıyaman ve diğer şehirler.
+
+        İLETİŞİM
+        Ad Soyad: [EKLE]
+        Telefon: [EKLE]
+        E-posta: [EKLE]
+        """.trimIndent()
+
+    private fun panel(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(15), dp(14), dp(15), dp(14))
+        background = cardBackground()
+        elevation = dp(2).toFloat()
+    }
+
+    private fun cardBackground(): android.graphics.drawable.GradientDrawable =
+        android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(surfaceRaised, surfaceColor)
+        ).apply {
+            cornerRadius = dp(20).toFloat()
+            setStroke(dp(1), borderColor)
+        }
+
+    private fun statCard(title: String, value: String, subtitle: String): LinearLayout = panel().apply {
+        setPadding(dp(10), dp(11), dp(10), dp(11))
+        addView(label(title, 9f, true, muted))
+        addView(label(value, 14f, true, primaryText).apply {
+            setPadding(0, dp(5), 0, dp(2))
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        })
+        addView(label(subtitle, 9f, false, muted).apply {
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        })
+    }
+
+    private fun primaryButton(value: String, action: () -> Unit) = Button(this).apply {
+        text = value
+        textSize = 13f
+        minHeight = dp(48)
+        isAllCaps = false
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
+        setTextColor(bgColor)
+        setPadding(dp(12), dp(5), dp(12), dp(5))
+        background = ripple(android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(accentColor, accentBlue)
+        ).apply { cornerRadius = dp(15).toFloat() })
+        elevation = dp(2).toFloat()
+        setOnClickListener { action() }
+    }
+
+    private fun chipButton(value: String, selected: Boolean, action: () -> Unit) = Button(this).apply {
+        text = value
+        textSize = 10f
+        minHeight = dp(44)
+        isAllCaps = false
+        setTypeface(typeface, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+        setTextColor(if (selected) bgColor else primaryText)
+        setPadding(dp(9), dp(3), dp(9), dp(3))
+        background = ripple(rounded(if (selected) accentColor else surfaceRaised, if (selected) accentColor else borderColor))
+        setOnClickListener { action() }
+    }
+
+    private fun quickChipRow(values: List<String>, action: (String) -> Unit): HorizontalScrollView =
+        HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+            val row = LinearLayout(this@CareerActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            values.forEach { value ->
+                row.addView(chipButton(value, false) { action(value) },
+                    LinearLayout.LayoutParams(-2, dp(44)).apply { setMargins(0, 0, dp(7), 0) })
+            }
+            addView(row)
+        }
+
+    private fun copyCvText() {
+        if (!::cv.isInitialized) return
+        val manager = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        manager.setPrimaryClip(android.content.ClipData.newPlainText("Aries CV", cv.text.toString()))
+        toast("CV panoya kopyalandı.")
+    }
+
+    private fun showCvMissingFields() {
+        if (!::cv.isInitialized) return
+        val missing = Regex("\\[[^\\]]+\\]").findAll(cv.text.toString()).map { it.value }.distinct().toList()
+        val message = if (missing.isEmpty()) {
+            "Köşeli parantezli boş alan görünmüyor. Bilgilerinin doğru ve güncel olduğunu yine de kontrol et."
+        } else {
+            "Tamamlanması gereken alanlar:\n\n" + missing.joinToString("\n") { "• " + it }
+        }
+        AlertDialog.Builder(this).setTitle("CV kontrolü").setMessage(message)
+            .setPositiveButton("Düzenle", null).show()
+    }
+    private fun saveCv(showToast: Boolean = true) {
+        val editor = prefs.edit()
+        if (::cv.isInitialized) editor.putString("career_cv", cv.text.toString().trim())
+        if (::role.isInitialized) editor.putString("career_role", role.text.toString().trim())
+        if (::place.isInitialized) editor.putString("career_place", place.text.toString().trim())
+        if (::category.isInitialized) editor.putInt("career_filter", category.selectedItemPosition)
+        editor.apply()
+        if (showToast) toast("CV ve arama tercihleri cihazına kaydedildi.")
+    }
+
+    private fun queueManualScan() {
+        saveCv(showToast = false)
+        manualScanButton.isEnabled = false
+        manualScanButton.text = "Tüm kaynaklar aranıyor…"
+        monitorStatus.text = "Durum: Manuel tarama kuyruğa alındı. Resmî ilanlar ve iş platformları kontrol ediliyor."
+        if (!prefs.getBoolean("career_monitor_initialized", false)) {
+            prefs.edit().putBoolean("career_monitor_initial_scan_queued", true).apply()
+        }
+        val workId = CareerMonitorScheduler.runManualNow(this)
+        manualScanObserver?.let { oldObserver -> manualScanLiveData?.removeObserver(oldObserver) }
+        val live = androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(workId)
+        val observer = object : androidx.lifecycle.Observer<androidx.work.WorkInfo?> {
+            override fun onChanged(info: androidx.work.WorkInfo?) {
+                if (info == null) return
+                when (info.state) {
+                    androidx.work.WorkInfo.State.ENQUEUED,
+                    androidx.work.WorkInfo.State.BLOCKED -> {
+                        monitorStatus.text = "Durum: Tarama internet bağlantısı bekliyor veya sıraya alındı."
+                    }
+                    androidx.work.WorkInfo.State.RUNNING -> {
+                        monitorStatus.text = "Durum: Kamu, İŞKUR, belediye, işveren ve ilan platformları taranıyor…"
+                    }
+                    androidx.work.WorkInfo.State.SUCCEEDED -> {
+                        showDailyResults(dailyResultsContainer)
+                        if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                        refreshMonitorStatus()
+                        manualScanButton.isEnabled = true
+                        manualScanButton.text = "Tüm kaynakları şimdi tara"
+                        val count = prefs.getInt("career_monitor_result_count", 0)
+                        toast("Tarama tamamlandı. $count bağlantı sonucu değerlendirildi.")
+                        live.removeObserver(this)
+                        manualScanObserver = null
+                        manualScanLiveData = null
+                    }
+                    androidx.work.WorkInfo.State.FAILED,
+                    androidx.work.WorkInfo.State.CANCELLED -> {
+                        if (!prefs.getBoolean("career_monitor_initialized", false)) {
+                            prefs.edit().putBoolean("career_monitor_initial_scan_queued", false).apply()
+                        }
+                        refreshMonitorStatus()
+                        manualScanButton.isEnabled = true
+                        manualScanButton.text = "Tüm kaynakları şimdi tara"
+                        toast("Tarama tamamlanamadı. Durum bölümünü kontrol et.")
+                        live.removeObserver(this)
+                        manualScanObserver = null
+                        manualScanLiveData = null
+                    }
+                }
+            }
+        }
+        manualScanLiveData = live
+        manualScanObserver = observer
+        live.observeForever(observer)
     }
 
     private fun searchJobs() {
+        (getSystemService(INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager)
+            ?.hideSoftInputFromWindow(if (::role.isInitialized) role.windowToken else window.decorView.windowToken, 0)
         val r = role.text.toString().trim()
         val p = place.text.toString().trim()
-        if (r.isBlank()) { toast("Önce pozisyon yaz."); return }
-        saveCv()
-        val kind = when (category.selectedItemPosition) {
-            1 -> "kamu personel alımı KPSS'li"
-            2 -> "kamu işçi alımı KPSS'siz"
-            3 -> "özel sektör iş ilanları"
-            4 -> "İŞKUR açık iş ilanları"
-            else -> "iş ilanı kamu özel sektör"
-        }
-        val query = "$r $p $kind 2026 başvuru şartları son başvuru tarihi"
+        val selectedCategory = category.selectedItemPosition
+        if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
+        saveCv(showToast = false)
         search.isEnabled = false
-        search.text = "İlanlar aranıyor…"
+        search.text = "Arama sürüyor…"
+        searchFailure = null
+        searchDiagnostic = ""
         results.removeAllViews()
-        results.addView(label("Açık web araması yapılıyor…", 13f, false, muted))
+        val loadingCard = panel().apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        val progress = ProgressBar(this).apply { isIndeterminate = true }
+        loadingCard.addView(progress, LinearLayout.LayoutParams(dp(30), dp(30)).apply { setMargins(0, 0, dp(12), 0) })
+        loadingCard.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(label("Kaynaklar taranıyor", 14f, true, primaryText))
+            addView(label("Arama motorları ve güvenilir kurum bağlantıları sırayla kontrol ediliyor…", 11f, false, muted))
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        results.addView(loadingCard, params(-1, -2, 0, 2, 0, 8))
         Thread {
-            val hits = try { Net.webSearch(query) } catch (e: Exception) { null }
+            var exceptionMessage: String? = null
+            val batch = try {
+                CareerSearchEngine.searchBatch(selectedCategory, r, p)
+            } catch (error: Exception) {
+                exceptionMessage = error.message
+                null
+            }
+            val failure = if (batch == null) {
+                "Arama işlemi tamamlanamadı: " + (exceptionMessage ?: "İnternet bağlantısını ve arama kaynaklarını kontrol et.")
+            } else if (!batch.hasAnySuccessfulQuery) {
+                "Arama sağlayıcılarının hiçbiri yanıt vermedi."
+            } else null
+
             runOnUiThread {
                 search.isEnabled = true
-                search.text = "Ücretsiz ilan ara"
-                results.removeAllViews()
-                if (hits == null || hits.isEmpty()) {
-                    results.addView(label("Sonuç bulunamadı veya arama servisine ulaşılamadı.", 13f, false, muted))
-                } else hits.take(8).forEachIndexed { index, hit -> showHit(index + 1, hit) }
+                search.text = "İlanları yeniden ara"
+                searchHits = batch?.hits?.take(60).orEmpty()
+                searchPage = 0
+                searchFilter = 0
+                hasSearchRun = true
+                searchFailure = failure
+                searchDiagnostic = if (batch == null) {
+                    "Arama sonucu alınamadı."
+                } else {
+                    "Çalışan sorgu: ${batch.successfulQueries}/${batch.totalQueries} · Tamamlanamayan: ${batch.failedQueries}" +
+                        (batch.errorMessages.take(3).joinToString(" | ").takeIf { it.isNotBlank() }?.let { "\n$it" } ?: "")
+                }
+                renderSearchResults(failure != null)
             }
         }.start()
     }
 
-    private fun showHit(index: Int, hit: Net.Hit) {
-        val card = LinearLayout(this).apply {
-            orientation = 1
-            setPadding(dp(12), dp(10), dp(12), dp(10))
-            setBackgroundColor(Color.rgb(27, 34, 51))
+    private fun renderSearchResults(failed: Boolean = false) {
+        if (!::results.isInitialized) return
+        results.removeAllViews()
+        if (failed) {
+            val errorCard = panel()
+            errorCard.addView(label("Arama tamamlanamadı", 15f, true, warningColor))
+            errorCard.addView(label(searchFailure ?: "Tarama tamamlanamadı.", 12f, false, primaryText))
+            if (searchDiagnostic.isNotBlank()) errorCard.addView(label(searchDiagnostic, 11f, false, muted))
+            errorCard.addView(primaryButton("↻  Yeniden dene") { searchJobs() }, params(-1, dp(48), 0, 8, 0, 0))
+            results.addView(errorCard, params(-1, -2, 0, 2, 0, 8))
+            return
         }
-        card.addView(label(index.toString() + ". " + hit.title, 15f, true))
-        if (hit.snippet.isNotBlank()) card.addView(label(hit.snippet, 12f, false, muted))
-        card.addView(label("CV metniyle kelime eşleşmesi: %" + score(cv.text.toString(), hit.title + " " + hit.snippet) +
-            " · Yalnızca metin benzerliğidir; işe kabul olasılığı değildir.", 11f, false, Color.rgb(150, 190, 255)))
-        val actions = LinearLayout(this).apply { orientation = 0 }
-        actions.addView(button("Aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
-                .onFailure { toast("Bağlantı açılamadı.") }
-        }, LinearLayout.LayoutParams(0, dp(42), 1f))
-        actions.addView(button("Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(42), 1f))
-        actions.addView(button("AI değerlendir") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(42), 1f))
-        card.addView(actions)
-        results.addView(card, params(-1, -2, 0, 0, 0, 8))
+        if (!hasSearchRun) {
+            val emptyCard = panel()
+            emptyCard.addView(label("İlk aramanı başlat", 15f, true, primaryText))
+            emptyCard.addView(label("Pozisyonunu ve bölgeni seçtikten sonra ilanlar burada listelenecek. Her sayfada beş fırsat gösterilir.", 12f, false, muted))
+            results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
+            return
+        }
+        if (searchHits.isEmpty()) {
+            val emptyCard = panel()
+            emptyCard.addView(label("Bu aramada eşleşen ilan bulunamadı", 15f, true, primaryText))
+            emptyCard.addView(label("Arama servisleri yanıt verdi ancak güvenilir kaynaklardan uygun ilan bağlantısı çıkarılamadı. Bu, iş ilanı olmadığı anlamına gelmez.", 12f, false, muted))
+            if (searchDiagnostic.isNotBlank()) emptyCard.addView(label(searchDiagnostic, 11f, false, muted))
+            results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
+            results.addView(primaryButton("⌕  Daha geniş arama yap") {
+                role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
+                category.setSelection(0)
+                searchJobs()
+            }, params(-1, dp(48), 0, 6, 0, 6))
+            results.addView(button("Resmî ve kurumsal kaynakları aç") {
+                showSources()
+            }, params(-1, dp(48), 0, 2, 0, 6))
+            results.addView(button("Günlük tam kaynak taramasına geç") {
+                renderPage(2)
+            }, params(-1, dp(48), 0, 2, 0, 6))
+            return
+        }
+
+        fun isExpired(hit: Net.Hit): Boolean =
+            CareerListingParser.deadlineStatus(hit.snippet)?.startsWith("SÜRESİ GEÇMİŞ", true) == true
+
+        val expiredCount = searchHits.count(::isExpired)
+        val unknownCount = searchHits.count { CareerListingParser.deadlineStatus(it.snippet).isNullOrBlank() }
+        val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        listOf("Kontrol listesi", "Tümü", "Süresi geçmiş").forEachIndexed { index, title ->
+            val chip = chipButton(title, searchFilter == index) {
+                searchFilter = index
+                searchPage = 0
+                renderSearchResults()
+            }
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(48), 1f).apply {
+                setMargins(dp(3), 0, dp(3), 0)
+            })
+        }
+        results.addView(filterRow, params(-1, dp(40), 0, 2, 0, 6))
+        results.addView(label(
+            searchHits.size.toString() + " aday · " + expiredCount + " geçmiş tarihli · " +
+                unknownCount + " son tarihi bulunamayan. İlanın açık olduğu kaynak sayfasında doğrulanmalı.",
+            11f, false, muted
+        ))
+
+        val visibleHits = when (searchFilter) {
+            2 -> searchHits.filter(::isExpired)
+            1 -> searchHits
+            else -> searchHits.filterNot(::isExpired)
+        }
+        if (visibleHits.isEmpty()) {
+            results.addView(label("Bu filtrede ilan yok.", 12f, false, muted))
+            return
+        }
+
+        val totalPages = (visibleHits.size + pageSize - 1) / pageSize
+        searchPage = searchPage.coerceIn(0, totalPages - 1)
+        results.addView(label(
+            visibleHits.size.toString() + " kayıt · Sayfa " + (searchPage + 1) + "/" + totalPages,
+            12f, true, accentColor
+        ))
+        if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 10f, false, muted))
+        val start = searchPage * pageSize
+        visibleHits.drop(start).take(pageSize).forEachIndexed { index, hit ->
+            showHit(start + index + 1, hit)
+        }
+        addPager(results, searchPage, totalPages) { next ->
+            searchPage = next
+            renderSearchResults()
+            pageScroll.post { pageScroll.smoothScrollTo(0, results.top) }
+        }
     }
 
+    private fun showHit(
+        index: Int,
+        hit: Net.Hit,
+        parent: LinearLayout = results,
+        storedCategory: String? = null,
+        storedEligibility: String? = null,
+        listingStatus: String? = null,
+        storedScore: Int? = null,
+        storedReason: String? = null,
+        storedDeadline: String? = null
+    ) {
+        val category = storedCategory ?: CareerSourceCatalog.categoryFor(hit.url)
+        val eligibility = storedEligibility ?: CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+        val matchScore = storedScore ?: CareerEligibility.profileMatchScore(
+            hit.title, hit.snippet,
+            if (::role.isInitialized) role.text.toString() else "",
+            if (::place.isInitialized) place.text.toString() else "",
+            eligibility
+        )
+        val matchReason = storedReason ?: CareerEligibility.profileMatchReason(
+            hit.title, hit.snippet,
+            if (::role.isInitialized) role.text.toString() else "",
+            if (::place.isInitialized) place.text.toString() else "",
+            eligibility
+        )
+        val card = panel().apply {
+            setPadding(dp(15), dp(14), dp(15), dp(14))
+            elevation = dp(2).toFloat()
+        }
+        val titleRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        titleRow.addView(label(index.toString().padStart(2, '0'), 12f, true, accentColor).apply {
+            gravity = Gravity.CENTER
+            background = rounded(surfaceRaised, borderColor)
+        }, LinearLayout.LayoutParams(dp(34), dp(34)).apply { setMargins(0, 0, dp(9), 0) })
+        titleRow.addView(label(hit.title, 15f, true, primaryText), LinearLayout.LayoutParams(0, -2, 1f))
+        card.addView(titleRow)
+        val sourceLabel = when {
+            CareerSourceCatalog.isSecondary(hit.url) ->
+                "İkincil ilan/keşif platformu: " + CareerSourceCatalog.sourceName(hit.url) + " · İlan ve başvuruyu platform/işveren sayfasında doğrula"
+            category.contains("İşveren kariyer") || category.contains("Özel sektör") ->
+                "İşveren/özel sektör sayfası: " + CareerSourceCatalog.sourceName(hit.url) + " · Devlet ilanı değildir"
+            category.contains("Kamu") || category.contains("Belediye") || category.contains("İŞKUR") ->
+                "Resmî kamu/İŞKUR kaynağı: " + CareerSourceCatalog.sourceName(hit.url)
+            else ->
+                "Kurumsal kaynak: " + CareerSourceCatalog.sourceName(hit.url) + " · İlan durumu kaynak sayfasında doğrulanmalı"
+        }
+        card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })
+        if (!storedCategory.isNullOrBlank()) {
+            card.addView(label("Liste: " + category, 11f, true, accentBlue))
+        }
+        if (hit.snippet.isNotBlank()) card.addView(label(hit.snippet, 12f, false, muted))
+        val stage = CareerRecruitmentTracker.detectStage(hit.title, hit.snippet)
+        if (stage != null) card.addView(label("İşe alım aşaması: " + stage, 11f, true, accentColor))
+        card.addView(label(eligibility, 12f, true, warningColor).apply {
+            setPadding(dp(10), dp(8), dp(10), dp(8))
+            background = rounded(Color.rgb(47, 39, 27), Color.rgb(111, 84, 47))
+        })
+        if (!listingStatus.isNullOrBlank()) {
+            card.addView(label(listingStatus, 11f, true, warningColor))
+        }
+        val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
+        if (deadline.isNotBlank()) {
+            card.addView(label(deadline, 11f, true, warningColor))
+        } else {
+            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, warningColor))
+        }
+        card.addView(label(
+            "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
+            11f, false, accentBlue
+        ))
+        card.addView(primaryButton("↗  İlanın tam sayfasını aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
+                .onFailure { toast("Bağlantı açılamadı.") }
+        }, params(-1, dp(48), 0, 10, 0, 5))
+        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        actions.addView(button("＋  Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+            setMargins(0, 0, dp(4), 0)
+        })
+        actions.addView(button("AI ile incele") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+            setMargins(dp(4), 0, 0, 0)
+        })
+        card.addView(actions)
+        parent.addView(card, params(-1, -2, 0, 0, 0, 8))
+    }
+
+    private fun showDailyResults(parent: LinearLayout) {
+        parent.removeAllViews()
+        val data = runCatching { JSONArray(prefs.getString("career_monitor_results", "[]")) }
+            .getOrDefault(JSONArray())
+        val allItems = ArrayList<JSONObject>()
+        for (i in 0 until data.length()) {
+            val item = data.optJSONObject(i) ?: continue
+            if (item.optString("title").isBlank() || item.optString("url").isBlank()) continue
+            allItems.add(item)
+        }
+
+        fun isExpired(item: JSONObject): Boolean {
+            val saved = item.optString("deadlineStatus")
+            val calculated = CareerListingParser.deadlineStatus(item.optString("snippet")).orEmpty()
+            return saved.startsWith("SÜRESİ GEÇMİŞ", true) || calculated.startsWith("SÜRESİ GEÇMİŞ", true)
+        }
+
+        val expiredCount = allItems.count(::isExpired)
+        val unknownCount = allItems.count {
+            val saved = it.optString("deadlineStatus")
+            saved.isBlank() && CareerListingParser.deadlineStatus(it.optString("snippet")).isNullOrBlank()
+        }
+
+        val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val filterLabels = listOf("Kontrol listesi", "Tümü", "Süresi geçmiş")
+        filterLabels.forEachIndexed { index, title ->
+            val chip = chipButton(title, dailyFilter == index) {
+                dailyFilter = index
+                dailyPage = 0
+                showDailyResults(parent)
+            }
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+                setMargins(dp(3), 0, dp(3), 0)
+            })
+        }
+        parent.addView(filterRow, params(-1, dp(46), 0, 4, 0, 8))
+        parent.addView(label(
+            allItems.size.toString() + " ilan adayı · " + expiredCount + " geçmiş tarihli · " +
+                unknownCount + " son tarihi bulunamayan kayıt. İlanın açık olduğu kaynak sayfasında doğrulanmalı.",
+            11f, false, muted
+        ))
+
+        dailyItems = when (dailyFilter) {
+            2 -> allItems.filter(::isExpired)
+            1 -> allItems
+            else -> allItems.filterNot(::isExpired)
+        }.sortedWith(compareByDescending<JSONObject> {
+            it.optInt("profileMatchScore", 0)
+        }.thenByDescending {
+            it.optLong("createdAt", 0L)
+        })
+
+        if (dailyItems.isEmpty()) {
+            val message = if (allItems.isEmpty()) {
+                prefs.getString("career_monitor_empty_reason", null)
+                    ?: "Henüz tarama sonucu yok. Otomatik takip veya manuel taramayı kullan."
+            } else {
+                "Bu filtrede gösterilecek ilan yok."
+            }
+            val emptyCard = panel()
+            emptyCard.addView(label(if (allItems.isEmpty()) "İlk tarama bekleniyor" else "Bu filtrede kayıt yok", 14f, true, primaryText))
+            emptyCard.addView(label(message, 12f, false, muted))
+            parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
+            return
+        }
+
+        val totalPages = (dailyItems.size + pageSize - 1) / pageSize
+        dailyPage = dailyPage.coerceIn(0, totalPages - 1)
+        parent.addView(label(
+            dailyItems.size.toString() + " kayıt · Sayfa " + (dailyPage + 1) + "/" + totalPages,
+            12f, true, accentColor
+        ))
+        val start = dailyPage * pageSize
+        dailyItems.drop(start).take(pageSize).forEachIndexed { index, item ->
+            val title = item.optString("title")
+            val url = item.optString("url")
+            val snippet = item.optString("snippet")
+            showHit(
+                start + index + 1,
+                Net.Hit(title, url, snippet),
+                parent,
+                item.optString("category", CareerSourceCatalog.categoryFor(url)),
+                item.optString("eligibility", null),
+                item.optString("listingStatus", null),
+                item.optInt("profileMatchScore", -1).takeIf { it >= 0 },
+                item.optString("profileMatchReason", null),
+                item.optString("deadlineStatus", null)
+            )
+        }
+        addPager(parent, dailyPage, totalPages) { next ->
+            dailyPage = next
+            showDailyResults(parent)
+            pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
+        }
+    }
+
+    private fun showProcessEvents(parent: LinearLayout) {
+        parent.removeAllViews()
+        val events = CareerRecruitmentTracker.read(prefs)
+        if (events.isEmpty()) {
+            val emptyCard = panel()
+            emptyCard.addView(label("Süreç güncellemesi bekleniyor", 14f, true, primaryText))
+            emptyCard.addView(label(
+                "Yeni evrak, kura, asıl/yedek, sınav ve sonuç duyuruları günlük taramalarda burada toplanacak.",
+                12f, false, muted
+            ))
+            parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
+            return
+        }
+
+        val totalPages = (events.size + pageSize - 1) / pageSize
+        processPage = processPage.coerceIn(0, totalPages - 1)
+        parent.addView(label(
+            events.size.toString() + " süreç güncellemesi · Sayfa " + (processPage + 1) + "/" + totalPages,
+            12f, true, accentColor
+        ))
+        val start = processPage * pageSize
+        events.drop(start).take(pageSize).forEach { event ->
+            val card = panel()
+            card.addView(label("SÜREÇ AŞAMASI", 9f, true, muted))
+            card.addView(label(event.stage, 12f, true, accentColor).apply {
+                setPadding(dp(10), dp(7), dp(10), dp(7))
+                background = rounded(Color.rgb(19, 49, 56), Color.rgb(48, 111, 112))
+            })
+            card.addView(label(event.title, 15f, true, primaryText))
+            if (event.snippet.isNotBlank()) card.addView(label(event.snippet, 12f, false, muted))
+            val detected = if (event.detectedAt > 0L) {
+                SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(event.detectedAt))
+            } else "Tespit zamanı bilinmiyor"
+            card.addView(label("Aries'in tespit zamanı: " + detected, 10f, false, muted))
+            if (event.eventAt != null) {
+                val date = SimpleDateFormat(
+                    if (event.hasExplicitTime) "dd.MM.yyyy HH:mm" else "dd.MM.yyyy",
+                    Locale("tr", "TR")
+                ).format(Date(event.eventAt))
+                val isUpcoming = event.eventAt > System.currentTimeMillis()
+                card.addView(label(
+                    (if (isUpcoming) "YAKLAŞAN TARİH · " else "TARİHİ GEÇMİŞ · ") + date +
+                        (if (isUpcoming && event.hasExplicitTime) " · Bir gün ve bir saat önce hatırlatma planlandı"
+                        else if (isUpcoming) " · Bir gün önce hatırlatma planlandı"
+                        else " · Eski duyuru; yeni tarih var mı kontrol et"),
+                    11f, true, if (isUpcoming) warningColor else dangerColor
+                ))
+            } else {
+                card.addView(label(
+                    "Tarih/saat metinden güvenle çıkarılamadı. Kurum duyurusunu açıp takvimi kontrol et.",
+                    11f, true, warningColor
+                ))
+            }
+            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            actions.addView(button("Duyuruyu aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
+                    .onFailure { toast("Kaynak açılamadı.") }
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            actions.addView(button("Başvurulara kaydet") {
+                saveJob(Net.Hit(event.title, event.url, event.snippet))
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            card.addView(actions)
+            parent.addView(card, params(-1, -2, 0, 2, 0, 8))
+        }
+        addPager(parent, processPage, totalPages) { next ->
+            processPage = next
+            showProcessEvents(parent)
+            pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
+        }
+    }
+
+    private fun addPager(parent: LinearLayout, current: Int, total: Int, onSelect: (Int) -> Unit) {
+        if (total <= 1) return
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, dp(10), 0, dp(6))
+        }
+        val previous = button("‹") { onSelect((current - 1).coerceAtLeast(0)) }
+        previous.isEnabled = current > 0
+        row.addView(previous, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+
+        val first = (current - 1).coerceAtLeast(0)
+        val last = (first + 2).coerceAtMost(total - 1)
+        for (page in first..last) {
+            val number = button((page + 1).toString()) { onSelect(page) }
+            number.setBackground(rounded(
+                if (page == current) accentColor else surfaceRaised,
+                Color.TRANSPARENT
+            ))
+            if (page == current) number.setTextColor(bgColor)
+            row.addView(number, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+        }
+
+        val next = button("›") { onSelect((current + 1).coerceAtMost(total - 1)) }
+        next.isEnabled = current < total - 1
+        row.addView(next, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+        parent.addView(row, params(-1, dp(54), 0, 4, 0, 2))
+    }
+
+    private fun ensureAutomaticTrackingDefault() {
+        if (!prefs.getBoolean("career_monitor_auto_default_applied", false)) {
+            // The user explicitly requested morning/evening automation for this Aries career module.
+            prefs.edit()
+                .putBoolean("career_monitor_enabled", true)
+                .putBoolean("career_monitor_auto_default_applied", true)
+                .apply()
+        }
+    }
+
+    private fun queueFirstAutomaticScanIfNeeded() {
+        if (!prefs.getBoolean("career_monitor_enabled", false) ||
+            prefs.getBoolean("career_monitor_initialized", false) ||
+            prefs.getBoolean("career_monitor_initial_scan_queued", false)
+        ) return
+
+        prefs.edit().putBoolean("career_monitor_initial_scan_queued", true).apply()
+        CareerMonitorScheduler.ensureChannel(this)
+        CareerMonitorScheduler.schedule(this)
+        queueManualScan()
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            !prefs.getBoolean("career_monitor_notification_request_attempted", false)
+        ) {
+            prefs.edit().putBoolean("career_monitor_notification_request_attempted", true).apply()
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 74031)
+        }
+    }
+
+    override fun onPause() {
+        saveCv(showToast = false)
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        manualScanObserver?.let { observer -> manualScanLiveData?.removeObserver(observer) }
+        manualScanObserver = null
+        manualScanLiveData = null
+        super.onDestroy()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        CareerMonitorScheduler.scheduleIfEnabled(this)
+        if (::monitorStatus.isInitialized) {
+            queueFirstAutomaticScanIfNeeded()
+            refreshMonitorStatus()
+            if (::dailyResultsContainer.isInitialized) showDailyResults(dailyResultsContainer)
+            if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+        }
+    }
+
+    private fun refreshMonitorStatus() {
+        if (!::monitorStatus.isInitialized) return
+        val enabled = prefs.getBoolean("career_monitor_enabled", false)
+        val running = prefs.getBoolean("career_monitor_is_running", false)
+        val last = prefs.getLong("career_monitor_last_scan", 0L)
+        val count = prefs.getInt("career_monitor_new_count", 0)
+        val resultCount = prefs.getInt("career_monitor_result_count", 0)
+        val error = prefs.getString("career_monitor_last_error", null)
+        val lastType = prefs.getString("career_monitor_last_run_type", "").orEmpty()
+        val lastSlot = prefs.getString("career_monitor_last_slot", "").orEmpty()
+        val time = if (last > 0L) SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(last)) else "Henüz tarama yapılmadı"
+        val notificationsAllowed = Build.VERSION.SDK_INT < 33 ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        monitorStatus.text = buildString {
+            append(if (enabled) "Otomatik takip: Açık (08.30 + 20.30)" else "Otomatik takip: Kapalı")
+            if (running) append("\nŞu anda ").append(prefs.getString("career_monitor_running_slot", "Kaynaklar")).append(" taraması sürüyor…")
+            append("\nSon kontrol: ").append(time)
+            if (last > 0L) {
+                append(" · ").append(lastType).append(" / ").append(lastSlot)
+                append("\nSon sonuç: ").append(resultCount).append(" bağlantı, ").append(count).append(" yeni")
+            }
+            val ok = prefs.getInt("career_monitor_successful_queries", 0)
+            val total = prefs.getInt("career_monitor_total_queries", 0)
+            if (total > 0) append("\nBaşarılı arama sorguları: ").append(ok).append("/").append(total)
+            if (!notificationsAllowed) append("\nBildirim izni kapalı; yeni ilan uyarıları ekrana düşmeyebilir.")
+            if (!error.isNullOrBlank()) append("\n").append(error)
+        }
+    }
+
+    private fun showSources() {
+        val sources = CareerSourceCatalog.sources
+        val names = sources.map {
+            val label = when {
+                !it.official -> "İKİNCİL KEŞİF"
+                it.category.contains("Kamu") || it.category.contains("İŞKUR") ||
+                    it.category.contains("Belediye") || it.category.contains("Resmî") -> "RESMÎ KAMU"
+                else -> "İŞVERENİN KENDİ PORTALI"
+            }
+            "$label · " + it.category + " · " + it.name
+        }.toTypedArray()
+        AlertDialog.Builder(this).setTitle("Takip edilen kaynaklar")
+            .setItems(names) { _, which ->
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(sources[which].url))) }
+                    .onFailure { toast("Kaynak açılamadı.") }
+            }.setNegativeButton("Kapat", null).show()
+    }
     private fun confirmReview(hit: Net.Hit) {
-        val cvText = cv.text.toString().trim()
-        if (cvText.isBlank()) { toast("Önce CV metnini ekle."); return }
+        val cvText = if (::cv.isInitialized) cv.text.toString().trim()
+            else prefs.getString("career_cv", buildDefaultCvText()).orEmpty().trim()
+        if (cvText.isBlank()) { toast("Önce CV metnini ekle."); renderPage(1); return }
         AlertDialog.Builder(this).setTitle("CV yapay zekâya gönderilsin mi?")
             .setMessage("E-posta, telefon, kimlik numarası ve IBAN alanları maskelendikten sonra CV ve ilan metni yalnızca Aries Bulut'un ücretsiz sağlayıcılarına gönderilir. Yalnızca onay verirsen gönderilir. Bu modülden doğrudan ücretli API'lere istek yapılmaz.")
             .setNegativeButton("Vazgeç", null)
@@ -175,40 +1224,144 @@ class CareerActivity : Activity() {
         .replace(Regex("\\bTR\\d{2}(?:\\s?\\d{4}){5}\\s?\\d{2}\\b", RegexOption.IGNORE_CASE), "[IBAN]")
         .replace(Regex("(\\+?90\\s?)?\\(?0?[2345]\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
 
+    private val applicationStatuses = listOf(
+        "Kaydedildi", "Başvurulacak", "Başvuruldu",
+        "Evrak teslimi bekleniyor", "Kuraya katılma listesi bekleniyor",
+        "Kura tarihi bekleniyor", "Kura sonucu bekleniyor",
+        "Asıl aday", "Yedek aday", "Sınav / mülakat bekleniyor",
+        "Nihai sonuç bekleniyor", "Teklif alındı", "Yerleşti / atandı",
+        "Olumsuz", "Vazgeçildi"
+    )
+
+    private fun savedJobs(): JSONArray =
+        runCatching { JSONArray(prefs.getString("career_jobs", "[]")) }.getOrDefault(JSONArray())
+
     private fun saveJob(hit: Net.Hit) {
-        val list = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
-        if ((0 until list.length()).any { list.optJSONObject(it)?.optString("url") == hit.url }) {
-            toast("Bu ilan zaten kayıtlı."); return
+        val list = savedJobs()
+        val fingerprint = CareerSearchEngine.fingerprint(hit.title, hit.url)
+        if ((0 until list.length()).any { index ->
+                val saved = list.optJSONObject(index) ?: return@any false
+                val oldFingerprint = saved.optString("fingerprint").ifBlank {
+                    val oldTitle = saved.optString("title")
+                    val oldUrl = saved.optString("url")
+                    if (oldTitle.isNotBlank() && oldUrl.isNotBlank()) {
+                        CareerSearchEngine.fingerprint(oldTitle, oldUrl)
+                    } else ""
+                }
+                oldFingerprint == fingerprint
+            }
+        ) {
+            toast("Bu ilan zaten kayıtlı.")
+            return
         }
-        list.put(JSONObject().put("title", hit.title).put("url", hit.url))
+        list.put(
+            JSONObject()
+                .put("title", hit.title)
+                .put("url", hit.url)
+                .put("snippet", hit.snippet)
+                .put("category", CareerSourceCatalog.categoryFor(hit.url))
+                .put("fingerprint", fingerprint)
+                .put("status", "Kaydedildi")
+                .put("createdAt", System.currentTimeMillis())
+                .put("updatedAt", System.currentTimeMillis())
+                .put("note", "")
+        )
         prefs.edit().putString("career_jobs", list.toString()).apply()
-        toast("İlan cihazına kaydedildi. Kayıtlı listeyi yenilemek için ekranı yeniden aç.")
+        toast("İlan takip listene kaydedildi.")
+        if (currentPage == 3) refreshSavedList()
+    }
+
+    private fun refreshSavedList() {
+        renderPage(currentPage)
+    }
+
+    private fun updateJobStatus(url: String, status: String) {
+        val old = savedJobs()
+        val updated = JSONArray()
+        for (i in 0 until old.length()) {
+            val item = old.optJSONObject(i) ?: continue
+            if (item.optString("url") == url) {
+                item.put("status", status)
+                    .put("updatedAt", System.currentTimeMillis())
+            }
+            updated.put(item)
+        }
+        prefs.edit().putString("career_jobs", updated.toString()).apply()
+        renderPage(currentPage)
+    }
+
+    private fun chooseJobStatus(url: String, current: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Başvuru durumunu güncelle")
+            .setSingleChoiceItems(applicationStatuses.toTypedArray(), applicationStatuses.indexOf(current).coerceAtLeast(0)) { dialog, which ->
+                dialog.dismiss()
+                updateJobStatus(url, applicationStatuses[which])
+            }
+            .setNegativeButton("Vazgeç", null)
+            .show()
     }
 
     private fun showSaved(parent: LinearLayout) {
-        val list = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
-        if (list.length() == 0) parent.addView(label("Henüz kaydedilmiş ilan yok.", 12f, false, muted))
-        for (i in list.length() - 1 downTo 0) {
-            val item = list.optJSONObject(i) ?: continue
+        val list = savedJobs()
+        if (list.length() == 0) {
+            val emptyCard = panel()
+            emptyCard.addView(label("Takip listen henüz boş", 15f, true, primaryText))
+            emptyCard.addView(label("Beğendiğin bir ilanda “Kaydet” düğmesine dokun. Başvuru durumunu daha sonra buradan güncelleyebilirsin.", 12f, false, muted))
+            emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(48), 0, 8, 0, 0))
+            parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
+            return
+        }
+        val items = (list.length() - 1 downTo 0).mapNotNull { list.optJSONObject(it) }
+        val totalPages = (items.size + pageSize - 1) / pageSize
+        savedPage = savedPage.coerceIn(0, (totalPages - 1).coerceAtLeast(0))
+        parent.addView(label(items.size.toString() + " kayıt · Sayfa " + (savedPage + 1) + "/" + totalPages, 12f, true, accentColor))
+        val start = savedPage * pageSize
+        items.drop(start).take(pageSize).forEach { item ->
             val url = item.optString("url")
-            val row = LinearLayout(this).apply { orientation = 0 }
-            row.addView(button(item.optString("title")) {
+            val title = item.optString("title")
+            val status = item.optString("status", "Kaydedildi")
+            val card = panel().apply { setPadding(dp(15), dp(13), dp(15), dp(13)) }
+            card.addView(label(title, 14f, true))
+            card.addView(label("BAŞVURU DURUMU  ·  $status", 11f, true, accentColor))
+            val deadline = CareerListingParser.deadlineStatus(item.optString("snippet")).orEmpty()
+            if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, warningColor))
+            val actions = LinearLayout(this).apply { orientation = 0 }
+            actions.addView(button("Durumu değiştir") {
+                chooseJobStatus(url, status)
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            actions.addView(button("İlanı aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-            }, LinearLayout.LayoutParams(0, dp(44), 1f))
-            row.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(dp(60), dp(44)))
-            parent.addView(row, params(-1, -2, 0, 2, 0, 2))
+                    .onFailure { toast("Bağlantı açılamadı.") }
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            actions.addView(button("Sil") { confirmDeleteJob(url, title) }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            card.addView(actions)
+            parent.addView(card, params(-1, -2, 0, 2, 0, 7))
+        }
+        addPager(parent, savedPage, totalPages) { next ->
+            savedPage = next
+            showSaved(parent)
+            pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
         }
     }
 
+    private fun confirmDeleteJob(url: String, title: String) {
+        AlertDialog.Builder(this)
+            .setTitle("İlan takip listesinden çıkarılsın mı?")
+            .setMessage(title)
+            .setNegativeButton("Vazgeç", null)
+            .setPositiveButton("Listeden çıkar") { _, _ -> deleteJob(url) }
+            .show()
+    }
+
     private fun deleteJob(url: String) {
-        val old = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
+        val old = savedJobs()
         val fresh = JSONArray()
         for (i in 0 until old.length()) {
             val item = old.optJSONObject(i) ?: continue
             if (item.optString("url") != url) fresh.put(item)
         }
         prefs.edit().putString("career_jobs", fresh.toString()).apply()
-        recreate()
+        renderPage(currentPage)
     }
 
     private fun score(cvText: String, description: String): Int {
@@ -225,21 +1378,61 @@ class CareerActivity : Activity() {
     }
 
     private fun field(value: String, hintText: String, multi: Boolean) = EditText(this).apply {
-        setText(value); hint = hintText; textSize = 14f
-        setTextColor(Color.WHITE); setHintTextColor(muted)
-        setPadding(dp(10), dp(8), dp(10), dp(8)); setBackgroundColor(Color.rgb(31, 37, 53))
-        if (multi) { minLines = 5; maxLines = 10; gravity = Gravity.TOP
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
-        } else { setSingleLine(true); inputType = android.text.InputType.TYPE_CLASS_TEXT }
+        setText(value)
+        hint = hintText
+        textSize = 15f
+        setTextColor(primaryText)
+        setHintTextColor(muted)
+        setPadding(dp(14), dp(12), dp(14), dp(12))
+        setBackground(rounded(bgColor, borderColor))
+        minHeight = dp(54)
+        letterSpacing = 0.01f
+        if (multi) {
+            minLines = 12
+            maxLines = 60
+            gravity = Gravity.TOP or Gravity.START
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        } else {
+            setSingleLine(true)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
     }
 
     private fun button(value: String, action: () -> Unit) = Button(this).apply {
-        text = value; textSize = 11f; setOnClickListener { action() }
+        text = value
+        textSize = 12f
+        minHeight = dp(48)
+        isAllCaps = false
+        setTextColor(primaryText)
+        setPadding(dp(11), dp(5), dp(11), dp(5))
+        background = ripple(rounded(surfaceRaised, borderColor))
+        elevation = dp(1).toFloat()
+        setOnClickListener { action() }
     }
+
     private fun label(value: String, size: Float, bold: Boolean, color: Int = Color.WHITE) = TextView(this).apply {
-        text = value; textSize = size; setTextColor(color); setPadding(0, dp(4), 0, dp(4))
+        text = value
+        textSize = size
+        setTextColor(color)
+        setPadding(0, dp(4), 0, dp(4))
+        setLineSpacing(dp(2).toFloat(), 1.0f)
         if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
     }
+
+    private fun ripple(content: android.graphics.drawable.Drawable): android.graphics.drawable.Drawable =
+        android.graphics.drawable.RippleDrawable(
+            android.content.res.ColorStateList.valueOf(Color.argb(56, 78, 220, 202)),
+            content,
+            rounded(Color.WHITE, Color.TRANSPARENT)
+        )
+
+    private fun rounded(fill: Int, stroke: Int): android.graphics.drawable.GradientDrawable =
+        android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = dp(17).toFloat()
+            setColor(fill)
+            if (stroke != Color.TRANSPARENT) setStroke(dp(1), stroke)
+        }
     private fun params(w: Int, h: Int, l: Int, t: Int, r: Int, b: Int) =
         LinearLayout.LayoutParams(w, h).apply { setMargins(l, t, r, b) }
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
