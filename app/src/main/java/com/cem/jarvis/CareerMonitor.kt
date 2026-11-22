@@ -222,7 +222,7 @@ object CareerMonitorScheduler {
             .build()
         androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             UNIQUE_WORK,
-            androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
             request
         )
     }
