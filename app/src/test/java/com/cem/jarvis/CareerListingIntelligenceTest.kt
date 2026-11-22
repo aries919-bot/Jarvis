@@ -231,4 +231,53 @@ class CareerListingIntelligenceTest {
         ).startsWith("ÖĞRENCİ / STAJ PROGRAMI"))
     }
 
+
+    @Test
+    fun routesDistinctIskurSubportalsToTheirActualServicePaths() {
+        val nationalInternship = CareerListingIntelligence.analyze(
+            "Ulusal Staj Programı",
+            "Üniversite öğrencileri için kayıt işlemleri.",
+            "https://ulusalstajprogrami.iskur.gov.tr/"
+        )
+        assertEquals("Ulusal Staj Programı portalı · doğrudan kayıt", nationalInternship.applicationChannel)
+
+        val guc = CareerListingIntelligence.analyze(
+            "Geleceğim Meslekte",
+            "Meslek yüksekokulu son sınıf öğrencilerine kariyer danışmanlığı.",
+            "https://guc.iskur.gov.tr/"
+        )
+        assertEquals(
+            "İŞKUR GÜÇ · program rehberi; başvuru ilgili program portalından",
+            guc.applicationChannel
+        )
+
+        val staj = CareerListingIntelligence.analyze(
+            "Staj başvurusu",
+            "Öğrenci staj kaydı.",
+            "https://staj.iskur.gov.tr/"
+        )
+        assertEquals("İŞKUR Staj Platformu · staj başvuru portalı", staj.applicationChannel)
+
+        val highSchoolInternship = CareerListingIntelligence.analyze(
+            "Lise staj başvurusu",
+            "Lise öğrencileri için staj portalı.",
+            "https://stajportali.iskur.gov.tr/"
+        )
+        assertEquals("İŞKUR Lise Staj Portalı · ilgili staj başvuru ekranı", highSchoolInternship.applicationChannel)
+
+        val esube = CareerListingIntelligence.analyze(
+            "Açık iş ilanı",
+            "İŞKUR e-Şube üzerinden başvuru.",
+            "https://esube.iskur.gov.tr/"
+        )
+        assertEquals("İŞKUR e-Şube · açık iş / program başvurusu", esube.applicationChannel)
+
+        val otherIskurPortal = CareerListingIntelligence.analyze(
+            "Program duyurusu",
+            "İlgili programı inceleyin.",
+            "https://engelsiz.iskur.gov.tr/"
+        )
+        assertTrue(otherIskurPortal.applicationChannel.startsWith("İŞKUR alt portalı"))
+    }
+
 }

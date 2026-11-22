@@ -62,8 +62,20 @@ object CareerListingIntelligence {
                 "Kariyer Kapısı · e-Devlet ile başvuru"
             host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") ->
                 "e-Devlet hizmeti · ilgili başvuru ekranını aç"
-            host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") ->
-                "İŞKUR e-Şube · açık iş / başvuru"
+            host == "ulusalstajprogrami.iskur.gov.tr" ->
+                "Ulusal Staj Programı portalı · doğrudan kayıt"
+            host == "guc.iskur.gov.tr" ->
+                "İŞKUR GÜÇ · program rehberi; başvuru ilgili program portalından"
+            host == "staj.iskur.gov.tr" ->
+                "İŞKUR Staj Platformu · staj başvuru portalı"
+            host == "stajportali.iskur.gov.tr" ->
+                "İŞKUR Lise Staj Portalı · ilgili staj başvuru ekranı"
+            host == "esube.iskur.gov.tr" ->
+                "İŞKUR e-Şube · açık iş / program başvurusu"
+            host == "iskur.gov.tr" ->
+                "İŞKUR · ilgili hizmet sayfasında başvuru yolunu doğrula"
+            host.endsWith(".iskur.gov.tr") ->
+                "İŞKUR alt portalı · sayfada belirtilen başvuru yolunu doğrula"
             host == "edb.adalet.gov.tr" ->
                 "Adalet Bakanlığı duyurusu · kayıt Ulusal Staj Programı portalından"
             CareerSourceCatalog.isSecondary(url) ->
