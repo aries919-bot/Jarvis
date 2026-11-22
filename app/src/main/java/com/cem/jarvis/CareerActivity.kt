@@ -1761,7 +1761,12 @@ class CareerActivity : Activity() {
                 item.put("status", status)
                     .put("updatedAt", now)
                 val followUpAt = item.optLong("followUpAt", 0L)
-                if (followUpAt > now) {
+                val finalStatuses = setOf("Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
+                if (status in finalStatuses) {
+                    CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
+                    item.remove("followUpAt")
+                    item.remove("followUpStatus")
+                } else if (followUpAt > now) {
                     CareerMonitorScheduler.scheduleApplicationFollowUp(
                         this, item.optString("title"), url, status, followUpAt
                     )
@@ -1795,6 +1800,7 @@ class CareerActivity : Activity() {
         )
         AlertDialog.Builder(this)
             .setTitle("Başvuru takip hatırlatması")
+            .setMessage("Hatırlatmalar Android pil ve bildirim ayarlarına göre birkaç dakika gecikebilir.")
             .setItems(choices) { _, which ->
                 when (which) {
                     0, 1, 2 -> {
@@ -1894,7 +1900,7 @@ class CareerActivity : Activity() {
         }
         AlertDialog.Builder(this)
             .setTitle("Başvuru notu")
-            .setMessage(title)
+            .setMessage("Bu notlar yalnızca bu cihazda saklanır.\n" + title)
             .setView(noteInput)
             .setNegativeButton("Vazgeç", null)
             .setPositiveButton("Notu kaydet") { _, _ ->
