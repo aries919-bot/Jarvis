@@ -56,11 +56,23 @@ class CareerMonitorPolicyTest {
             CareerEligibility.assessQualificationCodes(setOf(2023, 2086))
                 .startsWith("ALAN KODU UYUŞMUYOR")
         )
+        assertTrue(
+            CareerEligibility.assessQualificationCodes(setOf(2001))
+                .startsWith("ORTAÖĞRETİM KODU EŞLEŞİYOR")
+        )
+        assertTrue(
+            CareerEligibility.assess("TCDD Teknisyen", "KPSS P94 · Nitelik kodu: 2086")
+                .startsWith("ALAN KODU UYUŞMUYOR")
+        )
+        assertTrue(
+            CareerEligibility.assess("Elektrik Teknisyeni", "KPSS P94 · Nitelik kodu: 2023")
+                .startsWith("ALAN KODU EŞLEŞİYOR")
+        )
     }
 
     @Test
     fun extractsFourDigitQualificationCodesWithoutTreatingYearsAsTheOnlyMatch() {
-        assertEquals(setOf(2023, 2086), CareerEligibility.extractQualificationCodes("Nitelik kodları: 2023, 2086"))
+        assertEquals(setOf(2001, 2023, 2086), CareerEligibility.extractQualificationCodes("Nitelik kodları: 2001, 2023, 2086, 2026"))
     }
 
     @Test
