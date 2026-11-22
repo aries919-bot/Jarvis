@@ -567,6 +567,16 @@ object CareerSearchEngine {
         val errors: List<String>
     )
 
+    /**
+     * A search provider is useful only when it yields at least one trusted, job-like result.
+     * A trusted institution homepage alone must not suppress fallback providers.
+     */
+    internal fun hasUsableResult(hits: Collection<Net.Hit>): Boolean =
+        hits.any { hit ->
+            CareerSourceCatalog.isTrustedUrl(hit.url) &&
+                CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
+        }
+
     private fun collect(queries: List<String>, timeoutSeconds: Long, city: String = "Malatya"): CareerScanBatch {
         if (queries.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
         val executor = Executors.newFixedThreadPool(minOf(4, queries.size))
@@ -593,16 +603,16 @@ object CareerSearchEngine {
                         }
 
                         attempt("DuckDuckGo", { Net.webSearch(query, 8) })
-                        var trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
-                        if (trustedCount < 1) {
+                        var hasUsableResult = hasUsableResult(found.values)
+                        if (!hasUsableResult) {
                             attempt("Bing", { Net.webSearchBing(query, 8) })
-                            trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
+                            hasUsableResult = hasUsableResult(found.values)
                         }
-                        if (trustedCount < 1) {
+                        if (!hasUsableResult) {
                             attempt("Google Haberler RSS", { Net.webSearchGoogleNews(query, 4) })
-                            trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
+                            hasUsableResult = hasUsableResult(found.values)
                         }
-                        if (trustedCount < 1) {
+                        if (!hasUsableResult) {
                             attempt("Brave", { Net.webSearchBrave(query, 6) })
                         }
 
