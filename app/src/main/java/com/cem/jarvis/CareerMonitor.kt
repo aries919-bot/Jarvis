@@ -911,7 +911,7 @@ object CareerMonitorScheduler {
             .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
             .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
             .replace(Regex("""\s+"""), " ").trim()
-        val familyKey = normalized + "|" + event.url.substringBefore("#") + "|" + event.stage
+        val familyKey = normalized + "|" + event.url.substringBefore("#")
         val familyId = java.security.MessageDigest.getInstance("SHA-256")
             .digest(familyKey.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }.take(24)
