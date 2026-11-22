@@ -47,6 +47,7 @@ class CareerActivity : Activity() {
     private val warningColor = Color.rgb(153, 91, 17)
     private val dangerColor = Color.rgb(184, 54, 65)
     private lateinit var monitorStatus: TextView
+    private lateinit var cadreGuideStatus: TextView
     private lateinit var pageScroll: ScrollView
     private lateinit var pageContent: LinearLayout
     private lateinit var navBar: LinearLayout
@@ -224,10 +225,11 @@ class CareerActivity : Activity() {
         ))
         val hasP94Guide = !prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").isNullOrBlank()
         val hasP93Guide = !prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").isNullOrBlank()
-        cadreRadarCard.addView(label(
+        cadreGuideStatus = label(
             CareerCadreRadar.kpss2026_2CadreStatus(hasP94Guide, hasP93Guide),
             11f, true, if (hasP94Guide || hasP93Guide) accentColor else warningColor
-        ))
+        )
+        cadreRadarCard.addView(cadreGuideStatus)
         cadreRadarCard.addView(label("Geçmiş unvanlar gelecek alım garantisi değildir.", 10f, false, muted))
         cadreRadarCard.addView(primaryButton("Kadro radarını ve unvan rehberini aç") { showCadreRadar() },
             params(-1, dp(48), 0, 8, 0, 5))
@@ -750,6 +752,7 @@ class CareerActivity : Activity() {
                     discoveredTables.p94Url?.let { putString(CareerCadreRadar.P94_GUIDE_PREF_KEY, it) }
                     discoveredTables.p93Url?.let { putString(CareerCadreRadar.P93_GUIDE_PREF_KEY, it) }
                 }.apply()
+                refreshCadreGuideStatus()
                 searchPage = 0
                 searchFilter = 0
                 searchSectorFilter = 0
@@ -1319,6 +1322,7 @@ class CareerActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        refreshCadreGuideStatus()
         CareerMonitorScheduler.scheduleIfEnabled(this)
         if (::monitorStatus.isInitialized) {
             queueFirstAutomaticScanIfNeeded()
@@ -1330,6 +1334,14 @@ class CareerActivity : Activity() {
             if (::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
         }
     }
+    private fun refreshCadreGuideStatus() {
+        if (!::cadreGuideStatus.isInitialized) return
+        val hasP94 = !prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").isNullOrBlank()
+        val hasP93 = !prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").isNullOrBlank()
+        cadreGuideStatus.text = CareerCadreRadar.kpss2026_2CadreStatus(hasP94, hasP93)
+        cadreGuideStatus.setTextColor(if (hasP94 || hasP93) accentColor else warningColor)
+    }
+
     private fun refreshMonitorStatus() {
         if (!::monitorStatus.isInitialized) return
         val enabled = prefs.getBoolean("career_monitor_enabled", false)
