@@ -72,8 +72,8 @@ class CareerContentClassifierTest {
         assertFalse(result.isJobListing)
 
         val ambiguous = CareerContentClassifier.classify(
-            "Teknik personel bilgilendirmesi",
-            "Yeni düzenleme hakkında açıklama.",
+            "Teknik personel bilgisi",
+            "Yeni düzenlemenin teknik ayrıntıları.",
             "https://example.org/"
         )
         assertEquals(CareerContentType.REVIEW_REQUIRED, ambiguous.type)
