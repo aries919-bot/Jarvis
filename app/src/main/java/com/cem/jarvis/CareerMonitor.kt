@@ -1092,7 +1092,9 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 prefs.edit()
                     .putBoolean("career_monitor_is_running", false)
                     .putString("career_monitor_last_error",
-                        "Kaynak taraması başarısız: hiçbir arama sorgusu tamamlanamadı. İnternet/arama servisi kontrol edilip yeniden denenecek.")
+                        "Kaynak taraması başarısız: hiçbir arama sorgusu tamamlanamadı. " +
+                            batch.errorMessages.take(4).joinToString(" | ") +
+                            " İnternet/arama servisi kontrol edilip yeniden denenecek.")
                     .apply()
                 return androidx.work.ListenableWorker.Result.retry()
             }
