@@ -1,7 +1,6 @@
 package com.cem.jarvis
 
 import android.app.AlarmManager
-import android.app.BroadcastReceiver
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -34,16 +33,16 @@ object CareerSourceCatalog {
         Source("Malatya TSO – günlük İŞKUR listesi", "https://www.malatyatso.org.tr/iskur-ilanlari", "İŞKUR keşif", false),
         Source("ASELSAN Kariyer", "https://akariyer.aselsan.com/", "Özel sektör"),
         Source("TCDD", "https://www.tcdd.gov.tr/", "Kamu şirketi"),
-        Source("TCDD Taşımacılık", "https://www.tcddtasimacilik.gov.tr/", "Kamu şirketi"),
+        Source("TCDD Taşımacılık – işe alım duyuruları", "https://www.tcddtasimacilik.gov.tr/duyurular/", "Kamu şirketi"),
         Source("TEİAŞ Duyurular", "https://www.teias.gov.tr/duyurular", "Kamu şirketi"),
         Source("EÜAŞ Kariyer ve Staj", "https://www.euas.gov.tr/kariyer-ve-staj", "Kamu şirketi"),
         Source("TUSAŞ Kariyer", "https://kariyer.tusas.com/acik-pozisyonlarimiz", "Özel sektör"),
         Source("BOTAŞ Personel Alımı", "https://www.botas.gov.tr/Sayfa/personel-alimi/124", "Kamu şirketi"),
         Source("TÜPRAŞ Açık İlanlar", "https://tupras.gethirex.com/o/tupras/", "Özel sektör"),
         Source("ROKETSAN Kariyer", "https://kariyer.roketsan.com.tr/jobs", "Özel sektör"),
-        Source("TEI Kariyer", "https://www.tei.com.tr/tr/kariyer", "Özel sektör"),
+        Source("TEI Kariyer", "https://yetenek.tei.com.tr/jobs", "Özel sektör"),
         Source("HAVELSAN Kariyer", "https://www.havelsan.com/tr/kariyer", "Özel sektör"),
-        Source("Enerjisa Kariyer", "https://kariyer.enerjisa.com.tr/", "Özel sektör")
+        Source("Enerjisa Kariyer", "https://www.enerjisa.com.tr/tr/enerjisa-hakkinda/kariyer", "Özel sektör")
     )
 
     private val trustedDomains = listOf(
@@ -199,37 +198,32 @@ object CareerSearchEngine {
 
 object CareerMonitorScheduler {
     const val CHANNEL_ID = "aries_career_alerts"
-    private const val REQUEST_CODE = 74021
+    private const val UNIQUE_WORK = "aries_daily_career_scan"
 
+    /** WorkManager persists across process death and reboot; its daily run is intentionally inexact. */
     fun schedule(context: Context) {
-        val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pending = pendingIntent(context)
-        val next = Calendar.getInstance().apply {
+        val now = Calendar.getInstance()
+        val target = (now.clone() as Calendar).apply {
             set(Calendar.HOUR_OF_DAY, 8)
             set(Calendar.MINUTE, 20)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
-        }.timeInMillis
-        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, next, AlarmManager.INTERVAL_DAY, pending)
+            if (timeInMillis <= now.timeInMillis) add(Calendar.DAY_OF_YEAR, 1)
+        }
+        val delay = (target.timeInMillis - now.timeInMillis).coerceAtLeast(0L)
+        val request = androidx.work.PeriodicWorkRequestBuilder<CareerDailyWorker>(24, TimeUnit.HOURS)
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .addTag(UNIQUE_WORK)
+            .build()
+        androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            UNIQUE_WORK,
+            androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
     }
 
     fun cancel(context: Context) {
-        val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarm.cancel(pendingIntent(context))
-    }
-
-    fun scheduleIfEnabled(context: Context) {
-        val enabled = context.getSharedPreferences("j", Context.MODE_PRIVATE)
-            .getBoolean("career_monitor_enabled", false)
-        if (enabled) schedule(context)
-    }
-
-    private fun pendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, CareerDailyReceiver::class.java)
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
-            (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
-        return PendingIntent.getBroadcast(context, REQUEST_CODE, intent, flags)
+        androidx.work.WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_WORK)
     }
 
     fun ensureChannel(context: Context) {
@@ -243,6 +237,9 @@ object CareerMonitorScheduler {
 
     fun notifyNewJobs(context: Context, count: Int, first: Net.Hit?) {
         ensureChannel(context)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
         val open = Intent(context, CareerActivity::class.java)
         val pending = PendingIntent.getActivity(
             context, 74022, open,
@@ -263,42 +260,37 @@ object CareerMonitorScheduler {
     }
 }
 
-class CareerDailyReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent?) {
-        val result = goAsync()
-        Thread {
-            try {
-                val prefs = context.getSharedPreferences("j", Context.MODE_PRIVATE)
-                if (!prefs.getBoolean("career_monitor_enabled", false)) return@Thread
-                val hits = CareerSearchEngine.dailySearch()
-                val seen = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty().toMutableSet()
-                val fresh = hits.filter { seen.add(it.url) }
-                val boundedSeen = seen.takeLast(500).toSet()
-                val json = JSONArray()
-                hits.take(40).forEach { hit ->
-                    json.put(JSONObject().put("title", hit.title).put("url", hit.url).put("snippet", hit.snippet))
-                }
-                prefs.edit()
-                    .putStringSet("career_monitor_seen", boundedSeen)
-                    .putString("career_monitor_results", json.toString())
-                    .putLong("career_monitor_last_scan", System.currentTimeMillis())
-                    .putInt("career_monitor_new_count", fresh.size)
-                    .apply()
-                if (fresh.isNotEmpty()) CareerMonitorScheduler.notifyNewJobs(context, fresh.size, fresh.first())
-            } catch (_: Exception) {
-                context.getSharedPreferences("j", Context.MODE_PRIVATE).edit()
-                    .putLong("career_monitor_last_scan", System.currentTimeMillis())
-                    .putString("career_monitor_last_error", "Tarama tamamlanamadı; internet veya arama servisi kontrol edilmeli.")
-                    .apply()
-            } finally {
-                result.finish()
+class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters) : androidx.work.Worker(context, params) {
+    override fun doWork(): androidx.work.Result {
+        val prefs = applicationContext.getSharedPreferences("j", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("career_monitor_enabled", false)) return androidx.work.Result.success()
+        return try {
+            val hits = CareerSearchEngine.dailySearch()
+            val previous = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty()
+            val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
+            val seen = previous.toMutableSet()
+            val fresh = if (firstRun) emptyList() else hits.filter { seen.add(it.url) }
+            hits.forEach { seen.add(it.url) }
+            val boundedSeen = seen.toList().takeLast(500).toSet()
+            val json = JSONArray()
+            hits.take(40).forEach { hit ->
+                json.put(JSONObject().put("title", hit.title).put("url", hit.url).put("snippet", hit.snippet))
             }
-        }.start()
-    }
-}
-
-class CareerBootReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent?) {
-        CareerMonitorScheduler.scheduleIfEnabled(context)
+            prefs.edit()
+                .putStringSet("career_monitor_seen", boundedSeen)
+                .putString("career_monitor_results", json.toString())
+                .putLong("career_monitor_last_scan", System.currentTimeMillis())
+                .putInt("career_monitor_new_count", fresh.size)
+                .putBoolean("career_monitor_initialized", true)
+                .remove("career_monitor_last_error")
+                .apply()
+            if (fresh.isNotEmpty()) CareerMonitorScheduler.notifyNewJobs(applicationContext, fresh.size, fresh.first())
+            androidx.work.Result.success()
+        } catch (e: Exception) {
+            prefs.edit()
+                .putString("career_monitor_last_error", "Tarama tamamlanamadı: ${e.message ?: "internet veya arama servisi hatası"}")
+                .apply()
+            androidx.work.Result.retry()
+        }
     }
 }
