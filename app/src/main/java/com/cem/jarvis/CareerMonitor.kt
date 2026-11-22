@@ -1460,7 +1460,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 "career_place",
                 "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
             ).orEmpty()
-            val batch = CareerSearchEngine.dailySearchBatch(role, city)
+            val batch = CareerSearchEngine.dailySearchBatch(role, city, prefs.getString("bulut", "").orEmpty())
             if (!batch.hasAnySuccessfulQuery) {
                 prefs.edit()
                     .putBoolean("career_monitor_is_running", false)
