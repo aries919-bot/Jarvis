@@ -39,6 +39,12 @@ class CareerSourceCatalogTest {
         assertTrue(names.contains("Fırat Üniversitesi – Personel Daire Başkanlığı"))
         assertTrue(names.contains("Adıyaman Üniversitesi – Personel Daire Başkanlığı"))
         assertTrue(names.contains("e-Devlet – İş ve Kariyer hizmetleri"))
+        assertTrue(names.contains("İçişleri Bakanlığı – duyurular"))
+        assertTrue(names.contains("Millî Savunma Bakanlığı – Personel Temin Sistemi"))
+        assertTrue(names.contains("Jandarma Genel Komutanlığı – duyurular"))
+        assertTrue(names.contains("Çalışma ve Sosyal Güvenlik Bakanlığı – duyurular"))
+        assertTrue(names.contains("Kültür ve Turizm Bakanlığı – Personel Genel Müdürlüğü"))
+        assertTrue(names.contains("Savunma Sanayii Başkanlığı – duyurular"))
         assertEquals(
             "Üniversite / kamu personel alımı",
             CareerSourceCatalog.categoryFor("https://personel.ozal.edu.tr/announcements-all")
