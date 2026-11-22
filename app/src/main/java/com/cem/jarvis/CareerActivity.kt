@@ -148,8 +148,16 @@ class CareerActivity : Activity() {
         val filtersCard = panel()
         filtersCard.addView(label("Arama tercihlerin", 15f, true))
         filtersCard.addView(label("Aranacak pozisyon", 12f, true, muted))
+        val oldRoleDefault = "Elektrik teknisyeni / pano montajı / bakım-onarım / üretim / depo / operatör / satış / beden işçisi"
+        val savedRole = prefs.getString("career_role", null)
+        val roleValue = if (savedRole.isNullOrBlank() || savedRole == oldRoleDefault) {
+            "Elektrik teknisyeni, pano montajı, bakım, üretim"
+        } else savedRole
+        if (savedRole == oldRoleDefault || savedRole.isNullOrBlank()) {
+            prefs.edit().putString("career_role", roleValue).apply()
+        }
         role = field(
-            prefs.getString("career_role", "Elektrik teknisyeni, pano montajı, bakım, üretim").orEmpty(),
+            roleValue,
             "Örn. elektrik teknisyeni", false
         ).apply {
             setSingleLine(false)
@@ -160,8 +168,16 @@ class CareerActivity : Activity() {
         }
         filtersCard.addView(role, params(-1, dp(64), 0, 4, 0, 10))
         filtersCard.addView(label("Şehir / bölge", 12f, true, muted))
+        val oldPlaceDefault = "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
+        val savedPlace = prefs.getString("career_place", null)
+        val placeValue = if (savedPlace.isNullOrBlank() || savedPlace == oldPlaceDefault) {
+            "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman"
+        } else savedPlace
+        if (savedPlace == oldPlaceDefault || savedPlace.isNullOrBlank()) {
+            prefs.edit().putString("career_place", placeValue).apply()
+        }
         place = field(
-            prefs.getString("career_place", "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman").orEmpty(),
+            placeValue,
             "Örn. Malatya veya Türkiye geneli", false
         ).apply {
             setSingleLine(false)
