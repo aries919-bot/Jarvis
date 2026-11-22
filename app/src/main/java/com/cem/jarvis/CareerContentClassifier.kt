@@ -90,10 +90,11 @@ object CareerContentClassifier {
         val normalizedTitle = normalize(title)
         val roleInTitle = listOf(
             "elektrik", "teknisyen", "tekniker", "muhendis",
-            "operator", "bakim", "uretim", "sofor", "depo"
+            "operator", "bakim", "uretim", "sofor", "depo",
+            "personel", "isci", "guvenlik", "destek", "saha", "teknik"
         ).any(normalizedTitle::contains)
         val directJobPage = Regex(
-            """/(?:ilan-detay|job|jobs|position|vacancy|is-ilanlari)(?:/|$)"""
+            """/(?:ilan|ilan-detay|job|jobs|position|vacancy|is-ilani|is-ilanlari)(?:/|$)"""
         ).containsMatchIn(path) && roleInTitle
 
         if (explicitJobLanguage || directJobPage) {
