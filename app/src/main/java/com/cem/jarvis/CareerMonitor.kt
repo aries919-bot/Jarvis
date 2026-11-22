@@ -701,7 +701,7 @@ object CareerRecruitmentTracker {
         "SINAV SONUCU" to listOf("sinav sonucu", "mulakat sonucu", "sozlu sinav sonucu", "yazili sinav sonucu"),
         "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurasi sonuc", "kura sonucu", "kura sonuclari", "asil ve yedek", "asil aday", "yedek aday"),
         "SINAV / MÜLAKAT TARİHİ" to listOf("sinav tarihi", "sinava girecek", "sozlu sinav", "yazili sinav", "mulakat tarihi"),
-        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("kura cekimi", "kura cekilisi", "kura tarihi", "kuraya katilacak", "noter kurasina katilacak", "kura listesi"),
+        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("kura cekimi", "kura cekilisi", "kura tarihi", "kuraya katilacak", "noter kurasi duyurusu", "noter kurasina katilacak", "kura listesi"),
         "EVRAK / BELGE KONTROLÜ" to listOf("evrak kontrol", "belge kontrol", "evrak teslim", "belgelerin teslim", "eksik evrak", "evrak inceleme"),
         "BAŞVURU / YENİ ALIM" to listOf(
             "personel alimi", "isci alimi", "iskur basvuru", "basvurular basladi",
@@ -730,9 +730,9 @@ object CareerRecruitmentTracker {
             stage?.startsWith("EVRAK") == true ->
                 Regex("""(?i)(?:evrak\s+teslim|belge(?:lerin)?\s+teslim|evrak\s+kontrol|belge\s+kontrol)""")
             stage?.startsWith("KURA TARİHİ") == true ->
-                Regex("""(?i)(?:kura\s+(?:çekimi|çekilişi|tarihi|cekimi|cekilisi)|kuraya\s+katılacak|kuraya\s+katilacak|noter\s+kurasına\s+katılacak|noter\s+kurasina\s+katilacak|noter\s+huzurunda)""")
+                Regex("""(?i)(?:kura\s+(?:çekimi|çekilişi|tarihi|cekimi|cekilisi)|kuraya\s+katılacak|kuraya\s+katilacak|noter\s+kurası|noter\s+kurasi|noter\s+huzurunda)""")
             stage?.startsWith("SINAV /") == true ->
-                Regex("""(?i)(?:sınav(?:ın)?\s*(?:yeri|tarihi)?|sinav(?:in)?\s*(?:yeri|tarihi)?|mülakat\s+tarihi|mulakat\s+tarihi)""")
+                Regex("""(?i)(?:sınav(?:ın|a|i)?\s*(?:yeri|tarihi)?|sinav(?:in|a|i)?\s*(?:yeri|tarihi)?|mülakat(?:ın)?\s+tarihi|mulakat(?:in)?\s+tarihi)""")
             stage?.startsWith("NOTER KURASI SONUCU") == true ||
                 stage?.startsWith("SINAV SONUCU") == true ||
                 stage?.startsWith("NİHAİ SONUÇ") == true -> return null
