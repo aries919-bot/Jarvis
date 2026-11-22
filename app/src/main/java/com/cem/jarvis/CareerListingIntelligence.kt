@@ -77,16 +77,16 @@ object CareerListingIntelligence {
             if (Regex("""\bkpss\s*p\s*93\b""").containsMatchIn(text) || text.contains("on lisans")) add("Ön lisans / KPSS P93")
             if (Regex("""\bkpss\s*p\s*3\b""").containsMatchIn(text) || text.contains("lisans mezunu")) add("Lisans / KPSS P3")
             if (text.contains("elektrik") || text.contains("elektrik elektronik")) add("Elektrik alanı/programı ifadesi · diploma kodu ayrıca kontrol edilmeli")
-            if (Regex("""(?<!\\d)2023(?!\\d)""").containsMatchIn(text)) {
+            if (Regex("""(?<!\d)2023(?!\d)""").containsMatchIn(text)) {
                 add("Nitelik kodu 2023 ifadesi · ortaöğretim elektrik-elektronik alan/ dal şartını ÖSYM tablosundan doğrula")
             }
-            if (Regex("""(?<!\\d)3290(?!\\d)""").containsMatchIn(text)) {
+            if (Regex("""(?<!\d)3290(?!\d)""").containsMatchIn(text)) {
                 add("Nitelik kodu 3290 ifadesi · elektrik / elektrik teknolojisi ön lisans mezuniyeti ve tercih koşullarını doğrula")
             }
-            if (Regex("""(?<!\\d)2001(?!\\d)""").containsMatchIn(text)) {
+            if (Regex("""(?<!\d)2001(?!\d)""").containsMatchIn(text)) {
                 add("Nitelik kodu 2001 ifadesi · ortaöğretim mezuniyet şartını resmî tabloda doğrula")
             }
-            if (Regex("""(?<!\\d)2086(?!\\d)""").containsMatchIn(text)) {
+            if (Regex("""(?<!\d)2086(?!\d)""").containsMatchIn(text)) {
                 add("Nitelik kodu 2086 ifadesi · raylı sistem alan/ program koşulunu resmî tabloda doğrula")
             }
             if (text.contains("engelli")) add("Engelli aday şartı ifadesi · yalnızca ilgili ilan koşulları için")
