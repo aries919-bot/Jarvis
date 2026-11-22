@@ -43,6 +43,42 @@ class CareerCadreRadarTest {
     }
 
     @Test
+    fun electricAssociateCode3290RequiresGraduationInEligibilityAssessment() {
+        val snippet = "Özel şart nitelik kodu: 3290"
+        assertEquals(
+            setOf(3290),
+            CareerEligibility.extractQualificationCodes(snippet)
+        )
+        val notGraduated = CareerEligibility.assess(
+            "Tekniker · Elektrik",
+            snippet,
+            "https://www.tedas.gov.tr/ilan",
+            false
+        )
+        assertTrue(notGraduated.startsWith("MEZUNİYET SONRASI"))
+
+        val graduated = CareerEligibility.assess(
+            "Tekniker · Elektrik",
+            snippet,
+            "https://www.tedas.gov.tr/ilan",
+            true
+        )
+        assertTrue(graduated.startsWith("NİTELİK KODU KONTROLÜ"))
+        assertTrue(graduated.contains("Elektrik veya Elektrik Teknolojisi"))
+    }
+
+    @Test
+    fun p93ScoreTypeMismatchIsNotHiddenByAssociateQualificationCode() {
+        val result = CareerEligibility.assess(
+            "Tekniker · Elektrik",
+            "KPSS P93 şartı ve nitelik kodu 3290",
+            "https://www.tedas.gov.tr/ilan",
+            false
+        )
+        assertTrue(result.startsWith("PUAN TÜRÜ UYUŞMUYOR"))
+    }
+
+    @Test
     fun tedasElectricalTechnicianIsShownAsHistoricalP93Example() {
         val entry = CareerCadreRadar.p93History.firstOrNull { it.title.contains("Elektrik (3290)") }
         assertTrue(entry != null)
