@@ -1892,9 +1892,12 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir. " +
                     (CareerSearchEngine.friendlyDiagnostics(batch.errorMessages.joinToString(" | ")) ?: "Bazı arama sorguları sonuç döndürmedi.")
             } else null
-            val freshForAlerts = fresh.filter { hit ->
-                CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
-                    ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
+            // Only verified job-listing candidates trigger the "new job" notification.
+            // Lottery, exam, student-program and general notice updates use their own process/news area.
+            val freshJobForAlerts = fresh.filter { hit ->
+                CareerContentClassifier.classify(hit.title, hit.snippet, hit.url).isJobListing &&
+                    CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
+                        ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
             val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
             processEvents.forEach { event ->
@@ -1914,7 +1917,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 .putLong("career_monitor_last_scan", now)
                 .putString("career_monitor_last_slot", slot)
                 .putString("career_monitor_last_run_type", if (manualRun) "Manuel" else "Otomatik")
-                .putInt("career_monitor_new_count", freshForAlerts.size)
+                .putInt("career_monitor_new_count", freshJobForAlerts.size)
                 .putInt("career_monitor_result_count", hits.size)
                 .putBoolean("career_monitor_initialized", true)
                 .putInt("career_monitor_successful_queries", batch.successfulQueries)
@@ -1926,8 +1929,8 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                     else "")
                 .apply()
 
-            if (!manualRun && freshForAlerts.isNotEmpty()) {
-                CareerMonitorScheduler.notifyNewJobs(applicationContext, freshForAlerts.size, freshForAlerts.first(), slot)
+            if (!manualRun && freshJobForAlerts.isNotEmpty()) {
+                CareerMonitorScheduler.notifyNewJobs(applicationContext, freshJobForAlerts.size, freshJobForAlerts.first(), slot)
             }
             if (!manualRun && actionableProcessEvents.isNotEmpty()) {
                 CareerMonitorScheduler.notifyProcessUpdates(applicationContext, actionableProcessEvents)
