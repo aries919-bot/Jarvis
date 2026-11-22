@@ -78,4 +78,36 @@ class CareerSourceCatalogTest {
             CareerSourceCatalog.recruitmentGroup("Üretim personeli", "İş ilanı", "https://www.kariyer.net/is-ilanlari")
         )
     }
+
+    @Test
+    fun identifiesExplicitKpssFreePublicRecruitmentWithoutGuessingFromMissingKpssText() {
+        assertEquals(
+            "KPSS'siz kamu alımı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sürekli işçi alımı",
+                "İlanda KPSS şartı aranmaz; başvuru İŞKUR üzerinden yapılacaktır.",
+                "https://www.ogm.gov.tr/duyurular"
+            )
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Personel alımı",
+                "Başvuru şartları ve KPSS bilgisi kurum duyurusunda incelenmelidir.",
+                "https://www.dsi.gov.tr/duyurular"
+            )
+        )
+    }
+
+    @Test
+    fun doesNotLabelAnUnverifiedJobBoardKuraPostAsConfirmedPublicEmployment() {
+        assertEquals(
+            "Kura duyurusu · statü doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Noter kurası ile personel alımı",
+                "Asıl ve yedek aday listesi yayımlandı.",
+                "https://www.kariyer.net/is-ilani"
+            )
+        )
+    }
 }

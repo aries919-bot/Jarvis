@@ -206,35 +206,65 @@ object CareerSourceCatalog {
         val text = (title + " " + snippet).lowercase(Locale("tr", "TR"))
             .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
             .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+            .replace(Regex("[^a-z0-9 ]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
         val host = normalizedHost(url).orEmpty()
         val kuraTerms = listOf(
             "noter kurasi", "kura cekimi", "kura cekilisi", "kura tarihi",
             "kuraya katilacak", "kura sonucu", "kura sonuclari",
             "asil ve yedek", "asil aday", "yedek aday", "kurada asil"
         )
-        if (kuraTerms.any(text::contains)) return "Kura ile kamu alımı"
-        if (text.contains("kpss") || host.contains("osym.gov.tr") ||
-            host.contains("kariyerkapisi.gov.tr") || host.contains("cbiko.gov.tr")) {
-            return "KPSS ile kamu alımı"
-        }
-
+        val noKpssTerms = listOf(
+            "kpss siz", "kpss sarti aranmaz", "kpss sarti aranmamaktadir",
+            "kpss puani aranmayacaktir", "kpss puani istenmez",
+            "kpss puani bulunma sarti aranmaz"
+        )
         val publicLinkedDomains = listOf(
             "gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr",
             "aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com",
             "mke.gov.tr", "teias.gov.tr", "euas.gov.tr", "tcdd.gov.tr",
             "tcddtasimacilik.gov.tr", "dsi.gov.tr", "dhmi.gov.tr", "dmo.gov.tr",
             "etimaden.gov.tr", "botas.gov.tr", "turkseker.gov.tr",
-            "kiyiemniyeti.gov.tr", "ptt.gov.tr", "ilbank.gov.tr", "tga.gov.tr"
+            "kiyiemniyeti.gov.tr", "ptt.gov.tr", "ilbank.gov.tr", "tga.gov.tr",
+            "tubitak.gov.tr"
         )
         val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
-        if (publicLinkedDomains.any { host == it || host.endsWith(".$it") } ||
+        val namedPublicEmployer = listOf(
+            "orman genel mudurlugu", "karayollari genel mudurlugu",
+            "devlet su isleri", "devlet hava meydanlari", "enerji ve tabii kaynaklar",
+            "turkiye elektrik iletim", "elektrik uretim", "tcdd", "ptt",
+            "milli egitim bakanligi", "saglik bakanligi", "adalet bakanligi",
+            "icisleri bakanligi", "belediyesi", "universitesi", "jandarma",
+            "sahil guvenlik", "il ozel idaresi"
+        ).any(text::contains)
+        val publicLinked = publicLinkedDomains.any { host == it || host.endsWith(".$it") } ||
             publicCategory.contains("kamu") || publicCategory.contains("belediye") ||
-            publicCategory.contains("universite") || publicCategory.contains("işkur") ||
+            publicCategory.contains("universite") || publicCategory.contains("iskur") ||
             publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
-            host.endsWith(".turkiye.gov.tr")) {
-            return "Kamu / kamu bağlantılı"
-        }
+            host.endsWith(".turkiye.gov.tr") || namedPublicEmployer
 
+        if (publicLinked && noKpssTerms.any(text::contains)) {
+            return "KPSS'siz kamu alımı"
+        }
+        if (kuraTerms.any(text::contains)) {
+            return if (publicLinked) "Kura ile kamu alımı"
+            else "Kura duyurusu · statü doğrulanmalı"
+        }
+        val kpssRequirementTerms = listOf(
+            "kpss sarti", "kpss puan", "kpss tercih",
+            "kpss merkezi yerlestirme", "kpss yerles"
+        )
+        val hasKpssRequirement = kpssRequirementTerms.any(text::contains) ||
+            Regex("""kpss p\d{1,2}""").containsMatchIn(text) ||
+            host.contains("osym.gov.tr") ||
+            host.contains("kariyerkapisi.gov.tr") ||
+            host.contains("cbiko.gov.tr")
+        if (hasKpssRequirement) {
+            return if (publicLinked) "KPSS ile kamu alımı"
+            else "KPSS / şartı doğrulanmalı"
+        }
+        if (publicLinked) return "Kamu / kamu bağlantılı"
         if (isSecondary(url)) return "Platform / sektör doğrulanmalı"
         if (publicCategory.contains("özel sektör") ||
             publicCategory.contains("işveren") || publicCategory.contains("kariyer portalı")) {
@@ -585,19 +615,109 @@ object CareerSearchEngine {
     private fun normalizedUrl(url: String): String {
         return try {
             val uri = java.net.URI(url.trim())
-            val host = (uri.host ?: "").lowercase(Locale.ROOT)
+            val host = (uri.host ?: "").lowercase(Locale.ROOT).removePrefix("www.")
             val path = (uri.rawPath ?: "/").ifBlank { "/" }.trimEnd('/').ifBlank { "/" }
             val retained = (uri.rawQuery ?: "").split("&")
                 .filter { it.isNotBlank() }
                 .filterNot {
                     val key = it.substringBefore("=").lowercase(Locale.ROOT)
-                    key.startsWith("utm_") || key in setOf("fbclid", "gclid", "ref", "source")
+                    key.startsWith("utm_") || key in setOf(
+                        "fbclid", "gclid", "ref", "source", "mc_cid", "mc_eid", "_ga", "tracking_id"
+                    )
                 }
                 .sorted()
             "https://$host$path" + if (retained.isEmpty()) "" else "?" + retained.joinToString("&")
         } catch (_: Exception) {
             url.substringBefore("#").trimEnd('/').lowercase(Locale.ROOT)
         }
+    }
+
+    private val duplicateNoise = setOf(
+        "is", "ilan", "ilani", "ilanlari", "alimi", "alim", "personel",
+        "basvuru", "duyuru", "acik", "pozisyon", "kariyer", "aday", "liste", "ise",
+        "genel", "icin", "ve", "ile", "de", "da", "2026", "2025", "2027"
+    )
+
+    private fun duplicateTitleKey(title: String): String =
+        CareerEligibility.normalizeForFingerprint(title)
+            .split(" ")
+            .filter { it.length > 2 && it !in duplicateNoise }
+            .distinct()
+            .sorted()
+            .joinToString("|")
+
+    private fun duplicateTokens(hit: Net.Hit): Set<String> =
+        CareerEligibility.normalizeForFingerprint(hit.title + " " + hit.snippet)
+            .split(" ")
+            .filter { it.length > 2 && it !in duplicateNoise }
+            .toSet()
+
+    /** True only for the same canonical URL or a strong title-and-content match. */
+    fun areDuplicates(first: Net.Hit, second: Net.Hit): Boolean {
+        if (normalizedUrl(first.url) == normalizedUrl(second.url)) return true
+        val firstTitle = duplicateTitleKey(first.title)
+        val secondTitle = duplicateTitleKey(second.title)
+        if (firstTitle.isBlank() || firstTitle != secondTitle ||
+            firstTitle.split("|").size < 3) return false
+        val a = duplicateTokens(first)
+        val b = duplicateTokens(second)
+        if (a.size < 4 || b.size < 4) return false
+        val union = (a + b).size
+        val overlap = a.intersect(b).size.toDouble() / union.toDouble()
+        return overlap >= 0.70
+    }
+
+    private fun resultQuality(hit: Net.Hit): Int =
+        (if (CareerSourceCatalog.isSecondary(hit.url)) 0 else 1000) +
+            hit.snippet.length.coerceAtMost(900) +
+            hit.title.length.coerceAtMost(180)
+
+    /** Deduplicates provider copies while preferring the original employer/institution page. */
+    fun deduplicateHits(hits: Collection<Net.Hit>): List<Net.Hit> {
+        val unique = ArrayList<Net.Hit>()
+        val byUrl = HashMap<String, Int>()
+        val byTitle = HashMap<String, MutableList<Int>>()
+        hits.forEach { candidate ->
+            val urlKey = normalizedUrl(candidate.url)
+            val titleKey = duplicateTitleKey(candidate.title)
+            var duplicateIndex = byUrl[urlKey]
+            if (duplicateIndex == null && titleKey.split("|").size >= 3) {
+                duplicateIndex = byTitle[titleKey].orEmpty().firstOrNull { index ->
+                    areDuplicates(unique[index], candidate)
+                }
+            }
+            if (duplicateIndex == null) {
+                val index = unique.size
+                unique.add(candidate)
+                byUrl[urlKey] = index
+                if (titleKey.split("|").size >= 3) {
+                    byTitle.getOrPut(titleKey) { ArrayList() }.add(index)
+                }
+            } else {
+                val current = unique[duplicateIndex]
+                if (resultQuality(candidate) > resultQuality(current)) {
+                    unique[duplicateIndex] = candidate
+                    byUrl[urlKey] = duplicateIndex
+                }
+            }
+        }
+        return unique
+    }
+
+    fun friendlyDiagnostics(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        val value = raw.lowercase(Locale.ROOT)
+        val issues = linkedSetOf<String>()
+        if (value.contains("duckduckgo")) issues += "DuckDuckGo güvenlik kontrolü"
+        if (value.contains("brave") && (value.contains("429") || value.contains("rate"))) {
+            issues += "Brave geçici istek sınırı"
+        } else if (value.contains("brave")) issues += "Brave geçici erişim sorunu"
+        if (value.contains("bing") && (value.contains("okunamad") || value.contains("parse") || value.contains("sonuç bağlantıları"))) {
+            issues += "Bing sonuç sayfası okunamadı"
+        } else if (value.contains("bing")) issues += "Bing geçici erişim sorunu"
+        if (issues.isEmpty()) issues += "bazı arama servisleri yanıt vermedi"
+        return "Bazı arama servislerinde geçici sorun: " + issues.take(3).joinToString(", ") +
+            ". Sonuçlar eksik olabilir; daha sonra yeniden tarama yap."
     }
 
     fun fingerprint(title: String, url: String): String {
@@ -637,10 +757,14 @@ object CareerSearchEngine {
                         fun attempt(provider: String, search: () -> List<Net.Hit>) {
                             try {
                                 val results = search()
-                                providerResponses++
-                                results.forEach { hit ->
-                                    val key = fingerprint(hit.title, hit.url)
-                                    if (key !in found) found[key] = hit
+                                if (results.isEmpty()) {
+                                    errors += "$provider: sonuçlar okunamadı veya boş yanıt döndü"
+                                } else {
+                                    providerResponses++
+                                    results.forEach { hit ->
+                                        val key = fingerprint(hit.title, hit.url)
+                                        if (key !in found) found[key] = hit
+                                    }
                                 }
                             } catch (error: Exception) {
                                 val detail = error.message?.take(180).orEmpty().ifBlank { error.javaClass.simpleName }
@@ -694,13 +818,11 @@ object CareerSearchEngine {
 
             val successful = outcomes.count { it.providerResponses > 0 }
             val failed = (queries.size - successful).coerceAtLeast(cancelled)
-            val found = outcomes.flatMap { it.hits }
-            val seen = HashSet<String>()
-            val filtered = found.filter { hit ->
+            val found = outcomes.flatMap { it.hits }.filter { hit ->
                 CareerSourceCatalog.isTrustedUrl(hit.url) &&
-                    CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet) &&
-                    seen.add(fingerprint(hit.title, hit.url))
-            }.sortedByDescending {
+                    CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
+            }
+            val filtered = deduplicateHits(found).sortedByDescending {
                 CareerEligibility.relevance(it.title, it.snippet, city)
             }
 
@@ -1352,7 +1474,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
             val partialWarning = if (batch.failedQueries > 0) {
                 "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir. " +
-                    batch.errorMessages.take(3).joinToString(" | ")
+                    (CareerSearchEngine.friendlyDiagnostics(batch.errorMessages.joinToString(" | ")) ?: "Bazı arama sorguları sonuç döndürmedi.")
             } else null
             val freshForAlerts = fresh.filter { hit ->
                 CareerListingParser.deadlineStatus(hit.snippet)
