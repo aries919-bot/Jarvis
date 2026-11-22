@@ -34,6 +34,21 @@ class CareerCadreRadarTest {
     }
 
     @Test
+    fun electricAssociateQualificationCodeIsGroundedAndGraduationRequired() {
+        assertEquals(3290, CareerCadreRadar.P93_ELECTRIC_PROGRAM_CODE)
+        assertTrue(CareerCadreRadar.P93_ELECTRIC_TEDAS_NOTE.contains("Elektrik veya Elektrik Teknolojisi"))
+        assertTrue(CareerCadreRadar.P93_ELECTRIC_TEDAS_NOTE.contains("Mezuniyet"))
+        assertTrue(CareerCadreRadar.P94_ELECTRIC_CODE_NOTE.contains("2023 kodu"))
+    }
+
+    @Test
+    fun tedasElectricalTechnicianIsShownAsHistoricalP93Example() {
+        val entry = CareerCadreRadar.p93History.firstOrNull { it.title.contains("Elektrik (3290)") }
+        assertTrue(entry != null)
+        assertTrue(entry!!.institutionExamples.contains("TEDAŞ"))
+    }
+
+    @Test
     fun differentRecruitmentRoutesAreNotCollapsedIntoOneType() {
         val titles = CareerCadreRadar.recruitmentRoutes.map { it.first }
         assertTrue(titles.contains("KPSS merkezi yerleştirme"))
