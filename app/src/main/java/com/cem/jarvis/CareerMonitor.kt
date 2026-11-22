@@ -899,23 +899,36 @@ object CareerMonitorScheduler {
     }
 
     fun scheduleProcessReminders(context: Context, event: CareerProcessEvent) {
+        val normalized = event.title.lowercase(Locale("tr", "TR"))
+            .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+            .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+            .replace(Regex("""\s+"""), " ").trim()
+        val familyKey = normalized + "|" + event.url.substringBefore("#") + "|" + event.stage
+        val familyId = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(familyKey.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }.take(24)
+        val baseName = "aries-process-" + familyId
+        val workManager = androidx.work.WorkManager.getInstance(context)
+
+        // Aynı duyurunun tarihi değişirse eski hatırlatma iptal edilip yenisi kurulur.
+        workManager.cancelUniqueWork(baseName + "-day")
+        workManager.cancelUniqueWork(baseName + "-hour")
+
         val eventAt = event.eventAt ?: return
-        val now = System.currentTimeMillis()
-        enqueueProcessReminder(context, event, "day", eventAt - TimeUnit.DAYS.toMillis(1))
+        enqueueProcessReminder(context, event, baseName + "-day", eventAt - TimeUnit.DAYS.toMillis(1))
         if (event.hasExplicitTime) {
-            enqueueProcessReminder(context, event, "hour", eventAt - TimeUnit.HOURS.toMillis(1))
+            enqueueProcessReminder(context, event, baseName + "-hour", eventAt - TimeUnit.HOURS.toMillis(1))
         }
     }
 
     private fun enqueueProcessReminder(
         context: Context,
         event: CareerProcessEvent,
-        reminderKind: String,
+        uniqueName: String,
         reminderAt: Long
     ) {
         val delay = reminderAt - System.currentTimeMillis()
         if (delay <= 0L) return
-        val unique = "aries-process-" + event.id.take(24) + "-" + reminderKind
         val request = androidx.work.OneTimeWorkRequestBuilder<CareerProcessReminderWorker>()
             .setInitialDelay(delay, TimeUnit.MILLISECONDS)
             .setInputData(
@@ -924,13 +937,13 @@ object CareerMonitorScheduler {
                     "event_url" to event.url,
                     "event_stage" to event.stage,
                     "event_at" to (event.eventAt ?: 0L),
-                    "reminder_kind" to reminderKind
+                    "reminder_kind" to uniqueName.substringAfterLast("-")
                 )
             )
             .build()
         androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
-            unique,
-            androidx.work.ExistingWorkPolicy.KEEP,
+            uniqueName,
+            androidx.work.ExistingWorkPolicy.REPLACE,
             request
         )
     }
