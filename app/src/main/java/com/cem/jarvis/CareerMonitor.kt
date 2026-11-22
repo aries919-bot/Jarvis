@@ -190,10 +190,11 @@ object CareerSourceCatalog {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
             host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") -> "Kamu / e-Devlet hizmetleri"
-            host == "osym.gov.tr" || host.endsWith(".osym.gov.tr") ||
-                host == "kariyerkapisi.gov.tr" || host.endsWith(".kariyerkapisi.gov.tr") ||
-                host.endsWith(".cbiko.gov.tr") || host == "kamuilan.sbb.gov.tr" ->
+            host == "osym.gov.tr" || host.endsWith(".osym.gov.tr") ->
                 "Kamu / KPSS ve merkezi yerleştirme"
+            host == "kariyerkapisi.gov.tr" || host.endsWith(".kariyerkapisi.gov.tr") ||
+                host.endsWith(".cbiko.gov.tr") -> "Kamu / işe alım ve başvuru portalı"
+            host == "kamuilan.sbb.gov.tr" -> "Kamu / resmî personel ilanı"
             host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") -> "İŞKUR / açık iş ve program"
             listOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
                 .any { host == it || host.endsWith(".$it") } -> "Üniversite / kamu personel alımı"
