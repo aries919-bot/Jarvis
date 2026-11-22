@@ -33,6 +33,7 @@ class CareerActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ensureAutomaticTrackingDefault()
         val root = LinearLayout(this).apply {
             orientation = 1
             setPadding(dp(16), dp(18), dp(16), dp(12))
@@ -333,10 +334,42 @@ class CareerActivity : Activity() {
         if (displayed == 0) parent.addView(label("Son taramada gösterilecek ilan bağlantısı bulunamadı.", 12f, false, muted))
     }
 
+    private fun ensureAutomaticTrackingDefault() {
+        if (!prefs.getBoolean("career_monitor_auto_default_applied", false)) {
+            // The user explicitly requested morning/evening automation for this Aries career module.
+            prefs.edit()
+                .putBoolean("career_monitor_enabled", true)
+                .putBoolean("career_monitor_auto_default_applied", true)
+                .apply()
+        }
+    }
+
+    private fun queueFirstAutomaticScanIfNeeded() {
+        if (!prefs.getBoolean("career_monitor_enabled", false) ||
+            prefs.getBoolean("career_monitor_initialized", false) ||
+            prefs.getBoolean("career_monitor_initial_scan_queued", false)
+        ) return
+
+        prefs.edit().putBoolean("career_monitor_initial_scan_queued", true).apply()
+        CareerMonitorScheduler.ensureChannel(this)
+        CareerMonitorScheduler.schedule(this)
+        CareerMonitorScheduler.runManualNow(this)
+        monitorStatus.text = "İlk tam kaynak taraması sıraya alındı. Sonuçlar geldiğinde burada listelenecek."
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            !prefs.getBoolean("career_monitor_notification_request_attempted", false)
+        ) {
+            prefs.edit().putBoolean("career_monitor_notification_request_attempted", true).apply()
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 74031)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         CareerMonitorScheduler.scheduleIfEnabled(this)
         if (::monitorStatus.isInitialized) {
+            queueFirstAutomaticScanIfNeeded()
             refreshMonitorStatus()
             if (::dailyResultsContainer.isInitialized) showDailyResults(dailyResultsContainer)
         }
