@@ -40,6 +40,8 @@ class CareerActivity : Activity() {
     private var searchPage = 0
     private var searchFilter = 0
     private var hasSearchRun = false
+    private var searchDiagnostic = ""
+    private var searchFailure: String? = null
     private var savedPage = 0
     private var dailyItems: List<JSONObject> = emptyList()
     private var dailyPage = 0
@@ -145,16 +147,28 @@ class CareerActivity : Activity() {
         filtersCard.addView(label("Arama tercihlerin", 15f, true))
         filtersCard.addView(label("Aranacak pozisyon", 12f, true, muted))
         role = field(
-            prefs.getString("career_role", "Elektrik teknisyeni / pano montajı / bakım-onarım / üretim / depo / operatör / satış / beden işçisi").orEmpty(),
+            prefs.getString("career_role", "Elektrik teknisyeni, pano montajı, bakım, üretim").orEmpty(),
             "Örn. elektrik teknisyeni", false
-        )
-        filtersCard.addView(role, params(-1, dp(50), 0, 4, 0, 10))
+        ).apply {
+            setSingleLine(false)
+            minLines = 1
+            maxLines = 2
+            setHorizontallyScrolling(false)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        filtersCard.addView(role, params(-1, dp(64), 0, 4, 0, 10))
         filtersCard.addView(label("Şehir / bölge", 12f, true, muted))
         place = field(
-            prefs.getString("career_place", "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli").orEmpty(),
+            prefs.getString("career_place", "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman").orEmpty(),
             "Örn. Malatya veya Türkiye geneli", false
-        )
-        filtersCard.addView(place, params(-1, dp(50), 0, 4, 0, 10))
+        ).apply {
+            setSingleLine(false)
+            minLines = 1
+            maxLines = 2
+            setHorizontallyScrolling(false)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        filtersCard.addView(place, params(-1, dp(64), 0, 4, 0, 10))
         filtersCard.addView(label("İlan türü", 12f, true, muted))
         category = Spinner(this)
         category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, filters)
@@ -416,26 +430,41 @@ class CareerActivity : Activity() {
     private fun searchJobs() {
         val r = role.text.toString().trim()
         val p = place.text.toString().trim()
-        if (r.isBlank()) { toast("Önce pozisyon yaz."); return }
+        if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
         saveCv(showToast = false)
         search.isEnabled = false
-        search.text = "Kaynaklar aranıyor…"
+        search.text = "Arama sürüyor…"
+        searchFailure = null
+        searchDiagnostic = ""
         results.removeAllViews()
-        results.addView(label("Kamu, İŞKUR, belediye ve işveren kaynakları taranıyor…", 13f, false, muted))
+        results.addView(label("Arama sağlayıcıları sırayla deneniyor. Eşleşen güvenilir kaynaklar kontrol ediliyor…", 13f, false, muted))
         Thread {
-            val hits = try {
-                CareerSearchEngine.search(category.selectedItemPosition, r, p)
-            } catch (_: Exception) {
+            val batch = try {
+                CareerSearchEngine.searchBatch(category.selectedItemPosition, r, p)
+            } catch (error: Exception) {
                 null
             }
+            val failure = if (batch == null) {
+                "Arama işlemi başlatılamadı. İnternet bağlantısını kontrol edip yeniden dene."
+            } else if (!batch.hasAnySuccessfulQuery) {
+                "Arama sağlayıcılarının hiçbiri yanıt vermedi."
+            } else null
+
             runOnUiThread {
                 search.isEnabled = true
-                search.text = "İlanları şimdi ara"
-                searchHits = hits?.take(50).orEmpty()
+                search.text = "İlanları yeniden ara"
+                searchHits = batch?.hits?.take(60).orEmpty()
                 searchPage = 0
                 searchFilter = 0
                 hasSearchRun = true
-                renderSearchResults(hits == null)
+                searchFailure = failure
+                searchDiagnostic = if (batch == null) {
+                    "Arama sonucu alınamadı."
+                } else {
+                    "Çalışan sorgu: ${batch.successfulQueries}/${batch.totalQueries} · Tamamlanamayan: ${batch.failedQueries}" +
+                        (batch.errorMessages.take(3).joinToString(" | ").takeIf { it.isNotBlank() }?.let { "\n$it" } ?: "")
+                }
+                renderSearchResults(failure != null)
             }
         }.start()
     }
@@ -444,7 +473,9 @@ class CareerActivity : Activity() {
         if (!::results.isInitialized) return
         results.removeAllViews()
         if (failed) {
-            results.addView(label("Tarama tamamlanamadı. İnternet bağlantısını kontrol edip yeniden dene.", 13f, false, muted))
+            results.addView(label(searchFailure ?: "Tarama tamamlanamadı.", 13f, true, Color.rgb(255, 190, 110)))
+            if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 11f, false, muted))
+            results.addView(button("Yeniden dene") { searchJobs() }, params(-1, dp(44), 0, 6, 0, 6))
             return
         }
         if (!hasSearchRun) {
@@ -452,7 +483,13 @@ class CareerActivity : Activity() {
             return
         }
         if (searchHits.isEmpty()) {
-            results.addView(label("Bu aramada ilan adayı bulunamadı. Bazı siteler giriş gerektirebilir veya arama motorunda listelenmiyor olabilir.", 13f, false, muted))
+            results.addView(label("Arama servisleri yanıt verdi ancak bu filtrede güvenilir kaynaklardan eşleşen bir ilan bağlantısı çıkarılamadı. Bu, iş ilanı yok anlamına gelmez.", 13f, false, muted))
+            if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 11f, false, muted))
+            results.addView(button("Daha geniş arama yap") {
+                role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
+                category.setSelection(0)
+                searchJobs()
+            }, params(-1, dp(44), 0, 6, 0, 6))
             return
         }
 
@@ -501,6 +538,7 @@ class CareerActivity : Activity() {
             visibleHits.size.toString() + " kayıt · Sayfa " + (searchPage + 1) + "/" + totalPages,
             12f, true, Color.rgb(116, 207, 220)
         ))
+        if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 10f, false, muted))
         val start = searchPage * pageSize
         visibleHits.drop(start).take(pageSize).forEachIndexed { index, hit ->
             showHit(start + index + 1, hit)
