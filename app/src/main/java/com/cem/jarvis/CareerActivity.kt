@@ -1408,6 +1408,13 @@ class CareerActivity : Activity() {
             "ÖSYM KPSS-2026/1 TABLO-1’de görülen geçmiş unvan örnekleri. Yeni dönemde tekrar açılacakları garanti değildir.",
             CareerCadreRadar.p94History
         )
+        val p94CodeNote = panel()
+        p94CodeNote.addView(label("P94 · Elektrik alanı nitelik kodu kontrolü", 13f, true, primaryText))
+        p94CodeNote.addView(label(
+            "2023 kodu: " + CareerCadreRadar.P94_ELECTRIC_CODE_NOTE,
+            11f, false, warningColor
+        ))
+        content.addView(p94CodeNote, params(-1, -2, 0, 8, 0, 8))
 
         val associateNote = panel()
         associateNote.addView(label("Ön lisans · KPSS P93", 16f, true, primaryText))
@@ -1417,6 +1424,13 @@ class CareerActivity : Activity() {
             11f, false, muted
         ))
         content.addView(associateNote, params(-1, -2, 0, 8, 0, 4))
+        val p93ElectricNote = panel()
+        p93ElectricNote.addView(label("Elektrik ön lisans programı · 3290 nitelik kodu", 13f, true, accentColor))
+        p93ElectricNote.addView(label(
+            CareerCadreRadar.P93_ELECTRIC_TEDAS_NOTE,
+            11f, true, warningColor
+        ))
+        content.addView(p93ElectricNote, params(-1, -2, 0, 8, 0, 8))
         addCadreSection(
             "P93 geçmiş unvan örnekleri",
             "ÖSYM KPSS-2026/1 TABLO-2’de görülen unvanlar. Elektrik ön lisans programı her tekniker kadrosuna otomatik uygunluk sağlamaz.",
