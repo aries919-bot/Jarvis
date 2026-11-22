@@ -1144,7 +1144,7 @@ class CareerActivity : Activity() {
     private fun field(value: String, hintText: String, multi: Boolean) = EditText(this).apply {
         setText(value)
         hint = hintText
-        textSize = 14f
+        textSize = 15f
         setTextColor(Color.WHITE)
         setHintTextColor(muted)
         setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -1162,7 +1162,8 @@ class CareerActivity : Activity() {
 
     private fun button(value: String, action: () -> Unit) = Button(this).apply {
         text = value
-        textSize = 11f
+        textSize = 12f
+        minHeight = dp(44)
         isAllCaps = false
         setTextColor(Color.WHITE)
         setPadding(dp(10), dp(4), dp(10), dp(4))
