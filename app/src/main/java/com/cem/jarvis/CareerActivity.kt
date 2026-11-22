@@ -31,7 +31,7 @@ class CareerActivity : Activity() {
     private var processPage = 0
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
+    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları")
     private val muted = Color.rgb(154, 161, 178)
     private lateinit var monitorStatus: TextView
     private lateinit var pageScroll: ScrollView
