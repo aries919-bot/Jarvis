@@ -116,7 +116,16 @@ class CareerMonitorPolicyTest {
             "Son başvuru tarihi: 01.01.2020",
             java.text.SimpleDateFormat("dd.MM.yyyy").parse("22.11.2026")!!.time
         )
-        assertTrue(expired!!.startsWith("SÜRESİ GEÇMİŞ OLABİLİR"))
+        assertTrue(expired!!.startsWith("SÜRESİ GEÇMİŞ"))
+        assertEquals(
+            "23.11.2026",
+            CareerListingParser.deadlineDate("Son başvuru tarihi: 23 Kasım 2026")
+        )
+        val future = CareerListingParser.deadlineStatus(
+            "Son müracaat tarihi: 23 Kasım 2026",
+            java.text.SimpleDateFormat("dd.MM.yyyy").parse("22.11.2026")!!.time
+        )
+        assertTrue(future!!.startsWith("SON TARİH BİLGİSİ"))
     }
 
     @Test
