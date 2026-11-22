@@ -35,6 +35,8 @@ object CareerSourceCatalog {
         Source("ASELSAN Kariyer", "https://akariyer.aselsan.com/", "Özel sektör"),
         Source("MKE Kariyer – ilanlar", "https://kariyer.mke.gov.tr/ilanlar", "Kamu şirketi / kariyer"),
         Source("Eti Maden Duyurular", "https://www.etimaden.gov.tr/duyurular", "Kamu şirketi"),
+        Source("TÜBİTAK Kariyer", "https://kariyer.tubitak.gov.tr/", "Kamu / teknik personel"),
+        Source("TÜRKŞEKER Duyurular", "https://www.turkseker.gov.tr/?MenuID=52&ModulID=9", "Kamu şirketi"),
         Source("Şişecam Kariyer", "https://www.sisecam.com/tr/kariyer", "Özel sektör"),
         Source("Türk Telekom Kariyer", "https://www.turktelekomkariyer.com.tr/", "Özel sektör"),
         Source("TCDD", "https://www.tcdd.gov.tr/", "Kamu şirketi"),
@@ -54,7 +56,7 @@ object CareerSourceCatalog {
     )
 
     private val trustedDomains = listOf(
-        "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
+        "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr"
@@ -152,6 +154,8 @@ object CareerSearchEngine {
             "site:euas.gov.tr kariyer personel alımı teknisyen 2026",
             "site:kariyer.mke.gov.tr elektrik teknisyen personel ilanları 2026",
             "site:etimaden.gov.tr personel işçi KPSS alımı duyurular 2026",
+            "site:kariyer.tubitak.gov.tr teknik personel açık pozisyon personel alımı 2026",
+            "site:turkseker.gov.tr personel işçi tekniker alımı duyurular 2026",
             "site:botas.gov.tr personel alımı teknisyen 2026",
             "site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
             "site:tei.com.tr OR site:havelsan.com kariyer teknisyen elektrik 2026"
@@ -199,7 +203,7 @@ object CareerSearchEngine {
             "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr belediye işçi personel alımı 2026",
             "site:kariyer.tusas.com OR site:kariyer.roketsan.com.tr OR site:akariyer.aselsan.com teknisyen açık pozisyon 2026",
             "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr OR site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
-            "site:kariyer.mke.gov.tr OR site:etimaden.gov.tr personel alımı teknisyen işçi kariyer 2026",
+            "site:kariyer.mke.gov.tr OR site:etimaden.gov.tr OR site:kariyer.tubitak.gov.tr OR site:turkseker.gov.tr personel alımı teknisyen işçi kariyer 2026",
             "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com OR site:enerjisa.com.tr teknisyen elektrik kariyer iş ilanı 2026",
             "site:sisecam.com OR site:turktelekomkariyer.com.tr açık pozisyon üretim teknisyen 2026"
         )
