@@ -1005,6 +1005,7 @@ class CareerActivity : Activity() {
             "Kamu / kamu bağlantılı" -> "KAMU KURUMU · " + CareerSourceCatalog.sourceName(hit.url)
             "KİT / kamu şirketi alımı · usul doğrulanmalı" -> "KİT / KAMU ŞİRKETİ · İŞVEREN ALIMI · usul ilanda doğrulanmalı"
             "Savunma sanayii / şirket alımı" -> "SAVUNMA SANAYİİ · ŞİRKET İŞVERENİ · kamu memur ataması değildir"
+            "Özel sektör" -> "ÖZEL SEKTÖR · İŞVERENİN KARİYER PORTALI / İLANI"
             "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI · şart ilanda açıkça belirtilmiş"
             "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · kurumun kamu/özel statüsünü doğrula"
             "Kura duyurusu · şirket süreci doğrulanmalı" -> "ŞİRKET KURA DUYURUSU · işveren sürecini doğrula"
