@@ -21,6 +21,11 @@ object CareerSourceCatalog {
     data class Source(val name: String, val url: String, val category: String, val official: Boolean = true)
 
     val sources = listOf(
+        Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/arama?aranan=kamu+al%C4%B1m", "Kamu / e-Devlet hizmetleri"),
+        Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
+        Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
+        Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
+        Source("Adıyaman Üniversitesi – Personel Daire Başkanlığı", "https://pdb.adiyaman.edu.tr/tr/duyurular", "Üniversite / kamu personel"),
         Source("Kariyer Kapısı – Kamu işe alım", "https://kariyerkapisi.gov.tr/", "Kamu"),
         Source("Kariyer Kapısı eski işe alım bağlantısı", "https://isealimkariyerkapisi.cbiko.gov.tr/", "Kamu / eski adres"),
         Source("ÖSYM – KPSS tercih ve yerleştirme duyuruları", "https://www.osym.gov.tr/Duyurular/Index", "Kamu / KPSS"),
@@ -105,6 +110,7 @@ object CareerSourceCatalog {
     )
 
     private val trustedDomains = listOf(
+        "turkiye.gov.tr", "ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr",
         "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
@@ -158,6 +164,9 @@ object CareerSourceCatalog {
         return when {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
+            host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") -> "Kamu / e-Devlet hizmetleri"
+            listOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
+                .any { host == it || host.endsWith(".$it") } -> "Üniversite / kamu personel alımı"
             host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
                 host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
                 host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
@@ -414,7 +423,8 @@ object CareerSearchEngine {
             "site:kariyerkapisi.gov.tr kamu işe alım personel ilanı lise KPSS $year $c",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise ortaöğretim personel alımı KPSS $year $c",
             "site:ilan.gov.tr personel alımı lise ortaöğretim KPSS $year $c",
-            "site:resmigazete.gov.tr personel alımı atama ortaöğretim KPSS $year $c"
+            "site:resmigazete.gov.tr personel alımı atama ortaöğretim KPSS $year $c",
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B sözleşmeli personel alımı KPSS ortaöğretim $year"
         )
         val publicNoKpss = listOf(
             "site:esube.iskur.gov.tr açık iş ilanı $r $c $year",
@@ -430,7 +440,8 @@ object CareerSearchEngine {
             "site:gov.tr kura sonuçları asıl yedek sınav mülakat personel $year",
             "site:bel.tr belediye şirketi personel işçi alımı başvuru $year $c",
             "site:malatyatso.org.tr İŞKUR açık iş ilanları $year",
-            "site:malorsa.org.tr personel alım ilanı Malatya OSB $year"
+            "site:malorsa.org.tr personel alım ilanı Malatya OSB $year",
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR kura personel işçi alımı sonuçları $year"
         )
         val privateSector = listOf(
             "site:akariyer.aselsan.com teknisyen elektrik üretim açık pozisyon",
@@ -670,7 +681,8 @@ object CareerSearchEngine {
             "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
             "site:ilan.gov.tr personel alımı lise KPSS $year",
-            "site:resmigazete.gov.tr atama personel alımı $year"
+            "site:resmigazete.gov.tr atama personel alımı $year",
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B personel alımı ön değerlendirme yedek sonuç kura $year"
         )
         val iskUrAndLocal = listOf(
             "site:esube.iskur.gov.tr $primaryCity açık iş elektrik teknisyen üretim depo işçi $year",
@@ -678,7 +690,8 @@ object CareerSearchEngine {
             "site:malatyatso.org.tr İŞKUR iş ilanları Malatya Yeşilyurt Battalgazi $year",
             "site:malorsa.org.tr Malatya Merkez 1 OSB personel alımı iş ilanı $year",
             "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr personel işçi alımı $year",
-            "site:yerelyonetimler.csb.gov.tr belediye personel işçi alımı $year"
+            "site:yerelyonetimler.csb.gov.tr belediye personel işçi alımı $year",
+            "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR Gençlik Programı kura sonuçları personel alımı $year"
         )
         val kuraQueries = listOf(
             "site:ogm.gov.tr noter kurası işçi alımı kuraya katılacaklar kura sonuçları $year",
