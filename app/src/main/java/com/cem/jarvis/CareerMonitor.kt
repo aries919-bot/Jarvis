@@ -701,7 +701,7 @@ object CareerRecruitmentTracker {
         "SINAV SONUCU" to listOf("sinav sonucu", "mulakat sonucu", "sozlu sinav sonucu", "yazili sinav sonucu"),
         "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurasi sonuc", "kura sonucu", "kura sonuclari", "asil ve yedek", "asil aday", "yedek aday"),
         "SINAV / MÜLAKAT TARİHİ" to listOf("sinav tarihi", "sinava girecek", "sozlu sinav", "yazili sinav", "mulakat tarihi"),
-        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("kura cekimi", "kura tarihi", "kuraya katilacak", "kura listesi"),
+        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("kura cekimi", "kura cekilisi", "kura tarihi", "kuraya katilacak", "noter kurasina katilacak", "kura listesi"),
         "EVRAK / BELGE KONTROLÜ" to listOf("evrak kontrol", "belge kontrol", "evrak teslim", "belgelerin teslim", "eksik evrak", "evrak inceleme"),
         "BAŞVURU / YENİ ALIM" to listOf(
             "personel alimi", "isci alimi", "iskur basvuru", "basvurular basladi",
@@ -730,7 +730,7 @@ object CareerRecruitmentTracker {
             stage?.startsWith("EVRAK") == true ->
                 Regex("""(?i)(?:evrak\s+teslim|belge(?:lerin)?\s+teslim|evrak\s+kontrol|belge\s+kontrol)""")
             stage?.startsWith("KURA TARİHİ") == true ->
-                Regex("""(?i)(?:kura\s+(?:çekimi|tarihi|cekimi)|kuraya\s+katılacak|kuraya\s+katilacak|noter\s+huzurunda)""")
+                Regex("""(?i)(?:kura\s+(?:çekimi|çekilişi|tarihi|cekimi|cekilisi)|kuraya\s+katılacak|kuraya\s+katilacak|noter\s+kurasına\s+katılacak|noter\s+kurasina\s+katilacak|noter\s+huzurunda)""")
             stage?.startsWith("SINAV /") == true ->
                 Regex("""(?i)(?:sınav(?:ın)?\s*(?:yeri|tarihi)?|sinav(?:in)?\s*(?:yeri|tarihi)?|mülakat\s+tarihi|mulakat\s+tarihi)""")
             stage?.startsWith("NOTER KURASI SONUCU") == true ||
@@ -808,17 +808,17 @@ object CareerRecruitmentTracker {
         val added = ArrayList<CareerProcessEvent>()
         val now = System.currentTimeMillis()
 
-        hits.forEach { hit ->
+        hits.forEach hitLoop@ { hit ->
             val stages = detectStages(hit.title, hit.snippet)
-            if (stages.isEmpty()) return@forEach
+            if (stages.isEmpty()) return@hitLoop
             val normalizedTitle = normalize(hit.title).replace(Regex("""\s+"""), " ").trim()
-            stages.forEach { stage ->
+            stages.forEach stageLoop@ { stage ->
                 val parsed = parseEventTime(hit.title, hit.snippet, stage)
                 val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage + "|" + (parsed?.first ?: 0L)
                 val id = java.security.MessageDigest.getInstance("SHA-256")
                     .digest(rawId.toByteArray(Charsets.UTF_8))
                     .joinToString("") { "%02x".format(it) }
-                if (!seen.add(id)) return@forEach
+                if (!seen.add(id)) return@stageLoop
                 val event = CareerProcessEvent(
                     id = id,
                     title = hit.title,
