@@ -81,7 +81,7 @@ object Net {
             .replace(Regex("\\s+"), " ").trim()
 
     // Anahtarsız web araması: DuckDuckGo'nun yazı tabanlı sayfasından sonuçları çeker.
-    fun webSearch(query: String): List<Hit> {
+    fun webSearch(query: String, maxResults: Int = 5): List<Hit> {
         val url = "https://html.duckduckgo.com/html/?kl=tr-tr&q=" + URLEncoder.encode(query, "UTF-8")
         val c = URL(url).openConnection() as HttpURLConnection
         c.requestMethod = "GET"
@@ -96,7 +96,7 @@ object Net {
         val snips = Regex("<a[^>]*class=\"result__snippet\"[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL).findAll(html).toList()
         val out = ArrayList<Hit>()
         for (i in links.indices) {
-            if (out.size >= 5) break
+            if (out.size >= maxResults.coerceIn(1, 15)) break
             var href = links[i].groupValues[1].replace("&amp;", "&")
             val m = Regex("[?&]uddg=([^&]+)").find(href)
             if (m != null) href = java.net.URLDecoder.decode(m.groupValues[1], "UTF-8")
