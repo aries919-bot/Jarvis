@@ -140,33 +140,34 @@ class CareerActivity : Activity() {
         monitorStatus.text = "Durum: Manuel tarama kuyruğa alındı. Resmî ilanlar ve iş platformları kontrol ediliyor."
         val workId = CareerMonitorScheduler.runManualNow(this)
         val live = androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(workId)
-        lateinit var observer: androidx.lifecycle.Observer<androidx.work.WorkInfo?>
-        observer = androidx.lifecycle.Observer { info ->
-            if (info == null) return@Observer
-            when (info.state) {
-                androidx.work.WorkInfo.State.ENQUEUED,
-                androidx.work.WorkInfo.State.BLOCKED -> {
-                    monitorStatus.text = "Durum: Tarama internet bağlantısı bekliyor veya sıraya alındı."
-                }
-                androidx.work.WorkInfo.State.RUNNING -> {
-                    monitorStatus.text = "Durum: Kamu, İŞKUR, belediye, işveren ve ilan platformları taranıyor…"
-                }
-                androidx.work.WorkInfo.State.SUCCEEDED -> {
-                    showDailyResults(dailyResultsContainer)
-                    refreshMonitorStatus()
-                    manualScanButton.isEnabled = true
-                    manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
-                    val count = prefs.getInt("career_monitor_result_count", 0)
-                    toast("Tarama tamamlandı. $count bağlantı sonucu değerlendirildi.")
-                    live.removeObserver(observer)
-                }
-                androidx.work.WorkInfo.State.FAILED,
-                androidx.work.WorkInfo.State.CANCELLED -> {
-                    refreshMonitorStatus()
-                    manualScanButton.isEnabled = true
-                    manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
-                    toast("Tarama tamamlanamadı. Durum bölümünü kontrol et.")
-                    live.removeObserver(observer)
+        val observer = object : androidx.lifecycle.Observer<androidx.work.WorkInfo?> {
+            override fun onChanged(info: androidx.work.WorkInfo?) {
+                if (info == null) return
+                when (info.state) {
+                    androidx.work.WorkInfo.State.ENQUEUED,
+                    androidx.work.WorkInfo.State.BLOCKED -> {
+                        monitorStatus.text = "Durum: Tarama internet bağlantısı bekliyor veya sıraya alındı."
+                    }
+                    androidx.work.WorkInfo.State.RUNNING -> {
+                        monitorStatus.text = "Durum: Kamu, İŞKUR, belediye, işveren ve ilan platformları taranıyor…"
+                    }
+                    androidx.work.WorkInfo.State.SUCCEEDED -> {
+                        showDailyResults(dailyResultsContainer)
+                        refreshMonitorStatus()
+                        manualScanButton.isEnabled = true
+                        manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
+                        val count = prefs.getInt("career_monitor_result_count", 0)
+                        toast("Tarama tamamlandı. $count bağlantı sonucu değerlendirildi.")
+                        live.removeObserver(this)
+                    }
+                    androidx.work.WorkInfo.State.FAILED,
+                    androidx.work.WorkInfo.State.CANCELLED -> {
+                        refreshMonitorStatus()
+                        manualScanButton.isEnabled = true
+                        manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
+                        toast("Tarama tamamlanamadı. Durum bölümünü kontrol et.")
+                        live.removeObserver(this)
+                    }
                 }
             }
         }
