@@ -148,12 +148,12 @@ object CareerSourceCatalog {
         return when {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
-            host.endsWith(".gov.tr") || host.endsWith(".bel.tr") ||
-                host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
+            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
                 host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
                 host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
-            host.contains("malatya.bel.tr") || host.contains("battalgazi.bel.tr") ||
-                host.contains("yesilyurt.bel.tr") || host.contains("csb.gov.tr") -> "Belediye / kamu"
+            host.endsWith(".bel.tr") || host.contains("malatya.bel.tr") ||
+                host.contains("battalgazi.bel.tr") || host.contains("yesilyurt.bel.tr") -> "Belediye / kamu"
+            host.endsWith(".gov.tr") || host.contains("csb.gov.tr") -> "Kamu / resmî kurum"
             host.contains("ogm.gov.tr") || host.contains("kgm.gov.tr") || host.contains("ant.gov.tr") -> "Kamu / kura ve işçi alımı"
             host.contains("tcdd") || host.contains("teias.gov.tr") || host.contains("euas.gov.tr") ||
                 host.contains("mke.gov.tr") || host.contains("etimaden.gov.tr") ||
