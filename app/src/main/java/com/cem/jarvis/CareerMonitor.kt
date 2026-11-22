@@ -29,6 +29,9 @@ object CareerSourceCatalog {
         Source("İŞKUR Açık İş Haritası", "https://acikisharita.iskur.gov.tr/", "İŞKUR / açık iş"),
         Source("ilan.gov.tr – Personel alımı", "https://www.ilan.gov.tr/", "Resmî ilan"),
         Source("Resmî Gazete", "https://www.resmigazete.gov.tr/", "Resmî ilan"),
+        Source("Orman Genel Müdürlüğü – kura ve işçi alımı", "https://www.ogm.gov.tr/", "Kamu / kura ve işçi alımı"),
+        Source("Karayolları Genel Müdürlüğü – kura ve işçi alımı", "https://www.kgm.gov.tr/", "Kamu / kura ve işçi alımı"),
+        Source("ANT Başkanlığı – personel ve kura duyuruları", "https://www.ant.gov.tr/haberler.html", "Kamu / kura ve işçi alımı"),
         Source("Yerel Yönetimler Genel Müdürlüğü", "https://yerelyonetimler.csb.gov.tr/", "Belediye"),
         Source("Malatya Büyükşehir Belediyesi", "https://www.malatya.bel.tr/", "Belediye"),
         Source("Battalgazi Belediyesi", "https://www.battalgazi.bel.tr/", "Belediye"),
@@ -82,7 +85,7 @@ object CareerSourceCatalog {
 
     private val trustedDomains = listOf(
         "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
-        "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
+        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
         "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
@@ -129,6 +132,7 @@ object CareerSourceCatalog {
                 host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
             host.contains("malatya.bel.tr") || host.contains("battalgazi.bel.tr") ||
                 host.contains("yesilyurt.bel.tr") || host.contains("csb.gov.tr") -> "Belediye / kamu"
+            host.contains("ogm.gov.tr") || host.contains("kgm.gov.tr") || host.contains("ant.gov.tr") -> "Kamu / kura ve işçi alımı"
             host.contains("tcdd") || host.contains("teias.gov.tr") || host.contains("euas.gov.tr") ||
                 host.contains("mke.gov.tr") || host.contains("etimaden.gov.tr") ||
                 host.contains("botas.gov.tr") || host.contains("turkseker.gov.tr") -> "Kamu kurumu / kamu şirketi"
@@ -151,7 +155,10 @@ object CareerSourceCatalog {
             "açık pozisyon", "acik pozisyon", "başvuru", "basvuru", "son başvuru",
             "son basvuru", "teknisyen", "tekniker", "memur", "işkur", "iskur",
             "kpss", "üretim", "uretim", "bakım", "bakim", "elektrik", "pano",
-            "operatör", "operator", "depo", "satış", "satis", "kasiyer", "şoför", "sofor"
+            "operatör", "operator", "depo", "satış", "satis", "kasiyer", "şoför", "sofor",
+            "kura", "noter", "asıl aday", "asil aday", "yedek aday", "evrak teslim",
+            "evrak kontrol", "sınav tarihi", "sinav tarihi", "sınav sonucu", "sinav sonucu",
+            "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "kuraya katılacak"
         )
         return indicators.any(text::contains)
     }
@@ -358,7 +365,8 @@ data class CareerScanBatch(
     val hits: List<Net.Hit>,
     val successfulQueries: Int,
     val failedQueries: Int,
-    val totalQueries: Int
+    val totalQueries: Int,
+    val errorMessages: List<String> = emptyList()
 ) {
     val hasAnySuccessfulQuery: Boolean get() = successfulQueries > 0
 }
