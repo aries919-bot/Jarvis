@@ -127,11 +127,11 @@ object CareerEmployerResearcher {
         for (script in scripts) {
             val block = script.groupValues[1]
             val name = Regex(
-                """"hiringOrganization"\s*:\s*\{.{0,500}?"name"\s*:\s*"((?:\\.|[^"])*)""""
+                """(?is)"hiringOrganization"\s*:\s*\{.{0,500}?"name"\s*:\s*"((?:\\.|[^"])*)""""
             ).find(block)?.groupValues?.getOrNull(1)
             if (!name.isNullOrBlank()) return name.replace("\\/", "/").take(200)
             val jobTitleEmployer = Regex(
-                """"@type"\s*:\s*"Organization".{0,300}?"name"\s*:\s*"((?:\\.|[^"])*)""""
+                """(?is)"@type"\s*:\s*"Organization".{0,300}?"name"\s*:\s*"((?:\\.|[^"])*)""""
             ).find(block)?.groupValues?.getOrNull(1)
             if (!jobTitleEmployer.isNullOrBlank()) return jobTitleEmployer.take(200)
         }
