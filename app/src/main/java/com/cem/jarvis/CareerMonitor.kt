@@ -703,7 +703,11 @@ object CareerRecruitmentTracker {
         "SINAV / MÜLAKAT TARİHİ" to listOf("sinav tarihi", "sinava girecek", "sozlu sinav", "yazili sinav", "mulakat tarihi"),
         "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("noter kurasi", "kura cekimi", "kura tarihi", "kuraya katilacak", "kura listesi"),
         "EVRAK / BELGE KONTROLÜ" to listOf("evrak kontrol", "belge kontrol", "evrak teslim", "belgelerin teslim", "eksik evrak", "evrak inceleme"),
-        "BAŞVURU / YENİ ALIM" to listOf("personel alimi", "isci alimi", "iskur basvuru", "basvurular basladi", "son basvuru")
+        "BAŞVURU / YENİ ALIM" to listOf(
+            "personel alimi", "isci alimi", "iskur basvuru", "basvurular basladi",
+            "son basvuru", "is ilani", "is ilanlari", "acik pozisyon",
+            "kariyer firsati", "ise alim", "basvuruya acildi"
+        )
     )
 
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
