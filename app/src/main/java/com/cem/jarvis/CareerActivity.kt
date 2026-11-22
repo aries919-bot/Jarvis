@@ -342,12 +342,12 @@ class CareerActivity : Activity() {
 
     private fun buildDefaultCvText(): String = """
         PROFİL ÖZETİ
-        Elektrik-Elektronik Teknolojisi alanında mesleki lise eğitimi almış, Elektrik Tesisatları ve Pano Montörlüğü dalından mezun; Elektrik ön lisans eğitimine devam eden teknik personel adayıyım. Elektrik bakım, pano montajı ve üretim alanlarında kendimi geliştirmeyi hedefliyorum.
+        Elektrik ön lisans programında eğitimine devam eden teknik personel adayıyım. Elektrik bakım, pano montajı ve üretim alanlarında çalışmayı hedefliyorum. Elektrik bakım, pano montajı ve üretim alanlarında kendimi geliştirmeyi hedefliyorum.
 
         EĞİTİM
         Lise adı: [OKULUN TAM ADINI EKLE]
-        Alan: Elektrik-Elektronik Teknolojisi
-        Dal: Elektrik Tesisatları ve Pano Montörlüğü
+        Alan: [DİPLOMADAKİ ALANI EKLE]
+        Dal: [DİPLOMADAKİ DALI EKLE]
         Mezuniyet yılı: [YILI EKLE]
 
         Turgut Özal Üniversitesi – Arapgir MYO
