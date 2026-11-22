@@ -945,6 +945,7 @@ object CareerMonitorScheduler {
                     "event_url" to event.url,
                     "event_stage" to event.stage,
                     "event_at" to (event.eventAt ?: 0L),
+                    "has_explicit_time" to event.hasExplicitTime,
                     "reminder_kind" to uniqueName.substringAfterLast("-")
                 )
             )
@@ -1025,6 +1026,7 @@ class CareerProcessReminderWorker(context: Context, params: androidx.work.Worker
         val url = inputData.getString("event_url").orEmpty()
         val stage = inputData.getString("event_stage").orEmpty()
         val eventAt = inputData.getLong("event_at", 0L)
+        val hasExplicitTime = inputData.getBoolean("has_explicit_time", false)
         val reminderKind = inputData.getString("reminder_kind").orEmpty()
         if (title.isBlank() || url.isBlank() || stage.isBlank()) {
             return androidx.work.ListenableWorker.Result.failure()
@@ -1035,11 +1037,13 @@ class CareerProcessReminderWorker(context: Context, params: androidx.work.Worker
         ) return androidx.work.ListenableWorker.Result.success()
 
         val time = if (eventAt > 0L) {
-            java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(java.util.Date(eventAt))
+            val format = if (hasExplicitTime) "dd.MM.yyyy HH:mm" else "dd.MM.yyyy"
+            java.text.SimpleDateFormat(format, Locale("tr", "TR")).format(java.util.Date(eventAt))
         } else "Tarih kaynak duyurusunda ayrıca kontrol edilmeli"
         val message = when (reminderKind) {
             "hour" -> "Etkinliğe yaklaşık 1 saat kaldı: " + time
-            else -> "Yarın için takip hatırlatması: " + time
+            else -> "Yarın için takip hatırlatması: " + time +
+                if (hasExplicitTime) "" else " · Duyuruda saat belirtilmemiş."
         }
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         val requestCode = (url.hashCode() and 0x7fffffff).coerceAtLeast(1)
