@@ -78,155 +78,312 @@ object CareerSourceCatalog {
     }
 
     fun isSecondary(url: String): Boolean = url.contains("malatyatso.org.tr", ignoreCase = true)
+
+    fun categoryFor(url: String): String {
+        val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT) }.getOrDefault("")
+        return when {
+            isSecondary(url) || host.contains("iskur.gov.tr") -> "İŞKUR / KPSS'siz işçi"
+            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") ||
+                host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
+                host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
+            host.contains("malatya.bel.tr") || host.contains("battalgazi.bel.tr") ||
+                host.contains("yesilyurt.bel.tr") || host.contains("csb.gov.tr") -> "Belediye / kamu"
+            host.contains("tcdd") || host.contains("teias.gov.tr") || host.contains("euas.gov.tr") ||
+                host.contains("mke.gov.tr") || host.contains("etimaden.gov.tr") ||
+                host.contains("botas.gov.tr") || host.contains("turkseker.gov.tr") -> "Kamu kurumu / kamu şirketi"
+            else -> "Özel sektör / büyük şirket"
+        }
+    }
+
+    fun isLikelyJobResult(title: String, snippet: String): Boolean {
+        val text = (title + " " + snippet).lowercase(Locale("tr", "TR"))
+        val indicators = listOf(
+            "personel al", "işçi al", "is ilan", "iş ilan", "açık pozisyon", "acik pozisyon",
+            "kariyer", "başvuru", "basvuru", "son başvuru", "son basvuru", "teknisyen",
+            "tekniker", "memur", "işkur", "iskur", "kpss", "üretim", "uretim",
+            "bakım", "bakim", "elektrik", "pano", "operatör", "operator"
+        )
+        return indicators.any(text::contains)
+    }
 }
 
 object CareerEligibility {
     const val KPSS_P94 = 63.23366
+    const val HIGH_SCHOOL_FIELD_CODE_ELECTRIC_ELECTRONICS = 6013
+    const val HIGH_SCHOOL_BRANCH_CODE_PANEL_MOUNTING = 3
+    const val QUALIFICATION_CODE_ELECTRIC_ELECTRONICS = 2023
+    const val QUALIFICATION_CODE_RAIL_SYSTEMS = 2086
 
-    fun assess(title: String, snippet: String): String {
-        val text = "$title $snippet".lowercase()
-            .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
-            .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
-        val associateRequired = listOf("on lisans mezunu", "onlisans mezunu", "myo mezunu", "elektrik teknikeri")
-            .any { text.contains(it) }
-        if (associateRequired && !text.contains("lise mezunu") && !text.contains("meslek lisesi")) {
-            return "MEZUNİYET SONRASI · Ön lisans mezuniyeti şartı olabilir; şu an öğrenci olduğun için başvuruya uygun sayılmadı."
-        }
-        if (text.contains("kpss") && (text.contains("p3") || text.contains("p93"))) {
-            return "PUAN TÜRÜ UYUŞMUYOR · Bu ilandaki P3/P93 şartı, ortaöğretim P94 puanınla karşılanmaz."
-        }
-        if (text.contains("kpss")) {
-            val minScore = Regex("(?:en az|asgari|taban|en dusuk)\\s*(\\d{2,3})\\s*puan")
-                .find(text)?.groupValues?.getOrNull(1)?.toDoubleOrNull()
-            if (minScore != null && minScore > KPSS_P94) {
-                return "PUAN ŞARTI UYMUYOR · İlanda görünen taban puan $minScore; P94 puanın 63,23366."
-            }
-            if (text.contains("p94") || text.contains("ortaogretim") || text.contains("orta ogretim")) {
-                return if (minScore != null) "İLK ELEMEDE UYGUN · P94 puan şartı sağlanıyor görünüyor; diğer özel koşullar kontrol edilmeli."
-                else "ŞARTLARI DOĞRULA · P94/ortaöğretim ifadesi var; taban puan ve nitelik kodları ilanın tam metninden kontrol edilmeli."
-            }
-            return "KPSS ŞARTI BELİRSİZ · Puan türü ve taban puan ilanın tam metninden doğrulanmalı."
-        }
-        if (text.contains("elektrik") || text.contains("pano") || text.contains("bakim") ||
-            text.contains("teknisyen") || text.contains("teknik lise")) {
-            return "ALAN EŞLEŞMESİ VAR · Elektrik/teknik deneyiminle ilişkili; diploma, deneyim ve sertifika şartları kontrol edilmeli."
-        }
-        return "ŞARTLARI DOĞRULA · İlan bulundu; eğitim, yaş, deneyim ve başvuru koşulları tam metinden kontrol edilmeli."
+    private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
+        .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+        .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+
+    private fun hasExplicitAssociateRequirement(text: String): Boolean {
+        val phrases = listOf(
+            "on lisans mezunu olmak", "onlisans mezunu olmak", "myo mezunu olmak",
+            "on lisans programindan mezun", "onlisans programindan mezun",
+            "iki yillik yuksekogretim mezunu", "mezuniyet sarti: on lisans",
+            "elektrik programi mezunu olmak"
+        )
+        return phrases.any(text::contains)
     }
 
+    fun assess(title: String, snippet: String, url: String = ""): String {
+        val text = normalize("$title $snippet $url")
+        if (hasExplicitAssociateRequirement(text)) {
+            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. 2027’de mezuniyetin tamamlanmadan bu şartı karşılamazsın."
+        }
+
+        val requiresKpss = text.contains("kpss")
+        val p3 = Regex("\\bp\\s*3\\b").containsMatchIn(text)
+        val p93 = Regex("\\bp\\s*93\\b").containsMatchIn(text)
+        val p94 = Regex("\\bp\\s*94\\b").containsMatchIn(text)
+        if (requiresKpss && (p3 || p93) && !p94) {
+            return "PUAN TÜRÜ UYUŞMUYOR · İlan P3/P93 istiyor; ortaöğretim P94 puanın bu puan türlerinin yerine geçmez."
+        }
+
+        if (requiresKpss) {
+            val minScore = Regex(
+                "(?:en az|asgari|taban|en dusuk|min(?:imum)?)\\s*(?:kpss\\s*)?(?:p\\s*94\\s*)?(?:puan(?:i)?\\s*)?(\\d{2,3}(?:[.,]\\d+)?)\\s*puan?"
+            ).find(text)?.groupValues?.getOrNull(1)?.replace(',', '.')?.toDoubleOrNull()
+            if (minScore != null && minScore > KPSS_P94) {
+                return "PUAN ŞARTI UYUŞMUYOR · İlanda açıkça $minScore puan alt sınırı görünüyor; P94 puanın 63,23366."
+            }
+            if (p94 || text.contains("ortaogretim") || text.contains("orta ogretim")) {
+                return if (minScore == null) {
+                    "P94 İLE TERCİH DEĞERLENDİRMESİ · Merkezi yerleştirmede herkese uygulanan sabit bir taban puan varsayılmaz. 63,23366 puanınla tercih hakkın, ilgili nitelik kodları ve kontenjan/puan sıralamasına bağlıdır."
+                } else {
+                    "İLK PUAN KONTROLÜ GEÇİLDİ · İlanda görünen P94 alt sınırı 63,23366 puanını aşmıyor; öğrenim, nitelik kodu ve diğer şartlar ayrıca kontrol edilmeli."
+                }
+            }
+            return "KPSS ŞARTI BELİRSİZ · Puan türü ve varsa alt sınır ilanın tam metninden doğrulanmalı; uygunluk kesinleştirilmedi."
+        }
+
+        if (listOf("elektrik", "pano", "kablolama", "bakim", "teknisyen", "teknik lise")
+                .any(text::contains)) {
+            return "ALAN EŞLEŞMESİ VAR · Elektrik lise dalınla ilişkili. Diploma dalı, deneyim, vardiya, ehliyet ve sertifika şartları tam metinden kontrol edilmeli."
+        }
+        return "ŞARTLARI DOĞRULA · Başlık/özet tek başına yeterli değil; eğitim, şehir, deneyim ve son başvuru tarihi kaynak sayfasında kontrol edilmeli."
+    }
+
+    fun assessQualificationCodes(codes: Set<Int>): String {
+        if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
+            return "ALAN KODU EŞLEŞİYOR · 2023 nitelik kodu Elektrik-Elektronik Teknolojisi alanı mezuniyetini kapsar; 6013/3 dalın bu alan içindedir. Diğer kodlar da ayrıca sağlanmalı."
+        }
+        if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
+            return "ALAN KODU UYUŞMUYOR · 2086 Raylı Sistemler alanı/dalı şartıdır; Elektrik Tesisatları ve Pano Montörlüğü dalınla aynı değildir."
+        }
+        return "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamı ÖSYM kılavuzundaki açıklamalarıyla karşılaştırılmalı."
+    }
+
+    fun extractQualificationCodes(text: String): Set<Int> =
+        Regex("(?<!\\d)(20\\d{2})(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
+
+    fun normalizeForFingerprint(value: String): String = normalize(value)
+        .replace(Regex("[^a-z0-9 ]"), " ")
+        .replace(Regex("\\s+"), " ")
+        .trim()
+
     fun relevance(title: String, snippet: String, city: String): Int {
-        val text = "$title $snippet".lowercase()
-        var score = 0
-        listOf("elektrik", "pano", "kablolama", "bakım", "teknisyen", "tekniker", "otomasyon", "üretim", "işçi", "personel", "memur", "operatör", "depo", "satış", "kasiyer", "paketleme", "tekstil", "gıda", "lojistik", "temizlik", "şoför")
-            .forEach { if (text.contains(it)) score += 10 }
-        if (city.isNotBlank() && text.contains(city.lowercase())) score += 20
-        if (text.contains("son başvuru") || text.contains("başvuru tarihi")) score += 5
+        val text = normalize("$title $snippet")
+        val terms = listOf(
+            "elektrik", "pano", "kablolama", "bakim", "teknisyen", "tekniker",
+            "otomasyon", "uretim", "isci", "personel", "memur", "operator",
+            "depo", "satis", "kasiyer", "paketleme", "tekstil", "gida",
+            "lojistik", "temizlik", "sofor", "guvenlik", "cagri merkezi"
+        )
+        var score = terms.count { text.contains(normalize(it)) } * 8
+        if (city.isNotBlank() && text.contains(normalize(city))) score += 20
+        if (listOf("son basvuru", "basvuru tarihi", "personel alimi", "acik pozisyon", "is ilani")
+                .any(text::contains)) score += 8
         return score.coerceAtMost(100)
     }
 }
 
+data class CareerScanBatch(
+    val hits: List<Net.Hit>,
+    val successfulQueries: Int,
+    val failedQueries: Int,
+    val totalQueries: Int
+) {
+    val hasAnySuccessfulQuery: Boolean get() = successfulQueries > 0
+}
+
 /** DuckDuckGo sonuçları yalnızca keşif içindir; kayda giren bağlantılar güvenilir resmî alan adlarıyla sınırlıdır. */
+/** Arama motoru yalnızca keşif katmanıdır. Her gösterilen sonuç güvenilir kurum alan adıyla sınırlanır;
+ * sayfanın güncel ilan olduğunu doğrulamaz. Başvuru şartı ve son tarih ilanın kendisinden okunmalıdır. */
 object CareerSearchEngine {
     private fun queryList(category: Int, role: String, city: String): List<String> {
-        val r = role.ifBlank { "elektrik teknisyeni personel işçi" }
-        val c = city.ifBlank { "Türkiye" }
+        val r = role.ifBlank { "elektrik teknisyeni pano montaj bakım üretim işçi personel" }
+        val c = city.ifBlank { "Malatya Türkiye" }
         val publicKpss = listOf(
-            "site:osym.gov.tr KPSS tercih ortaöğretim P94 personel alımı 2026",
-            "site:kamuilan.sbb.gov.tr personel alımı ortaöğretim KPSS P94 2026 $c",
-            "site:isealimkariyerkapisi.cbiko.gov.tr KPSS ortaöğretim lise personel 2026",
+            "site:osym.gov.tr KPSS-2026/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
+            "site:osym.gov.tr KPSS ortaöğretim P94 2026/2 nitelik kodu 2023 2001",
+            "site:kamuilan.sbb.gov.tr personel alımı lise ortaöğretim KPSS P94 2026 $c",
+            "site:isealimkariyerkapisi.cbiko.gov.tr lise ortaöğretim personel alımı KPSS 2026 $c",
             "site:ilan.gov.tr personel alımı lise ortaöğretim KPSS 2026 $c",
-            "site:resmigazete.gov.tr personel alımı atama KPSS ortaöğretim 2026"
+            "site:resmigazete.gov.tr personel alımı atama ortaöğretim KPSS 2026 $c"
         )
         val publicNoKpss = listOf(
-            "site:iskur.gov.tr açık iş ilanı $r $c 2026",
-            "site:malatyatso.org.tr/iskur-ilanlari $r Malatya 2026 İŞKUR",
-            "site:yerelyonetimler.csb.gov.tr belediye işçi personel alımı 2026",
-            "site:malatya.bel.tr personel alımı iş ilanı 2026"
+            "site:esube.iskur.gov.tr açık iş ilanı $r $c 2026",
+            "site:acikisharita.iskur.gov.tr Malatya elektrik teknisyen işçi 2026",
+            "site:yerelyonetimler.csb.gov.tr belediye işçi personel alımı 2026 Malatya",
+            "site:malatya.bel.tr personel alımı iş ilanı 2026",
+            "site:battalgazi.bel.tr personel işçi alımı 2026",
+            "site:yesilyurt.bel.tr personel işçi alımı 2026",
+            "site:malatyatso.org.tr/iskur-ilanlari Malatya açık iş ilanları 2026"
         )
         val privateSector = listOf(
-            "site:kariyer.tusas.com teknisyen elektrik açık pozisyon 2026",
-            "site:kariyer.roketsan.com.tr/jobs teknisyen bakım elektrik 2026",
-            "site:akariyer.aselsan.com teknisyen elektrik üretim kariyer",
-            "site:tupras.gethirex.com/o/tupras teknisyen elektrik bakım kariyer"
+            "site:akariyer.aselsan.com teknisyen elektrik üretim açık pozisyon",
+            "site:kariyer.tusas.com teknisyen elektrik bakım açık pozisyon 2026",
+            "site:kariyer.roketsan.com.tr/jobs teknisyen elektronik üretim bakım 2026",
+            "site:tupras.gethirex.com/o/tupras elektrik teknisyen bakım açık pozisyon",
+            "site:sisecam.com/tr/kariyer elektrik bakım teknisyen üretim açık pozisyon",
+            "site:turktelekomkariyer.com.tr teknisyen teknik personel açık pozisyon"
         )
-        val largeEmployers = listOf(
+        val publicEmployers = listOf(
             "site:teias.gov.tr personel alımı işçi teknisyen 2026",
-            "site:euas.gov.tr kariyer personel alımı teknisyen 2026",
-            "site:kariyer.mke.gov.tr elektrik teknisyen personel ilanları 2026",
+            "site:euas.gov.tr personel alımı teknisyen işçi 2026",
+            "site:kariyer.mke.gov.tr elektrik teknisyen personel ilanları",
             "site:etimaden.gov.tr personel işçi KPSS alımı duyurular 2026",
-            "site:kariyer.tubitak.gov.tr teknik personel açık pozisyon personel alımı 2026",
-            "site:turkseker.gov.tr personel işçi tekniker alımı duyurular 2026",
+            "site:kariyer.tubitak.gov.tr teknik personel açık pozisyon 2026",
+            "site:turkseker.gov.tr personel işçi alımı duyurular 2026",
             "site:botas.gov.tr personel alımı teknisyen 2026",
-            "site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
-            "site:tei.com.tr OR site:havelsan.com kariyer teknisyen elektrik 2026"
+            "site:tcdd.gov.tr personel alımı işçi teknisyen 2026",
+            "site:tcddtasimacilik.gov.tr duyurular personel alımı teknisyen 2026"
         )
         val postAssociate = listOf(
             "elektrik teknikeri ön lisans mezunu KPSS P93 personel alımı 2026",
-            "elektrik teknikeri MYO mezunu özel sektör tekniker açık pozisyon 2026",
+            "elektrik teknikeri MYO mezunu özel sektör açık pozisyon 2026",
             "site:teias.gov.tr OR site:euas.gov.tr elektrik teknikeri ön lisans mezunu 2026",
-            "site:aselsan.com OR site:tusas.com elektrik teknikeri ön lisans teknisyen 2026"
+            "site:aselsan.com OR site:tusas.com elektrik teknikeri ön lisans mezunu 2026"
         )
-        val extra = "$r $c iş ilanı başvuru şartları 2026"
+        val extra = "$r $c iş ilanı başvuru şartları son başvuru tarihi 2026"
         return when (category) {
             1 -> publicKpss + listOf(extra)
             2 -> publicNoKpss + listOf(extra)
             3 -> privateSector + listOf(extra)
-            4 -> largeEmployers + privateSector.take(2)
+            4 -> publicEmployers + privateSector
             5 -> postAssociate
-            else -> publicKpss + publicNoKpss + privateSector + largeEmployers + listOf(extra)
+            else -> publicKpss + publicNoKpss + publicEmployers + privateSector + listOf(extra)
+        }.distinct()
+    }
+
+    private fun normalizedUrl(url: String): String {
+        return try {
+            val uri = java.net.URI(url.trim())
+            val host = (uri.host ?: "").lowercase(Locale.ROOT)
+            val path = (uri.rawPath ?: "/").ifBlank { "/" }.trimEnd('/').ifBlank { "/" }
+            val retained = (uri.rawQuery ?: "").split("&")
+                .filter { it.isNotBlank() }
+                .filterNot {
+                    val key = it.substringBefore("=").lowercase(Locale.ROOT)
+                    key.startsWith("utm_") || key in setOf("fbclid", "gclid", "ref", "source")
+                }
+                .sorted()
+            "https://$host$path" + if (retained.isEmpty()) "" else "?" + retained.joinToString("&")
+        } catch (_: Exception) {
+            url.substringBefore("#").trimEnd('/').lowercase(Locale.ROOT)
         }
     }
 
-    fun search(category: Int, role: String, city: String): List<Net.Hit> {
-        val queries = queryList(category, role, city).distinct()
-        val executor = Executors.newFixedThreadPool(minOf(6, queries.size.coerceAtLeast(1)))
+    fun fingerprint(title: String, url: String): String {
+        val normalizedTitle = CareerEligibility.normalizeForFingerprint(title)
+        val payload = normalizedTitle + "|" + normalizedUrl(url)
+        val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(payload.toByteArray(Charsets.UTF_8))
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun collect(queries: List<String>, timeoutSeconds: Long): CareerScanBatch {
+        if (queries.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
+        val executor = Executors.newFixedThreadPool(minOf(6, queries.size))
         return try {
-            val futures = executor.invokeAll(queries.map { query -> Callable { Net.webSearch(query) } }, 28, TimeUnit.SECONDS)
+            val futures = executor.invokeAll(
+                queries.map { query -> Callable { Net.webSearch(query) } },
+                timeoutSeconds,
+                TimeUnit.SECONDS
+            )
             val found = ArrayList<Net.Hit>()
+            var succeeded = 0
+            var failed = 0
             futures.forEach { future ->
-                if (!future.isCancelled) runCatching { found.addAll(future.get()) }
+                if (future.isCancelled) {
+                    failed++
+                } else {
+                    try {
+                        found.addAll(future.get())
+                        succeeded++
+                    } catch (_: Exception) {
+                        failed++
+                    }
+                }
             }
             val seen = HashSet<String>()
-            found.filter { hit ->
+            val filtered = found.filter { hit ->
                 CareerSourceCatalog.isTrustedUrl(hit.url) &&
-                    seen.add(hit.url.substringBefore("#").trimEnd('/').lowercase())
-            }.sortedByDescending { CareerEligibility.relevance(it.title, it.snippet, city) }
+                    CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet) &&
+                    seen.add(fingerprint(hit.title, hit.url))
+            }.sortedByDescending {
+                CareerEligibility.relevance(it.title, it.snippet, "Malatya")
+            }
+            CareerScanBatch(filtered, succeeded, failed, queries.size)
         } finally {
             executor.shutdownNow()
         }
+    }
+
+    fun searchBatch(category: Int, role: String, city: String): CareerScanBatch =
+        collect(queryList(category, role, city), 75)
+
+    fun search(category: Int, role: String, city: String): List<Net.Hit> {
+        val batch = searchBatch(category, role, city)
+        if (!batch.hasAnySuccessfulQuery) throw java.io.IOException("Arama kaynaklarına ulaşılamadı.")
+        return batch.hits
+    }
+
+    fun dailySearchBatch(): CareerScanBatch {
+        val queries = listOf(
+            "site:osym.gov.tr KPSS-2026/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
+            "site:osym.gov.tr KPSS ortaöğretim P94 lise 2026 tercih nitelik kodları",
+            "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı 2026",
+            "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS 2026",
+            "site:ilan.gov.tr personel alımı lise KPSS 2026",
+            "site:resmigazete.gov.tr atama personel alımı 2026",
+            "site:esube.iskur.gov.tr Malatya elektrik teknisyen bakım işçi açık iş ilanı 2026",
+            "site:acikisharita.iskur.gov.tr Malatya açık iş ilanları 2026",
+            "site:malatyatso.org.tr/iskur-ilanlari Malatya İŞKUR ilanları elektrik işçi 2026",
+            "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr işçi personel alımı 2026",
+            "site:yerelyonetimler.csb.gov.tr belediye personel alımı işçi 2026",
+            "site:akariyer.aselsan.com teknisyen elektrik açık pozisyon",
+            "site:kariyer.tusas.com teknisyen elektrik bakım açık pozisyon 2026",
+            "site:kariyer.roketsan.com.tr/jobs elektronik üretim teknisyeni bakım 2026",
+            "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr personel alımı işçi teknisyen 2026",
+            "site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
+            "site:kariyer.mke.gov.tr OR site:etimaden.gov.tr OR site:kariyer.tubitak.gov.tr personel alımı teknisyen 2026",
+            "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com teknisyen kariyer açık pozisyon",
+            "site:sisecam.com/tr/kariyer OR site:turktelekomkariyer.com.tr açık pozisyon üretim teknisyen 2026",
+            "site:enerjisa.com.tr/tr/enerjisa-hakkinda/kariyer elektrik teknisyen personel 2026"
+        )
+        return collect(queries, 90)
     }
 
     fun dailySearch(): List<Net.Hit> {
-        val queries = listOf(
-            "site:osym.gov.tr OR site:kamuilan.sbb.gov.tr OR site:isealimkariyerkapisi.cbiko.gov.tr OR site:ilan.gov.tr OR site:resmigazete.gov.tr KPSS ortaöğretim P94 lise personel alımı 2026",
-            "site:iskur.gov.tr OR site:malatyatso.org.tr/iskur-ilanlari Malatya elektrikçi teknisyen bakım işçi ilanı 2026",
-            "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr belediye işçi personel alımı 2026",
-            "site:kariyer.tusas.com OR site:kariyer.roketsan.com.tr OR site:akariyer.aselsan.com teknisyen açık pozisyon 2026",
-            "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr OR site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
-            "site:kariyer.mke.gov.tr OR site:etimaden.gov.tr OR site:kariyer.tubitak.gov.tr OR site:turkseker.gov.tr personel alımı teknisyen işçi kariyer 2026",
-            "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com OR site:enerjisa.com.tr teknisyen elektrik kariyer iş ilanı 2026",
-            "site:sisecam.com OR site:turktelekomkariyer.com.tr açık pozisyon üretim teknisyen 2026"
-        )
-        val executor = Executors.newFixedThreadPool(6)
-        return try {
-            val futures = executor.invokeAll(queries.map { query -> Callable { Net.webSearch(query) } }, 12, TimeUnit.SECONDS)
-            val found = ArrayList<Net.Hit>()
-            futures.forEach { future -> if (!future.isCancelled) runCatching { found.addAll(future.get()) } }
-            val seen = HashSet<String>()
-            found.filter { CareerSourceCatalog.isTrustedUrl(it.url) &&
-                CareerEligibility.relevance(it.title, it.snippet, "") > 0 &&
-                seen.add(it.url.substringBefore("#").trimEnd('/').lowercase()) }
-        } finally {
-            executor.shutdownNow()
-        }
+        val batch = dailySearchBatch()
+        if (!batch.hasAnySuccessfulQuery) throw java.io.IOException("Günlük kaynak taramasında hiçbir arama sorgusu başarıyla tamamlanmadı.")
+        return batch.hits
     }
 }
 
 object CareerMonitorScheduler {
     const val CHANNEL_ID = "aries_career_alerts"
     private const val UNIQUE_WORK = "aries_daily_career_scan"
+    private const val UNIQUE_NOW = "aries_career_scan_now"
 
-    /** WorkManager persists across process death and reboot; its daily run is intentionally inexact. */
+    private fun constraints() = androidx.work.Constraints.Builder()
+        .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+        .build()
+
+    /** WorkManager kalıcı iş kuyruğudur; Android pil yönetimi nedeniyle tam saat garantisi vermez. */
     fun schedule(context: Context) {
         val now = Calendar.getInstance()
         val target = (now.clone() as Calendar).apply {
@@ -239,6 +396,8 @@ object CareerMonitorScheduler {
         val delay = (target.timeInMillis - now.timeInMillis).coerceAtLeast(0L)
         val request = androidx.work.PeriodicWorkRequestBuilder<CareerDailyWorker>(24, TimeUnit.HOURS)
             .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setConstraints(constraints())
+            .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .addTag(UNIQUE_WORK)
             .build()
         androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -248,8 +407,28 @@ object CareerMonitorScheduler {
         )
     }
 
+    fun scheduleIfEnabled(context: Context) {
+        val enabled = context.getSharedPreferences("j", Context.MODE_PRIVATE)
+            .getBoolean("career_monitor_enabled", false)
+        if (enabled) schedule(context) else cancel(context)
+    }
+
+    fun runNow(context: Context) {
+        val request = androidx.work.OneTimeWorkRequestBuilder<CareerDailyWorker>()
+            .setConstraints(constraints())
+            .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+            .addTag(UNIQUE_NOW)
+            .build()
+        androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
+            UNIQUE_NOW,
+            androidx.work.ExistingWorkPolicy.KEEP,
+            request
+        )
+    }
+
     fun cancel(context: Context) {
         androidx.work.WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_WORK)
+        androidx.work.WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_NOW)
     }
 
     fun ensureChannel(context: Context) {
@@ -274,58 +453,85 @@ object CareerMonitorScheduler {
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, CHANNEL_ID)
             else Notification.Builder(context)
         builder.setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Aries: yeni iş ilanı bulundu")
-            .setContentText("$count yeni resmî/kurumsal kaynak sonucu bulundu. Açıp şartlarını incele.")
+            .setContentTitle("Aries: yeni iş ilanı bağlantısı")
+            .setContentText("$count yeni resmî/kurumsal kaynak sonucu bulundu.")
             .setAutoCancel(true)
             .setContentIntent(pending)
             .setStyle(Notification.BigTextStyle().bigText(
-                (first?.title?.plus(" · ") ?: "") + "$count yeni sonuç. Başvuru tarihi ve şartları ilanın resmî sayfasından doğrula."
+                (first?.title?.plus(" · ") ?: "") +
+                    "$count yeni sonuç. İlanın hâlâ açık olduğunu ve başvuru koşullarını resmî sayfada doğrula."
             ))
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(74023, builder.build())
     }
 }
 
-class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters) : androidx.work.Worker(context, params) {
-    override fun doWork(): androidx.work.Result {
+class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters) :
+    androidx.work.Worker(context, params) {
+
+    override fun doWork(): androidx.work.ListenableWorker.Result {
         val prefs = applicationContext.getSharedPreferences("j", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("career_monitor_enabled", false)) return androidx.work.Result.success()
+        if (!prefs.getBoolean("career_monitor_enabled", false)) return androidx.work.ListenableWorker.Result.success()
         return try {
-            val hits = CareerSearchEngine.dailySearch()
-            if (hits.isEmpty()) {
+            val batch = CareerSearchEngine.dailySearchBatch()
+            if (!batch.hasAnySuccessfulQuery) {
                 prefs.edit()
-                    .putLong("career_monitor_last_scan", System.currentTimeMillis())
-                    .putInt("career_monitor_new_count", 0)
                     .putString("career_monitor_last_error",
-                        "Bu taramada doğrulanabilir sonuç alınamadı. Bu, hiç ilan olmadığı anlamına gelmez; bir sonraki günlük kontrolde yeniden taranacak.")
+                        "Kaynak taraması başarısız: hiçbir arama sorgusu tamamlanamadı. İnternet erişimi/arama servisi kontrol edilecek ve yeniden denenecek.")
                     .apply()
-                return androidx.work.Result.success()
+                return androidx.work.ListenableWorker.Result.retry()
             }
+
+            val hits = batch.hits
             val previous = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty()
             val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
             val seen = previous.toMutableSet()
-            val fresh = if (firstRun) emptyList() else hits.filter { seen.add(it.url) }
-            hits.forEach { seen.add(it.url) }
-            val boundedSeen = seen.toList().takeLast(500).toSet()
-            val json = JSONArray()
-            hits.take(40).forEach { hit ->
-                json.put(JSONObject().put("title", hit.title).put("url", hit.url).put("snippet", hit.snippet))
+            val fresh = if (firstRun) emptyList() else hits.filter { hit ->
+                seen.add(CareerSearchEngine.fingerprint(hit.title, hit.url))
             }
+            hits.forEach { hit -> seen.add(CareerSearchEngine.fingerprint(hit.title, hit.url)) }
+            val boundedSeen = seen.sorted().takeLast(2000).toSet()
+
+            val json = JSONArray()
+            hits.take(60).forEach { hit ->
+                val category = CareerSourceCatalog.categoryFor(hit.url)
+                json.put(
+                    JSONObject()
+                        .put("title", hit.title)
+                        .put("url", hit.url)
+                        .put("snippet", hit.snippet)
+                        .put("source", CareerSourceCatalog.sourceName(hit.url))
+                        .put("category", category)
+                        .put("eligibility", CareerEligibility.assess(hit.title, hit.snippet, hit.url))
+                        .put("listingStatus", if (CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet))
+                            "İlan adayı · güncellik ve açık başvuru durumu sayfada doğrulanmalı"
+                        else "Kariyer/duyuru kaynağı · açık ilan olduğu doğrulanmadı")
+                        .put("fingerprint", CareerSearchEngine.fingerprint(hit.title, hit.url))
+                )
+            }
+            val partialWarning = if (batch.failedQueries > 0) {
+                "\${batch.successfulQueries}/\${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir."
+            } else null
+
             prefs.edit()
                 .putStringSet("career_monitor_seen", boundedSeen)
                 .putString("career_monitor_results", json.toString())
                 .putLong("career_monitor_last_scan", System.currentTimeMillis())
                 .putInt("career_monitor_new_count", fresh.size)
                 .putBoolean("career_monitor_initialized", true)
-                .remove("career_monitor_last_error")
+                .putInt("career_monitor_successful_queries", batch.successfulQueries)
+                .putInt("career_monitor_total_queries", batch.totalQueries)
+                .putString("career_monitor_last_error", partialWarning)
                 .apply()
+
             if (fresh.isNotEmpty()) CareerMonitorScheduler.notifyNewJobs(applicationContext, fresh.size, fresh.first())
-            androidx.work.Result.success()
+            androidx.work.ListenableWorker.Result.success()
         } catch (e: Exception) {
             prefs.edit()
-                .putString("career_monitor_last_error", "Tarama tamamlanamadı: ${e.message ?: "internet veya arama servisi hatası"}")
+                .putString("career_monitor_last_error",
+                    "Tarama tamamlanamadı: \${e.message ?: "bağlantı veya kaynak hatası"}")
                 .apply()
-            androidx.work.Result.retry()
+            androidx.work.ListenableWorker.Result.retry()
         }
     }
 }
