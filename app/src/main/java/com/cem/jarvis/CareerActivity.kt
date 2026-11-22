@@ -574,13 +574,17 @@ class CareerActivity : Activity() {
             "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
             11f, false, Color.rgb(150, 190, 255)
         ))
-        val actions = LinearLayout(this).apply { orientation = 0 }
-        actions.addView(button("İlan sayfasını aç") {
+        card.addView(button("İlanın tam sayfasını aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
                 .onFailure { toast("Bağlantı açılamadı.") }
-        }, LinearLayout.LayoutParams(0, dp(42), 1f))
-        actions.addView(button("Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(42), 1f))
-        actions.addView(button("AI değerlendir") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(42), 1f))
+        }, params(-1, dp(44), 0, 8, 0, 4))
+        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        actions.addView(button("＋ Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+            setMargins(0, 0, dp(4), 0)
+        })
+        actions.addView(button("AI ile incele") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+            setMargins(dp(4), 0, 0, 0)
+        })
         card.addView(actions)
         parent.addView(card, params(-1, -2, 0, 0, 0, 8))
     }
