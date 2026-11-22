@@ -21,7 +21,15 @@ object CareerSourceCatalog {
     data class Source(val name: String, val url: String, val category: String, val official: Boolean = true)
 
     val sources = listOf(
-        Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/arama?aranan=kamu+al%C4%B1m", "Kamu / e-Devlet hizmetleri"),
+        Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama", "Kamu / e-Devlet hizmetleri"),
+        Source("Kariyer Kapısı – açık kamu ilanları", "https://kariyerkapisi.gov.tr/isealim", "Kamu / başvuru ve değerlendirme"),
+        Source("İŞKUR Gençlik Programı", "https://esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx", "İŞKUR / üniversite programı"),
+        Source("İŞKUR İşgücü Uyum Programı (İUP)", "https://esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx", "İŞKUR / uyum programı"),
+        Source("GÜÇ – Gençliğin Üretim Çağı programları", "https://guc.iskur.gov.tr/", "Öğrenci / genç istihdam programları"),
+        Source("GÜÇ – program ve hizmetler", "https://guc.iskur.gov.tr/hizmetlerimiz/", "İŞKUR / program rehberi"),
+        Source("İŞKUR Staj Portalı – lise öğrencileri", "https://stajportali.iskur.gov.tr/", "İŞKUR / lise stajı"),
+        Source("İŞKUR Staj Portalı – genel giriş", "https://staj.iskur.gov.tr/", "İŞKUR / staj platformu"),
+        Source("Ulusal Staj Programı – üniversite öğrencileri", "https://ulusalstajprogrami.iskur.gov.tr/", "İŞKUR / üniversite stajı"),
         Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
         Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
         Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
@@ -71,7 +79,7 @@ object CareerSourceCatalog {
         Source("Malatya Büyükşehir Belediyesi", "https://www.malatya.bel.tr/", "Belediye"),
         Source("Battalgazi Belediyesi", "https://www.battalgazi.bel.tr/", "Belediye"),
         Source("Yeşilyurt Belediyesi", "https://yesilyurt.bel.tr/", "Belediye"),
-        Source("Malatya TSO – canlı İŞKUR listesi", "https://www.malatyatso.org.tr/", "İŞKUR keşif", false),
+        Source("Malatya TSO – İŞKUR açık iş keşfi", "https://www.malatyatso.org.tr/iskur-ilanlari", "İŞKUR keşif · ikincil kaynak", false),
         Source("Malatya Merkez 1. OSB – personel duyuruları", "https://malorsa.org.tr/", "Malatya OSB", false),
         Source("Kariyer.net", "https://www.kariyer.net/is-ilanlari", "İlan platformu", false),
         Source("Eleman.net", "https://www.eleman.net/is-ilanlari", "İlan platformu", false),
@@ -121,7 +129,7 @@ object CareerSourceCatalog {
     private val trustedDomains = listOf(
         "turkiye.gov.tr", "ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr",
         "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
-        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
+        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "edu.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
         "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
@@ -169,31 +177,43 @@ object CareerSourceCatalog {
     }
 
     fun categoryFor(url: String): String {
-        val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT) }.getOrDefault("")
+        val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
+            .getOrDefault("")
+        val defenceDomains = listOf("aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com")
+        val kitDomains = listOf(
+            "mke.gov.tr", "tcdd.gov.tr", "tcddtasimacilik.gov.tr", "teias.gov.tr",
+            "euas.gov.tr", "botas.gov.tr", "etimaden.gov.tr", "turkseker.gov.tr",
+            "dhmi.gov.tr", "dmo.gov.tr", "ptt.gov.tr", "kiyiemniyeti.gov.tr", "ilbank.gov.tr"
+        )
+        fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
         return when {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
             host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") -> "Kamu / e-Devlet hizmetleri"
+            host == "osym.gov.tr" || host.endsWith(".osym.gov.tr") ->
+                "Kamu / KPSS ve merkezi yerleştirme"
+            host == "kariyerkapisi.gov.tr" || host.endsWith(".kariyerkapisi.gov.tr") ||
+                host.endsWith(".cbiko.gov.tr") -> "Kamu / işe alım ve başvuru portalı"
+            host == "kamuilan.sbb.gov.tr" -> "Kamu / resmî personel ilanı"
+            host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") -> "İŞKUR / açık iş ve program"
             listOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
                 .any { host == it || host.endsWith(".$it") } -> "Üniversite / kamu personel alımı"
-            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
-                host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
-                host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
-            host.endsWith(".bel.tr") || host.contains("malatya.bel.tr") ||
-                host.contains("battalgazi.bel.tr") || host.contains("yesilyurt.bel.tr") -> "Belediye / kamu"
-            host.endsWith(".gov.tr") || host.contains("csb.gov.tr") -> "Kamu / resmî kurum"
-            host.contains("ogm.gov.tr") || host.contains("kgm.gov.tr") || host.contains("ant.gov.tr") -> "Kamu / kura ve işçi alımı"
-            host.contains("tcdd") || host.contains("teias.gov.tr") || host.contains("euas.gov.tr") ||
-                host.contains("mke.gov.tr") || host.contains("etimaden.gov.tr") ||
-                host.contains("botas.gov.tr") || host.contains("turkseker.gov.tr") -> "Kamu kurumu / kamu şirketi"
-            host.contains("iskur.gov.tr") -> "İŞKUR / açık iş"
+            host.endsWith(".bel.tr") || host == "malatya.bel.tr" ||
+                host.endsWith(".malatya.bel.tr") || host.endsWith(".battalgazi.bel.tr") ||
+                host.endsWith(".yesilyurt.bel.tr") -> "Belediye / kamu"
+            inDomains(defenceDomains) -> "Savunma sanayii / işveren kariyer portalı"
+            inDomains(kitDomains) -> "Kamu şirketi / KİT kariyer portalı"
+            host.endsWith(".gov.tr") -> "Kamu / resmî kurum"
+            host.endsWith(".edu.tr") -> "Üniversite / kamu personel alımı"
+            host.contains("tga.gov.tr") -> "Kamu bağlantılı kurum / kariyer"
             host.contains("tusas") || host.contains("roketsan") || host.contains("aselsan") ||
                 host.contains("havelsan") || host.contains("tupras") || host.contains("vestel") ||
                 host.contains("turkcell") || host.contains("vodafone") || host.contains("migros") ||
                 host.contains("kockariyerim") || host.contains("koccareers") || host.contains("sabanci") ||
                 host.contains("myworkdayjobs") || host.contains("borusan") ||
                 host.contains("eczacibasi") || host.contains("anadolukariyerim") || host.contains("calik") ||
-                host.contains("careerscci") || host.contains("sutas") || host.contains("tirsan") -> "İşveren kariyer portalı"
+                host.contains("careerscci") || host.contains("sutas") || host.contains("tirsan") ->
+                "İşveren kariyer portalı"
             else -> "Özel sektör / büyük şirket"
         }
     }
@@ -211,6 +231,18 @@ object CareerSourceCatalog {
             .replace(Regex("\\s+"), " ")
             .trim()
         val host = normalizedHost(url).orEmpty()
+        val defenceDomains = listOf("aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com")
+        val kitDomains = listOf(
+            "mke.gov.tr", "tcdd.gov.tr", "tcddtasimacilik.gov.tr", "teias.gov.tr",
+            "euas.gov.tr", "botas.gov.tr", "etimaden.gov.tr", "turkseker.gov.tr",
+            "dhmi.gov.tr", "dmo.gov.tr", "ptt.gov.tr", "kiyiemniyeti.gov.tr", "ilbank.gov.tr"
+        )
+        fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
+        val isDefenceEmployer = inDomains(defenceDomains) ||
+            Regex("""\b(?:aselsan|tusas|roketsan|havelsan)\b""").containsMatchIn(text)
+        val isKitEmployer = inDomains(kitDomains) ||
+            Regex("""\b(?:mke|tcdd|tcddtasimacilik|teias|euas|botas|ptt|dhmi|dmo|ilbank)\b""").containsMatchIn(text) ||
+            listOf("eti maden", "turkseker", "kiyi emniyeti").any(text::contains)
         val kuraTerms = listOf(
             "noter kurasi", "kura cekimi", "kura cekilisi", "kura tarihi",
             "kuraya katilacak", "kura sonucu", "kura sonuclari",
@@ -221,15 +253,7 @@ object CareerSourceCatalog {
             "kpss puani aranmayacaktir", "kpss puani istenmez",
             "kpss puani bulunma sarti aranmaz"
         )
-        val publicLinkedDomains = listOf(
-            "gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr",
-            "aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com",
-            "mke.gov.tr", "teias.gov.tr", "euas.gov.tr", "tcdd.gov.tr",
-            "tcddtasimacilik.gov.tr", "dsi.gov.tr", "dhmi.gov.tr", "dmo.gov.tr",
-            "etimaden.gov.tr", "botas.gov.tr", "turkseker.gov.tr",
-            "kiyiemniyeti.gov.tr", "ptt.gov.tr", "ilbank.gov.tr", "tga.gov.tr",
-            "tubitak.gov.tr"
-        )
+        val publicLinkedDomains = listOf("gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr")
         val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
         val namedPublicEmployer = listOf(
             "orman genel mudurlugu", "karayollari genel mudurlugu",
@@ -245,9 +269,17 @@ object CareerSourceCatalog {
             publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
             host.endsWith(".turkiye.gov.tr") || namedPublicEmployer
 
-        if (publicLinked && noKpssTerms.any(text::contains)) {
-            return "KPSS'siz kamu alımı"
+        // Defence-industry employers and KİT portals recruit as employers; their career
+        // pages are not automatically ÖSYM central placement or ordinary civil-service posts.
+        if (isDefenceEmployer) {
+            return if (kuraTerms.any(text::contains)) "Kura duyurusu · şirket süreci doğrulanmalı"
+            else "Savunma sanayii / şirket alımı"
         }
+        if (isKitEmployer) {
+            return if (kuraTerms.any(text::contains)) "Kura ile kamu alımı"
+            else "KİT / kamu şirketi alımı · usul doğrulanmalı"
+        }
+        if (publicLinked && noKpssTerms.any(text::contains)) return "KPSS'siz kamu alımı"
         if (kuraTerms.any(text::contains)) {
             return if (publicLinked) "Kura ile kamu alımı"
             else "Kura duyurusu · statü doğrulanmalı"
@@ -256,14 +288,11 @@ object CareerSourceCatalog {
             "kpss sarti", "kpss puan", "kpss tercih",
             "kpss merkezi yerlestirme", "kpss yerles"
         )
+        // A portal/domain alone does not prove that KPSS is required; only explicit text does.
         val hasKpssRequirement = kpssRequirementTerms.any(text::contains) ||
-            Regex("""kpss p\d{1,2}""").containsMatchIn(text) ||
-            host.contains("osym.gov.tr") ||
-            host.contains("kariyerkapisi.gov.tr") ||
-            host.contains("cbiko.gov.tr")
+            Regex("""kpss p\d{1,2}""").containsMatchIn(text)
         if (hasKpssRequirement) {
-            return if (publicLinked) "KPSS ile kamu alımı"
-            else "KPSS / şartı doğrulanmalı"
+            return if (publicLinked) "KPSS ile kamu alımı" else "KPSS / şartı doğrulanmalı"
         }
         if (publicLinked) return "Kamu / kamu bağlantılı"
         if (isSecondary(url)) return "Platform / sektör doğrulanmalı"
@@ -284,7 +313,8 @@ object CareerSourceCatalog {
             "operatör", "operator", "depo", "satış", "satis", "kasiyer", "şoför", "sofor",
             "kura", "noter", "asıl aday", "asil aday", "yedek aday", "evrak teslim",
             "evrak kontrol", "sınav tarihi", "sinav tarihi", "sınav sonucu", "sinav sonucu",
-            "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "kuraya katılacak"
+            "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "kuraya katılacak",
+            "staj", "stajyer", "gençlik programı", "genclik programi", "işgücü uyum", "isgucu uyum"
         )
         return indicators.any(text::contains)
     }
@@ -585,6 +615,13 @@ object CareerSearchEngine {
             "site:linkedin.com/jobs/view $r $c Türkiye $year",
             "site:isbul.net $r $c iş ilanı $year"
         )
+        val studentPrograms = listOf(
+            "site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx İŞKUR Gençlik Programı üniversite öğrenci il kontenjan başvuru $year",
+            "site:guc.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci başvuru hizmetleri $year",
+            "site:ulusalstajprogrami.iskur.gov.tr OR site:staj.iskur.gov.tr OR site:stajportali.iskur.gov.tr üniversite öğrencisi lise ve üniversite Ulusal Staj Programı teknik staj $year",
+            "site:esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx NEET İşgücü Uyum Programı İUP ilçe başvuru $year",
+            "elektrik öğrencisi zorunlu staj Malatya Elazığ Adıyaman üniversite kurum işyeri başvurusu $year"
+        )
         val postAssociate = listOf(
             "elektrik teknikeri ön lisans mezunu KPSS P93 personel alımı $year",
             "elektrik teknikeri MYO mezunu özel sektör açık pozisyon $year",
@@ -631,6 +668,7 @@ object CareerSearchEngine {
             6 -> kuraQueries + publicKpss.take(3) + listOf(extra)
             7 -> dailyPrivate + listOf(extra)
             8 -> municipal + kuraQueries.take(3) + listOf(extra)
+            9 -> studentPrograms
             else -> generalQuick
         }.distinct()
     }
@@ -958,6 +996,7 @@ object CareerSearchEngine {
             "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ön lisans P93 TABLO-2 kadro kontenjan nitelik kodu",
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise $year tercih nitelik kodları",
+            "site:guc.iskur.gov.tr OR site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx OR site:staj.iskur.gov.tr OR site:ulusalstajprogrami.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci teknik staj İUP $year",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
             "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
@@ -1413,6 +1452,47 @@ object CareerMonitorScheduler {
         )
     }
 
+    /** User-selected follow-up reminder for a saved application; no reminder is created automatically. */
+    fun scheduleApplicationFollowUp(
+        context: Context,
+        title: String,
+        url: String,
+        status: String,
+        reminderAt: Long
+    ): Boolean {
+        val delay = reminderAt - System.currentTimeMillis()
+        if (title.isBlank() || !url.startsWith("https://") || delay <= 0L) return false
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(url.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }.take(24)
+        val request = androidx.work.OneTimeWorkRequestBuilder<CareerApplicationFollowUpWorker>()
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(
+                androidx.work.workDataOf(
+                    "application_title" to title,
+                    "application_url" to url,
+                    "application_status" to status,
+                    "reminder_at" to reminderAt
+                )
+            )
+            .build()
+        androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
+            "aries-application-follow-up-" + key,
+            androidx.work.ExistingWorkPolicy.REPLACE,
+            request
+        )
+        return true
+    }
+
+    fun cancelApplicationFollowUp(context: Context, url: String) {
+        if (!url.startsWith("https://")) return
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(url.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }.take(24)
+        androidx.work.WorkManager.getInstance(context)
+            .cancelUniqueWork("aries-application-follow-up-" + key)
+    }
+
     fun notifyProcessUpdates(context: Context, events: List<CareerProcessEvent>) {
         if (events.isEmpty()) return
         ensureChannel(context)
@@ -1516,6 +1596,49 @@ class CareerProcessReminderWorker(context: Context, params: androidx.work.Worker
             .setContentTitle("Aries · " + stage)
             .setContentText(message)
             .setStyle(Notification.BigTextStyle().bigText(title + "\n" + message + "\nKaynak: " + url))
+            .setAutoCancel(true)
+            .setContentIntent(pending)
+        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(requestCode, builder.build())
+        return androidx.work.ListenableWorker.Result.success()
+    }
+}
+
+class CareerApplicationFollowUpWorker(context: Context, params: androidx.work.WorkerParameters) :
+    androidx.work.Worker(context, params) {
+
+    override fun doWork(): androidx.work.ListenableWorker.Result {
+        val title = inputData.getString("application_title").orEmpty()
+        val url = inputData.getString("application_url").orEmpty()
+        val status = inputData.getString("application_status").orEmpty()
+        val reminderAt = inputData.getLong("reminder_at", 0L)
+        if (title.isBlank() || !url.startsWith("https://") || reminderAt <= 0L) {
+            return androidx.work.ListenableWorker.Result.failure()
+        }
+        CareerMonitorScheduler.ensureChannel(applicationContext)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            applicationContext.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return androidx.work.ListenableWorker.Result.success()
+
+        val date = java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
+            .format(java.util.Date(reminderAt))
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val requestCode = (url.hashCode() and 0x7fffffff).coerceAtLeast(1)
+        val pending = PendingIntent.getActivity(
+            applicationContext, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+        val message = "Kayıtlı başvuru durumunu kontrol et. Son durum: " +
+            status.ifBlank { "Kaydedildi" } + " · Hatırlatma: " + date
+        val builder = if (Build.VERSION.SDK_INT >= 26) {
+            Notification.Builder(applicationContext, CareerMonitorScheduler.CHANNEL_ID)
+        } else {
+            Notification.Builder(applicationContext)
+        }
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("Aries · Başvuru takip hatırlatması")
+            .setContentText(title)
+            .setStyle(Notification.BigTextStyle().bigText(message + "\nİlanı açıp başvuru/sonuç durumunu güncelle."))
             .setAutoCancel(true)
             .setContentIntent(pending)
         val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -13,6 +13,7 @@ import android.view.Gravity
 import android.widget.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Calendar
 import java.util.Locale
 import java.util.Date
 import java.text.SimpleDateFormat
@@ -32,7 +33,7 @@ class CareerActivity : Activity() {
     private var processPage = 0
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları")
+    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Öğrenci · staj / İŞKUR gençlik programları")
     // Kariyer ekranına özel tasarım paleti; ana Aries temasını değiştirmez.
     // Kariyer alanı ana uygulamadan bağımsız, açık ve yüksek kontrastlı bir görsel dile sahip.
     private val bgColor = Color.rgb(244, 247, 251)
@@ -311,7 +312,7 @@ class CareerActivity : Activity() {
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
         filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
         filtersCard.addView(quickChipRow(
-            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye")
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye", "Öğrenci · staj")
         ) { selected ->
             val target = when (selected) {
                 "Kamu · KPSS" -> 1
@@ -320,6 +321,7 @@ class CareerActivity : Activity() {
                 "Büyük kurumlar" -> 4
                 "Özel sektör" -> 3
                 "Belediye" -> 8
+                "Öğrenci · staj" -> 9
                 else -> 0
             }
             category.setSelection(target)
@@ -775,17 +777,19 @@ class CareerActivity : Activity() {
         val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
         val publicGroups = setOf(
             "Kamu / kamu bağlantılı", "Kura ile kamu alımı",
-            "KPSS ile kamu alımı", "KPSS'siz kamu alımı"
+            "KPSS ile kamu alımı", "KPSS'siz kamu alımı",
+            "KİT / kamu şirketi alımı · usul doğrulanmalı"
         )
         return when (filter) {
             1 -> group in publicGroups
-            2 -> group == "Kura ile kamu alımı" || group == "Kura duyurusu · statü doğrulanmalı"
+            2 -> group == "Kura ile kamu alımı" || group == "Kura duyurusu · statü doğrulanmalı" ||
+                group == "Kura duyurusu · şirket süreci doğrulanmalı"
             3 -> group == "KPSS ile kamu alımı" || group == "KPSS / şartı doğrulanmalı"
             4 -> group == "KPSS'siz kamu alımı"
-            5 -> group == "Özel sektör"
+            5 -> group == "Özel sektör" || group == "Savunma sanayii / şirket alımı"
             6 -> group == "Diğer / doğrulanmalı" ||
                 group == "Platform / sektör doğrulanmalı" ||
-                group == "Kura duyurusu · statü doğrulanmalı" ||
+                group.contains("doğrulanmalı") ||
                 group == "KPSS / şartı doğrulanmalı"
             else -> true
         }
@@ -793,23 +797,27 @@ class CareerActivity : Activity() {
 
     private fun recruitmentGroupOrder(group: String): Int = when (group) {
         "Kamu / kamu bağlantılı" -> 0
-        "Kura ile kamu alımı", "Kura duyurusu · statü doğrulanmalı" -> 1
-        "KPSS ile kamu alımı", "KPSS / şartı doğrulanmalı" -> 2
-        "KPSS'siz kamu alımı" -> 3
-        "Özel sektör" -> 4
-        else -> 5
+        "KİT / kamu şirketi alımı · usul doğrulanmalı" -> 1
+        "Kura ile kamu alımı", "Kura duyurusu · statü doğrulanmalı" -> 2
+        "KPSS ile kamu alımı", "KPSS / şartı doğrulanmalı" -> 3
+        "KPSS'siz kamu alımı" -> 4
+        "Savunma sanayii / şirket alımı", "Özel sektör" -> 5
+        else -> 6
     }
 
     private fun addRecruitmentGroupHeading(parent: LinearLayout, group: String, count: Int) {
         val display = when (group) {
-            "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI"
+            "Kamu / kamu bağlantılı" -> "KAMU KURUMU / RESMÎ DUYURU"
+            "KİT / kamu şirketi alımı · usul doğrulanmalı" -> "KİT / KAMU ŞİRKETİ · İŞVEREN ALIMI"
             "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI"
             "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · KURUM STATÜSÜ DOĞRULANMALI"
+            "Kura duyurusu · şirket süreci doğrulanmalı" -> "ŞİRKET KURA DUYURUSU · SÜREÇ DOĞRULANMALI"
             "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI"
             "KPSS / şartı doğrulanmalı" -> "KPSS ŞARTI DOĞRULANMALI"
-            "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI"
-            "Özel sektör" -> "ÖZEL SEKTÖR"
-            "Platform / sektör doğrulanmalı" -> "İŞ İLANI PLATFORMU · İŞVEREN DOĞRULANMALI"
+            "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU İŞÇİSİ / ALIMI"
+            "Savunma sanayii / şirket alımı" -> "SAVUNMA SANAYİİ ŞİRKETLERİ · İŞVEREN ALIMI"
+            "Özel sektör" -> "ÖZEL SEKTÖR / İŞVEREN KARİYER PORTALI"
+            "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İŞVEREN DOĞRULANMALI"
             else -> "DİĞER / KAYNAK DOĞRULANMALI"
         }
         val block = LinearLayout(this).apply {
@@ -818,7 +826,7 @@ class CareerActivity : Activity() {
             setPadding(dp(2), dp(7), dp(2), dp(3))
         }
         block.addView(label(display, 10f, true, accentBlue), LinearLayout.LayoutParams(0, -2, 1f))
-        block.addView(label("$count ilan", 10f, true, muted))
+        block.addView(label("$count kayıt", 10f, true, muted))
         parent.addView(block, params(-1, -2, 0, 9, 0, 2))
     }
 
@@ -912,9 +920,10 @@ class CareerActivity : Activity() {
             1 -> sectorHits
             else -> sectorHits.filterNot(::isExpired)
         }
-        val visibleHits = if (searchSectorFilter == 0) {
-            eligibleHits.sortedBy { recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url)) }
-        } else eligibleHits
+        // Keep all result groups stable for every filter, not only the unfiltered view.
+        val visibleHits = eligibleHits.sortedBy {
+            recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url))
+        }
 
         if (visibleHits.isEmpty()) {
             results.addView(label("Bu filtrede gösterilecek ilan yok.", 12f, false, muted))
@@ -988,18 +997,25 @@ class CareerActivity : Activity() {
         }, LinearLayout.LayoutParams(dp(34), dp(34)).apply { setMargins(0, 0, dp(9), 0) })
         titleRow.addView(label(hit.title, 15f, true, primaryText), LinearLayout.LayoutParams(0, -2, 1f))
         card.addView(titleRow)
-        val recruitmentGroup = CareerSourceCatalog.recruitmentGroup(hit.title, hit.snippet, hit.url)
+        val facts = CareerListingIntelligence.analyze(hit.title, hit.snippet, hit.url)
+        val recruitmentGroup = facts.employerGroup
         val sourceLabel = when (recruitmentGroup) {
             "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
             "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
-            "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI · " + CareerSourceCatalog.sourceName(hit.url)
+            "Kamu / kamu bağlantılı" -> "KAMU KURUMU · " + CareerSourceCatalog.sourceName(hit.url)
+            "KİT / kamu şirketi alımı · usul doğrulanmalı" -> "KİT / KAMU ŞİRKETİ · İŞVEREN ALIMI · usul ilanda doğrulanmalı"
+            "Savunma sanayii / şirket alımı" -> "SAVUNMA SANAYİİ · ŞİRKET İŞVERENİ · kamu memur ataması değildir"
+            "Özel sektör" -> "ÖZEL SEKTÖR · İŞVERENİN KARİYER PORTALI / İLANI"
             "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI · şart ilanda açıkça belirtilmiş"
             "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · kurumun kamu/özel statüsünü doğrula"
+            "Kura duyurusu · şirket süreci doğrulanmalı" -> "ŞİRKET KURA DUYURUSU · işveren sürecini doğrula"
             "KPSS / şartı doğrulanmalı" -> "KPSS İBARESİ VAR · başvuru şartını ilanda doğrula"
             "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İşverenin kamu/özel statüsünü ilanda doğrula"
             else -> "KAYNAK SINIFLANDIRMASI DOĞRULANMALI · " + CareerSourceCatalog.sourceName(hit.url)
         }
         card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })
+        card.addView(label("Duyuru türü: " + facts.noticeType, 11f, true, primaryText))
+        card.addView(label("Başvuru yolu: " + facts.applicationChannel, 11f, false, muted))
         if (!storedCategory.isNullOrBlank()) {
             card.addView(label("Liste: " + category, 11f, true, accentBlue))
         }
@@ -1010,14 +1026,15 @@ class CareerActivity : Activity() {
             setPadding(dp(10), dp(8), dp(10), dp(8))
             background = rounded(Color.rgb(255, 245, 224), Color.rgb(230, 194, 128))
         })
-        if (!listingStatus.isNullOrBlank()) {
-            card.addView(label(listingStatus, 11f, true, warningColor))
+        card.addView(label(facts.applicationStatus, 11f, true, warningColor))
+        if (!listingStatus.isNullOrBlank() && facts.applicationStatus.startsWith("BAŞVURU DURUMU")) {
+            card.addView(label(listingStatus, 10f, false, muted))
         }
-        val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
-        if (deadline.isNotBlank()) {
-            card.addView(label(deadline, 11f, true, warningColor))
-        } else {
-            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, warningColor))
+        if (facts.quotaText != null) {
+            card.addView(label("Arama özetinde kontenjan/sayı ifadesi: " + facts.quotaText + " · resmî ilan metninde doğrula.", 11f, true, accentColor))
+        }
+        if (facts.requirementSignals.isNotEmpty()) {
+            card.addView(label("Görülen şart ifadeleri: " + facts.requirementSignals.take(4).joinToString(" · "), 10f, false, muted))
         }
         card.addView(label(
             "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
@@ -1380,11 +1397,14 @@ class CareerActivity : Activity() {
     private fun showSources() {
         val sources = CareerSourceCatalog.sources
         val names = sources.map {
+            val category = it.category.lowercase(Locale("tr", "TR"))
             val label = when {
                 !it.official -> "İKİNCİL KEŞİF"
-                it.category.contains("Kamu") || it.category.contains("İŞKUR") ||
-                    it.category.contains("Belediye") || it.category.contains("Resmî") -> "RESMÎ KAMU"
-                else -> "İŞVERENİN KENDİ PORTALI"
+                category.contains("kamu") || category.contains("iskur") ||
+                    category.contains("belediye") || category.contains("resmî") ||
+                    category.contains("üniversite") || category.contains("öğrenci") ->
+                    "RESMÎ / KAMU VE ÖĞRENCİ KAYNAĞI"
+                else -> "İŞVERENİN KARİYER PORTALI"
             }
             "$label · " + it.category + " · " + it.name
         }.toTypedArray()
@@ -1653,7 +1673,42 @@ class CareerActivity : Activity() {
                         .filter { it > 0L }.minOrNull() ?: 0L)
                     .put("updatedAt", maxOf(oldUpdated, newUpdated))
                     .put("note", old.optString("note").ifBlank { candidate.optString("note") })
+                    .put("noteUpdatedAt", maxOf(old.optLong("noteUpdatedAt", 0L), candidate.optLong("noteUpdatedAt", 0L)))
                     .put("fingerprint", CareerSearchEngine.fingerprint(merged.optString("title"), merged.optString("url")))
+                val reminderOwner = if (candidate.optLong("followUpAt", 0L) > old.optLong("followUpAt", 0L)) candidate else old
+                val reminderAt = maxOf(old.optLong("followUpAt", 0L), candidate.optLong("followUpAt", 0L))
+                if (reminderAt > 0L) {
+                    val mergedUrl = merged.optString("url")
+                    val reminderStatus = reminderOwner.optString("followUpStatus", retainedStatus)
+                    merged.put("followUpAt", reminderAt)
+                        .put("followUpStatus", reminderStatus)
+                    if (reminderOwner.optString("url") != mergedUrl || reminderStatus != retainedStatus) {
+                        CareerMonitorScheduler.cancelApplicationFollowUp(this, old.optString("url"))
+                        CareerMonitorScheduler.cancelApplicationFollowUp(this, candidate.optString("url"))
+                        if (reminderAt > System.currentTimeMillis() && mergedUrl.startsWith("https://")) {
+                            CareerMonitorScheduler.scheduleApplicationFollowUp(
+                                this, merged.optString("title"), mergedUrl, retainedStatus, reminderAt
+                            )
+                            merged.put("followUpStatus", retainedStatus)
+                        } else {
+                            merged.remove("followUpAt")
+                            merged.remove("followUpStatus")
+                        }
+                    }
+                }
+                val timeline = ArrayList<JSONObject>()
+                listOf(old.optJSONArray("history"), candidate.optJSONArray("history")).forEach { events ->
+                    if (events != null) for (eventIndex in 0 until events.length()) {
+                        val event = events.optJSONObject(eventIndex) ?: continue
+                        timeline.add(JSONObject(event.toString()))
+                    }
+                }
+                val mergedTimeline = JSONArray()
+                timeline.distinctBy { it.optLong("at", 0L).toString() + "|" + it.optString("to") }
+                    .sortedBy { it.optLong("at", 0L) }
+                    .takeLast(15)
+                    .forEach { mergedTimeline.put(it) }
+                if (mergedTimeline.length() > 0) merged.put("history", mergedTimeline)
                 unique[duplicateIndex] = merged
             }
         }
@@ -1690,6 +1745,9 @@ class CareerActivity : Activity() {
                 .put("createdAt", System.currentTimeMillis())
                 .put("updatedAt", System.currentTimeMillis())
                 .put("note", "")
+                .put("history", JSONArray().put(
+                    JSONObject().put("from", "").put("to", "Kaydedildi").put("at", System.currentTimeMillis())
+                ))
         )
         prefs.edit().putString("career_jobs", list.toString()).apply()
         toast("İlan takip listene eklendi.")
@@ -1706,8 +1764,33 @@ class CareerActivity : Activity() {
         for (i in 0 until old.length()) {
             val item = old.optJSONObject(i) ?: continue
             if (item.optString("url") == url) {
+                val oldStatus = item.optString("status", "Kaydedildi")
+                val now = System.currentTimeMillis()
+                if (oldStatus != status) {
+                    val history = item.optJSONArray("history") ?: JSONArray()
+                    history.put(
+                        JSONObject()
+                            .put("from", oldStatus)
+                            .put("to", status)
+                            .put("at", now)
+                    )
+                    while (history.length() > 15) history.remove(0)
+                    item.put("history", history)
+                }
                 item.put("status", status)
-                    .put("updatedAt", System.currentTimeMillis())
+                    .put("updatedAt", now)
+                val followUpAt = item.optLong("followUpAt", 0L)
+                val finalStatuses = setOf("Teklif alındı", "Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
+                if (status in finalStatuses) {
+                    CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
+                    item.remove("followUpAt")
+                    item.remove("followUpStatus")
+                } else if (followUpAt > now) {
+                    CareerMonitorScheduler.scheduleApplicationFollowUp(
+                        this, item.optString("title"), url, status, followUpAt
+                    )
+                    item.put("followUpStatus", status)
+                }
             }
             updated.put(item)
         }
@@ -1725,6 +1808,138 @@ class CareerActivity : Activity() {
             .setNegativeButton("Vazgeç", null)
             .show()
     }
+
+    private fun chooseFollowUpReminder(url: String, title: String, status: String) {
+        val choices = arrayOf(
+            "Yarın · 10:00",
+            "3 gün sonra · 10:00",
+            "1 hafta sonra · 10:00",
+            "Tarih ve saat seç",
+            "Hatırlatmayı iptal et"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Başvuru takip hatırlatması")
+            .setMessage("Hatırlatmalar Android pil ve bildirim ayarlarına göre birkaç dakika gecikebilir.")
+            .setItems(choices) { _, which ->
+                when (which) {
+                    0, 1, 2 -> {
+                        val days = when (which) { 0 -> 1; 1 -> 3; else -> 7 }
+                        val target = Calendar.getInstance().apply {
+                            add(Calendar.DAY_OF_YEAR, days)
+                            set(Calendar.HOUR_OF_DAY, 10)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        saveFollowUpReminder(url, title, status, target.timeInMillis)
+                    }
+                    3 -> chooseCustomFollowUpReminder(url, title, status)
+                    4 -> clearFollowUpReminder(url)
+                }
+            }
+            .setNegativeButton("Kapat", null)
+            .show()
+    }
+
+    private fun chooseCustomFollowUpReminder(url: String, title: String, status: String) {
+        val now = Calendar.getInstance()
+        android.app.DatePickerDialog(
+            this,
+            { _, year, month, day ->
+                val selected = Calendar.getInstance().apply {
+                    set(year, month, day, 10, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                android.app.TimePickerDialog(
+                    this,
+                    { _, hour, minute ->
+                        selected.set(Calendar.HOUR_OF_DAY, hour)
+                        selected.set(Calendar.MINUTE, minute)
+                        saveFollowUpReminder(url, title, status, selected.timeInMillis)
+                    },
+                    10,
+                    0,
+                    true
+                ).show()
+            },
+            now.get(Calendar.YEAR),
+            now.get(Calendar.MONTH),
+            now.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    private fun saveFollowUpReminder(url: String, title: String, status: String, reminderAt: Long) {
+        val items = savedJobs()
+        val updated = JSONArray()
+        var found = false
+        for (i in 0 until items.length()) {
+            val item = items.optJSONObject(i) ?: continue
+            if (item.optString("url") == url) {
+                item.put("followUpAt", reminderAt)
+                    .put("followUpStatus", status)
+                found = true
+            }
+            updated.put(item)
+        }
+        if (!found) {
+            toast("Başvuru kaydı bulunamadı; önce ilanı kaydet.")
+            return
+        }
+        val scheduled = CareerMonitorScheduler.scheduleApplicationFollowUp(this, title, url, status, reminderAt)
+        if (!scheduled) {
+            toast("Seçilen hatırlatma zamanı geçmiş. İleri bir tarih ve saat seç.")
+            return
+        }
+        prefs.edit().putString("career_jobs", updated.toString()).apply()
+        toast("Başvuru takip hatırlatması kuruldu.")
+        refreshSavedList()
+    }
+
+    private fun clearFollowUpReminder(url: String) {
+        CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
+        val items = savedJobs()
+        val updated = JSONArray()
+        for (i in 0 until items.length()) {
+            val item = items.optJSONObject(i) ?: continue
+            if (item.optString("url") == url) {
+                item.remove("followUpAt")
+                item.remove("followUpStatus")
+            }
+            updated.put(item)
+        }
+        prefs.edit().putString("career_jobs", updated.toString()).apply()
+        toast("Takip hatırlatması iptal edildi.")
+        refreshSavedList()
+    }
+
+    private fun editJobNote(url: String, title: String, currentNote: String) {
+        val noteInput = field(currentNote, "Başvuru notu, görüşme bilgisi, belge veya irtibat notu…", true).apply {
+            minLines = 4
+            maxLines = 10
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Başvuru notu")
+            .setMessage("Bu notlar yalnızca bu cihazda saklanır.\n" + title)
+            .setView(noteInput)
+            .setNegativeButton("Vazgeç", null)
+            .setPositiveButton("Notu kaydet") { _, _ ->
+                val items = savedJobs()
+                val updated = JSONArray()
+                for (i in 0 until items.length()) {
+                    val item = items.optJSONObject(i) ?: continue
+                    if (item.optString("url") == url) {
+                        item.put("note", noteInput.text.toString().trim())
+                            .put("noteUpdatedAt", System.currentTimeMillis())
+                    }
+                    updated.put(item)
+                }
+                prefs.edit().putString("career_jobs", updated.toString()).apply()
+                toast("Başvuru notu kaydedildi.")
+                refreshSavedList()
+            }
+            .show()
+    }
+
     private fun showSaved(parent: LinearLayout) {
         val storedItems = savedJobs()
         val allItems = (storedItems.length() - 1 downTo 0)
@@ -1800,6 +2015,21 @@ class CareerActivity : Activity() {
             card.addView(label(title, 14f, true))
             card.addView(label(group.uppercase(Locale("tr", "TR")), 10f, true, accentBlue))
             card.addView(label("BAŞVURU DURUMU · $status", 11f, true, accentColor))
+            val history = item.optJSONArray("history") ?: JSONArray()
+            if (history.length() > 0) {
+                val recentHistory = (maxOf(0, history.length() - 3) until history.length()).mapNotNull { index ->
+                    val event = history.optJSONObject(index) ?: return@mapNotNull null
+                    val at = event.optLong("at", 0L)
+                    val to = event.optString("to")
+                    if (to.isBlank()) null else {
+                        val dateText = if (at > 0L) SimpleDateFormat("dd.MM HH:mm", Locale("tr", "TR")).format(Date(at)) else ""
+                        (if (dateText.isBlank()) "" else "$dateText · ") + to
+                    }
+                }
+                if (recentHistory.isNotEmpty()) {
+                    card.addView(label("SÜREÇ GEÇMİŞİ · " + recentHistory.joinToString("  →  "), 10f, false, muted))
+                }
+            }
             val deadline = CareerListingParser.deadlineStatus(snippet).orEmpty()
             if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, warningColor))
             val date = item.optLong("updatedAt", 0L)
@@ -1807,6 +2037,21 @@ class CareerActivity : Activity() {
                 "Son güncelleme: " + SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(date)),
                 10f, false, muted
             ))
+            val note = item.optString("note").trim()
+            if (note.isNotBlank()) {
+                card.addView(label("NOT · " + note, 11f, false, primaryText).apply {
+                    setPadding(dp(9), dp(7), dp(9), dp(7))
+                    background = rounded(surfaceRaised, borderColor)
+                })
+            }
+            val followUpAt = item.optLong("followUpAt", 0L)
+            if (followUpAt > 0L) {
+                val whenText = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(followUpAt))
+                card.addView(label(
+                    (if (followUpAt > System.currentTimeMillis()) "TAKİP HATIRLATMASI · " else "PLANLANAN TAKİP ZAMANI · ") + whenText,
+                    10f, true, if (followUpAt > System.currentTimeMillis()) accentColor else warningColor
+                ))
+            }
             val actions = LinearLayout(this).apply { orientation = 0 }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
@@ -1818,6 +2063,14 @@ class CareerActivity : Activity() {
             actions.addView(button("Sil") { confirmDeleteJob(url, title) },
                 LinearLayout.LayoutParams(0, dp(46), 0.6f).apply { setMargins(dp(3), 0, 0, 0) })
             card.addView(actions)
+            val followActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            followActions.addView(button(if (followUpAt > 0L) "Hatırlatmayı düzenle" else "Takip hatırlatması") {
+                chooseFollowUpReminder(url, title, status)
+            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(0, dp(4), dp(3), 0) })
+            followActions.addView(button(if (note.isBlank()) "Not ekle" else "Notu düzenle") {
+                editJobNote(url, title, note)
+            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), dp(4), 0, 0) })
+            card.addView(followActions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 7))
         }
         addPager(parent, savedPage, totalPages) { next ->
@@ -1884,6 +2137,7 @@ class CareerActivity : Activity() {
     }
 
     private fun deleteJob(url: String) {
+        CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
         val old = savedJobs()
         val fresh = JSONArray()
         for (i in 0 until old.length()) {

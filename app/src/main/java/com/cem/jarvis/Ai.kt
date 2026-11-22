@@ -532,7 +532,7 @@ object Ai {
         val body = JSONObject()
             .put("role", role.take(150))
             .put("city", city.take(120))
-            .put("category", category.coerceIn(0, 8))
+            .put("category", category.coerceIn(0, 9))
             .put("daily", daily)
         val (code, txt) = Net.post(
             CAREER_SEARCH_URL,

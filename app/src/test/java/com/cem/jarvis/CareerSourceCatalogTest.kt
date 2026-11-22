@@ -12,6 +12,8 @@ class CareerSourceCatalogTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://www.sgk.gov.tr/"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.bel.tr/"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://sub.dsi.gov.tr/duyurular"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("https://engelsiz.iskur.gov.tr/faaliyetlerimiz/iskur-genclik-programi"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.edu.tr/staj"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("HTTPS://WWW.DSI.GOV.TR/duyurular"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("http://www.dsi.gov.tr/"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("https://www.dsi.gov.tr.evil.example/"))
@@ -23,6 +25,9 @@ class CareerSourceCatalogTest {
     fun classifiesGeneralGovernmentSitesSeparatelyFromKpssPortals() {
         assertEquals("Kamu / resmî kurum", CareerSourceCatalog.categoryFor("https://www.dsi.gov.tr/duyurular"))
         assertEquals("Kamu / KPSS ve merkezi yerleştirme", CareerSourceCatalog.categoryFor("https://www.osym.gov.tr/duyurular"))
+        assertEquals("Kamu / işe alım ve başvuru portalı", CareerSourceCatalog.categoryFor("https://kariyerkapisi.gov.tr/isealim"))
+        assertEquals("Kamu / resmî personel ilanı", CareerSourceCatalog.categoryFor("https://kamuilan.sbb.gov.tr/"))
+
         assertEquals("Belediye / kamu", CareerSourceCatalog.categoryFor("https://www.example.bel.tr/duyurular"))
     }
 
@@ -39,6 +44,14 @@ class CareerSourceCatalogTest {
         assertTrue(names.contains("Fırat Üniversitesi – Personel Daire Başkanlığı"))
         assertTrue(names.contains("Adıyaman Üniversitesi – Personel Daire Başkanlığı"))
         assertTrue(names.contains("e-Devlet – İş ve Kariyer hizmetleri"))
+        assertTrue(names.contains("İŞKUR Gençlik Programı"))
+        assertTrue(names.contains("İŞKUR İşgücü Uyum Programı (İUP)"))
+        assertTrue(names.contains("GÜÇ – Gençliğin Üretim Çağı programları"))
+        assertTrue(names.contains("GÜÇ – program ve hizmetler"))
+        assertTrue(names.contains("İŞKUR Staj Portalı – lise öğrencileri"))
+        assertTrue(names.contains("İŞKUR Staj Portalı – genel giriş"))
+        assertTrue(names.contains("Ulusal Staj Programı – üniversite öğrencileri"))
+        assertTrue(names.contains("Kariyer Kapısı – açık kamu ilanları"))
         assertTrue(names.contains("İçişleri Bakanlığı – duyurular"))
         assertTrue(names.contains("Millî Savunma Bakanlığı – Personel Temin Sistemi"))
         assertTrue(names.contains("Jandarma Genel Komutanlığı – duyurular"))
@@ -66,7 +79,7 @@ class CareerSourceCatalogTest {
             CareerSourceCatalog.recruitmentGroup("Teknisyen alımı", "Başvuru duyurusu", "https://www.dsi.gov.tr/")
         )
         assertEquals(
-            "Kamu / kamu bağlantılı",
+            "Savunma sanayii / şirket alımı",
             CareerSourceCatalog.recruitmentGroup("Teknik personel", "Açık pozisyon", "https://akariyer.aselsan.com/")
         )
         assertEquals(
@@ -74,8 +87,36 @@ class CareerSourceCatalogTest {
             CareerSourceCatalog.recruitmentGroup("Elektrik teknisyeni", "Açık pozisyon", "https://careers.borusan.com/")
         )
         assertEquals(
+            "Savunma sanayii / şirket alımı",
+            CareerSourceCatalog.recruitmentGroup("Elektrik-elektronik bakım teknisyeni", "Açık pozisyon", "https://kariyer.tusas.com/acik-pozisyonlarimiz")
+        )
+        assertEquals(
+            "KİT / kamu şirketi alımı · usul doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup("Teknisyen alımı", "Başvuru duyurusu", "https://www.tcdd.gov.tr/duyurular")
+        )
+        assertEquals(
             "Platform / sektör doğrulanmalı",
             CareerSourceCatalog.recruitmentGroup("Üretim personeli", "İş ilanı", "https://www.kariyer.net/is-ilanlari")
+        )
+    }
+
+    @Test
+    fun doesNotInferKpssRequirementFromKariyerKapisiDomainAlone() {
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sözleşmeli personel alımı",
+                "Başvuru koşulları ve değerlendirme süreci kurum ilanında açıklanmıştır.",
+                "https://kariyerkapisi.gov.tr/isealim"
+            )
+        )
+        assertEquals(
+            "KPSS ile kamu alımı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sözleşmeli personel alımı",
+                "KPSS P94 puanı ile başvuru alınacaktır.",
+                "https://kariyerkapisi.gov.tr/isealim"
+            )
         )
     }
 
