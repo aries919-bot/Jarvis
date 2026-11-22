@@ -118,7 +118,8 @@ object CareerCadreRadar {
             val normalized = rawText
                 .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
                 .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
-            val has2026_2 = path.contains("tercih2") ||
+            val has2026_2 = (path.contains("/2026/") && path.contains("tercih2")) ||
+                path.contains("2026-2") ||
                 rawText.contains("2026/2") || rawText.contains("2026-2")
             if (!has2026_2) return@forEach
 
