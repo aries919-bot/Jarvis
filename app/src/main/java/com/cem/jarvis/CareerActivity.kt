@@ -415,33 +415,102 @@ class CareerActivity : Activity() {
         .replace(Regex("\\bTR\\d{2}(?:\\s?\\d{4}){5}\\s?\\d{2}\\b", RegexOption.IGNORE_CASE), "[IBAN]")
         .replace(Regex("(\\+?90\\s?)?\\(?0?[2345]\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
 
+    private val applicationStatuses = listOf(
+        "Kaydedildi", "Başvurulacak", "Başvuruldu", "Mülakat", "Teklif alındı", "Olumsuz", "Vazgeçildi"
+    )
+
+    private fun savedJobs(): JSONArray =
+        runCatching { JSONArray(prefs.getString("career_jobs", "[]")) }.getOrDefault(JSONArray())
+
     private fun saveJob(hit: Net.Hit) {
-        val list = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
-        if ((0 until list.length()).any { list.optJSONObject(it)?.optString("url") == hit.url }) {
-            toast("Bu ilan zaten kayıtlı."); return
+        val list = savedJobs()
+        val fingerprint = CareerSearchEngine.fingerprint(hit.title, hit.url)
+        if ((0 until list.length()).any { list.optJSONObject(it)?.optString("fingerprint") == fingerprint }) {
+            toast("Bu ilan zaten kayıtlı.")
+            return
         }
-        list.put(JSONObject().put("title", hit.title).put("url", hit.url))
+        list.put(
+            JSONObject()
+                .put("title", hit.title)
+                .put("url", hit.url)
+                .put("snippet", hit.snippet)
+                .put("category", CareerSourceCatalog.categoryFor(hit.url))
+                .put("fingerprint", fingerprint)
+                .put("status", "Kaydedildi")
+                .put("createdAt", System.currentTimeMillis())
+                .put("updatedAt", System.currentTimeMillis())
+                .put("note", "")
+        )
         prefs.edit().putString("career_jobs", list.toString()).apply()
-        toast("İlan cihazına kaydedildi. Kayıtlı listeyi yenilemek için ekranı yeniden aç.")
+        toast("İlan takip listene kaydedildi.")
+        if (::dailyResultsContainer.isInitialized) refreshSavedList()
+    }
+
+    private fun refreshSavedList() {
+        // Rebuild the saved section by recreating this screen; the records remain in local preferences.
+        recreate()
+    }
+
+    private fun updateJobStatus(url: String, status: String) {
+        val old = savedJobs()
+        val updated = JSONArray()
+        for (i in 0 until old.length()) {
+            val item = old.optJSONObject(i) ?: continue
+            if (item.optString("url") == url) {
+                item.put("status", status)
+                    .put("updatedAt", System.currentTimeMillis())
+            }
+            updated.put(item)
+        }
+        prefs.edit().putString("career_jobs", updated.toString()).apply()
+        recreate()
+    }
+
+    private fun chooseJobStatus(url: String, current: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Başvuru durumunu güncelle")
+            .setSingleChoiceItems(applicationStatuses.toTypedArray(), applicationStatuses.indexOf(current).coerceAtLeast(0)) { dialog, which ->
+                dialog.dismiss()
+                updateJobStatus(url, applicationStatuses[which])
+            }
+            .setNegativeButton("Vazgeç", null)
+            .show()
     }
 
     private fun showSaved(parent: LinearLayout) {
-        val list = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
-        if (list.length() == 0) parent.addView(label("Henüz kaydedilmiş ilan yok.", 12f, false, muted))
+        val list = savedJobs()
+        if (list.length() == 0) {
+            parent.addView(label("Henüz kaydedilmiş ilan yok. Beğendiğin ilanlarda Kaydet düğmesini kullan.", 12f, false, muted))
+            return
+        }
         for (i in list.length() - 1 downTo 0) {
             val item = list.optJSONObject(i) ?: continue
             val url = item.optString("url")
-            val row = LinearLayout(this).apply { orientation = 0 }
-            row.addView(button(item.optString("title")) {
+            val title = item.optString("title")
+            val status = item.optString("status", "Kaydedildi")
+            val card = LinearLayout(this).apply {
+                orientation = 1
+                setPadding(dp(10), dp(8), dp(10), dp(8))
+                setBackgroundColor(Color.rgb(27, 34, 51))
+            }
+            card.addView(label(title, 14f, true))
+            card.addView(label("Başvuru aşaması: $status", 12f, true, Color.rgb(150, 190, 255)))
+            val actions = LinearLayout(this).apply { orientation = 0 }
+            actions.addView(button("Durumu değiştir") {
+                chooseJobStatus(url, status)
+            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            actions.addView(button("İlanı aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-            }, LinearLayout.LayoutParams(0, dp(44), 1f))
-            row.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(dp(60), dp(44)))
-            parent.addView(row, params(-1, -2, 0, 2, 0, 2))
+                    .onFailure { toast("Bağlantı açılamadı.") }
+            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            actions.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            card.addView(actions)
+            parent.addView(card, params(-1, -2, 0, 2, 0, 6))
         }
     }
 
     private fun deleteJob(url: String) {
-        val old = try { JSONArray(prefs.getString("career_jobs", "[]")) } catch (e: Exception) { JSONArray() }
+        val old = savedJobs()
         val fresh = JSONArray()
         for (i in 0 until old.length()) {
             val item = old.optJSONObject(i) ?: continue
