@@ -32,6 +32,27 @@ object CareerSourceCatalog {
         Source("Orman Genel Müdürlüğü – kura ve işçi alımı", "https://www.ogm.gov.tr/", "Kamu / kura ve işçi alımı"),
         Source("Karayolları Genel Müdürlüğü – kura ve işçi alımı", "https://www.kgm.gov.tr/", "Kamu / kura ve işçi alımı"),
         Source("ANT Başkanlığı – personel ve kura duyuruları", "https://www.ant.gov.tr/haberler.html", "Kamu / kura ve işçi alımı"),
+        Source("Sağlık Bakanlığı – personel duyuruları", "https://www.saglik.gov.tr/", "Kamu / bakanlık"),
+        Source("Adalet Bakanlığı – personel duyuruları", "https://www.adalet.gov.tr/", "Kamu / bakanlık"),
+        Source("Aile ve Sosyal Hizmetler Bakanlığı", "https://www.aile.gov.tr/", "Kamu / bakanlık"),
+        Source("Millî Eğitim Bakanlığı – personel duyuruları", "https://www.meb.gov.tr/", "Kamu / bakanlık"),
+        Source("Gençlik ve Spor Bakanlığı", "https://www.gsb.gov.tr/", "Kamu / bakanlık"),
+        Source("Tarım ve Orman Bakanlığı", "https://www.tarimorman.gov.tr/", "Kamu / bakanlık"),
+        Source("Ulaştırma ve Altyapı Bakanlığı", "https://www.uab.gov.tr/duyurular", "Kamu / bakanlık"),
+        Source("Devlet Su İşleri Genel Müdürlüğü", "https://www.dsi.gov.tr/", "Kamu / genel müdürlük"),
+        Source("Devlet Hava Meydanları İşletmesi", "https://www.dhmi.gov.tr/", "Kamu / KİT"),
+        Source("Devlet Malzeme Ofisi", "https://www.dmo.gov.tr/", "Kamu / KİT"),
+        Source("Devlet Arşivleri Başkanlığı", "https://www.devletarsivleri.gov.tr/", "Kamu / başkanlık"),
+        Source("Darphane ve Damga Matbaası", "https://www.darphane.gov.tr/", "Kamu / KİT"),
+        Source("Gelir İdaresi Başkanlığı", "https://www.gib.gov.tr/", "Kamu / başkanlık"),
+        Source("Göç İdaresi Başkanlığı", "https://www.goc.gov.tr/", "Kamu / başkanlık"),
+        Source("Sosyal Güvenlik Kurumu", "https://www.sgk.gov.tr/", "Kamu / başkanlık"),
+        Source("AFAD", "https://www.afad.gov.tr/", "Kamu / başkanlık"),
+        Source("Kıyı Emniyeti Genel Müdürlüğü", "https://www.kiyiemniyeti.gov.tr/", "Kamu / KİT"),
+        Source("PTT – duyurular", "https://www.ptt.gov.tr/", "Kamu / KİT"),
+        Source("İller Bankası", "https://www.ilbank.gov.tr/", "Kamu / KİT"),
+        Source("KOSGEB", "https://www.kosgeb.gov.tr/", "Kamu / başkanlık"),
+        Source("Kalkınma ajansları – resmî ilan keşfi", "https://www.sanayi.gov.tr/", "Kamu / bağlı kuruluş"),
         Source("Yerel Yönetimler Genel Müdürlüğü", "https://yerelyonetimler.csb.gov.tr/", "Belediye"),
         Source("Malatya Büyükşehir Belediyesi", "https://www.malatya.bel.tr/", "Belediye"),
         Source("Battalgazi Belediyesi", "https://www.battalgazi.bel.tr/", "Belediye"),
@@ -85,7 +106,7 @@ object CareerSourceCatalog {
 
     private val trustedDomains = listOf(
         "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
-        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
+        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
         "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
@@ -127,7 +148,8 @@ object CareerSourceCatalog {
         return when {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
-            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
+            host.endsWith(".gov.tr") || host.endsWith(".bel.tr") ||
+                host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
                 host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
                 host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
             host.contains("malatya.bel.tr") || host.contains("battalgazi.bel.tr") ||
@@ -395,6 +417,12 @@ object CareerSearchEngine {
             "site:malatya.bel.tr personel alımı iş ilanı $year",
             "site:battalgazi.bel.tr personel işçi alımı $year",
             "site:yesilyurt.bel.tr personel işçi alımı $year",
+            "site:gov.tr personel alımı KPSS ortaöğretim lise P94 $year",
+            "site:gov.tr sürekli işçi alımı İŞKUR kura noter kurası $year",
+            "site:gov.tr sözleşmeli personel alım ilanı son başvuru $year",
+            "site:gov.tr elektrik teknisyeni tekniker bakım onarım personel alımı $year",
+            "site:gov.tr kura sonuçları asıl yedek sınav mülakat personel $year",
+            "site:bel.tr belediye şirketi personel işçi alımı başvuru $year $c",
             "site:malatyatso.org.tr İŞKUR açık iş ilanları $year",
             "site:malorsa.org.tr personel alım ilanı Malatya OSB $year"
         )
@@ -657,7 +685,11 @@ object CareerSearchEngine {
             "site:careers.anadolukariyerim.com OR site:careers.calik.com personel teknisyen üretim ilan",
             "site:vestelkariyer.com OR site:migroskurumsal.com/kariyer elektrik teknisyen depo personel",
             "site:careerscci.com OR site:kariyerim.turkcell.com.tr OR site:jobs.vodafone.com Türkiye teknisyen üretim satış",
-            "site:pladis.wd3.myworkdayjobs.com OR site:sutas.com.tr OR site:tirsan.com.tr Türkiye üretim teknisyen personel"
+            "site:pladis.wd3.myworkdayjobs.com OR site:sutas.com.tr OR site:tirsan.com.tr Türkiye üretim teknisyen personel",
+            "site:kiyiemniyeti.gov.tr OR site:dhmi.gov.tr OR site:dsi.gov.tr işçi personel alımı $year",
+            "site:ptt.gov.tr OR site:ilbank.gov.tr OR site:dmo.gov.tr personel alımı kariyer $year",
+            "site:afad.gov.tr OR site:sgk.gov.tr OR site:gib.gov.tr personel alımı $year",
+            "site:tarimorman.gov.tr OR site:saglik.gov.tr OR site:adalet.gov.tr personel alımı $year"
         )
         val platformQueries = listOf(
             "site:kariyer.net/is-ilani $role $primaryCity",
