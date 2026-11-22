@@ -750,7 +750,11 @@ object CareerRecruitmentTracker {
         val normalizedDate = dateText.replace('/', '.').replace('-', '.')
         val dateParser = java.text.SimpleDateFormat(dateFormat, Locale("tr", "TR")).apply { isLenient = false }
         val parsedDate = runCatching { dateParser.parse(normalizedDate) }.getOrNull() ?: return null
-        val afterDate = tail.substring(dateMatch.range.last + 1).take(100)
+        val afterDate = tail.substring(dateMatch.range.last + 1).take(180)
+        val normalizedAfterDate = normalize(afterDate)
+        if (listOf("duyurulacak", "ilan edilecek", "aciklanacak", "yayimlanacak").any(normalizedAfterDate::contains)) {
+            return null
+        }
         val timeText = Regex("""(?i)(?:saat\s*)?([01]?\d|2[0-3])[:.]([0-5]\d)""")
             .find(afterDate)
         val calendar = Calendar.getInstance().apply {
