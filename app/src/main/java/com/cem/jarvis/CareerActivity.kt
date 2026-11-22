@@ -1306,6 +1306,10 @@ class CareerActivity : Activity() {
 
     private fun newsCandidates(): List<JSONObject> {
         val combined = ArrayList<JSONObject>()
+        // Items already present in the process timeline stay there instead of being repeated in the archive.
+        val trackedProcessUrls = CareerRecruitmentTracker.read(prefs)
+            .map { it.url.substringBefore("#").trimEnd('/').lowercase(Locale.ROOT) }
+            .toSet()
         listOf("career_monitor_results", "career_news_items").forEach { key ->
             val source = runCatching { JSONArray(prefs.getString(key, "[]")) }
                 .getOrDefault(JSONArray())
@@ -1317,6 +1321,8 @@ class CareerActivity : Activity() {
                 val hit = Net.Hit(title, url, item.optString("snippet"))
                 val classification = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url)
                 if (classification.isJobListing) continue
+                val normalizedUrl = url.substringBefore("#").trimEnd('/').lowercase(Locale.ROOT)
+                if (classification.type == CareerContentType.PROCESS_NOTICE && normalizedUrl in trackedProcessUrls) continue
                 val duplicate = combined.indexOfFirst { old ->
                     CareerSearchEngine.areDuplicates(
                         Net.Hit(old.optString("title"), old.optString("url"), old.optString("snippet")),
