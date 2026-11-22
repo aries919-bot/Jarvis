@@ -488,38 +488,80 @@ object CareerSearchEngine {
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
+    private data class QueryOutcome(
+        val hits: List<Net.Hit>,
+        val providerResponses: Int,
+        val errors: List<String>
+    )
+
     private fun collect(queries: List<String>, timeoutSeconds: Long, city: String = "Malatya"): CareerScanBatch {
         if (queries.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
         val executor = Executors.newFixedThreadPool(minOf(4, queries.size))
         return try {
             val futures = executor.invokeAll(
-                queries.map { query ->
+                queries.mapIndexed { queryIndex, query ->
                     Callable {
-                        val primary = runCatching { Net.webSearch(query, 8) }.getOrDefault(emptyList())
-                        // Use a second engine when the first returns too few trusted-domain hits.
-                        val trustedCount = primary.count { CareerSourceCatalog.isTrustedUrl(it.url) }
-                        if (trustedCount >= 4) primary
-                        else primary + runCatching { Net.webSearchBing(query, 8) }.getOrDefault(emptyList())
+                        val found = LinkedHashMap<String, Net.Hit>()
+                        val errors = ArrayList<String>()
+                        var providerResponses = 0
+
+                        fun attempt(provider: String, search: () -> List<Net.Hit>) {
+                            try {
+                                val results = search()
+                                providerResponses++
+                                results.forEach { hit ->
+                                    val key = fingerprint(hit.title, hit.url)
+                                    if (key !in found) found[key] = hit
+                                }
+                            } catch (error: Exception) {
+                                val detail = error.message?.take(180).orEmpty().ifBlank { error.javaClass.simpleName }
+                                errors += provider + ": " + detail
+                            }
+                        }
+
+                        attempt("DuckDuckGo", { Net.webSearch(query, 8) })
+                        var trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
+                        if (trustedCount < 2) {
+                            attempt("Bing", { Net.webSearchBing(query, 8) })
+                            trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
+                        }
+                        if (trustedCount < 2) {
+                            attempt("Brave", { Net.webSearchBrave(query, 6) })
+                        }
+
+                        QueryOutcome(
+                            found.values.toList(),
+                            providerResponses,
+                            errors.map { "Sorgu " + (queryIndex + 1).toString() + ": " + it }
+                        )
                     }
                 },
                 timeoutSeconds,
                 TimeUnit.SECONDS
             )
-            val found = ArrayList<Net.Hit>()
-            var succeeded = 0
-            var failed = 0
+
+            val outcomes = ArrayList<QueryOutcome>()
+            val errors = ArrayList<String>()
+            var cancelled = 0
             futures.forEach { future ->
                 if (future.isCancelled) {
-                    failed++
+                    cancelled++
+                    errors += "Arama zaman sınırını aştı; bazı sorgular tamamlanamadı."
                 } else {
                     try {
-                        found.addAll(future.get())
-                        succeeded++
-                    } catch (_: Exception) {
-                        failed++
+                        val outcome = future.get()
+                        outcomes += outcome
+                        errors += outcome.errors
+                    } catch (error: Exception) {
+                        errors += "Arama görevi tamamlanamadı: " +
+                            (error.cause?.message ?: error.message ?: "bilinmeyen hata")
                     }
                 }
             }
+
+            val successful = outcomes.count { it.providerResponses > 0 }
+            val failed = (queries.size - successful).coerceAtLeast(cancelled)
+            val found = outcomes.flatMap { it.hits }
             val seen = HashSet<String>()
             val filtered = found.filter { hit ->
                 CareerSourceCatalog.isTrustedUrl(hit.url) &&
@@ -528,18 +570,29 @@ object CareerSearchEngine {
             }.sortedByDescending {
                 CareerEligibility.relevance(it.title, it.snippet, city)
             }
-            CareerScanBatch(filtered, succeeded, failed, queries.size)
+
+            CareerScanBatch(
+                hits = filtered,
+                successfulQueries = successful,
+                failedQueries = failed,
+                totalQueries = queries.size,
+                errorMessages = errors.distinct().take(12)
+            )
         } finally {
             executor.shutdownNow()
         }
     }
 
+    /** Manuel aramada bütün kaynakları bekletmemek için en alakalı sorgularla sınırlı tur yapar. */
     fun searchBatch(category: Int, role: String, city: String): CareerScanBatch =
-        collect(queryList(category, role, city), 100, city)
+        collect(queryList(category, role, city).take(12), 90, city)
 
     fun search(category: Int, role: String, city: String): List<Net.Hit> {
         val batch = searchBatch(category, role, city)
-        if (!batch.hasAnySuccessfulQuery) throw java.io.IOException("Arama kaynaklarına ulaşılamadı.")
+        if (!batch.hasAnySuccessfulQuery) {
+            val reason = batch.errorMessages.take(3).joinToString(" | ")
+            throw java.io.IOException("Arama sağlayıcılarının hiçbiri yanıt vermedi. " + reason)
+        }
         return batch.hits
     }
 
@@ -576,6 +629,16 @@ object CareerSearchEngine {
             "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr personel işçi alımı $year",
             "site:yerelyonetimler.csb.gov.tr belediye personel işçi alımı $year"
         )
+        val kuraQueries = listOf(
+            "site:ogm.gov.tr noter kurası işçi alımı kuraya katılacaklar kura sonuçları $year",
+            "site:kgm.gov.tr noter kurası işçi alımı kura sonuçları asıl yedek $year",
+            "site:ant.gov.tr noter kurası personel alımı asıl yedek sınav sonuçları $year",
+            "site:iskur.gov.tr kura çekimi işçi alımı kura tarihi sonuç listesi $year",
+            "kamu işçi alımı noter kurası evrak kontrol kuraya katılacak aday listesi $year",
+            "kamu personel alımı kura sonuçları asıl yedek aday sınav tarihi nihai sonuç $year",
+            "Malatya Elazığ Adıyaman kamu işçi alımı kura tarihi kura sonucu $year",
+            "işçi alımı sözlü sınav tarihi sınav yeri sınav sonucu nihai liste $year"
+        )
         val employerQueries = listOf(
             "site:akariyer.aselsan.com teknisyen elektrik açık pozisyon",
             "site:kariyer.tusas.com teknisyen elektrik bakım açık pozisyon $year",
@@ -604,8 +667,8 @@ object CareerSearchEngine {
             "site:tr.jooble.org $role $primaryCity"
         )
         return collect(
-            (profileQueries + kpssQueries + iskUrAndLocal + employerQueries + platformQueries).distinct(),
-            180,
+            (profileQueries + kpssQueries + iskUrAndLocal + kuraQueries + employerQueries + platformQueries).distinct(),
+            240,
             city
         )
     }
