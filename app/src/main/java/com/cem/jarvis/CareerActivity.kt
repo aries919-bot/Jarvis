@@ -520,6 +520,12 @@ class CareerActivity : Activity() {
                 category.setSelection(0)
                 searchJobs()
             }, params(-1, dp(44), 0, 6, 0, 6))
+            results.addView(button("Resmî ve kurumsal kaynakları aç") {
+                showSources()
+            }, params(-1, dp(44), 0, 2, 0, 6))
+            results.addView(button("Günlük tam kaynak taramasına geç") {
+                renderPage(2)
+            }, params(-1, dp(44), 0, 2, 0, 6))
             return
         }
 
