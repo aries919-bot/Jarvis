@@ -42,7 +42,8 @@ object CareerSourceCatalog {
         Source("TUSAŞ Kariyer – tüm açık pozisyonlar", "https://kariyer.tusas.com/acik-pozisyonlarimiz", "Özel sektör"),
         Source("BOTAŞ Personel Alımı", "https://www.botas.gov.tr/Sayfa/personel-alimi/124", "Kamu şirketi"),
         Source("TÜPRAŞ Açık İlanlar", "https://tupras.gethirex.com/o/tupras/", "Özel sektör"),
-        Source("ROKETSAN Kariyer", "https://kariyer.roketsan.com.tr/jobs", "Özel sektör"),
+        Source("ROKETSAN – Elektronik Üretim Teknisyeni", "https://kariyer.roketsan.com.tr/6ny5xckybt8n4jn8f4prqdsljx.job", "Özel sektör / doğrudan ilan"),
+        Source("ROKETSAN Kariyer – tüm açık pozisyonlar", "https://kariyer.roketsan.com.tr/jobs", "Özel sektör"),
         Source("TEI Kariyer", "https://yetenek.tei.com.tr/jobs", "Özel sektör"),
         Source("HAVELSAN Kariyer", "https://www.havelsan.com/tr/kariyer", "Özel sektör"),
         Source("Enerjisa Kariyer", "https://www.enerjisa.com.tr/tr/enerjisa-hakkinda/kariyer", "Özel sektör")
