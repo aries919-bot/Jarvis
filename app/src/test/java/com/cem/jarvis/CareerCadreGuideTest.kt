@@ -12,7 +12,8 @@ class CareerCadreGuideTest {
         )
 
         assertTrue(codes.containsAll(setOf(2001, 2023, 2061, 2065, 2086, 2111, 2119)))
-        assertFalse(codes.contains(7324))\n        assertFalse(codes.contains(2026))
+        assertFalse(codes.contains(7324))
+        assertFalse(codes.contains(2026))
     }
 
     @Test
