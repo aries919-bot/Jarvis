@@ -1494,7 +1494,10 @@ class CareerActivity : Activity() {
 
     private fun showProcessEvents(parent: LinearLayout) {
         parent.removeAllViews()
-        val events = CareerRecruitmentTracker.read(prefs)
+        val events = CareerRecruitmentTracker.read(prefs).filterNot { event ->
+            event.stage == "BAŞVURU / YENİ ALIM" &&
+                CareerContentClassifier.classify(event.title, event.snippet, event.url).isJobListing
+        }
         if (events.isEmpty()) {
             val emptyCard = panel()
             emptyCard.addView(label("Süreç güncellemesi bekleniyor", 14f, true, primaryText))
