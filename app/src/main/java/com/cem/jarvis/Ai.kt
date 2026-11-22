@@ -108,6 +108,64 @@ object Net {
         return out
     }
 
+    // Bing is a bounded fallback when DuckDuckGo returns too few useful results.
+    fun webSearchBing(query: String, maxResults: Int = 5): List<Hit> {
+        val address = "https://www.bing.com/search?setlang=tr&cc=tr&q=" +
+            URLEncoder.encode(query, "UTF-8")
+        val connection = URL(address).openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connectTimeout = 8000
+        connection.readTimeout = 10000
+        connection.setRequestProperty(
+            "User-Agent",
+            "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36"
+        )
+        connection.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9")
+        try {
+            val code = connection.responseCode
+            if (code !in 200..299) throw IOException("Bing arama hatası: $code")
+            val html = connection.inputStream.bufferedReader().use { it.readText() }
+            val blocks = Regex("""<li[^>]+class=["'][^"']*b_algo[^"']*["'][^>]*>.*?</li>""", RegexOption.DOT_MATCHES_ALL)
+                .findAll(html)
+            val results = ArrayList<Hit>()
+            val seen = HashSet<String>()
+            for (block in blocks) {
+                if (results.size >= maxResults.coerceIn(1, 15)) break
+                val anchor = Regex(
+                    """<h2[^>]*>\s*<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>""",
+                    RegexOption.DOT_MATCHES_ALL
+                ).find(block.value) ?: continue
+                var href = anchor.groupValues[1].replace("&amp;", "&")
+                if (href.contains("bing.com/ck/a", ignoreCase = true)) {
+                    val wrapped = Regex("[?&]u=([^&]+)").find(href)?.groupValues?.getOrNull(1)
+                    if (wrapped != null) {
+                        val decoded = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
+                        val token = decoded.removePrefix("a1")
+                        val target = runCatching {
+                            String(java.util.Base64.getUrlDecoder().decode(token), Charsets.UTF_8)
+                        }.getOrDefault(decoded)
+                        if (target.startsWith("http")) href = target
+                    }
+                }
+                if (href.startsWith("//")) href = "https:$href"
+                if (!href.startsWith("https://") && !href.startsWith("http://")) continue
+                val title = stripTags(anchor.groupValues[2])
+                val caption = Regex(
+                    """<div[^>]+class=["'][^"']*b_caption[^"']*["'][^>]*>(.*?)</div>""",
+                    RegexOption.DOT_MATCHES_ALL
+                ).find(block.value)?.groupValues?.getOrNull(1).orEmpty()
+                val snippet = Regex("""<p[^>]*>(.*?)</p>""", RegexOption.DOT_MATCHES_ALL)
+                    .find(caption)?.groupValues?.getOrNull(1)?.let(::stripTags).orEmpty()
+                if (title.isNotBlank() && seen.add(href.substringBefore("#"))) {
+                    results += Hit(title, href, snippet)
+                }
+            }
+            return results
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     fun quote(sym: String, token: String): String {
         val url = "https://finnhub.io/api/v1/quote?symbol=" + URLEncoder.encode(sym, "UTF-8") +
             "&token=" + URLEncoder.encode(token, "UTF-8")
