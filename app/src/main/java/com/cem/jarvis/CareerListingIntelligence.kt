@@ -61,10 +61,10 @@ object CareerListingIntelligence {
                 "İŞKUR e-Şube · açık iş / başvuru"
             CareerSourceCatalog.isSecondary(url) ->
                 "İlan platformu · işveren ve başvuru adresi doğrulanmalı"
-            host.endsWith(".gov.tr") || host.endsWith(".bel.tr") || host.endsWith(".edu.tr") ->
-                "Kurumun kendi duyurusu · başvuru yöntemi ilanda belirtilir"
             employerGroup.startsWith("KİT /") || employerGroup.startsWith("Savunma sanayii /") ->
                 "İşverenin kendi kariyer/başvuru portalı"
+            host.endsWith(".gov.tr") || host.endsWith(".bel.tr") || host.endsWith(".edu.tr") ->
+                "Kurumun kendi duyurusu · başvuru yöntemi ilanda belirtilir"
             CareerSourceCatalog.categoryFor(url).contains("İşveren") ||
                 CareerSourceCatalog.categoryFor(url).contains("Özel sektör") ->
                 "İşverenin kendi kariyer portalı"
@@ -105,7 +105,7 @@ object CareerListingIntelligence {
             ?: return null
         val digits = raw.filter(Char::isDigit)
         val count = digits.toLongOrNull() ?: return null
-        if (count !in 1..100_000) return null
+        if (count !in 1L..100_000L) return null
         return raw
     }
 }
