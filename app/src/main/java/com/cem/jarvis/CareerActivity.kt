@@ -1396,11 +1396,14 @@ class CareerActivity : Activity() {
     private fun showSources() {
         val sources = CareerSourceCatalog.sources
         val names = sources.map {
+            val category = it.category.lowercase(Locale("tr", "TR"))
             val label = when {
                 !it.official -> "İKİNCİL KEŞİF"
-                it.category.contains("Kamu") || it.category.contains("İŞKUR") ||
-                    it.category.contains("Belediye") || it.category.contains("Resmî") -> "RESMÎ KAMU"
-                else -> "İŞVERENİN KENDİ PORTALI"
+                category.contains("kamu") || category.contains("iskur") ||
+                    category.contains("belediye") || category.contains("resmî") ||
+                    category.contains("üniversite") || category.contains("öğrenci") ->
+                    "RESMÎ / KAMU VE ÖĞRENCİ KAYNAĞI"
+                else -> "İŞVERENİN KARİYER PORTALI"
             }
             "$label · " + it.category + " · " + it.name
         }.toTypedArray()
