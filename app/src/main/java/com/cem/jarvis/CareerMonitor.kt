@@ -456,8 +456,9 @@ object CareerSearchEngine {
                 queries.map { query ->
                     Callable {
                         val primary = runCatching { Net.webSearch(query, 8) }.getOrDefault(emptyList())
-                        // Use a second engine only for low-yield queries to limit requests and throttling.
-                        if (primary.size >= 4) primary
+                        // Use a second engine when the first returns too few trusted-domain hits.
+                        val trustedCount = primary.count { CareerSourceCatalog.isTrustedUrl(it.url) }
+                        if (trustedCount >= 4) primary
                         else primary + runCatching { Net.webSearchBing(query, 8) }.getOrDefault(emptyList())
                     }
                 },
