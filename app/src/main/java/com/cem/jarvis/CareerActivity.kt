@@ -1,16 +1,21 @@
 package com.cem.jarvis
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.content.pm.PackageManager
 import android.view.Gravity
 import android.widget.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
+import java.util.Date
+import java.text.SimpleDateFormat
 
 class CareerActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
@@ -20,8 +25,9 @@ class CareerActivity : Activity() {
     private lateinit var category: Spinner
     private lateinit var results: LinearLayout
     private lateinit var search: Button
-    private val filters = listOf("Tüm ilanlar", "Kamu KPSS'li", "Kamu KPSS'siz", "Özel sektör", "İŞKUR")
+    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "Kamu işçisi · KPSSsiz / belediye / İŞKUR", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
     private val muted = Color.rgb(154, 161, 178)
+    private lateinit var monitorStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,9 +45,36 @@ class CareerActivity : Activity() {
         val body = LinearLayout(this).apply { orientation = 1; setPadding(0, dp(8), 0, dp(12)) }
         body.addView(label("CV bilgilerin", 18f, true))
         body.addView(label("CV cihazında saklanır. Yapay zekâya yalnızca açık onayınla gönderilir.", 12f, false, muted))
-        cv = field(prefs.getString("career_cv", "").orEmpty(), "CV metnini buraya yapıştır", true)
+        val starterProfile = "Elektrik Tesisatları ve Pano Montörlüğü meslek lisesi mezunuyum. Elektrik ön lisans öğrencisiyim; henüz mezun değilim (beklenen mezuniyet 2027). Atölye düzeyinde pano montajı, kablolama, kontaktör/röle kumanda, temel PLC, multimetre ile ölçüm ve teknik resim deneyimim var. Ortaöğretim KPSS P94: 63,23366. Malatya öncelikli; servis veya konaklama varsa il dışı işleri de değerlendirebilirim."
+        cv = field(prefs.getString("career_cv", starterProfile).orEmpty(), "CV metnini buraya yapıştır", true)
         body.addView(cv, params(-1, dp(155), 0, 8, 0, 8))
         body.addView(button("CV'yi cihazıma kaydet") { saveCv() }, params(-1, dp(46), 0, 0, 0, 12))
+        body.addView(label("Günlük otomatik takip", 18f, true))
+        body.addView(label("Telefon her gün yaklaşık 08:20’de resmî kamu ve işveren kariyer kaynaklarını tarar. Yeni bağlantı bulursa bildirim verir. Android pil tasarrufu bu saati geciktirebilir.", 12f, false, muted))
+        val dailySwitch = Switch(this).apply {
+            text = "Günlük taramayı ve bildirimleri aç"
+            setTextColor(Color.WHITE)
+            isChecked = prefs.getBoolean("career_monitor_enabled", false)
+            setOnCheckedChangeListener { _, enabled ->
+                prefs.edit().putBoolean("career_monitor_enabled", enabled).apply()
+                if (enabled) {
+                    CareerMonitorScheduler.ensureChannel(this@CareerActivity)
+                    CareerMonitorScheduler.schedule(this@CareerActivity)
+                    if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 74031)
+                    toast("Günlük takip açıldı. İlk tarama için Kaynakları tara düğmesini kullan.")
+                } else {
+                    CareerMonitorScheduler.cancel(this@CareerActivity)
+                    toast("Günlük takip durduruldu.")
+                }
+                refreshMonitorStatus()
+            }
+        }
+        body.addView(dailySwitch, params(-1, dp(48), 0, 0, 0, 4))
+        monitorStatus = label("", 12f, false, muted)
+        body.addView(monitorStatus)
+        refreshMonitorStatus()
+        body.addView(button("Takip kaynaklarını görüntüle") { showSources() }, params(-1, dp(44), 0, 4, 0, 12))
 
         body.addView(label("Aranacak pozisyon", 15f, true))
         role = field(prefs.getString("career_role", "Elektrik teknisyeni / elektrik bakım personeli").orEmpty(), "Örn. elektrik teknisyeni", false)
@@ -80,31 +113,27 @@ class CareerActivity : Activity() {
         val p = place.text.toString().trim()
         if (r.isBlank()) { toast("Önce pozisyon yaz."); return }
         saveCv()
-        val kind = when (category.selectedItemPosition) {
-            1 -> "kamu personel alımı KPSS'li"
-            2 -> "kamu işçi alımı KPSS'siz"
-            3 -> "özel sektör iş ilanları"
-            4 -> "İŞKUR açık iş ilanları"
-            else -> "iş ilanı kamu özel sektör"
-        }
-        val query = "$r $p $kind 2026 başvuru şartları son başvuru tarihi"
         search.isEnabled = false
-        search.text = "İlanlar aranıyor…"
+        search.text = "Resmî kaynaklar taranıyor…"
         results.removeAllViews()
-        results.addView(label("Açık web araması yapılıyor…", 13f, false, muted))
+        results.addView(label("Kamu, İŞKUR, belediye ve şirket kariyer alanları birleştirilerek aranıyor…", 13f, false, muted))
         Thread {
-            val hits = try { Net.webSearch(query) } catch (e: Exception) { null }
+            val hits = try { CareerSearchEngine.search(category.selectedItemPosition, r, p) } catch (_: Exception) { null }
             runOnUiThread {
                 search.isEnabled = true
-                search.text = "Ücretsiz ilan ara"
+                search.text = "Kaynakları tara"
                 results.removeAllViews()
-                if (hits == null || hits.isEmpty()) {
-                    results.addView(label("Sonuç bulunamadı veya arama servisine ulaşılamadı.", 13f, false, muted))
-                } else hits.take(8).forEachIndexed { index, hit -> showHit(index + 1, hit) }
+                if (hits == null) {
+                    results.addView(label("Tarama tamamlanamadı. İnternet bağlantısını kontrol edip yeniden dene.", 13f, false, muted))
+                } else if (hits.isEmpty()) {
+                    results.addView(label("Bu taramada doğrulanmış resmî/kurumsal bağlantı bulunamadı. Bu, hiç ilan olmadığı anlamına gelmez; siteler giriş gerektirebilir veya arama motoru sonuç vermemiş olabilir.", 13f, false, muted))
+                } else {
+                    results.addView(label(hits.size.toString() + " benzersiz kaynak bağlantısı bulundu. İlanın açık olup olmadığını ve tam şartları resmî sayfada kontrol et.", 12f, false, muted))
+                    hits.take(30).forEachIndexed { index, hit -> showHit(index + 1, hit) }
+                }
             }
         }.start()
     }
-
     private fun showHit(index: Int, hit: Net.Hit) {
         val card = LinearLayout(this).apply {
             orientation = 1
@@ -112,9 +141,15 @@ class CareerActivity : Activity() {
             setBackgroundColor(Color.rgb(27, 34, 51))
         }
         card.addView(label(index.toString() + ". " + hit.title, 15f, true))
+        card.addView(label(
+            if (CareerSourceCatalog.isSecondary(hit.url)) "Kaynak: Malatya TSO · İkincil İŞKUR keşif listesi; e-Şube’de ayrıca doğrula"
+            else "Kaynak: " + CareerSourceCatalog.sourceName(hit.url) + " · Kurumsal/resmî alan adı",
+            11f, true, Color.rgb(150, 190, 255)
+        ))
         if (hit.snippet.isNotBlank()) card.addView(label(hit.snippet, 12f, false, muted))
-        card.addView(label("CV metniyle kelime eşleşmesi: %" + score(cv.text.toString(), hit.title + " " + hit.snippet) +
-            " · Yalnızca metin benzerliğidir; işe kabul olasılığı değildir.", 11f, false, Color.rgb(150, 190, 255)))
+        card.addView(label(CareerEligibility.assess(hit.title, hit.snippet), 12f, true, Color.rgb(255, 207, 120)))
+        card.addView(label("CV kelime eşleşmesi: %" + score(cv.text.toString(), hit.title + " " + hit.snippet) +
+            " · Bu oran işe kabul olasılığı değildir; arama özeti tam ilan şartlarının yerine geçmez.", 11f, false, Color.rgb(150, 190, 255)))
         val actions = LinearLayout(this).apply { orientation = 0 }
         actions.addView(button("Aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
@@ -126,6 +161,36 @@ class CareerActivity : Activity() {
         results.addView(card, params(-1, -2, 0, 0, 0, 8))
     }
 
+    override fun onResume() {
+        super.onResume()
+        CareerMonitorScheduler.scheduleIfEnabled(this)
+        if (::monitorStatus.isInitialized) refreshMonitorStatus()
+    }
+
+    private fun refreshMonitorStatus() {
+        if (!::monitorStatus.isInitialized) return
+        val enabled = prefs.getBoolean("career_monitor_enabled", false)
+        val last = prefs.getLong("career_monitor_last_scan", 0L)
+        val count = prefs.getInt("career_monitor_new_count", 0)
+        val error = prefs.getString("career_monitor_last_error", null)
+        val time = if (last > 0L) SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(last)) else "Henüz tarama yapılmadı"
+        monitorStatus.text = buildString {
+            append(if (enabled) "Durum: Açık" else "Durum: Kapalı")
+            append(" · Son kontrol: ").append(time)
+            if (last > 0L && error.isNullOrBlank()) append(" · Son kontrolde yeni: ").append(count)
+            if (!error.isNullOrBlank()) append("\n").append(error)
+        }
+    }
+
+    private fun showSources() {
+        val sources = CareerSourceCatalog.sources
+        val names = sources.map { (if (it.official) "RESMÎ · " else "İKİNCİL KEŞİF · ") + it.category + " · " + it.name }.toTypedArray()
+        AlertDialog.Builder(this).setTitle("Takip edilen kaynaklar")
+            .setItems(names) { _, which ->
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(sources[which].url))) }
+                    .onFailure { toast("Kaynak açılamadı.") }
+            }.setNegativeButton("Kapat", null).show()
+    }
     private fun confirmReview(hit: Net.Hit) {
         val cvText = cv.text.toString().trim()
         if (cvText.isBlank()) { toast("Önce CV metnini ekle."); return }
