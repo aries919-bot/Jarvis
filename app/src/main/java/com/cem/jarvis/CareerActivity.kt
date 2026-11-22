@@ -780,21 +780,6 @@ class CareerActivity : Activity() {
         parent.addView(horizontal, params(-1, dp(48), 0, 4, 0, 4))
     }
 
-    private fun addSectorFilterRow(parent: LinearLayout, selected: Int, onSelected: (Int) -> Unit) {
-        val horizontal = HorizontalScrollView(this).apply {
-            isHorizontalScrollBarEnabled = false
-            overScrollMode = android.view.View.OVER_SCROLL_NEVER
-        }
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        sectorFilterLabels.forEachIndexed { index, title ->
-            row.addView(chipButton(title, selected == index) { onSelected(index) },
-                LinearLayout.LayoutParams(-2, dp(42)).apply {
-                    setMargins(dp(3), dp(2), dp(3), dp(2))
-                })
-        }
-        horizontal.addView(row)
-        parent.addView(horizontal, params(-1, dp(48), 0, 4, 0, 4))
-    }
     private fun renderSearchResults(failed: Boolean = false) {
         if (!::results.isInitialized) return
         results.removeAllViews()
