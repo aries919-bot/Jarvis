@@ -114,6 +114,7 @@ object CareerEligibility {
     const val HIGH_SCHOOL_BRANCH_CODE_PANEL_MOUNTING = 3
     const val QUALIFICATION_CODE_ELECTRIC_ELECTRONICS = 2023
     const val QUALIFICATION_CODE_RAIL_SYSTEMS = 2086
+    const val QUALIFICATION_CODE_ANY_HIGH_SCHOOL = 2001
 
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
@@ -131,6 +132,16 @@ object CareerEligibility {
 
     fun assess(title: String, snippet: String, url: String = ""): String {
         val text = normalize("$title $snippet $url")
+        val hasCodeContext = listOf("nitelik kod", "ozel sart kod", "aranan nitelik kod").any(text::contains)
+        if (hasCodeContext) {
+            val codes = extractQualificationCodes(text)
+            if (codes.isNotEmpty()) {
+                val codeAssessment = assessQualificationCodes(codes)
+                if (codeAssessment.startsWith("ALAN KODU UYUŞMUYOR") ||
+                    codeAssessment.startsWith("ALAN KODU EŞLEŞİYOR") ||
+                    codeAssessment.startsWith("ORTAÖĞRETİM KODU EŞLEŞİYOR")) return codeAssessment
+            }
+        }
         if (hasExplicitAssociateRequirement(text)) {
             return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. 2027’de mezuniyetin tamamlanmadan bu şartı karşılamazsın."
         }
@@ -174,11 +185,14 @@ object CareerEligibility {
         if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
             return "ALAN KODU EŞLEŞİYOR · 2023 nitelik kodu Elektrik-Elektronik Teknolojisi alanı mezuniyetini kapsar; 6013/3 dalın bu alan içindedir. Diğer kodlar da ayrıca sağlanmalı."
         }
+        if (QUALIFICATION_CODE_ANY_HIGH_SCHOOL in codes) {
+            return "ORTAÖĞRETİM KODU EŞLEŞİYOR · 2001 herhangi bir ortaöğretim alanından mezuniyeti ifade eder. İlandaki diğer özel şartlar da sağlanmalı."
+        }
         return "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamı ÖSYM kılavuzundaki açıklamalarıyla karşılaştırılmalı."
     }
 
     fun extractQualificationCodes(text: String): Set<Int> =
-        Regex("(?<!\\d)(20\\d{2})(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
+        Regex("(?<!\\d)(2001|2023|2086)(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
 
     fun normalizeForFingerprint(value: String): String = normalize(value)
         .replace(Regex("[^a-z0-9 ]"), " ")
