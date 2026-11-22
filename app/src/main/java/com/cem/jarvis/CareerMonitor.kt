@@ -526,6 +526,10 @@ object CareerSearchEngine {
                             trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
                         }
                         if (trustedCount < 2) {
+                            attempt("Google Haberler RSS", { Net.webSearchGoogleNews(query, 4) })
+                            trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
+                        }
+                        if (trustedCount < 2) {
                             attempt("Brave", { Net.webSearchBrave(query, 6) })
                         }
 
