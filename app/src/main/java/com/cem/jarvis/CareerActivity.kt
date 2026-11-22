@@ -673,7 +673,7 @@ class CareerActivity : Activity() {
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(selectedCategory, r, p)
+                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty())
             } catch (error: Exception) {
                 exceptionMessage = error.message
                 null
