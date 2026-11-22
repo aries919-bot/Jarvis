@@ -230,6 +230,17 @@ object CareerEmployerResearcher {
                 !CareerSourceCatalog.isSecondary(hit.url)
         }
         val employer = structured ?: mappedEmployer
+        val finalHost = runCatching {
+            URI(page.finalUrl ?: hit.url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.")
+        }.getOrDefault("")
+        val redirectWarning = if (
+            finalHost.isNotBlank() && host.isNotBlank() &&
+            finalHost != host && !finalHost.endsWith(".$host") && !host.endsWith(".$finalHost")
+        ) {
+            " DİKKAT: Kaynak farklı bir alan adına yönlendi ($finalHost); işveren/kaynak ilişkisi ayrıca incelenmeli."
+        } else if (page.finalUrl?.startsWith("http://", true) == true) {
+            " DİKKAT: Son adres HTTPS değil; hassas bilgi girmeden önce manuel kontrol et."
+        } else ""
         val sourceAssessment = when {
             CareerSourceCatalog.isSecondary(hit.url) ->
                 "İkincil iş/ilan platformu alan adı. Bu sayfa işverenin kendi sitesi sayılmaz."
@@ -237,7 +248,7 @@ object CareerEmployerResearcher {
                 "Alan adı Aries'in tanımlı kurumsal/resmî kaynak listesinde bulunuyor; bu tek başına ticaret sicili veya açık ilan kanıtı değildir."
             else ->
                 "Alan adı Aries'in tanımlı kaynak listesinde bulunamadı; bağımsız doğrulama gerekiyor."
-        }
+        } + redirectWarning
         val employerAssessment = when {
             structured != null ->
                 "Sayfanın yapılandırılmış verisinde işveren adı '$structured' olarak bulundu. Tüzel kişilik/sicil kaydı ayrıca doğrulanmış değildir."
@@ -253,7 +264,9 @@ object CareerEmployerResearcher {
             "\"" + hit.title.take(140) + "\" \"" + host + "\" ilan işveren şirket resmi kaynak"
         }
         val companyResults = runSearch(companyQuery)
-        val registryQuery = employer?.let { "\"" + it + "\" ticaret sicil gazetesi MERSİS şirket kaydı" }
+        val registryQuery = employer?.let {
+            "\"" + it + "\" site:ticaretsicil.gov.tr OR site:ticaretsicilgazetesi.gov.tr MERSİS şirket kaydı"
+        }
         val registryResults = registryQuery?.let(::runSearch).orEmpty()
         val limitations = if (page.status == null) {
             "İlan sayfası otomatik olarak okunamadı; oturum, bot koruması veya bağlantı engeli olabilir. Sayfaya kullanıcı tarafından manuel bakılmalı."
@@ -277,7 +290,8 @@ object CareerEmployerResearcher {
             companyResults = companyResults,
             registrySearchQuery = registryQuery,
             registryResults = registryResults,
-            limitations = limitations
+            limitations = limitations,
+            visibleText = page.visibleText
         )
     }
 }
