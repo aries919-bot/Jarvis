@@ -8,6 +8,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.Locale
 
 class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
     val temporary: Boolean
@@ -84,7 +85,7 @@ object Net {
         var clean = value
             .replace(Regex("(?is)<script[^>]*>.*?</script>"), " ")
             .replace(Regex("(?is)<style[^>]*>.*?</style>"), " ")
-            .replace(Regex("(?i)<br\s*/?>|</p>|</div>|</li>"), " ")
+            .replace(Regex("""(?i)<br\s*/?>|</p>|</div>|</li>"""), " ")
             .replace(Regex("<[^>]*>"), " ")
             .replace("&amp;", "&")
             .replace("&quot;", "\"")
