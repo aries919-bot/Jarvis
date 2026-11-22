@@ -206,8 +206,6 @@ object CareerSourceCatalog {
 }
 
 object CareerEligibility {
-    const val HIGH_SCHOOL_FIELD_CODE_ELECTRIC_ELECTRONICS = 6013
-    const val HIGH_SCHOOL_BRANCH_CODE_PANEL_MOUNTING = 3
     const val QUALIFICATION_CODE_ELECTRIC_ELECTRONICS = 2023
     const val QUALIFICATION_CODE_RAIL_SYSTEMS = 2086
     const val QUALIFICATION_CODE_ANY_HIGH_SCHOOL = 2001
@@ -229,20 +227,14 @@ object CareerEligibility {
     fun assess(title: String, snippet: String, url: String = ""): String {
         val text = normalize("$title $snippet $url")
 
-        // A hard disqualifying field code must not be overwritten by a soft skill/title match.
         val hasCodeContext = listOf("nitelik kod", "ozel sart kod", "aranan nitelik kod").any(text::contains)
         val codes = if (hasCodeContext) extractQualificationCodes(text) else emptySet()
-        if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
-            return assessQualificationCodes(codes)
-        }
-        val qualificationNote = when {
-            QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes -> assessQualificationCodes(setOf(QUALIFICATION_CODE_ELECTRIC_ELECTRONICS))
-            QUALIFICATION_CODE_ANY_HIGH_SCHOOL in codes -> assessQualificationCodes(setOf(QUALIFICATION_CODE_ANY_HIGH_SCHOOL))
-            else -> null
-        }
+        // A code can describe a required diploma field; it cannot prove the candidate's own field.
+        // Keep the requirement visible until the diploma's exact field/branch has been confirmed.
+        val qualificationNote = codes.takeIf { it.isNotEmpty() }?.let(::assessQualificationCodes)
 
         if (hasExplicitAssociateRequirement(text)) {
-            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. 2027’de mezuniyetin tamamlanmadan bu şartı karşılamazsın."
+            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. Henüz ön lisans mezunu değilsen bu şartı karşılamazsın."
         }
 
         val requiresKpss = text.contains("kpss")
@@ -277,16 +269,21 @@ object CareerEligibility {
     }
 
     fun assessQualificationCodes(codes: Set<Int>): String {
-        if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
-            return "ALAN KODU UYUŞMUYOR · 2086 Raylı Sistemler alanı/dalı şartıdır; Elektrik Tesisatları ve Pano Montörlüğü dalınla aynı değildir."
-        }
+        val notes = mutableListOf<String>()
         if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
-            return "ALAN KODU EŞLEŞİYOR · 2023 nitelik kodu Elektrik-Elektronik Teknolojisi alanı mezuniyetini kapsar; 6013/3 dalın bu alan içindedir. Diğer kodlar da ayrıca sağlanmalı."
+            notes += "2023 kodu için ÖSYM kılavuzunda yazan ortaöğretim alan/dal şartını lise diplomanla karşılaştır. Uygulama senin alanını doğrulamadı."
+        }
+        if (QUALIFICATION_CODE_RAIL_SYSTEMS in codes) {
+            notes += "2086 kodunun güncel kılavuzdaki tanımını ve istediği alan/dalı ayrıca kontrol et; uygulama bu kodu otomatik ret sebebi saymaz."
         }
         if (QUALIFICATION_CODE_ANY_HIGH_SCHOOL in codes) {
-            return "ORTAÖĞRETİM KODU EŞLEŞİYOR · 2001 herhangi bir ortaöğretim alanından mezuniyeti ifade eder. İlandaki diğer özel şartlar da sağlanmalı."
+            notes += "2001 kodu herhangi bir ortaöğretim alanından mezuniyet şartını ifade eder; mezuniyet belgen ve ilandaki diğer özel şartlar yine kontrol edilmeli."
         }
-        return "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamı ÖSYM kılavuzundaki açıklamalarıyla karşılaştırılmalı."
+        return if (notes.isEmpty()) {
+            "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamını güncel ÖSYM kılavuzundaki açıklamalarla ve diploma bilgilerinle karşılaştır."
+        } else {
+            "NİTELİK KODU KONTROLÜ · " + notes.joinToString(" ")
+        }
     }
 
     fun extractQualificationCodes(text: String): Set<Int> =
@@ -328,8 +325,11 @@ object CareerEligibility {
         if (matchedCity != null) reasons += "Bölge: $matchedCity"
         if (text.contains("p94") || text.contains("ortaogretim")) reasons += "Ortaöğretim KPSS ifadesi bulundu"
         if (listOf("elektrik", "pano", "teknisyen", "bakim").any(text::contains)) reasons += "Elektrik/teknik alan eşleşmesi"
-        if (eligibility.startsWith("PUAN") || eligibility.startsWith("MEZUNİYET") ||
-            eligibility.startsWith("ALAN KODU UYUŞMUYOR")) reasons += "Zorunlu şart uyuşmazlığı olabilir; tam kılavuzu kontrol et"
+        if (eligibility.startsWith("PUAN") || eligibility.startsWith("MEZUNİYET")) {
+            reasons += "Zorunlu şart uyuşmazlığı olabilir; tam kılavuzu kontrol et"
+        } else if (eligibility.startsWith("NİTELİK KODU KONTROLÜ")) {
+            reasons += "Diplomadaki alan/dal ile nitelik kodunu güncel kılavuzdan karşılaştır"
+        }
         return if (reasons.isEmpty()) "Arama terimleriyle genel eşleşme; tam ilan metni incelenmeli" else reasons.joinToString(" · ")
     }
 
