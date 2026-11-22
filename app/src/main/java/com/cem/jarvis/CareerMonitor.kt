@@ -1676,12 +1676,12 @@ object CareerMonitorScheduler {
             else Notification.Builder(context)
         builder.setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Aries: $slot taramasında yeni ilan bağlantıları")
-            .setContentText("$count yeni resmî/kurumsal/platform sonucu bulundu.")
+            .setContentText("$count yeni iş ilanı adayı bulundu. Başvurunun açık olduğunu kaynakta doğrula.")
             .setAutoCancel(true)
             .setContentIntent(pending)
             .setStyle(Notification.BigTextStyle().bigText(
                 (first?.title?.plus(" · ") ?: "") +
-                    "$count yeni sonuç bulundu. İlanın aktifliğini ve son başvuru tarihini kaynak sayfasında doğrula."
+                    "$count yeni iş ilanı adayı bulundu. Başvuru durumu, işveren ve son başvuru tarihini kaynak sayfasında doğrula."
             ))
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(if (slot == "Akşam") 74024 else 74023, builder.build())
