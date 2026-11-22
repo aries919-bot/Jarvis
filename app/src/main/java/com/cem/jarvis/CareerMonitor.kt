@@ -47,6 +47,7 @@ object CareerSourceCatalog {
         Source("Türkiye Turizm Tanıtım ve Geliştirme Ajansı – kariyer", "https://tga.gov.tr/kariyer", "Kamu bağlantılı / kurumsal kariyer"),
         Source("Sağlık Bakanlığı – personel duyuruları", "https://www.saglik.gov.tr/", "Kamu / bakanlık"),
         Source("Adalet Bakanlığı – personel duyuruları", "https://www.adalet.gov.tr/", "Kamu / bakanlık"),
+        Source("Adalet Bakanlığı – Personel Genel Müdürlüğü / alım ilanları", "https://pgm.adalet.gov.tr/", "Kamu / 4/B sözleşmeli personel"),
         Source("Aile ve Sosyal Hizmetler Bakanlığı", "https://www.aile.gov.tr/", "Kamu / bakanlık"),
         Source("Millî Eğitim Bakanlığı – personel duyuruları", "https://www.meb.gov.tr/", "Kamu / bakanlık"),
         Source("Gençlik ve Spor Bakanlığı", "https://www.gsb.gov.tr/", "Kamu / bakanlık"),
@@ -293,6 +294,7 @@ object CareerEligibility {
     const val QUALIFICATION_CODE_ELECTRIC_ELECTRONICS = 2023
     const val QUALIFICATION_CODE_RAIL_SYSTEMS = 2086
     const val QUALIFICATION_CODE_ANY_HIGH_SCHOOL = 2001
+    const val QUALIFICATION_CODE_ELECTRIC_ASSOCIATE = 3290
 
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
@@ -308,18 +310,20 @@ object CareerEligibility {
         return phrases.any(text::contains)
     }
 
-    fun assess(title: String, snippet: String, url: String = ""): String {
+    fun assess(
+        title: String,
+        snippet: String,
+        url: String = "",
+        isAssociateDegreeGraduate: Boolean = false
+    ): String {
         val text = normalize("$title $snippet $url")
 
         val hasCodeContext = listOf("nitelik kod", "ozel sart kod", "aranan nitelik kod").any(text::contains)
         val codes = if (hasCodeContext) extractQualificationCodes(text) else emptySet()
         // A code can describe a required diploma field; it cannot prove the candidate's own field.
         // Keep the requirement visible until the diploma's exact field/branch has been confirmed.
-        val qualificationNote = codes.takeIf { it.isNotEmpty() }?.let(::assessQualificationCodes)
-
-        if (hasExplicitAssociateRequirement(text)) {
-            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. Henüz ön lisans mezunu değilsen bu şartı karşılamazsın."
-        }
+        val qualificationNote = codes.takeIf { it.isNotEmpty() }
+            ?.let { assessQualificationCodes(it, isAssociateDegreeGraduate) }
 
         val requiresKpss = text.contains("kpss")
         val p3 = Regex("\\bp\\s*3\\b").containsMatchIn(text)
@@ -327,6 +331,14 @@ object CareerEligibility {
         val p94 = Regex("\\bp\\s*94\\b").containsMatchIn(text)
         if (requiresKpss && (p3 || p93) && !p94) {
             return "PUAN TÜRÜ UYUŞMUYOR · İlan P3/P93 istiyor; ortaöğretim P94 puanın bu puan türlerinin yerine geçmez."
+        }
+
+        if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes && !isAssociateDegreeGraduate) {
+            return "MEZUNİYET SONRASI · 3290 kodu Elektrik veya Elektrik Teknolojisi ön lisans programından mezuniyet ister. Ön lisans mezuniyetin yoksa bu şartı karşılamazsın."
+        }
+
+        if (hasExplicitAssociateRequirement(text)) {
+            return "MEZUNİYET SONRASI · İlan ön lisans mezuniyeti istiyor. Henüz ön lisans mezunu değilsen bu şartı karşılamazsın."
         }
 
         if (requiresKpss) {
@@ -352,8 +364,14 @@ object CareerEligibility {
         return "ŞARTLARI DOĞRULA · Başlık/özet tek başına yeterli değil; eğitim, şehir, deneyim ve son başvuru tarihi kaynak sayfasında kontrol edilmeli."
     }
 
-    fun assessQualificationCodes(codes: Set<Int>): String {
+    fun assessQualificationCodes(
+        codes: Set<Int>,
+        isAssociateDegreeGraduate: Boolean = false
+    ): String {
         val notes = mutableListOf<String>()
+        if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes) {
+            notes += "3290 kodu Elektrik veya Elektrik Teknolojisi ön lisans programından mezuniyet ister; diploma program adını resmî nitelik koduyla karşılaştır."
+        }
         if (QUALIFICATION_CODE_ELECTRIC_ELECTRONICS in codes) {
             notes += "2023 kodu için ÖSYM kılavuzunda yazan ortaöğretim alan/dal şartını lise diplomanla karşılaştır. Uygulama senin alanını doğrulamadı."
         }
@@ -366,12 +384,17 @@ object CareerEligibility {
         return if (notes.isEmpty()) {
             "NİTELİK KODLARI KONTROL EDİLMELİ · Kodların tamamını güncel ÖSYM kılavuzundaki açıklamalarla ve diploma bilgilerinle karşılaştır."
         } else {
-            "NİTELİK KODU KONTROLÜ · " + notes.joinToString(" ")
+            val prefix = if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes && !isAssociateDegreeGraduate) {
+                "MEZUNİYET SONRASI · "
+            } else {
+                "NİTELİK KODU KONTROLÜ · "
+            }
+            prefix + notes.joinToString(" ")
         }
     }
 
     fun extractQualificationCodes(text: String): Set<Int> =
-        Regex("(?<!\\d)(2001|2023|2086)(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
+        Regex("(?<!\\d)(2001|2023|2086|3290)(?!\\d)").findAll(text).map { it.value.toInt() }.toSet()
 
     fun normalizeForFingerprint(value: String): String = normalize(value)
         .replace(Regex("[^a-z0-9 ]"), " ")
@@ -931,6 +954,8 @@ object CareerSearchEngine {
             "$role Türkiye geneli servis lojman konaklama iş ilanı $year"
         )
         val kpssQueries = listOf(
+            "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ortaöğretim P94 TABLO-1 kadro kontenjan nitelik kodu",
+            "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ön lisans P93 TABLO-2 kadro kontenjan nitelik kodu",
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise $year tercih nitelik kodları",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
@@ -1202,6 +1227,8 @@ object CareerMonitorScheduler {
     private const val UNIQUE_MORNING = "aries_career_morning_scan"
     private const val UNIQUE_EVENING = "aries_career_evening_scan"
     private const val UNIQUE_MANUAL = "aries_career_manual_scan"
+    private const val KPSS_2026_2_START_REMINDER = "aries_kpss_2026_2_start"
+    private const val KPSS_2026_2_END_REMINDER = "aries_kpss_2026_2_end"
 
     private fun constraints() = androidx.work.Constraints.Builder()
         .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
@@ -1240,6 +1267,58 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_LEGACY)
         scheduleSlot(context, UNIQUE_MORNING, "Sabah", 8, 30)
         scheduleSlot(context, UNIQUE_EVENING, "Akşam", 20, 30)
+        schedulePreferenceReminders(context)
+    }
+
+    /**
+     * KPSS tercih dönemi hatırlatması günlük ilan taramasından bağımsızdır.
+     * Kullanıcı günlük taramayı kapatsa da tercih tarihini kaçırmamak için saklanır.
+     */
+    fun schedulePreferenceReminders(context: Context) {
+        scheduleKpss2026_2PreferenceReminders(context)
+    }
+
+    /**
+     * ÖSYM 2026 takviminde yayımlanan 17–24 Aralık tercih aralığı için iki hatırlatma kurar.
+     * Takvimde saat verilmediği için bildirim saatini resmî saatmiş gibi sunmaz.
+     */
+    private fun scheduleKpss2026_2PreferenceReminders(context: Context) {
+        val startAt = Calendar.getInstance().apply {
+            set(2026, Calendar.DECEMBER, 17, 9, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val endAt = Calendar.getInstance().apply {
+            set(2026, Calendar.DECEMBER, 24, 9, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        fun scheduleDay(title: String, stage: String, eventAt: Long, prefix: String) {
+            val event = CareerProcessEvent(
+                id = prefix,
+                title = title,
+                url = CareerCadreRadar.OFFICIAL_CALENDAR_URL,
+                snippet = CareerCadreRadar.PREFERENCE_STATUS,
+                stage = stage,
+                detectedAt = System.currentTimeMillis(),
+                eventAt = eventAt,
+                hasExplicitTime = false
+            )
+            enqueueProcessReminder(context, event, prefix + "-day", eventAt - TimeUnit.DAYS.toMillis(1))
+            enqueueProcessReminder(context, event, prefix + "-dayof", eventAt)
+        }
+
+        scheduleDay(
+            "KPSS-2026/2 tercihleri başlıyor",
+            "KPSS-2026/2 TERCİH DÖNEMİ BAŞLANGICI",
+            startAt,
+            KPSS_2026_2_START_REMINDER
+        )
+        scheduleDay(
+            "KPSS-2026/2 son tercih günü",
+            "KPSS-2026/2 TERCİH DÖNEMİ SON GÜNÜ",
+            endAt,
+            KPSS_2026_2_END_REMINDER
+        )
     }
 
     fun scheduleIfEnabled(context: Context) {
@@ -1269,6 +1348,7 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_LEGACY)
         wm.cancelUniqueWork(UNIQUE_MORNING)
         wm.cancelUniqueWork(UNIQUE_EVENING)
+        // KPSS-2026/2 takvim hatırlatmaları, ilan taraması kapalı olsa bile korunur.
     }
 
     fun scheduleProcessReminders(context: Context, event: CareerProcessEvent) {
@@ -1483,6 +1563,12 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
 
             val hits = batch.hits
+            val discoveredTables = CareerCadreRadar.detect2026_2GuideTables(hits)
+            prefs.edit().apply {
+                discoveredTables.p94Url?.let { putString(CareerCadreRadar.P94_GUIDE_PREF_KEY, it) }
+                discoveredTables.p93Url?.let { putString(CareerCadreRadar.P93_GUIDE_PREF_KEY, it) }
+            }.apply()
+
             val orderedSeen = LinkedHashSet<String>()
             val oldOrder = runCatching {
                 JSONArray(prefs.getString("career_monitor_seen_order", "[]"))
@@ -1509,7 +1595,12 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
             val json = JSONArray()
             val ranked = hits.map { hit ->
-                val eligibility = CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+                val eligibility = CareerEligibility.assess(
+                    hit.title,
+                    hit.snippet,
+                    hit.url,
+                    prefs.getBoolean("career_associate_graduated", false)
+                )
                 val score = CareerEligibility.profileMatchScore(hit.title, hit.snippet, role, city, eligibility)
                 Triple(hit, eligibility, score)
             }.sortedByDescending { it.third }

@@ -47,6 +47,7 @@ class CareerActivity : Activity() {
     private val warningColor = Color.rgb(153, 91, 17)
     private val dangerColor = Color.rgb(184, 54, 65)
     private lateinit var monitorStatus: TextView
+    private lateinit var cadreGuideStatus: TextView
     private lateinit var pageScroll: ScrollView
     private lateinit var pageContent: LinearLayout
     private lateinit var navBar: LinearLayout
@@ -137,6 +138,8 @@ class CareerActivity : Activity() {
         setContentView(root)
         renderNavigation()
         renderPage(0)
+        // KPSS-2026/2 tercih hatırlatmaları günlük ilan taramasından bağımsızdır.
+        CareerMonitorScheduler.schedulePreferenceReminders(this)
         CareerMonitorScheduler.scheduleIfEnabled(this)
     }
 
@@ -212,6 +215,29 @@ class CareerActivity : Activity() {
         metrics.addView(statCard("OTOMATİK TAKİP", trackingValue, "Sabah · akşam"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
         metrics.addView(statCard("SON TARAMA", lastScanValue, "Kaynak kontrolü"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(5), 0, 0, 0) })
         pageContent.addView(metrics, params(-1, -2, 0, 0, 0, 16))
+
+        val cadreRadarCard = panel()
+        cadreRadarCard.addView(label("ÖSYM · KPSS-2026/2 MERKEZÎ YERLEŞTİRME", 10f, true, accentColor))
+        cadreRadarCard.addView(label(CareerCadreRadar.PREFERENCE_WINDOW, 20f, true, primaryText))
+        cadreRadarCard.addView(label(
+            "Tercih tarihleri açıklandı. Hangi kurumda hangi unvanın ve kaç kontenjanın olacağı resmî tercih kılavuzu yayımlandığında kesinleşecek.",
+            12f, false, muted
+        ))
+        val hasP94Guide = !prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").isNullOrBlank()
+        val hasP93Guide = !prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").isNullOrBlank()
+        cadreGuideStatus = label(
+            CareerCadreRadar.kpss2026_2CadreStatus(hasP94Guide, hasP93Guide),
+            11f, true, if (hasP94Guide || hasP93Guide) accentColor else warningColor
+        )
+        cadreRadarCard.addView(cadreGuideStatus)
+        cadreRadarCard.addView(label("Geçmiş unvanlar gelecek alım garantisi değildir.", 10f, false, muted))
+        cadreRadarCard.addView(primaryButton("Kadro radarını ve unvan rehberini aç") { showCadreRadar() },
+            params(-1, dp(48), 0, 8, 0, 5))
+        cadreRadarCard.addView(button("ÖSYM tercih takvimini aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
+                .onFailure { toast("ÖSYM sayfası açılamadı.") }
+        }, params(-1, dp(44), 0, 0, 0, 0))
+        pageContent.addView(cadreRadarCard, params(-1, -2, 0, 0, 0, 14))
 
         pageContent.addView(label("İlanlarını filtrele", 18f, true, primaryText))
         pageContent.addView(label(
@@ -721,6 +747,12 @@ class CareerActivity : Activity() {
                 search.isEnabled = true
                 search.text = "İlanları yeniden ara"
                 searchHits = CareerSearchEngine.deduplicateHits(batch?.hits.orEmpty()).take(60)
+                val discoveredTables = CareerCadreRadar.detect2026_2GuideTables(batch?.hits.orEmpty())
+                prefs.edit().apply {
+                    discoveredTables.p94Url?.let { putString(CareerCadreRadar.P94_GUIDE_PREF_KEY, it) }
+                    discoveredTables.p93Url?.let { putString(CareerCadreRadar.P93_GUIDE_PREF_KEY, it) }
+                }.apply()
+                refreshCadreGuideStatus()
                 searchPage = 0
                 searchFilter = 0
                 searchSectorFilter = 0
@@ -927,7 +959,12 @@ class CareerActivity : Activity() {
         storedDeadline: String? = null
     ) {
         val category = storedCategory ?: CareerSourceCatalog.categoryFor(hit.url)
-        val eligibility = storedEligibility ?: CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+        val eligibility = storedEligibility ?: CareerEligibility.assess(
+            hit.title,
+            hit.snippet,
+            hit.url,
+            prefs.getBoolean("career_associate_graduated", false)
+        )
         val matchScore = storedScore ?: CareerEligibility.profileMatchScore(
             hit.title, hit.snippet,
             if (::role.isInitialized) role.text.toString() else "",
@@ -1290,6 +1327,7 @@ class CareerActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        refreshCadreGuideStatus()
         CareerMonitorScheduler.scheduleIfEnabled(this)
         if (::monitorStatus.isInitialized) {
             queueFirstAutomaticScanIfNeeded()
@@ -1301,6 +1339,14 @@ class CareerActivity : Activity() {
             if (::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
         }
     }
+    private fun refreshCadreGuideStatus() {
+        if (!::cadreGuideStatus.isInitialized) return
+        val hasP94 = !prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").isNullOrBlank()
+        val hasP93 = !prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").isNullOrBlank()
+        cadreGuideStatus.text = CareerCadreRadar.kpss2026_2CadreStatus(hasP94, hasP93)
+        cadreGuideStatus.setTextColor(if (hasP94 || hasP93) accentColor else warningColor)
+    }
+
     private fun refreshMonitorStatus() {
         if (!::monitorStatus.isInitialized) return
         val enabled = prefs.getBoolean("career_monitor_enabled", false)
@@ -1348,6 +1394,165 @@ class CareerActivity : Activity() {
                     .onFailure { toast("Kaynak açılamadı.") }
             }.setNegativeButton("Kapat", null).show()
     }
+
+    private fun showCadreRadar() {
+        val scroll = ScrollView(this).apply {
+            isFillViewport = false
+            setVerticalScrollBarEnabled(true)
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(4), dp(12), dp(14))
+        }
+        scroll.addView(content)
+
+        val status = panel()
+        status.addView(label("KPSS-2026/2 · " + CareerCadreRadar.PREFERENCE_WINDOW, 16f, true, primaryText))
+        val detectedP94Url = prefs.getString(CareerCadreRadar.P94_GUIDE_PREF_KEY, "").orEmpty()
+        val detectedP93Url = prefs.getString(CareerCadreRadar.P93_GUIDE_PREF_KEY, "").orEmpty()
+        val hasP94Guide = detectedP94Url.isNotBlank()
+        val hasP93Guide = detectedP93Url.isNotBlank()
+        status.addView(label(CareerCadreRadar.kpss2026_2CadreStatus(hasP94Guide, hasP93Guide), 12f, true, if (hasP94Guide || hasP93Guide) accentColor else muted))
+        status.addView(label(
+            "Yalnızca ÖSYM alan adında bulunan 2026/2 TABLO-1 ve TABLO-2 belgeleri tespit edilmiş sayılır. Kadro, kontenjan, puan türü ve nitelik kodları doğrudan resmî tabloda kontrol edilmelidir.",
+            11f, true, warningColor
+        ))
+        if (hasP94Guide) {
+            status.addView(button("Bulunan resmî P94 · TABLO-1 belgesini aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP94Url))) }
+                    .onFailure { toast("P94 kılavuzu açılamadı.") }
+            }, params(-1, dp(44), 0, 6, 0, 0))
+        }
+        if (hasP93Guide) {
+            status.addView(button("Bulunan resmî P93 · TABLO-2 belgesini aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP93Url))) }
+                    .onFailure { toast("P93 kılavuzu açılamadı.") }
+            }, params(-1, dp(44), 0, 6, 0, 0))
+        }
+        status.addView(button("ÖSYM takvimini aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
+                .onFailure { toast("ÖSYM sayfası açılamadı.") }
+        }, params(-1, dp(44), 0, 6, 0, 0))
+        content.addView(status, params(-1, -2, 0, 0, 0, 12))
+
+        fun addCadreSection(title: String, subtitle: String, entries: List<CareerCadreEntry>) {
+            content.addView(label(title, 16f, true, primaryText))
+            content.addView(label(subtitle, 11f, false, muted))
+            entries.forEach { entry ->
+                val card = panel()
+                card.addView(label(entry.title, 14f, true, accentBlue))
+                card.addView(label("2026/1 kurum örnekleri: " + entry.institutionExamples, 11f, false, muted))
+                card.addView(label("Kontrol: " + entry.requirementNote, 11f, true, warningColor))
+                content.addView(card, params(-1, -2, 0, 3, 0, 6))
+            }
+        }
+
+        addCadreSection(
+            "Ortaöğretim · KPSS P94",
+            "ÖSYM KPSS-2026/1 TABLO-1’de görülen geçmiş unvan örnekleri. Yeni dönemde tekrar açılacakları garanti değildir.",
+            CareerCadreRadar.p94History
+        )
+        val p94CodeNote = panel()
+        p94CodeNote.addView(label("P94 · Elektrik alanı nitelik kodu kontrolü", 13f, true, primaryText))
+        p94CodeNote.addView(label(
+            "2023 kodu: " + CareerCadreRadar.P94_ELECTRIC_CODE_NOTE,
+            11f, false, warningColor
+        ))
+        content.addView(p94CodeNote, params(-1, -2, 0, 8, 0, 8))
+
+        val associateNote = panel()
+        associateNote.addView(label("Ön lisans · KPSS P93", 16f, true, primaryText))
+        val associateGraduated = prefs.getBoolean("career_associate_graduated", false)
+        val associateStatus = label(CareerCadreRadar.associateTrackLabel(associateGraduated), 12f, true, warningColor)
+        associateNote.addView(associateStatus)
+        val associateGraduateSwitch = Switch(this).apply {
+            text = "Ön lisans programından mezunum"
+            textSize = 13f
+            setTextColor(primaryText)
+            isChecked = associateGraduated
+            if (Build.VERSION.SDK_INT >= 21) {
+                thumbTintList = android.content.res.ColorStateList.valueOf(accentColor)
+                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(181, 207, 218))
+            }
+            setOnCheckedChangeListener { _, checked ->
+                prefs.edit().putBoolean("career_associate_graduated", checked).apply()
+                associateStatus.text = CareerCadreRadar.associateTrackLabel(checked)
+            }
+        }
+        associateNote.addView(associateGraduateSwitch, params(-1, dp(48), 0, 4, 0, 2))
+        associateNote.addView(label(
+            "Bu ayar yalnızca Aries'in bilgilendirme etiketini değiştirir. Her ilanın tercih/başvuru tarihindeki mezuniyet şartı ve ilgili ön lisans program kodu ayrıca kontrol edilmelidir.",
+            11f, false, muted
+        ))
+        content.addView(associateNote, params(-1, -2, 0, 8, 0, 4))
+        val p93ElectricNote = panel()
+        p93ElectricNote.addView(label("Elektrik ön lisans programı · 3290 nitelik kodu", 13f, true, accentColor))
+        p93ElectricNote.addView(label(
+            CareerCadreRadar.P93_ELECTRIC_TEDAS_NOTE,
+            11f, true, warningColor
+        ))
+        content.addView(p93ElectricNote, params(-1, -2, 0, 8, 0, 8))
+        addCadreSection(
+            "P93 geçmiş unvan örnekleri",
+            "ÖSYM KPSS-2026/1 TABLO-2’de görülen unvanlar. Elektrik ön lisans programı her tekniker kadrosuna otomatik uygunluk sağlamaz.",
+            CareerCadreRadar.p93History
+        )
+
+        val routes = panel()
+        routes.addView(label("Merkezî yerleştirme dışında takip edilmesi gereken alımlar", 15f, true, primaryText))
+        CareerCadreRadar.recruitmentRoutes.forEach { (name, detail) ->
+            routes.addView(label(name, 12f, true, accentBlue))
+            routes.addView(label(detail, 11f, false, muted))
+        }
+        routes.addView(label(
+            "2026 örneği: Adalet Bakanlığının ayrı sözleşmeli alım duyurusunda teknisyen (elektrik) dâhil farklı unvanlarda toplam 7.615 pozisyon ilan edilmişti. Bu, KPSS-2026/2 kadrosu veya şu anda açık başvuru olduğu anlamına gelmez.",
+            11f, true, warningColor
+        ))
+        routes.addView(button("Adalet Bakanlığı duyurusunu aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.ADALET_2026_NOTICE_URL))) }
+                .onFailure { toast("Adalet Bakanlığı duyurusu açılamadı.") }
+        }, params(-1, dp(44), 0, 6, 0, 0))
+        routes.addView(button("İŞKUR açık iş sistemini aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.ISKUR_URL))) }
+                .onFailure { toast("İŞKUR sayfası açılamadı.") }
+        }, params(-1, dp(44), 0, 5, 0, 0))
+        content.addView(routes, params(-1, -2, 0, 10, 0, 12))
+
+        val historicScore = panel()
+        historicScore.addView(label("Geçmiş puan örneği · tahmin değildir", 13f, true, primaryText))
+        historicScore.addView(label(CareerCadreRadar.P94_ELAZIG_TECHNICIAN_NOTE, 11f, false, muted))
+        historicScore.addView(button("2026/1 ortaöğretim kadro tablosunu aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_TABLE_URL))) }
+                .onFailure { toast("ÖSYM tablosu açılamadı.") }
+        }, params(-1, dp(44), 0, 6, 0, 0))
+        historicScore.addView(button("2026/1 ön lisans kadro tablosunu aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_TABLE_URL))) }
+                .onFailure { toast("ÖSYM tablosu açılamadı.") }
+        }, params(-1, dp(44), 0, 5, 0, 0))
+        historicScore.addView(button("P94 ortaöğretim nitelik kodlarını aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL))) }
+                .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
+        }, params(-1, dp(44), 0, 5, 0, 0))
+        historicScore.addView(button("P93 ön lisans program kodlarını aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL))) }
+                .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
+        }, params(-1, dp(44), 0, 5, 0, 0))
+        content.addView(historicScore, params(-1, -2, 0, 0, 0, 12))
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Kadro radarı")
+            .setView(scroll)
+            .setPositiveButton("Kapat", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.window?.setLayout(
+                (resources.displayMetrics.widthPixels * 0.94f).toInt(),
+                (resources.displayMetrics.heightPixels * 0.84f).toInt()
+            )
+        }
+        dialog.show()
+    }
+
     private fun confirmReview(hit: Net.Hit) {
         val cvText = if (::cv.isInitialized) cv.text.toString().trim()
             else prefs.getString("career_cv", buildDefaultCvText()).orEmpty().trim()
