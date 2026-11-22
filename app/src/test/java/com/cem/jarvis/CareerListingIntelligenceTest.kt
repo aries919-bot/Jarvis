@@ -113,6 +113,23 @@ class CareerListingIntelligenceTest {
     }
 
     @Test
+    fun surfacesKnownQualificationCodeSignalsWithoutCallingThemAnEligibilityDecision() {
+        val codes = listOf("2023", "3290", "2001", "2086")
+        val facts = CareerListingIntelligence.analyze(
+            "Teknisyen / teknik personel alımı",
+            "Nitelik kodları: ${codes.joinToString(", ")}",
+            "https://www.dsi.gov.tr/duyurular"
+        )
+        codes.forEach { code ->
+            assertTrue(
+                "Nitelik kodu $code ayrı sinyal olarak gösterilmeli",
+                facts.requirementSignals.any { it.contains("Nitelik kodu $code") }
+            )
+        }
+        assertTrue(facts.applicationStatus.contains("BİLİNMİYOR"))
+    }
+
+    @Test
     fun surfacesEducationAndKpssSignalsWithoutDeclaringEligibility() {
         val facts = CareerListingIntelligence.analyze(
             "Teknisyen alımı",
