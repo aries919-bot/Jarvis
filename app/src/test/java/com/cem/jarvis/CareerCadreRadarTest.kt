@@ -83,6 +83,18 @@ class CareerCadreRadarTest {
     }
 
     @Test
+    fun kpss2025_2OfficialTableIsNotMistakenFor2026_2() {
+        val historic = Net.Hit(
+            "KPSS-2025/2 Ortaöğretim P94 TABLO-1",
+            "https://dokuman.osym.gov.tr/pdfdokuman/2025/KPSS/TERCIH2/tablo1_2025-2.pdf",
+            "ÖSYM geçmiş tercih tablosu"
+        )
+        val tables = CareerCadreRadar.detect2026_2GuideTables(listOf(historic))
+        assertEquals(null, tables.p94Url)
+        assertFalse(tables.hasAnyTable)
+    }
+
+    @Test
     fun thirdPartyCopyOfKpss2026_2TableIsNotMarkedOfficial() {
         val copied = Net.Hit(
             "KPSS-2026/2 Ortaöğretim P94 TABLO-1",
