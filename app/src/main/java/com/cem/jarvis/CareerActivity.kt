@@ -25,6 +25,8 @@ class CareerActivity : Activity() {
     private lateinit var category: Spinner
     private lateinit var results: LinearLayout
     private lateinit var search: Button
+    private lateinit var manualScanButton: Button
+    private lateinit var dailyResultsContainer: LinearLayout
     private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
     private val muted = Color.rgb(154, 161, 178)
     private lateinit var monitorStatus: TextView
@@ -57,10 +59,10 @@ class CareerActivity : Activity() {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.osym.gov.tr/Duyurular/Index"))) }
                 .onFailure { toast("ÖSYM sayfası açılamadı.") }
         }, params(-1, dp(44), 0, 4, 0, 12))
-        body.addView(label("Günlük otomatik takip", 18f, true))
-        body.addView(label("Telefon her gün yaklaşık 08:20’de resmî kamu ve işveren kariyer kaynaklarını tarar. Yeni bağlantı bulursa bildirim verir. Android pil tasarrufu bu saati geciktirebilir.", 12f, false, muted))
+        body.addView(label("Sabah ve akşam otomatik takip", 18f, true))
+        body.addView(label("Aries her gün yaklaşık 08.30 ve 20.30’da ÖSYM/kamu, İŞKUR, Malatya OSB, belediyeler, büyük işverenler ve iş ilanı platformlarını tarar. Yeni bağlantıları tekrar etmeden bildirir. İnternet ve bildirim izni gerekir; Android pil tasarrufu saati geciktirebilir.", 12f, false, muted))
         val dailySwitch = Switch(this).apply {
-            text = "Günlük taramayı ve bildirimleri aç"
+            text = "Sabah + akşam otomatik taramayı aç"
             setTextColor(Color.WHITE)
             isChecked = prefs.getBoolean("career_monitor_enabled", false)
             setOnCheckedChangeListener { _, enabled ->
@@ -68,10 +70,10 @@ class CareerActivity : Activity() {
                 if (enabled) {
                     CareerMonitorScheduler.ensureChannel(this@CareerActivity)
                     CareerMonitorScheduler.schedule(this@CareerActivity)
-                    CareerMonitorScheduler.runNow(this@CareerActivity)
+                    queueManualScan()
                     if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                         requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 74031)
-                    toast("Günlük takip açıldı. İlk kaynak taraması kuyruğa alındı.")
+                    toast("Sabah-akşam takibi açıldı; ilk tam tarama başlatıldı.")
                 } else {
                     CareerMonitorScheduler.cancel(this@CareerActivity)
                     toast("Günlük takip durduruldu.")
@@ -84,14 +86,8 @@ class CareerActivity : Activity() {
         body.addView(monitorStatus)
         refreshMonitorStatus()
         body.addView(button("Takip kaynaklarını görüntüle") { showSources() }, params(-1, dp(44), 0, 4, 0, 4))
-        body.addView(button("Şimdi günlük kaynakları tara") {
-            if (!prefs.getBoolean("career_monitor_enabled", false)) {
-                toast("Önce günlük takip düğmesini aç.")
-            } else {
-                CareerMonitorScheduler.runNow(this)
-                toast("Resmî ve kurumsal kaynak taraması sıraya alındı.")
-            }
-        }, params(-1, dp(44), 0, 0, 0, 12))
+        manualScanButton = button("Benim için şimdi tüm kaynakları ara") { queueManualScan() }
+        body.addView(manualScanButton, params(-1, dp(48), 0, 0, 0, 12))
 
         body.addView(label("Aranacak pozisyon", 15f, true))
         role = field(prefs.getString("career_role", "Elektrik teknisyeni / pano montajı / bakım-onarım / üretim / depo / operatör / satış / beden işçisi").orEmpty(), "Örn. elektrik teknisyeni", false)
@@ -112,9 +108,9 @@ class CareerActivity : Activity() {
         results = LinearLayout(this).apply { orientation = 1 }
         body.addView(results, params(-1, -2, 0, 8, 0, 12))
         body.addView(label("Son otomatik takip sonuçları", 18f, true))
-        val dailyResults = LinearLayout(this).apply { orientation = 1 }
-        body.addView(dailyResults, params(-1, -2, 0, 8, 0, 12))
-        showDailyResults(dailyResults)
+        dailyResultsContainer = LinearLayout(this).apply { orientation = 1 }
+        body.addView(dailyResultsContainer, params(-1, -2, 0, 8, 0, 12))
+        showDailyResults(dailyResultsContainer)
         body.addView(label("Kaydedilmiş ilanlar", 18f, true))
         showSaved(body)
         scroll.addView(body)
@@ -122,11 +118,51 @@ class CareerActivity : Activity() {
         setContentView(root)
     }
 
-    private fun saveCv() {
+    private fun saveCv(showToast: Boolean = true) {
         prefs.edit().putString("career_cv", cv.text.toString().trim())
             .putString("career_role", role.text.toString().trim())
             .putString("career_place", place.text.toString().trim()).apply()
-        toast("CV ve arama tercihleri cihazına kaydedildi.")
+        if (showToast) toast("CV ve arama tercihleri cihazına kaydedildi.")
+    }
+
+    private fun queueManualScan() {
+        saveCv(showToast = false)
+        manualScanButton.isEnabled = false
+        manualScanButton.text = "Tüm kaynaklar aranıyor…"
+        monitorStatus.text = "Durum: Manuel tarama kuyruğa alındı. Resmî ilanlar ve iş platformları kontrol ediliyor."
+        val workId = CareerMonitorScheduler.runManualNow(this)
+        val live = androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(workId)
+        lateinit var observer: androidx.lifecycle.Observer<androidx.work.WorkInfo?>
+        observer = androidx.lifecycle.Observer { info ->
+            if (info == null) return@Observer
+            when (info.state) {
+                androidx.work.WorkInfo.State.ENQUEUED,
+                androidx.work.WorkInfo.State.BLOCKED -> {
+                    monitorStatus.text = "Durum: Tarama internet bağlantısı bekliyor veya sıraya alındı."
+                }
+                androidx.work.WorkInfo.State.RUNNING -> {
+                    monitorStatus.text = "Durum: Kamu, İŞKUR, belediye, işveren ve ilan platformları taranıyor…"
+                }
+                androidx.work.WorkInfo.State.SUCCEEDED -> {
+                    showDailyResults(dailyResultsContainer)
+                    refreshMonitorStatus()
+                    manualScanButton.isEnabled = true
+                    manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
+                    val count = prefs.getInt("career_monitor_result_count", 0)
+                    toast("Tarama tamamlandı. $count bağlantı sonucu değerlendirildi.")
+                    live.removeObserver(observer)
+                }
+                androidx.work.WorkInfo.State.FAILED,
+                androidx.work.WorkInfo.State.CANCELLED -> {
+                    refreshMonitorStatus()
+                    manualScanButton.isEnabled = true
+                    manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
+                    toast("Tarama tamamlanamadı. Durum bölümünü kontrol et.")
+                    live.removeObserver(observer)
+                }
+            }
+        }
+        live.observe(this, observer)
     }
 
     private fun searchJobs() {
