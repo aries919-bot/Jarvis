@@ -29,6 +29,8 @@ object CareerSourceCatalog {
         Source("Resmî Gazete", "https://www.resmigazete.gov.tr/", "Resmî ilan"),
         Source("Yerel Yönetimler Genel Müdürlüğü", "https://yerelyonetimler.csb.gov.tr/", "Belediye"),
         Source("Malatya Büyükşehir Belediyesi", "https://www.malatya.bel.tr/", "Belediye"),
+        Source("Battalgazi Belediyesi", "https://www.battalgazi.bel.tr/", "Belediye"),
+        Source("Yeşilyurt Belediyesi", "https://yesilyurt.bel.tr/", "Belediye"),
         Source("Malatya TSO – günlük İŞKUR listesi", "https://www.malatyatso.org.tr/iskur-ilanlari", "İŞKUR keşif", false),
         Source("ASELSAN Kariyer", "https://akariyer.aselsan.com/", "Özel sektör"),
         Source("TCDD", "https://www.tcdd.gov.tr/", "Kamu şirketi"),
@@ -48,7 +50,7 @@ object CareerSourceCatalog {
 
     private val trustedDomains = listOf(
         "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "ilan.gov.tr", "resmigazete.gov.tr",
-        "csb.gov.tr", "malatya.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
+        "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "gethirex.com",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr"
     )
@@ -187,7 +189,7 @@ object CareerSearchEngine {
         val queries = listOf(
             "site:osym.gov.tr OR site:kamuilan.sbb.gov.tr OR site:isealimkariyerkapisi.cbiko.gov.tr OR site:ilan.gov.tr OR site:resmigazete.gov.tr KPSS ortaöğretim P94 lise personel alımı 2026",
             "site:iskur.gov.tr OR site:malatyatso.org.tr/iskur-ilanlari Malatya elektrikçi teknisyen bakım işçi ilanı 2026",
-            "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr belediye işçi personel alımı 2026",
+            "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr belediye işçi personel alımı 2026",
             "site:kariyer.tusas.com OR site:kariyer.roketsan.com.tr OR site:akariyer.aselsan.com teknisyen açık pozisyon 2026",
             "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr OR site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
             "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com OR site:enerjisa.com.tr teknisyen elektrik kariyer iş ilanı 2026"
