@@ -1541,6 +1541,12 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
 
             val hits = batch.hits
+            val discoveredTables = CareerCadreRadar.detect2026_2GuideTables(hits)
+            prefs.edit().apply {
+                discoveredTables.p94Url?.let { putString(CareerCadreRadar.P94_GUIDE_PREF_KEY, it) }
+                discoveredTables.p93Url?.let { putString(CareerCadreRadar.P93_GUIDE_PREF_KEY, it) }
+            }.apply()
+
             val orderedSeen = LinkedHashSet<String>()
             val oldOrder = runCatching {
                 JSONArray(prefs.getString("career_monitor_seen_order", "[]"))
