@@ -1465,7 +1465,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
             val partialWarning = if (batch.failedQueries > 0) {
                 "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir. " +
-                    batch.errorMessages.take(3).joinToString(" | ")
+                    (CareerSearchEngine.friendlyDiagnostics(batch.errorMessages.joinToString(" | ")) ?: "Bazı arama sorguları sonuç döndürmedi.")
             } else null
             val freshForAlerts = fresh.filter { hit ->
                 CareerListingParser.deadlineStatus(hit.snippet)
