@@ -1739,6 +1739,137 @@ class CareerActivity : Activity() {
             .setNegativeButton("Vazgeç", null)
             .show()
     }
+
+    private fun chooseFollowUpReminder(url: String, title: String, status: String) {
+        val choices = arrayOf(
+            "Yarın · 10:00",
+            "3 gün sonra · 10:00",
+            "1 hafta sonra · 10:00",
+            "Tarih ve saat seç",
+            "Hatırlatmayı iptal et"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Başvuru takip hatırlatması")
+            .setItems(choices) { _, which ->
+                when (which) {
+                    0, 1, 2 -> {
+                        val days = when (which) { 0 -> 1; 1 -> 3; else -> 7 }
+                        val target = Calendar.getInstance().apply {
+                            add(Calendar.DAY_OF_YEAR, days)
+                            set(Calendar.HOUR_OF_DAY, 10)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        saveFollowUpReminder(url, title, status, target.timeInMillis)
+                    }
+                    3 -> chooseCustomFollowUpReminder(url, title, status)
+                    4 -> clearFollowUpReminder(url)
+                }
+            }
+            .setNegativeButton("Kapat", null)
+            .show()
+    }
+
+    private fun chooseCustomFollowUpReminder(url: String, title: String, status: String) {
+        val now = Calendar.getInstance()
+        android.app.DatePickerDialog(
+            this,
+            { _, year, month, day ->
+                val selected = Calendar.getInstance().apply {
+                    set(year, month, day, 10, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                android.app.TimePickerDialog(
+                    this,
+                    { _, hour, minute ->
+                        selected.set(Calendar.HOUR_OF_DAY, hour)
+                        selected.set(Calendar.MINUTE, minute)
+                        saveFollowUpReminder(url, title, status, selected.timeInMillis)
+                    },
+                    10,
+                    0,
+                    true
+                ).show()
+            },
+            now.get(Calendar.YEAR),
+            now.get(Calendar.MONTH),
+            now.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    private fun saveFollowUpReminder(url: String, title: String, status: String, reminderAt: Long) {
+        val items = savedJobs()
+        val updated = JSONArray()
+        var found = false
+        for (i in 0 until items.length()) {
+            val item = items.optJSONObject(i) ?: continue
+            if (item.optString("url") == url) {
+                item.put("followUpAt", reminderAt)
+                    .put("followUpStatus", status)
+                found = true
+            }
+            updated.put(item)
+        }
+        if (!found) {
+            toast("Başvuru kaydı bulunamadı; önce ilanı kaydet.")
+            return
+        }
+        val scheduled = CareerMonitorScheduler.scheduleApplicationFollowUp(this, title, url, status, reminderAt)
+        if (!scheduled) {
+            toast("Seçilen hatırlatma zamanı geçmiş. İleri bir tarih ve saat seç.")
+            return
+        }
+        prefs.edit().putString("career_jobs", updated.toString()).apply()
+        toast("Başvuru takip hatırlatması kuruldu.")
+        refreshSavedList()
+    }
+
+    private fun clearFollowUpReminder(url: String) {
+        CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
+        val items = savedJobs()
+        val updated = JSONArray()
+        for (i in 0 until items.length()) {
+            val item = items.optJSONObject(i) ?: continue
+            if (item.optString("url") == url) {
+                item.remove("followUpAt")
+                item.remove("followUpStatus")
+            }
+            updated.put(item)
+        }
+        prefs.edit().putString("career_jobs", updated.toString()).apply()
+        toast("Takip hatırlatması iptal edildi.")
+        refreshSavedList()
+    }
+
+    private fun editJobNote(url: String, title: String, currentNote: String) {
+        val noteInput = field(currentNote, "Başvuru notu, görüşme bilgisi, belge veya irtibat notu…", true).apply {
+            minLines = 4
+            maxLines = 10
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Başvuru notu")
+            .setMessage(title)
+            .setView(noteInput)
+            .setNegativeButton("Vazgeç", null)
+            .setPositiveButton("Notu kaydet") { _, _ ->
+                val items = savedJobs()
+                val updated = JSONArray()
+                for (i in 0 until items.length()) {
+                    val item = items.optJSONObject(i) ?: continue
+                    if (item.optString("url") == url) {
+                        item.put("note", noteInput.text.toString().trim())
+                            .put("noteUpdatedAt", System.currentTimeMillis())
+                    }
+                    updated.put(item)
+                }
+                prefs.edit().putString("career_jobs", updated.toString()).apply()
+                toast("Başvuru notu kaydedildi.")
+                refreshSavedList()
+            }
+            .show()
+    }
+
     private fun showSaved(parent: LinearLayout) {
         val storedItems = savedJobs()
         val allItems = (storedItems.length() - 1 downTo 0)
