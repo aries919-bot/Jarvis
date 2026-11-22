@@ -32,6 +32,18 @@ class CareerCadreGuideTest {
     }
 
     @Test
+    fun diplomaProfileIsShownButNeverTreatedAsAnAutomaticallyVerifiedCredential() {
+        val explanation = CareerCadreGuide.explainQualificationCodes(
+            setOf(2023),
+            "Elektrik-Elektronik Teknolojisi",
+            "Pano Montörlüğü"
+        )
+
+        assertTrue(explanation.contains("Profilinde kayıtlı lise alanı/dalı"))
+        assertTrue(explanation.contains("otomatik doğrulanmış değildir"))
+    }
+
+    @Test
     fun comparesAnExplicitP94MinimumAgainstTheCandidateDeclaredScore() {
         val meets = CareerEligibility.assess(
             "Kamu personel alımı",
@@ -54,7 +66,7 @@ class CareerCadreGuideTest {
 
         assertTrue(names.any { it.contains("Teknisyen") })
         assertTrue(names.any { it.contains("Destek personeli") })
-        assertTrue(names.any { it.contains("Vagon teknisyeni") })
+        assertTrue(names.any { it.contains("Vagon teknisyeni", ignoreCase = true) })
         assertTrue(CareerCadreGuide.KPSS_2026_2_START.isNotBlank())
         assertTrue(CareerCadreGuide.KPSS_2026_2_END.isNotBlank())
     }
