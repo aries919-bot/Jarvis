@@ -383,7 +383,7 @@ class CareerActivity : Activity() {
             isChecked = prefs.getBoolean("career_monitor_enabled", false)
             if (Build.VERSION.SDK_INT >= 21) {
                 thumbTintList = android.content.res.ColorStateList.valueOf(accentColor)
-                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(53, 86, 107))
+                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(181, 207, 218))
             }
             setOnCheckedChangeListener { _, enabled ->
                 prefs.edit().putBoolean("career_monitor_enabled", enabled).apply()
@@ -1225,7 +1225,7 @@ class CareerActivity : Activity() {
                 if (page == current) accentColor else surfaceRaised,
                 Color.TRANSPARENT
             ))
-            if (page == current) number.setTextColor(bgColor)
+            if (page == current) number.setTextColor(Color.WHITE)
             row.addView(number, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
         }
 
