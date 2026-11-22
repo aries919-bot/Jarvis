@@ -156,9 +156,10 @@ class CareerMonitorPolicyTest {
     }
 
     @Test
-    fun detectsElectricalTradeRelevanceWithoutClaimingAcceptanceProbability() {
+    fun detectsElectricalTradeRelevanceWithoutClaimingDiplomaEligibility() {
         val result = CareerEligibility.assess("Pano montaj teknisyeni", "Elektrik meslek lisesi mezunu.")
-        assertTrue(result.startsWith("ALAN EŞLEŞMESİ VAR"))
+        assertTrue(result.startsWith("TEKNİK ALAN İFADESİ VAR"))
+        assertFalse(result.startsWith("ALAN EŞLEŞMESİ VAR"))
         assertTrue(CareerEligibility.relevance("Elektrik teknisyeni", "Pano bakım personeli", "Malatya") >= 20)
     }
 }
