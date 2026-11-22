@@ -959,7 +959,12 @@ class CareerActivity : Activity() {
         storedDeadline: String? = null
     ) {
         val category = storedCategory ?: CareerSourceCatalog.categoryFor(hit.url)
-        val eligibility = storedEligibility ?: CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+        val eligibility = storedEligibility ?: CareerEligibility.assess(
+            hit.title,
+            hit.snippet,
+            hit.url,
+            prefs.getBoolean("career_associate_graduated", false)
+        )
         val matchScore = storedScore ?: CareerEligibility.profileMatchScore(
             hit.title, hit.snippet,
             if (::role.isInitialized) role.text.toString() else "",
