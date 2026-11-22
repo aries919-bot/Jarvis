@@ -184,7 +184,7 @@ class CareerListingIntelligenceTest {
     fun sendsAdaletInternshipApplicantsToTheActualUlusalStajRegistrationPortal() {
         val facts = CareerListingIntelligence.analyze(
             "Ulusal Staj Programı başvuruları",
-            "Üniversite ve yüksekokul öğrencilerinin kayıtları 14.12.2026 tarihine kadar.",
+            "Üniversite ve yüksekokul öğrencilerinin kayıtlarını 14.12.2026 tarihine kadar tamamlaması gerekmektedir.",
             CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL
         )
         assertEquals(
