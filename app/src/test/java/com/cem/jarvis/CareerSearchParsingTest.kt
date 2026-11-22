@@ -167,4 +167,50 @@ class CareerSearchParsingTest {
         )
         assertEquals(null, noDate)
     }
+
+    @Test
+    fun deduplicatesSameEmployerListingAcrossOfficialAndSecondarySearchLinks() {
+        val secondary = Net.Hit(
+            "ASELSAN Elektrik Elektronik Teknisyeni İşe Alım",
+            "https://www.kariyer.net/is-ilani/aselsan-elektrik-elektronik-teknisyeni",
+            "ASELSAN Ankara tesislerinde elektrik elektronik bakım teknisyeni için başvuru yapılabilir."
+        )
+        val official = Net.Hit(
+            "Elektrik Elektronik Teknisyeni - ASELSAN",
+            "https://akariyer.aselsan.com/tr/job/123",
+            "ASELSAN Ankara tesislerinde elektrik elektronik bakım teknisyeni için başvuru yapılabilir."
+        )
+
+        val result = CareerSearchEngine.deduplicateHits(listOf(secondary, official))
+
+        assertEquals(1, result.size)
+        assertEquals(official.url, result.single().url)
+    }
+
+    @Test
+    fun keepsDifferentEmployersEvenWhenTheRoleTitleIsSimilar() {
+        val aselsan = Net.Hit(
+            "ASELSAN Elektrik Elektronik Teknisyeni",
+            "https://akariyer.aselsan.com/job/1",
+            "ASELSAN elektrik elektronik teknisyeni başvurusu"
+        )
+        val borusan = Net.Hit(
+            "BORUSAN Elektrik Elektronik Teknisyeni",
+            "https://careers.borusan.com/job/2",
+            "BORUSAN elektrik elektronik teknisyeni başvurusu"
+        )
+
+        assertEquals(2, CareerSearchEngine.deduplicateHits(listOf(aselsan, borusan)).size)
+    }
+
+    @Test
+    fun simplifiesProviderErrorsForTheTrackingScreen() {
+        val message = CareerSearchEngine.friendlyDiagnostics(
+            "Sorgu 1: DuckDuckGo güvenlik kontrolü | Sorgu 2: Brave HTTP 429"
+        )
+        assertNotNull(message)
+        assertTrue(message!!.contains("DuckDuckGo"))
+        assertTrue(message.contains("Brave"))
+        assertFalse(message.contains("HTTP 429"))
+    }
 }
