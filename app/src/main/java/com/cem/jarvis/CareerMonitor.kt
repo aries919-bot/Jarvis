@@ -21,7 +21,8 @@ object CareerSourceCatalog {
     data class Source(val name: String, val url: String, val category: String, val official: Boolean = true)
 
     val sources = listOf(
-        Source("Kariyer Kapısı – Kamu işe alım", "https://isealimkariyerkapisi.cbiko.gov.tr/", "Kamu"),
+        Source("Kariyer Kapısı – Kamu işe alım", "https://kariyerkapisi.gov.tr/", "Kamu"),
+        Source("Kariyer Kapısı eski işe alım bağlantısı", "https://isealimkariyerkapisi.cbiko.gov.tr/", "Kamu / eski adres"),
         Source("ÖSYM – KPSS tercih ve yerleştirme duyuruları", "https://www.osym.gov.tr/Duyurular/Index", "Kamu / KPSS"),
         Source("Kamu İlan Sistemi", "https://kamuilan.sbb.gov.tr/", "Kamu"),
         Source("İŞKUR e-Şube", "https://esube.iskur.gov.tr/", "İŞKUR / açık iş"),
@@ -80,7 +81,7 @@ object CareerSourceCatalog {
     )
 
     private val trustedDomains = listOf(
-        "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
+        "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
@@ -123,7 +124,7 @@ object CareerSourceCatalog {
         return when {
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
-            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") ||
+            host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") || host.contains("kariyerkapisi.gov.tr") ||
                 host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
                 host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
             host.contains("malatya.bel.tr") || host.contains("battalgazi.bel.tr") ||
@@ -359,6 +360,7 @@ object CareerSearchEngine {
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 $year/2 nitelik kodu 2023 2001",
             "site:kamuilan.sbb.gov.tr personel alımı lise ortaöğretim KPSS P94 $year $c",
+            "site:kariyerkapisi.gov.tr kamu işe alım personel ilanı lise KPSS $year $c",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise ortaöğretim personel alımı KPSS $year $c",
             "site:ilan.gov.tr personel alımı lise ortaöğretim KPSS $year $c",
             "site:resmigazete.gov.tr personel alımı atama ortaöğretim KPSS $year $c"
@@ -513,6 +515,7 @@ object CareerSearchEngine {
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise $year tercih nitelik kodları",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
+            "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
             "site:ilan.gov.tr personel alımı lise KPSS $year",
             "site:resmigazete.gov.tr atama personel alımı $year"
