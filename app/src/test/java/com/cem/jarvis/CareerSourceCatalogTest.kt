@@ -151,4 +151,41 @@ class CareerSourceCatalogTest {
             )
         )
     }
+
+    @Test
+    fun doesNotAssumeEveryEduTrUniversityIsAStateInstitution() {
+        assertEquals(
+            "Üniversite / kamu personel alımı",
+            CareerSourceCatalog.categoryFor("https://personel.ozal.edu.tr/announcements-all")
+        )
+        assertEquals(
+            "Üniversite / statü doğrulanmalı",
+            CareerSourceCatalog.categoryFor("https://personel.vakifuni.edu.tr/duyurular")
+        )
+        assertEquals(
+            "Üniversite / statü doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Üniversite personel alımı",
+                "Başvuru duyurusu",
+                "https://personel.vakifuni.edu.tr/duyurular"
+            )
+        )
+        assertEquals(
+            "KPSS / şartı doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Personel alımı",
+                "KPSS P94 şartı aranır",
+                "https://personel.vakifuni.edu.tr/duyurular"
+            )
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Malatya Turgut Özal Üniversitesi personel alımı",
+                "Başvuru duyurusu",
+                "https://personel.vakifuni.edu.tr/duyurular"
+            )
+        )
+    }
+
 }

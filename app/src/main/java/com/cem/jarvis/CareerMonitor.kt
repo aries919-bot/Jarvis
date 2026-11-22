@@ -20,6 +20,21 @@ import java.util.concurrent.TimeUnit
 object CareerSourceCatalog {
     data class Source(val name: String, val url: String, val category: String, val official: Boolean = true)
 
+    // .edu.tr is a legitimate academic domain, but it does not by itself prove a
+    // university is a state institution. Keep an explicit public-university allowlist.
+    private val publicUniversityDomains = setOf(
+        "ozal.edu.tr",
+        "inonu.edu.tr",
+        "firat.edu.tr",
+        "adiyaman.edu.tr"
+    )
+
+    private fun isPublicUniversityHost(host: String): Boolean =
+        publicUniversityDomains.any { host == it || host.endsWith(".$it") }
+
+    private fun isUnverifiedUniversityHost(host: String): Boolean =
+        host.endsWith(".edu.tr") && !isPublicUniversityHost(host)
+
     val sources = listOf(
         Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama", "Kamu / e-Devlet hizmetleri"),
         Source("Kariyer Kapısı – açık kamu ilanları", "https://kariyerkapisi.gov.tr/isealim", "Kamu / başvuru ve değerlendirme"),
@@ -196,15 +211,14 @@ object CareerSourceCatalog {
                 host.endsWith(".cbiko.gov.tr") -> "Kamu / işe alım ve başvuru portalı"
             host == "kamuilan.sbb.gov.tr" -> "Kamu / resmî personel ilanı"
             host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") -> "İŞKUR / açık iş ve program"
-            listOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
-                .any { host == it || host.endsWith(".$it") } -> "Üniversite / kamu personel alımı"
+            isPublicUniversityHost(host) -> "Üniversite / kamu personel alımı"
             host.endsWith(".bel.tr") || host == "malatya.bel.tr" ||
                 host.endsWith(".malatya.bel.tr") || host.endsWith(".battalgazi.bel.tr") ||
                 host.endsWith(".yesilyurt.bel.tr") -> "Belediye / kamu"
             inDomains(defenceDomains) -> "Savunma sanayii / işveren kariyer portalı"
             inDomains(kitDomains) -> "Kamu şirketi / KİT kariyer portalı"
             host.endsWith(".gov.tr") -> "Kamu / resmî kurum"
-            host.endsWith(".edu.tr") -> "Üniversite / kamu personel alımı"
+            host.endsWith(".edu.tr") -> "Üniversite / statü doğrulanmalı"
             host.contains("tga.gov.tr") -> "Kamu bağlantılı kurum / kariyer"
             host.contains("tusas") || host.contains("roketsan") || host.contains("aselsan") ||
                 host.contains("havelsan") || host.contains("tupras") || host.contains("vestel") ||
@@ -253,21 +267,26 @@ object CareerSourceCatalog {
             "kpss puani aranmayacaktir", "kpss puani istenmez",
             "kpss puani bulunma sarti aranmaz"
         )
-        val publicLinkedDomains = listOf("gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr")
-        val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
+        val publicLinkedDomains = listOf("gov.tr", "bel.tr")
+        val publicUniversityByName = listOf(
+            "malatya turgut ozal universitesi",
+            "inonu universitesi",
+            "firat universitesi",
+            "adiyaman universitesi"
+        ).any(text::contains)
+        val isUnverifiedUniversity = isUnverifiedUniversityHost(host) && !publicUniversityByName
         val namedPublicEmployer = listOf(
             "orman genel mudurlugu", "karayollari genel mudurlugu",
             "devlet su isleri", "devlet hava meydanlari", "enerji ve tabii kaynaklar",
             "turkiye elektrik iletim", "elektrik uretim", "tcdd", "ptt",
             "milli egitim bakanligi", "saglik bakanligi", "adalet bakanligi",
-            "icisleri bakanligi", "belediyesi", "universitesi", "jandarma",
+            "icisleri bakanligi", "belediyesi", "jandarma",
             "sahil guvenlik", "il ozel idaresi"
         ).any(text::contains)
         val publicLinked = publicLinkedDomains.any { host == it || host.endsWith(".$it") } ||
             publicCategory.contains("kamu") || publicCategory.contains("belediye") ||
-            publicCategory.contains("universite") || publicCategory.contains("iskur") ||
             publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
-            host.endsWith(".turkiye.gov.tr") || namedPublicEmployer
+            host.endsWith(".turkiye.gov.tr") || namedPublicEmployer || publicUniversityByName
 
         // Defence-industry employers and KİT portals recruit as employers; their career
         // pages are not automatically ÖSYM central placement or ordinary civil-service posts.
@@ -294,6 +313,7 @@ object CareerSourceCatalog {
         if (hasKpssRequirement) {
             return if (publicLinked) "KPSS ile kamu alımı" else "KPSS / şartı doğrulanmalı"
         }
+        if (isUnverifiedUniversity) return "Üniversite / statü doğrulanmalı"
         if (publicLinked) return "Kamu / kamu bağlantılı"
         if (isSecondary(url)) return "Platform / sektör doğrulanmalı"
         if (publicCategory.contains("özel sektör") ||
@@ -510,6 +530,22 @@ object CareerListingParser {
         return null
     }
 
+    /**
+     * Returns a closing time only when it appears immediately after an explicitly labelled
+     * application deadline. Unrelated exam/event times elsewhere in the snippet are ignored.
+     */
+    fun deadlineTime(text: String): String? {
+        val match = deadlinePattern.find(text) ?: return null
+        val tailStart = match.range.last + 1
+        val tail = text.substring(tailStart, minOf(text.length, tailStart + 48))
+        val timeMatch = Regex("""(?:saat\\s*)?(\\d{1,2})[:.](\\d{2})""", RegexOption.IGNORE_CASE)
+            .find(tail) ?: return null
+        val hour = timeMatch.groupValues[1].toIntOrNull() ?: return null
+        val minute = timeMatch.groupValues[2].toIntOrNull() ?: return null
+        if (hour !in 0..23 || minute !in 0..59) return null
+        return String.format(Locale.ROOT, "%02d:%02d", hour, minute)
+    }
+
     fun deadlineStatus(text: String, nowMillis: Long = System.currentTimeMillis()): String? {
         val dateText = deadlineDate(text) ?: return null
         val parser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
@@ -528,10 +564,31 @@ object CareerListingParser {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        return if (deadlineDay.before(today)) {
-            "SÜRESİ GEÇMİŞ · Kaynak metnindeki son başvuru tarihi $dateText geçmiş. Bu kaydı yeni ilanlarla karıştırma; kaynak sayfasında başvurunun kapandığını doğrula."
-        } else {
-            "SON TARİH BİLGİSİ · Kaynak metninde son başvuru tarihi $dateText görünüyor; başvuru sayfasında teyit et."
+
+        val closingTime = deadlineTime(text)
+        if (closingTime != null) {
+            val parts = closingTime.split(":")
+            val deadlineAt = Calendar.getInstance().apply {
+                time = deadline
+                set(Calendar.HOUR_OF_DAY, parts[0].toInt())
+                set(Calendar.MINUTE, parts[1].toInt())
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            return if (nowMillis >= deadlineAt) {
+                "SÜRESİ GEÇMİŞ · Kaynakta son başvuru tarihi $dateText saat $closingTime yazıyor; kapanış zamanı geçmiş. Başvurunun kapandığını kurum sayfasında doğrula."
+            } else {
+                "SON TARİH BİLGİSİ · Kaynakta son başvuru tarihi $dateText saat $closingTime yazıyor; başvuru sayfasında teyit et."
+            }
+        }
+
+        return when {
+            deadlineDay.before(today) ->
+                "SÜRESİ GEÇMİŞ · Kaynak metnindeki son başvuru tarihi $dateText geçmiş. Bu kaydı yeni ilanlarla karıştırma; kaynak sayfasında başvurunun kapandığını doğrula."
+            deadlineDay.timeInMillis == today.timeInMillis ->
+                "SON GÜN · Kaynakta son başvuru tarihi $dateText yazıyor ancak kapanış saati belirtilmemiş; saati kurum sayfasından doğrula."
+            else ->
+                "SON TARİH BİLGİSİ · Kaynak metninde son başvuru tarihi $dateText görünüyor; başvuru sayfasında teyit et."
         }
     }
 }

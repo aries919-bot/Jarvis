@@ -72,10 +72,22 @@ object CareerListingIntelligence {
             else -> "Başvuru kanalı kaynakta doğrulanmalı"
         }
         val quotaText = extractQuota(text)
+        val hasKpssP94 = Regex("""\bkpss\s*p\s*94\b""").containsMatchIn(text)
+        val hasKpssP93 = Regex("""\bkpss\s*p\s*93\b""").containsMatchIn(text)
+        val hasKpssP3 = Regex("""\bkpss\s*p\s*3\b""").containsMatchIn(text)
+        val hasAssociateEducation = text.contains("on lisans") || text.contains("onlisans")
+        val hasBachelorEducation = !hasAssociateEducation &&
+            (text.contains("lisans mezun") || text.contains("lisans diplom"))
+        val hasSecondaryEducation = text.contains("ortaogretim") ||
+            text.contains("orta ogretim") || text.contains("lise mezunu") ||
+            text.contains("lise ve dengi")
         val requirements = buildList {
-            if (Regex("""\bkpss\s*p\s*94\b""").containsMatchIn(text) || text.contains("ortaogretim")) add("Ortaöğretim / KPSS P94")
-            if (Regex("""\bkpss\s*p\s*93\b""").containsMatchIn(text) || text.contains("on lisans")) add("Ön lisans / KPSS P93")
-            if (Regex("""\bkpss\s*p\s*3\b""").containsMatchIn(text) || text.contains("lisans mezunu")) add("Lisans / KPSS P3")
+            if (hasKpssP94) add("KPSS puan türü: P94 · ortaöğretim")
+            if (hasKpssP93) add("KPSS puan türü: P93 · ön lisans")
+            if (hasKpssP3) add("KPSS puan türü: P3 · lisans")
+            if (!hasKpssP94 && hasSecondaryEducation) add("Öğrenim şartı: ortaöğretim/lise · KPSS puan türü ayrıca belirtilmeli")
+            if (!hasKpssP93 && hasAssociateEducation) add("Öğrenim şartı: ön lisans · KPSS puan türü ayrıca belirtilmeli")
+            if (!hasKpssP3 && hasBachelorEducation) add("Öğrenim şartı: lisans · KPSS puan türü ayrıca belirtilmeli")
             if (text.contains("elektrik") || text.contains("elektrik elektronik")) add("Elektrik alanı/programı ifadesi · diploma kodu ayrıca kontrol edilmeli")
             if (Regex("""(?<!\d)2023(?!\d)""").containsMatchIn(text)) {
                 add("Nitelik kodu 2023 ifadesi · ortaöğretim elektrik-elektronik alan/ dal şartını ÖSYM tablosundan doğrula")

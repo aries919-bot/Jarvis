@@ -162,4 +162,59 @@ class CareerMonitorPolicyTest {
         assertFalse(result.startsWith("ALAN EŞLEŞMESİ VAR"))
         assertTrue(CareerEligibility.relevance("Elektrik teknisyeni", "Pano bakım personeli", "Malatya") >= 20)
     }
+
+    @Test
+    fun respectsOnlyAnExplicitApplicationClosingTime() {
+        assertEquals(
+            "17:00",
+            CareerListingParser.deadlineTime("Son başvuru tarihi: 30.11.2026 saat 17:00")
+        )
+        assertEquals(
+            "08:30",
+            CareerListingParser.deadlineTime("Son müracaat tarihi 30.11.2026, 8.30'a kadar")
+        )
+        assertNull(
+            CareerListingParser.deadlineTime("Son başvuru tarihi: 30.11.2026; sınav 09:00")
+                .takeIf { it == "09:00" }
+        )
+        assertNull(CareerListingParser.deadlineTime("Son başvuru tarihi: 30.11.2026 saat 27:90"))
+
+        val beforeClosing = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("30.11.2026 16:59")!!.time
+        val afterClosing = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("30.11.2026 17:01")!!.time
+
+        assertTrue(
+            CareerListingParser.deadlineStatus(
+                "Son başvuru tarihi: 30.11.2026 saat 17:00",
+                beforeClosing
+            )!!.startsWith("SON TARİH BİLGİSİ")
+        )
+        assertTrue(
+            CareerListingParser.deadlineStatus(
+                "Son başvuru tarihi: 30.11.2026 saat 17:00",
+                afterClosing
+            )!!.startsWith("SÜRESİ GEÇMİŞ")
+        )
+    }
+
+    @Test
+    fun doesNotInventAnEndOfDayTimeWhenTheDeadlineHasNoTime() {
+        val lateOnDeadlineDay = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("30.11.2026 23:30")!!.time
+        val status = CareerListingParser.deadlineStatus(
+            "Son başvuru tarihi: 30.11.2026",
+            lateOnDeadlineDay
+        )!!
+        assertTrue(status.startsWith("SON GÜN"))
+        assertTrue(status.contains("saati belirtilmemiş"))
+        assertFalse(status.startsWith("SÜRESİ GEÇMİŞ"))
+    }
+
 }

@@ -1011,6 +1011,7 @@ class CareerActivity : Activity() {
             "Kura duyurusu · şirket süreci doğrulanmalı" -> "ŞİRKET KURA DUYURUSU · işveren sürecini doğrula"
             "KPSS / şartı doğrulanmalı" -> "KPSS İBARESİ VAR · başvuru şartını ilanda doğrula"
             "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İşverenin kamu/özel statüsünü ilanda doğrula"
+            "Üniversite / statü doğrulanmalı" -> "ÜNİVERSİTE İLANI · Devlet/vakıf statüsünü ve başvuru kurumunu doğrula"
             else -> "KAYNAK SINIFLANDIRMASI DOĞRULANMALI · " + CareerSourceCatalog.sourceName(hit.url)
         }
         card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })
