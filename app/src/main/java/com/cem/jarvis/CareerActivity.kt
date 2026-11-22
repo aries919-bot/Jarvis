@@ -148,7 +148,8 @@ class CareerActivity : Activity() {
             Triple("▤", "CV'im", "CV düzenle"),
             Triple("◷", "Takip", "Otomatik takip"),
             Triple("✓", "Başvurular", "Kaydedilen ve devam eden başvurular"),
-            Triple("◈", "Sonuçlar", "Kura, sınav ve başvuru sonuçları")
+            Triple("◈", "Sonuçlar", "Kura, sınav ve başvuru sonuçları"),
+            Triple("▦", "Kadrolar", "P94 unvanları ve nitelik kodları")
         )
         tabs.forEachIndexed { index, tab ->
             val selected = currentPage == index
@@ -177,7 +178,7 @@ class CareerActivity : Activity() {
     private fun renderPage(page: Int) {
         if (!::pageContent.isInitialized) return
         saveCv(showToast = false)
-        currentPage = page.coerceIn(0, 4)
+        currentPage = page.coerceIn(0, 5)
         pageContent.removeAllViews()
         pageScroll.scrollTo(0, 0)
         renderNavigation()
@@ -188,6 +189,7 @@ class CareerActivity : Activity() {
             2 -> buildTrackingPage()
             3 -> buildSavedPage()
             4 -> buildResultsPage()
+            5 -> buildCadreGuidePage()
         }
     }
 
@@ -476,6 +478,131 @@ class CareerActivity : Activity() {
         finishedApplicationsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         pageContent.addView(finishedApplicationsContainer, params(-1, -2, 0, 4, 0, 8))
         showFinishedApplications(finishedApplicationsContainer)
+    }
+
+    private fun buildCadreGuidePage() {
+        pageContent.addView(label("Kadro ve unvan rehberi", 21f, true, primaryText))
+        pageContent.addView(label(
+            "ÖSYM merkezi yerleştirme kadroları, P94 nitelik kodları ve kamu alım unvanları. Geçmiş kadro örnekleri yeni dönem için garanti değildir.",
+            12f, false, muted
+        ))
+
+        val calendarCard = panel()
+        calendarCard.addView(label("KPSS-2026/2 · 2. MERKEZİ YERLEŞTİRME", 10f, true, accentColor))
+        calendarCard.addView(label(
+            CareerCadreGuide.KPSS_2026_2_START + " – " + CareerCadreGuide.KPSS_2026_2_END,
+            18f, true, primaryText
+        ))
+        calendarCard.addView(label(
+            "ÖSYM sınav takviminde tercih dönemi bu tarihlerde görünüyor. " +
+                "Kontrol tarihi: " + CareerCadreGuide.LAST_OFFICIAL_CHECK +
+                ". 2026/2 ortaöğretim kadro/şehir/kontenjan tablosu henüz yayımlanmadığı için şu an hangi unvanların açılacağı kesin olarak söylenemez.",
+            12f, false, muted
+        ))
+        calendarCard.addView(button("ÖSYM resmî tercih takvimini aç") {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreGuide.OSYM_CALENDAR_URL)))
+            }.onFailure { toast("ÖSYM takvimi açılamadı.") }
+        }, params(-1, dp(46), 0, 8, 0, 0))
+        pageContent.addView(calendarCard, params(-1, -2, 0, 3, 0, 10))
+
+        val profileCard = panel()
+        profileCard.addView(label("P94 ADAY PROFİLİ", 10f, true, accentColor))
+        profileCard.addView(label(
+            "Puanını ve lise diplomanın alan/dalını gir. Aries, ilanda açıkça yazan P94 alt puan şartını karşılaştırabilir; yerleşme ihtimali veya taban puan tahmini üretmez.",
+            12f, false, muted
+        ))
+        profileCard.addView(label("Lise alanı", 11f, true, muted))
+        val diplomaAreaInput = field(
+            prefs.getString("career_diploma_area", "").orEmpty(),
+            "Diplomandaki alanın tam adı",
+            false
+        )
+        profileCard.addView(diplomaAreaInput, params(-1, dp(54), 0, 2, 0, 7))
+        profileCard.addView(label("Lise dalı", 11f, true, muted))
+        val diplomaBranchInput = field(
+            prefs.getString("career_diploma_branch", "").orEmpty(),
+            "Diplomandaki dalın tam adı",
+            false
+        )
+        profileCard.addView(diplomaBranchInput, params(-1, dp(54), 0, 2, 0, 7))
+        profileCard.addView(label("Ortaöğretim KPSS P94 puanı", 11f, true, muted))
+        val p94ScoreInput = field(
+            prefs.getString("career_p94_score", "").orEmpty(),
+            "Sonuç belgendeki P94 puanı",
+            false
+        ).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        profileCard.addView(p94ScoreInput, params(-1, dp(54), 0, 2, 0, 7))
+        profileCard.addView(button("Aday profilini kaydet") {
+            val scoreText = p94ScoreInput.text.toString().trim().replace(',', '.')
+            val scoreValue = if (scoreText.isBlank()) null else scoreText.toDoubleOrNull()
+            if (scoreText.isNotBlank() && (scoreValue == null || !scoreValue.isFinite() || scoreValue !in 0.0..100.0)) {
+                toast("P94 puanı 0–100 arasında sayısal olmalı.")
+                return@button
+            }
+            prefs.edit()
+                .putString("career_diploma_area", diplomaAreaInput.text.toString().trim())
+                .putString("career_diploma_branch", diplomaBranchInput.text.toString().trim())
+                .putString("career_p94_score", scoreText)
+                .apply()
+            toast("P94 ve diploma profilin kaydedildi.")
+            renderPage(5)
+        }, params(-1, dp(48), 0, 8, 0, 0))
+        pageContent.addView(profileCard, params(-1, -2, 0, 3, 0, 12))
+
+        pageContent.addView(label("2026/1 ÖSYM P94 tablosunda görülen unvan örnekleri", 17f, true, primaryText))
+        pageContent.addView(label(
+            "Aşağıdakiler 2026/1 kılavuzundan alınmış geçmiş örneklerdir. 2026/2 kadro listesi yayımlandığında yeni unvanlar ve kontenjanlar ayrıca gösterilmelidir.",
+            11f, false, muted
+        ))
+        CareerCadreGuide.historicalP94Cadres.forEach { cadre ->
+            val card = panel()
+            card.addView(label(cadre.title, 14f, true, primaryText))
+            card.addView(label(cadre.examples, 11f, false, muted))
+            card.addView(label("2026/1 nitelik kodu: " + cadre.requirementCodes, 11f, true, accentBlue))
+            card.addView(label(cadre.note, 11f, false, warningColor))
+            card.addView(button("Bu unvan için ilan ara") {
+                renderPage(0)
+                if (::role.isInitialized && ::category.isInitialized) {
+                    role.setText(cadre.searchTerm)
+                    category.setSelection(0)
+                    searchJobs()
+                } else {
+                    toast("Arama ekranı hazırlanamadı; tekrar dene.")
+                }
+            }, params(-1, dp(44), 0, 7, 0, 0))
+            pageContent.addView(card, params(-1, -2, 0, 3, 0, 8))
+        }
+
+        val sourceCard = panel()
+        sourceCard.addView(label("RESMÎ ÖSYM BELGELERİ", 10f, true, accentColor))
+        sourceCard.addView(button("2026/1 ortaöğretim kadro tablosu (PDF)") {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreGuide.KPSS_2026_1_TABLE_URL)))
+            }.onFailure { toast("Kadro tablosu açılamadı.") }
+        }, params(-1, dp(46), 0, 5, 0, 5))
+        sourceCard.addView(button("2026/1 ortaöğretim nitelik kodları (PDF)") {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreGuide.KPSS_2026_1_QUALIFICATIONS_URL)))
+            }.onFailure { toast("Nitelik kodları açılamadı.") }
+        }, params(-1, dp(46), 0, 3, 0, 5))
+        sourceCard.addView(button("2026/1 tercih kılavuzu ve tüm tablolar") {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreGuide.OSYM_2026_1_PAGE_URL)))
+            }.onFailure { toast("ÖSYM kılavuz sayfası açılamadı.") }
+        }, params(-1, dp(46), 0, 3, 0, 0))
+        pageContent.addView(sourceCard, params(-1, -2, 0, 4, 0, 14))
+
+        val associateNote = panel()
+        associateNote.addView(label("ÖN LİSANS / P93 KADROLARI", 10f, true, accentColor))
+        associateNote.addView(label(
+            "Ön lisans mezuniyet şartı isteyen P93 kadroları, ön lisans diploman tamamlanana kadar P94 kadrolarından ayrı tutulur. Mezuniyet şartı bulunan bir ilanı yalnızca Elektrik programında öğrenci olmak karşılamaz.",
+            12f, false, muted
+        ))
+        pageContent.addView(associateNote, params(-1, -2, 0, 2, 0, 12))
     }
 
     private fun buildDefaultCvText(): String = """
