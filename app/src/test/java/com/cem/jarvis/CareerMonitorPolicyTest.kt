@@ -103,6 +103,61 @@ class CareerMonitorPolicyTest {
     }
 
     @Test
+    fun parsesOnlyExplicitDeadlineTextAndMarksExpiredDates() {
+        assertEquals(
+            "17.12.2026",
+            CareerListingParser.deadlineDate("Başvuruların son günü: 17.12.2026")
+        )
+        assertEquals(
+            null,
+            CareerListingParser.deadlineDate("İlan tarihi: 17.12.2026")
+        )
+        val expired = CareerListingParser.deadlineStatus(
+            "Son başvuru tarihi: 01.01.2020",
+            java.text.SimpleDateFormat("dd.MM.yyyy").parse("22.11.2026")!!.time
+        )
+        assertTrue(expired!!.startsWith("SÜRESİ GEÇMİŞ OLABİLİR"))
+    }
+
+    @Test
+    fun ranksRelevantLocalElectricalRolesAboveUnrelatedJobs() {
+        val strong = CareerEligibility.profileMatchScore(
+            "Elektrik bakım teknisyeni",
+            "Malatya'da pano ve üretim bakım personeli aranıyor.",
+            "elektrik teknisyeni, pano montajı, bakım-onarım, üretim",
+            "Malatya, Battalgazi, Yeşilyurt",
+            "ALAN EŞLEŞMESİ VAR"
+        )
+        val weak = CareerEligibility.profileMatchScore(
+            "Mağaza satış danışmanı",
+            "İstanbul'da mağaza personeli aranıyor.",
+            "elektrik teknisyeni, pano montajı, bakım-onarım, üretim",
+            "Malatya, Battalgazi, Yeşilyurt",
+            "ŞARTLARI DOĞRULA"
+        )
+        assertTrue(strong > weak)
+    }
+
+    @Test
+    fun hardEligibilityMismatchReducesProfileMatchScore() {
+        val eligible = CareerEligibility.profileMatchScore(
+            "Elektrik bakım teknisyeni",
+            "Malatya elektrik pano bakım işi",
+            "elektrik teknisyeni pano",
+            "Malatya",
+            "ALAN EŞLEŞMESİ VAR"
+        )
+        val mismatch = CareerEligibility.profileMatchScore(
+            "Elektrik bakım teknisyeni",
+            "Malatya elektrik pano bakım işi",
+            "elektrik teknisyeni pano",
+            "Malatya",
+            "PUAN TÜRÜ UYUŞMUYOR"
+        )
+        assertTrue(eligible > mismatch)
+    }
+
+    @Test
     fun detectsElectricalTradeRelevanceWithoutClaimingAcceptanceProbability() {
         val result = CareerEligibility.assess("Pano montaj teknisyeni", "Elektrik meslek lisesi mezunu.")
         assertTrue(result.startsWith("ALAN EŞLEŞMESİ VAR"))
