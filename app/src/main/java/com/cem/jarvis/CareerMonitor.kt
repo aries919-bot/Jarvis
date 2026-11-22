@@ -125,7 +125,7 @@ object CareerSourceCatalog {
     private val trustedDomains = listOf(
         "turkiye.gov.tr", "ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr",
         "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
-        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
+        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "edu.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
         "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
@@ -309,7 +309,8 @@ object CareerSourceCatalog {
             "operatör", "operator", "depo", "satış", "satis", "kasiyer", "şoför", "sofor",
             "kura", "noter", "asıl aday", "asil aday", "yedek aday", "evrak teslim",
             "evrak kontrol", "sınav tarihi", "sinav tarihi", "sınav sonucu", "sinav sonucu",
-            "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "kuraya katılacak"
+            "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "kuraya katılacak",
+            "staj", "stajyer", "gençlik programı", "genclik programi", "işgücü uyum", "isgucu uyum"
         )
         return indicators.any(text::contains)
     }
@@ -610,6 +611,13 @@ object CareerSearchEngine {
             "site:linkedin.com/jobs/view $r $c Türkiye $year",
             "site:isbul.net $r $c iş ilanı $year"
         )
+        val studentPrograms = listOf(
+            "site:engelsiz.iskur.gov.tr İŞKUR Gençlik Programı üniversite öğrencisi başvuru şartları $year",
+            "site:engelsiz.iskur.gov.tr İşgücü Uyum Programı İUP başvuru öğrenci uygunluk şartları $year",
+            "site:guc.iskur.gov.tr staj platformu öğrenci teknik staj programı başvuru $year",
+            "site:kariyerkapisi.gov.tr staj öğrenci elektrik teknik ön lisans başvuru $year",
+            "üniversite öğrencisi elektrik zorunlu staj Malatya Elazığ Adıyaman başvuru $year"
+        )
         val postAssociate = listOf(
             "elektrik teknikeri ön lisans mezunu KPSS P93 personel alımı $year",
             "elektrik teknikeri MYO mezunu özel sektör açık pozisyon $year",
@@ -656,6 +664,7 @@ object CareerSearchEngine {
             6 -> kuraQueries + publicKpss.take(3) + listOf(extra)
             7 -> dailyPrivate + listOf(extra)
             8 -> municipal + kuraQueries.take(3) + listOf(extra)
+            9 -> studentPrograms
             else -> generalQuick
         }.distinct()
     }
@@ -983,6 +992,7 @@ object CareerSearchEngine {
             "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ön lisans P93 TABLO-2 kadro kontenjan nitelik kodu",
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise $year tercih nitelik kodları",
+            "site:engelsiz.iskur.gov.tr İŞKUR Gençlik Programı üniversite öğrencisi başvuru şartları $year",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
             "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
