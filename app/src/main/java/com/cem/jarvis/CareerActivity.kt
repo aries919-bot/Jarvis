@@ -485,7 +485,18 @@ class CareerActivity : Activity() {
     private fun saveJob(hit: Net.Hit) {
         val list = savedJobs()
         val fingerprint = CareerSearchEngine.fingerprint(hit.title, hit.url)
-        if ((0 until list.length()).any { list.optJSONObject(it)?.optString("fingerprint") == fingerprint }) {
+        if ((0 until list.length()).any { index ->
+                val saved = list.optJSONObject(index) ?: return@any false
+                val oldFingerprint = saved.optString("fingerprint").ifBlank {
+                    val oldTitle = saved.optString("title")
+                    val oldUrl = saved.optString("url")
+                    if (oldTitle.isNotBlank() && oldUrl.isNotBlank()) {
+                        CareerSearchEngine.fingerprint(oldTitle, oldUrl)
+                    } else ""
+                }
+                oldFingerprint == fingerprint
+            }
+        ) {
             toast("Bu ilan zaten kayıtlı.")
             return
         }
