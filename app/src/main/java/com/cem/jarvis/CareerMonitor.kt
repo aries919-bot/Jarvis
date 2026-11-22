@@ -775,7 +775,7 @@ object CareerRecruitmentTracker {
 
         hits.forEach { hit ->
             val stage = detectStage(hit.title, hit.snippet) ?: return@forEach
-            val normalizedTitle = normalize(hit.title).replace(Regex("\s+"), " ").trim()
+            val normalizedTitle = normalize(hit.title).replace(Regex("""\s+"""), " ").trim()
             val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage
             val id = java.security.MessageDigest.getInstance("SHA-256")
                 .digest(rawId.toByteArray(Charsets.UTF_8))
@@ -895,6 +895,69 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_EVENING)
     }
 
+    fun scheduleProcessReminders(context: Context, event: CareerProcessEvent) {
+        val eventAt = event.eventAt ?: return
+        val now = System.currentTimeMillis()
+        enqueueProcessReminder(context, event, "day", eventAt - TimeUnit.DAYS.toMillis(1))
+        if (event.hasExplicitTime) {
+            enqueueProcessReminder(context, event, "hour", eventAt - TimeUnit.HOURS.toMillis(1))
+        }
+    }
+
+    private fun enqueueProcessReminder(
+        context: Context,
+        event: CareerProcessEvent,
+        reminderKind: String,
+        reminderAt: Long
+    ) {
+        val delay = reminderAt - System.currentTimeMillis()
+        if (delay <= 0L) return
+        val unique = "aries-process-" + event.id.take(24) + "-" + reminderKind
+        val request = androidx.work.OneTimeWorkRequestBuilder<CareerProcessReminderWorker>()
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(
+                androidx.work.workDataOf(
+                    "event_title" to event.title,
+                    "event_url" to event.url,
+                    "event_stage" to event.stage,
+                    "event_at" to (event.eventAt ?: 0L),
+                    "reminder_kind" to reminderKind
+                )
+            )
+            .build()
+        androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
+            unique,
+            androidx.work.ExistingWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    fun notifyProcessUpdates(context: Context, events: List<CareerProcessEvent>) {
+        if (events.isEmpty()) return
+        ensureChannel(context)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        val first = events.first()
+        val open = Intent(Intent.ACTION_VIEW, Uri.parse(first.url))
+        val requestCode = (first.id.hashCode() and 0x7fffffff).coerceAtLeast(1)
+        val pending = PendingIntent.getActivity(
+            context, requestCode, open,
+            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+        val details = events.take(4).joinToString("\n") { "• " + it.stage + ": " + it.title }
+        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, CHANNEL_ID)
+            else Notification.Builder(context)
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("Aries: kura / işe alım süreci güncellendi")
+            .setContentText(events.size.toString() + " yeni aşama duyurusu bulundu.")
+            .setAutoCancel(true)
+            .setContentIntent(pending)
+            .setStyle(Notification.BigTextStyle().bigText(details + "\nKaynak sayfasını açıp tarihler ile aday listesini kontrol et."))
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(74025, builder.build())
+    }
+
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= 26) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -927,6 +990,50 @@ object CareerMonitorScheduler {
             ))
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(if (slot == "Akşam") 74024 else 74023, builder.build())
+    }
+}
+
+class CareerProcessReminderWorker(context: Context, params: androidx.work.WorkerParameters) :
+    androidx.work.Worker(context, params) {
+
+    override fun doWork(): androidx.work.ListenableWorker.Result {
+        val title = inputData.getString("event_title").orEmpty()
+        val url = inputData.getString("event_url").orEmpty()
+        val stage = inputData.getString("event_stage").orEmpty()
+        val eventAt = inputData.getLong("event_at", 0L)
+        val reminderKind = inputData.getString("reminder_kind").orEmpty()
+        if (title.isBlank() || url.isBlank() || stage.isBlank()) {
+            return androidx.work.ListenableWorker.Result.failure()
+        }
+        CareerMonitorScheduler.ensureChannel(applicationContext)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            applicationContext.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return androidx.work.ListenableWorker.Result.success()
+
+        val time = if (eventAt > 0L) {
+            java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(java.util.Date(eventAt))
+        } else "Tarih kaynak duyurusunda ayrıca kontrol edilmeli"
+        val message = when (reminderKind) {
+            "hour" -> "Etkinliğe yaklaşık 1 saat kaldı: " + time
+            else -> "Yarın için takip hatırlatması: " + time
+        }
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val requestCode = (url.hashCode() and 0x7fffffff).coerceAtLeast(1)
+        val pending = PendingIntent.getActivity(
+            applicationContext, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(applicationContext, CareerMonitorScheduler.CHANNEL_ID)
+            else Notification.Builder(applicationContext)
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("Aries · " + stage)
+            .setContentText(message)
+            .setStyle(Notification.BigTextStyle().bigText(title + "\n" + message + "\nKaynak: " + url))
+            .setAutoCancel(true)
+            .setContentIntent(pending)
+        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(requestCode, builder.build())
+        return androidx.work.ListenableWorker.Result.success()
     }
 }
 
@@ -1027,6 +1134,10 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             val partialWarning = if (batch.failedQueries > 0) {
                 "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir."
             } else null
+            val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
+            processEvents.forEach { event ->
+                CareerMonitorScheduler.scheduleProcessReminders(applicationContext, event)
+            }
             val now = System.currentTimeMillis()
 
             prefs.edit()
@@ -1050,6 +1161,9 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
             if (!manualRun && fresh.isNotEmpty()) {
                 CareerMonitorScheduler.notifyNewJobs(applicationContext, fresh.size, fresh.first(), slot)
+            }
+            if (!manualRun && processEvents.isNotEmpty()) {
+                CareerMonitorScheduler.notifyProcessUpdates(applicationContext, processEvents)
             }
             androidx.work.ListenableWorker.Result.success()
         } catch (e: Exception) {
