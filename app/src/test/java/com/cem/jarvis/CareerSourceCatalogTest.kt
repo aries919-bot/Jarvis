@@ -34,5 +34,14 @@ class CareerSourceCatalogTest {
         assertTrue(names.contains("Kıyı Emniyeti Genel Müdürlüğü"))
         assertTrue(names.contains("Sosyal Güvenlik Kurumu"))
         assertTrue(names.contains("PTT – duyurular"))
+        assertTrue(names.contains("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı"))
+        assertTrue(names.contains("İnönü Üniversitesi – Personel Daire Başkanlığı"))
+        assertTrue(names.contains("Fırat Üniversitesi – Personel Daire Başkanlığı"))
+        assertTrue(names.contains("Adıyaman Üniversitesi – Personel Daire Başkanlığı"))
+        assertTrue(names.contains("e-Devlet – İş ve Kariyer hizmetleri"))
+        assertEquals(
+            "Üniversite / kamu personel alımı",
+            CareerSourceCatalog.categoryFor("https://personel.ozal.edu.tr/announcements-all")
+        )
     }
 }
