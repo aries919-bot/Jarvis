@@ -568,7 +568,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 )
             }
             val partialWarning = if (batch.failedQueries > 0) {
-                "\${batch.successfulQueries}/\${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir."
+                "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir."
             } else null
 
             prefs.edit()
@@ -588,7 +588,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
         } catch (e: Exception) {
             prefs.edit()
                 .putString("career_monitor_last_error",
-                    "Tarama tamamlanamadı: \${e.message ?: "bağlantı veya kaynak hatası"}")
+                    "Tarama tamamlanamadı: ${e.message ?: "bağlantı veya kaynak hatası"}")
                 .apply()
             androidx.work.ListenableWorker.Result.retry()
         }
