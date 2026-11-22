@@ -701,7 +701,7 @@ object CareerRecruitmentTracker {
         "SINAV SONUCU" to listOf("sinav sonucu", "mulakat sonucu", "sozlu sinav sonucu", "yazili sinav sonucu"),
         "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurasi sonuc", "kura sonucu", "kura sonuclari", "asil ve yedek", "asil aday", "yedek aday"),
         "SINAV / MÜLAKAT TARİHİ" to listOf("sinav tarihi", "sinava girecek", "sozlu sinav", "yazili sinav", "mulakat tarihi"),
-        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("noter kurasi", "kura cekimi", "kura tarihi", "kuraya katilacak", "kura listesi"),
+        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("kura cekimi", "kura tarihi", "kuraya katilacak", "kura listesi"),
         "EVRAK / BELGE KONTROLÜ" to listOf("evrak kontrol", "belge kontrol", "evrak teslim", "belgelerin teslim", "eksik evrak", "evrak inceleme"),
         "BAŞVURU / YENİ ALIM" to listOf(
             "personel alimi", "isci alimi", "iskur basvuru", "basvurular basladi",
@@ -714,17 +714,32 @@ object CareerRecruitmentTracker {
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
         .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
 
-    fun detectStage(title: String, snippet: String): String? {
+    fun detectStages(title: String, snippet: String): List<String> {
         val text = normalize(title + " " + snippet)
-        return stageRules.firstOrNull { rule -> rule.second.any(text::contains) }?.first
+        return stageRules.filter { rule -> rule.second.any(text::contains) }.map { it.first }
     }
 
-    fun parseEventTime(title: String, snippet: String): Pair<Long, Boolean>? {
+    fun detectStage(title: String, snippet: String): String? =
+        detectStages(title, snippet).firstOrNull()
+
+    fun parseEventTime(title: String, snippet: String, stage: String? = null): Pair<Long, Boolean>? {
         val text = title + " " + snippet
-        val stageMarker = Regex(
-            "(?i)(?:kura|noter|sinav|sınav|mulakat|mülakat|basvuru|başvuru|evrak|belge)"
-        ).find(text) ?: return null
-        val tail = text.substring(stageMarker.range.first).take(650)
+        val markerPattern = when {
+            stage?.startsWith("BAŞVURU") == true ->
+                Regex("""(?i)(?:son\s+başvuru(?:\s+tarihi)?|son\s+müracaat(?:\s+tarihi)?|başvuruların\s+son\s+günü|son\s+basvuru(?:\s+tarihi)?)""")
+            stage?.startsWith("EVRAK") == true ->
+                Regex("""(?i)(?:evrak\s+teslim|belge(?:lerin)?\s+teslim|evrak\s+kontrol|belge\s+kontrol)""")
+            stage?.startsWith("KURA TARİHİ") == true ->
+                Regex("""(?i)(?:kura\s+(?:çekimi|tarihi|cekimi)|kuraya\s+katılacak|kuraya\s+katilacak|noter\s+huzurunda)""")
+            stage?.startsWith("SINAV /") == true ->
+                Regex("""(?i)(?:sınav(?:ın)?\s*(?:yeri|tarihi)?|sinav(?:in)?\s*(?:yeri|tarihi)?|mülakat\s+tarihi|mulakat\s+tarihi)""")
+            stage?.startsWith("NOTER KURASI SONUCU") == true ||
+                stage?.startsWith("SINAV SONUCU") == true ||
+                stage?.startsWith("NİHAİ SONUÇ") == true -> return null
+            else -> Regex("""(?i)(?:kura\s+(?:çekimi|tarihi|cekimi)|son\s+başvuru|son\s+basvuru|sınav\s+tarihi|sinav\s+tarihi|evrak\s+teslim|belge\s+teslim)""")
+        }
+        val marker = markerPattern.find(text) ?: return null
+        val tail = text.substring(marker.range.first).take(650)
         val numericDate = Regex("""(?i)(\d{1,2}[./-]\d{1,2}[./-]\d{4})""").find(tail)
         val monthDate = Regex(
             """(?i)(\d{1,2}\s+(?:ocak|şubat|subat|mart|nisan|mayıs|mayis|haziran|temmuz|ağustos|agustos|eylül|eylul|ekim|kasım|kasim|aralık|aralik)\s+\d{4})"""
@@ -790,26 +805,29 @@ object CareerRecruitmentTracker {
         val now = System.currentTimeMillis()
 
         hits.forEach { hit ->
-            val stage = detectStage(hit.title, hit.snippet) ?: return@forEach
+            val stages = detectStages(hit.title, hit.snippet)
+            if (stages.isEmpty()) return@forEach
             val normalizedTitle = normalize(hit.title).replace(Regex("""\s+"""), " ").trim()
-            val parsed = parseEventTime(hit.title, hit.snippet)
-            val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage + "|" + (parsed?.first ?: 0L)
-            val id = java.security.MessageDigest.getInstance("SHA-256")
-                .digest(rawId.toByteArray(Charsets.UTF_8))
-                .joinToString("") { "%02x".format(it) }
-            if (!seen.add(id)) return@forEach
-            val event = CareerProcessEvent(
-                id = id,
-                title = hit.title,
-                url = hit.url,
-                snippet = hit.snippet,
-                stage = stage,
-                detectedAt = now,
-                eventAt = parsed?.first,
-                hasExplicitTime = parsed?.second ?: false
-            )
-            added += event
-            events.add(0, event)
+            stages.forEach { stage ->
+                val parsed = parseEventTime(hit.title, hit.snippet, stage)
+                val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage + "|" + (parsed?.first ?: 0L)
+                val id = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(rawId.toByteArray(Charsets.UTF_8))
+                    .joinToString("") { "%02x".format(it) }
+                if (!seen.add(id)) return@forEach
+                val event = CareerProcessEvent(
+                    id = id,
+                    title = hit.title,
+                    url = hit.url,
+                    snippet = hit.snippet,
+                    stage = stage,
+                    detectedAt = now,
+                    eventAt = parsed?.first,
+                    hasExplicitTime = parsed?.second ?: false
+                )
+                added += event
+                events.add(0, event)
+            }
         }
 
         while (seen.size > 800) seen.remove(seen.firstOrNull() ?: break)
@@ -834,7 +852,6 @@ object CareerRecruitmentTracker {
         return added
     }
 }
-
 object CareerMonitorScheduler {
     const val CHANNEL_ID = "aries_career_alerts"
     private const val UNIQUE_LEGACY = "aries_daily_career_scan"
