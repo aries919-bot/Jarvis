@@ -309,36 +309,51 @@ object CareerEligibility {
 
 object CareerListingParser {
     private val deadlinePattern = Regex(
-        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu)[^0-9]{0,35}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4})",
+        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu)[^0-9]{0,45}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[\\p{L}]+\\s+\\d{4})",
         RegexOption.IGNORE_CASE
     )
+
     fun deadlineDate(text: String): String? {
         val raw = deadlinePattern.find(text)?.groupValues?.getOrNull(1) ?: return null
-        val normalized = raw.replace('/', '.').replace('-', '.')
-        val parser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
-        val parsed = runCatching { parser.parse(normalized) }.getOrNull() ?: return null
-        return parser.format(parsed)
+        val normalized = raw.replace('/', '.').replace('-', '.').trim()
+        val formats = if (normalized.any { it.isLetter() }) {
+            listOf("d MMMM yyyy", "dd MMMM yyyy", "d MMM yyyy", "dd MMM yyyy")
+        } else {
+            listOf("dd.MM.yyyy", "d.M.yyyy")
+        }
+        for (format in formats) {
+            val parser = java.text.SimpleDateFormat(format, Locale("tr", "TR")).apply { isLenient = false }
+            val parsed = runCatching { parser.parse(normalized) }.getOrNull() ?: continue
+            return java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).format(parsed)
+        }
+        return null
     }
+
     fun deadlineStatus(text: String, nowMillis: Long = System.currentTimeMillis()): String? {
         val dateText = deadlineDate(text) ?: return null
         val parser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
         val deadline = runCatching { parser.parse(dateText) }.getOrNull() ?: return null
         val today = Calendar.getInstance().apply {
             timeInMillis = nowMillis
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
         val deadlineDay = Calendar.getInstance().apply {
             time = deadline
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
         return if (deadlineDay.before(today)) {
-            "SÜRESİ GEÇMİŞ OLABİLİR · Kaynak metninde görünen son tarih: $dateText. İlan sayfasını kontrol et."
+            "SÜRESİ GEÇMİŞ · Kaynak metnindeki son başvuru tarihi $dateText geçmiş. Bu kaydı yeni ilanlarla karıştırma; kaynak sayfasında başvurunun kapandığını doğrula."
         } else {
-            "SON TARİH BİLGİSİ · Kaynak metninde $dateText yazıyor; başvuru sayfasında teyit et."
+            "SON TARİH BİLGİSİ · Kaynak metninde son başvuru tarihi $dateText görünüyor; başvuru sayfasında teyit et."
         }
     }
 }
-
 data class CareerScanBatch(
     val hits: List<Net.Hit>,
     val successfulQueries: Int,
