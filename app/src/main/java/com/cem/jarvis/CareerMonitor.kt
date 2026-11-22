@@ -47,6 +47,7 @@ object CareerSourceCatalog {
         Source("Türkiye Turizm Tanıtım ve Geliştirme Ajansı – kariyer", "https://tga.gov.tr/kariyer", "Kamu bağlantılı / kurumsal kariyer"),
         Source("Sağlık Bakanlığı – personel duyuruları", "https://www.saglik.gov.tr/", "Kamu / bakanlık"),
         Source("Adalet Bakanlığı – personel duyuruları", "https://www.adalet.gov.tr/", "Kamu / bakanlık"),
+        Source("Adalet Bakanlığı – Personel Genel Müdürlüğü / alım ilanları", "https://pgm.adalet.gov.tr/", "Kamu / 4/B sözleşmeli personel"),
         Source("Aile ve Sosyal Hizmetler Bakanlığı", "https://www.aile.gov.tr/", "Kamu / bakanlık"),
         Source("Millî Eğitim Bakanlığı – personel duyuruları", "https://www.meb.gov.tr/", "Kamu / bakanlık"),
         Source("Gençlik ve Spor Bakanlığı", "https://www.gsb.gov.tr/", "Kamu / bakanlık"),
@@ -931,6 +932,8 @@ object CareerSearchEngine {
             "$role Türkiye geneli servis lojman konaklama iş ilanı $year"
         )
         val kpssQueries = listOf(
+            "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ortaöğretim P94 TABLO-1 kadro kontenjan nitelik kodu",
+            "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ön lisans P93 TABLO-2 kadro kontenjan nitelik kodu",
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise $year tercih nitelik kodları",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
@@ -1202,6 +1205,8 @@ object CareerMonitorScheduler {
     private const val UNIQUE_MORNING = "aries_career_morning_scan"
     private const val UNIQUE_EVENING = "aries_career_evening_scan"
     private const val UNIQUE_MANUAL = "aries_career_manual_scan"
+    private const val KPSS_2026_2_START_REMINDER = "aries_kpss_2026_2_start"
+    private const val KPSS_2026_2_END_REMINDER = "aries_kpss_2026_2_end"
 
     private fun constraints() = androidx.work.Constraints.Builder()
         .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
@@ -1240,6 +1245,50 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_LEGACY)
         scheduleSlot(context, UNIQUE_MORNING, "Sabah", 8, 30)
         scheduleSlot(context, UNIQUE_EVENING, "Akşam", 20, 30)
+        scheduleKpss2026_2PreferenceReminders(context)
+    }
+
+    /**
+     * ÖSYM 2026 takviminde yayımlanan 17–24 Aralık tercih aralığı için iki hatırlatma kurar.
+     * Takvimde saat verilmediği için bildirim saatini resmî saatmiş gibi sunmaz.
+     */
+    private fun scheduleKpss2026_2PreferenceReminders(context: Context) {
+        val startAt = Calendar.getInstance().apply {
+            set(2026, Calendar.DECEMBER, 17, 9, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val endAt = Calendar.getInstance().apply {
+            set(2026, Calendar.DECEMBER, 24, 9, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        fun scheduleDay(title: String, stage: String, eventAt: Long, prefix: String) {
+            val event = CareerProcessEvent(
+                id = prefix,
+                title = title,
+                url = CareerCadreRadar.OFFICIAL_CALENDAR_URL,
+                snippet = CareerCadreRadar.PREFERENCE_STATUS,
+                stage = stage,
+                detectedAt = System.currentTimeMillis(),
+                eventAt = eventAt,
+                hasExplicitTime = false
+            )
+            enqueueProcessReminder(context, event, prefix + "-day", eventAt - TimeUnit.DAYS.toMillis(1))
+            enqueueProcessReminder(context, event, prefix + "-dayof", eventAt)
+        }
+
+        scheduleDay(
+            "KPSS-2026/2 tercihleri başlıyor",
+            "KPSS-2026/2 TERCİH DÖNEMİ BAŞLANGICI",
+            startAt,
+            KPSS_2026_2_START_REMINDER
+        )
+        scheduleDay(
+            "KPSS-2026/2 son tercih günü",
+            "KPSS-2026/2 TERCİH DÖNEMİ SON GÜNÜ",
+            endAt,
+            KPSS_2026_2_END_REMINDER
+        )
     }
 
     fun scheduleIfEnabled(context: Context) {
@@ -1269,6 +1318,10 @@ object CareerMonitorScheduler {
         wm.cancelUniqueWork(UNIQUE_LEGACY)
         wm.cancelUniqueWork(UNIQUE_MORNING)
         wm.cancelUniqueWork(UNIQUE_EVENING)
+        listOf(KPSS_2026_2_START_REMINDER, KPSS_2026_2_END_REMINDER).forEach { prefix ->
+            wm.cancelUniqueWork(prefix + "-day")
+            wm.cancelUniqueWork(prefix + "-dayof")
+        }
     }
 
     fun scheduleProcessReminders(context: Context, event: CareerProcessEvent) {
