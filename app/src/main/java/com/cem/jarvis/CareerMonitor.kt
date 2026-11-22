@@ -538,7 +538,7 @@ object CareerListingParser {
         val match = deadlinePattern.find(text) ?: return null
         val tailStart = match.range.last + 1
         val tail = text.substring(tailStart, minOf(text.length, tailStart + 48))
-        val timeMatch = Regex("""(?:saat\\s*)?(\\d{1,2})[:.](\\d{2})""", RegexOption.IGNORE_CASE)
+        val timeMatch = Regex("""^\\s*(?:[,;:–—-]\\s*)?(?:saat\\s*)?(\\d{1,2})[:.](\\d{2})""", RegexOption.IGNORE_CASE)
             .find(tail) ?: return null
         val hour = timeMatch.groupValues[1].toIntOrNull() ?: return null
         val minute = timeMatch.groupValues[2].toIntOrNull() ?: return null

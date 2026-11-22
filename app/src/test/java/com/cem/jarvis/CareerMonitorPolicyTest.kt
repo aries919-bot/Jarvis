@@ -175,7 +175,6 @@ class CareerMonitorPolicyTest {
         )
         assertNull(
             CareerListingParser.deadlineTime("Son başvuru tarihi: 30.11.2026; sınav 09:00")
-                .takeIf { it == "09:00" }
         )
         assertNull(CareerListingParser.deadlineTime("Son başvuru tarihi: 30.11.2026 saat 27:90"))
 
