@@ -50,4 +50,32 @@ class CareerSourceCatalogTest {
             CareerSourceCatalog.categoryFor("https://personel.ozal.edu.tr/announcements-all")
         )
     }
+
+    @Test
+    fun separatesPublicKuraKpssPrivateAndUnclassifiedJobBoardResults() {
+        assertEquals(
+            "Kura ile kamu alımı",
+            CareerSourceCatalog.recruitmentGroup("Noter kurası sonuçları", "Asıl ve yedek aday listesi", "https://www.ogm.gov.tr/duyurular")
+        )
+        assertEquals(
+            "KPSS ile kamu alımı",
+            CareerSourceCatalog.recruitmentGroup("Personel alımı", "KPSS P94 şartı", "https://www.kariyerkapisi.gov.tr/")
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup("Teknisyen alımı", "Başvuru duyurusu", "https://www.dsi.gov.tr/")
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup("Teknik personel", "Açık pozisyon", "https://akariyer.aselsan.com/")
+        )
+        assertEquals(
+            "Özel sektör",
+            CareerSourceCatalog.recruitmentGroup("Elektrik teknisyeni", "Açık pozisyon", "https://careers.borusan.com/")
+        )
+        assertEquals(
+            "Platform / sektör doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup("Üretim personeli", "İş ilanı", "https://www.kariyer.net/is-ilanlari")
+        )
+    }
 }

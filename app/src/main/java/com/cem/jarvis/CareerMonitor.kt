@@ -197,6 +197,52 @@ object CareerSourceCatalog {
         }
     }
 
+
+    /**
+     * Separates public recruitment, lottery rounds, KPSS placements and private employers.
+     * Generic job boards are deliberately not guessed as public or private.
+     */
+    fun recruitmentGroup(title: String, snippet: String, url: String): String {
+        val text = (title + " " + snippet).lowercase(Locale("tr", "TR"))
+            .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+            .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+        val host = normalizedHost(url).orEmpty()
+        val kuraTerms = listOf(
+            "noter kurasi", "kura cekimi", "kura cekilisi", "kura tarihi",
+            "kuraya katilacak", "kura sonucu", "kura sonuclari",
+            "asil ve yedek", "asil aday", "yedek aday", "kurada asil"
+        )
+        if (kuraTerms.any(text::contains)) return "Kura ile kamu alımı"
+        if (text.contains("kpss") || host.contains("osym.gov.tr") ||
+            host.contains("kariyerkapisi.gov.tr") || host.contains("cbiko.gov.tr")) {
+            return "KPSS ile kamu alımı"
+        }
+
+        val publicLinkedDomains = listOf(
+            "gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr",
+            "aselsan.com", "tusas.com", "roketsan.com.tr", "havelsan.com",
+            "mke.gov.tr", "teias.gov.tr", "euas.gov.tr", "tcdd.gov.tr",
+            "tcddtasimacilik.gov.tr", "dsi.gov.tr", "dhmi.gov.tr", "dmo.gov.tr",
+            "etimaden.gov.tr", "botas.gov.tr", "turkseker.gov.tr",
+            "kiyiemniyeti.gov.tr", "ptt.gov.tr", "ilbank.gov.tr", "tga.gov.tr"
+        )
+        val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
+        if (publicLinkedDomains.any { host == it || host.endsWith(".$it") } ||
+            publicCategory.contains("kamu") || publicCategory.contains("belediye") ||
+            publicCategory.contains("universite") || publicCategory.contains("işkur") ||
+            publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
+            host.endsWith(".turkiye.gov.tr")) {
+            return "Kamu / kamu bağlantılı"
+        }
+
+        if (isSecondary(url)) return "Platform / sektör doğrulanmalı"
+        if (publicCategory.contains("özel sektör") ||
+            publicCategory.contains("işveren") || publicCategory.contains("kariyer portalı")) {
+            return "Özel sektör"
+        }
+        return "Diğer / doğrulanmalı"
+    }
+
     fun isLikelyJobResult(title: String, snippet: String): Boolean {
         val text = (title + " " + snippet).lowercase(Locale("tr", "TR"))
         val indicators = listOf(
