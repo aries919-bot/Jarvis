@@ -20,16 +20,32 @@ import java.util.concurrent.TimeUnit
 object CareerSourceCatalog {
     data class Source(val name: String, val url: String, val category: String, val official: Boolean = true)
 
+    // .edu.tr is a legitimate academic domain, but it does not by itself prove a
+    // university is a state institution. Keep an explicit public-university allowlist.
+    private val publicUniversityDomains = setOf(
+        "ozal.edu.tr",
+        "inonu.edu.tr",
+        "firat.edu.tr",
+        "adiyaman.edu.tr"
+    )
+
+    private fun isPublicUniversityHost(host: String): Boolean =
+        publicUniversityDomains.any { host == it || host.endsWith(".$it") }
+
+    private fun isUnverifiedUniversityHost(host: String): Boolean =
+        host.endsWith(".edu.tr") && !isPublicUniversityHost(host)
+
     val sources = listOf(
         Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama", "Kamu / e-Devlet hizmetleri"),
         Source("Kariyer Kapısı – açık kamu ilanları", "https://kariyerkapisi.gov.tr/isealim", "Kamu / başvuru ve değerlendirme"),
         Source("İŞKUR Gençlik Programı", "https://esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx", "İŞKUR / üniversite programı"),
         Source("İŞKUR İşgücü Uyum Programı (İUP)", "https://esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx", "İŞKUR / uyum programı"),
-        Source("GÜÇ – Gençliğin Üretim Çağı programları", "https://guc.iskur.gov.tr/", "Öğrenci / genç istihdam programları"),
+        Source("GÜÇ – Gençliğin Üretim Çağı / Geleceğim Meslekte", "https://guc.iskur.gov.tr/", "Öğrenci / genç istihdam ve MYO son sınıf danışmanlığı"),
         Source("GÜÇ – program ve hizmetler", "https://guc.iskur.gov.tr/hizmetlerimiz/", "İŞKUR / program rehberi"),
         Source("İŞKUR Staj Portalı – lise öğrencileri", "https://stajportali.iskur.gov.tr/", "İŞKUR / lise stajı"),
         Source("İŞKUR Staj Portalı – genel giriş", "https://staj.iskur.gov.tr/", "İŞKUR / staj platformu"),
         Source("Ulusal Staj Programı – üniversite öğrencileri", "https://ulusalstajprogrami.iskur.gov.tr/", "İŞKUR / üniversite stajı"),
+        Source("Adalet Bakanlığı – Ulusal Staj Programı duyurusu", CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL, "Kamu / üniversite stajı · son tarih kurum duyurusunda"),
         Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
         Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
         Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
@@ -162,7 +178,7 @@ object CareerSourceCatalog {
         return sources.firstOrNull { source ->
             val sourceHost = normalizedHost(source.url).orEmpty()
             sourceHost.isNotBlank() &&
-                (host == sourceHost || host.endsWith(".$sourceHost") || sourceHost.endsWith(".$host"))
+                (host == sourceHost || host.endsWith(".$sourceHost"))
         }?.name ?: host
     }
 
@@ -196,15 +212,14 @@ object CareerSourceCatalog {
                 host.endsWith(".cbiko.gov.tr") -> "Kamu / işe alım ve başvuru portalı"
             host == "kamuilan.sbb.gov.tr" -> "Kamu / resmî personel ilanı"
             host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") -> "İŞKUR / açık iş ve program"
-            listOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
-                .any { host == it || host.endsWith(".$it") } -> "Üniversite / kamu personel alımı"
+            isPublicUniversityHost(host) -> "Üniversite / kamu personel alımı"
             host.endsWith(".bel.tr") || host == "malatya.bel.tr" ||
                 host.endsWith(".malatya.bel.tr") || host.endsWith(".battalgazi.bel.tr") ||
                 host.endsWith(".yesilyurt.bel.tr") -> "Belediye / kamu"
             inDomains(defenceDomains) -> "Savunma sanayii / işveren kariyer portalı"
             inDomains(kitDomains) -> "Kamu şirketi / KİT kariyer portalı"
             host.endsWith(".gov.tr") -> "Kamu / resmî kurum"
-            host.endsWith(".edu.tr") -> "Üniversite / kamu personel alımı"
+            host.endsWith(".edu.tr") -> "Üniversite / statü doğrulanmalı"
             host.contains("tga.gov.tr") -> "Kamu bağlantılı kurum / kariyer"
             host.contains("tusas") || host.contains("roketsan") || host.contains("aselsan") ||
                 host.contains("havelsan") || host.contains("tupras") || host.contains("vestel") ||
@@ -218,6 +233,29 @@ object CareerSourceCatalog {
         }
     }
 
+
+    /** Student internships and youth employment programmes are not civil-service appointments. */
+    fun isStudentProgram(title: String, snippet: String, url: String = ""): Boolean {
+        val text = (title + " " + snippet + " " + url).lowercase(Locale("tr", "TR"))
+            .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+            .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+            .replace(Regex("[^a-z0-9 ]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        val studentTerms = listOf(
+            "ulusal staj",
+            "staj program",
+            "stajyer",
+            "staj basvur",
+            "iskur genclik program",
+            "genclik programi",
+            "isgucu uyum program",
+            "gelecegim meslekte",
+            "student internship",
+            "internship program"
+        )
+        return studentTerms.any(text::contains)
+    }
 
     /**
      * Separates public recruitment, lottery rounds, KPSS placements and private employers.
@@ -253,21 +291,31 @@ object CareerSourceCatalog {
             "kpss puani aranmayacaktir", "kpss puani istenmez",
             "kpss puani bulunma sarti aranmaz"
         )
-        val publicLinkedDomains = listOf("gov.tr", "bel.tr", "edu.tr", "iskur.gov.tr")
+        val publicLinkedDomains = listOf("gov.tr", "bel.tr")
         val publicCategory = categoryFor(url).lowercase(Locale("tr", "TR"))
+        val publicUniversityByName = listOf(
+            "malatya turgut ozal universitesi",
+            "inonu universitesi",
+            "firat universitesi",
+            "adiyaman universitesi"
+        ).any(text::contains)
+        val isUnverifiedUniversity = isUnverifiedUniversityHost(host) && !publicUniversityByName
         val namedPublicEmployer = listOf(
             "orman genel mudurlugu", "karayollari genel mudurlugu",
             "devlet su isleri", "devlet hava meydanlari", "enerji ve tabii kaynaklar",
             "turkiye elektrik iletim", "elektrik uretim", "tcdd", "ptt",
             "milli egitim bakanligi", "saglik bakanligi", "adalet bakanligi",
-            "icisleri bakanligi", "belediyesi", "universitesi", "jandarma",
+            "icisleri bakanligi", "belediyesi", "jandarma",
             "sahil guvenlik", "il ozel idaresi"
         ).any(text::contains)
         val publicLinked = publicLinkedDomains.any { host == it || host.endsWith(".$it") } ||
             publicCategory.contains("kamu") || publicCategory.contains("belediye") ||
-            publicCategory.contains("universite") || publicCategory.contains("iskur") ||
             publicCategory.contains("resmi ilan") || host == "turkiye.gov.tr" ||
-            host.endsWith(".turkiye.gov.tr") || namedPublicEmployer
+            host.endsWith(".turkiye.gov.tr") || namedPublicEmployer || publicUniversityByName
+
+        // An internship or youth-program notice is not a staff appointment even when the
+        // publishing institution is public. Keep it out of KPSS/kura/public-job buckets.
+        if (isStudentProgram(title, snippet, url)) return "Öğrenci / staj / gençlik programı"
 
         // Defence-industry employers and KİT portals recruit as employers; their career
         // pages are not automatically ÖSYM central placement or ordinary civil-service posts.
@@ -294,6 +342,7 @@ object CareerSourceCatalog {
         if (hasKpssRequirement) {
             return if (publicLinked) "KPSS ile kamu alımı" else "KPSS / şartı doğrulanmalı"
         }
+        if (isUnverifiedUniversity) return "Üniversite / statü doğrulanmalı"
         if (publicLinked) return "Kamu / kamu bağlantılı"
         if (isSecondary(url)) return "Platform / sektör doğrulanmalı"
         if (publicCategory.contains("özel sektör") ||
@@ -361,6 +410,10 @@ object CareerEligibility {
         val p94 = Regex("\\bp\\s*94\\b").containsMatchIn(text)
         if (requiresKpss && (p3 || p93) && !p94) {
             return "PUAN TÜRÜ UYUŞMUYOR · İlan P3/P93 istiyor; ortaöğretim P94 puanın bu puan türlerinin yerine geçmez."
+        }
+
+        if (CareerSourceCatalog.isStudentProgram(title, snippet, url)) {
+            return "ÖĞRENCİ / STAJ PROGRAMI · Bu bir memur/işçi kadrosu değildir. Aktif öğrenci kaydı, öğrenim düzeyi, bölüm ve programın diğer kabul şartlarını resmî portalda doğrula."
         }
 
         if (QUALIFICATION_CODE_ELECTRIC_ASSOCIATE in codes && !isAssociateDegreeGraduate) {
@@ -490,9 +543,12 @@ object CareerEligibility {
 
 object CareerListingParser {
     private val deadlinePattern = Regex(
-        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu)[^0-9]{0,45}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[\\p{L}]+\\s+\\d{4})",
+        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu|kayıtlarını|kayıtları|kayitlarini|kayitlari)[^0-9]{0,45}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[\\p{L}]+\\s+\\d{4})",
         RegexOption.IGNORE_CASE
     )
+
+    fun noticeText(title: String, snippet: String): String =
+        listOf(title.trim(), snippet.trim()).filter { it.isNotBlank() }.joinToString(" ")
 
     fun deadlineDate(text: String): String? {
         val raw = deadlinePattern.find(text)?.groupValues?.getOrNull(1) ?: return null
@@ -508,6 +564,22 @@ object CareerListingParser {
             return java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).format(parsed)
         }
         return null
+    }
+
+    /**
+     * Returns a closing time only when it appears immediately after an explicitly labelled
+     * application deadline. Unrelated exam/event times elsewhere in the snippet are ignored.
+     */
+    fun deadlineTime(text: String): String? {
+        val match = deadlinePattern.find(text) ?: return null
+        val tailStart = match.range.last + 1
+        val tail = text.substring(tailStart, minOf(text.length, tailStart + 48))
+        val timeMatch = Regex("""^\s*(?:[,;:–—-]\s*)?(?:saat\s*)?(\d{1,2})[:.](\d{2})""", RegexOption.IGNORE_CASE)
+            .find(tail) ?: return null
+        val hour = timeMatch.groupValues[1].toIntOrNull() ?: return null
+        val minute = timeMatch.groupValues[2].toIntOrNull() ?: return null
+        if (hour !in 0..23 || minute !in 0..59) return null
+        return String.format(Locale.ROOT, "%02d:%02d", hour, minute)
     }
 
     fun deadlineStatus(text: String, nowMillis: Long = System.currentTimeMillis()): String? {
@@ -528,10 +600,31 @@ object CareerListingParser {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        return if (deadlineDay.before(today)) {
-            "SÜRESİ GEÇMİŞ · Kaynak metnindeki son başvuru tarihi $dateText geçmiş. Bu kaydı yeni ilanlarla karıştırma; kaynak sayfasında başvurunun kapandığını doğrula."
-        } else {
-            "SON TARİH BİLGİSİ · Kaynak metninde son başvuru tarihi $dateText görünüyor; başvuru sayfasında teyit et."
+
+        val closingTime = deadlineTime(text)
+        if (closingTime != null) {
+            val parts = closingTime.split(":")
+            val deadlineAt = Calendar.getInstance().apply {
+                time = deadline
+                set(Calendar.HOUR_OF_DAY, parts[0].toInt())
+                set(Calendar.MINUTE, parts[1].toInt())
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            return if (nowMillis >= deadlineAt) {
+                "SÜRESİ GEÇMİŞ · Kaynakta son başvuru tarihi $dateText saat $closingTime yazıyor; kapanış zamanı geçmiş. Başvurunun kapandığını kurum sayfasında doğrula."
+            } else {
+                "SON TARİH BİLGİSİ · Kaynakta son başvuru tarihi $dateText saat $closingTime yazıyor; başvuru sayfasında teyit et."
+            }
+        }
+
+        return when {
+            deadlineDay.before(today) ->
+                "SÜRESİ GEÇMİŞ · Kaynak metnindeki son başvuru tarihi $dateText geçmiş. Bu kaydı yeni ilanlarla karıştırma; kaynak sayfasında başvurunun kapandığını doğrula."
+            deadlineDay.timeInMillis == today.timeInMillis ->
+                "SON GÜN · Kaynakta son başvuru tarihi $dateText yazıyor ancak kapanış saati belirtilmemiş; saati kurum sayfasından doğrula."
+            else ->
+                "SON TARİH BİLGİSİ · Kaynak metninde son başvuru tarihi $dateText görünüyor; başvuru sayfasında teyit et."
         }
     }
 }
@@ -618,6 +711,8 @@ object CareerSearchEngine {
         val studentPrograms = listOf(
             "site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx İŞKUR Gençlik Programı üniversite öğrenci il kontenjan başvuru $year",
             "site:guc.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci başvuru hizmetleri $year",
+            "site:edb.adalet.gov.tr \"Ulusal Staj Programı\" üniversite yüksekokul öğrenci staj başvuru son tarihi $year",
+            "site:guc.iskur.gov.tr \"Geleceğim Meslekte\" meslek yüksekokulu MYO son sınıf danışmanlık işveren $year",
             "site:ulusalstajprogrami.iskur.gov.tr OR site:staj.iskur.gov.tr OR site:stajportali.iskur.gov.tr üniversite öğrencisi lise ve üniversite Ulusal Staj Programı teknik staj $year",
             "site:esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx NEET İşgücü Uyum Programı İUP ilçe başvuru $year",
             "elektrik öğrencisi zorunlu staj Malatya Elazığ Adıyaman üniversite kurum işyeri başvurusu $year"
@@ -1315,6 +1410,7 @@ object CareerMonitorScheduler {
      */
     fun schedulePreferenceReminders(context: Context) {
         scheduleKpss2026_2PreferenceReminders(context)
+        scheduleAdaletUniversityInternshipReminder(context)
     }
 
     /**
@@ -1357,6 +1453,44 @@ object CareerMonitorScheduler {
             "KPSS-2026/2 TERCİH DÖNEMİ SON GÜNÜ",
             endAt,
             KPSS_2026_2_END_REMINDER
+        )
+    }
+
+    /**
+     * Adalet Eğitim Dairesi duyurusundaki üniversite staj kayıt son günü (14.12.2026).
+     * Kurum bir kapanış saati belirtmedi; 09.00 yalnızca uygulamanın hatırlatma saatidir.
+     */
+    private fun scheduleAdaletUniversityInternshipReminder(context: Context) {
+        val eventAt = Calendar.getInstance().apply {
+            set(
+                CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_YEAR,
+                Calendar.DECEMBER,
+                CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_DAY,
+                9, 0, 0
+            )
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val event = CareerProcessEvent(
+            id = "aries-ada-university-internship-2026",
+            title = "Adalet Bakanlığı Ulusal Staj Programı · son kayıt günü",
+            url = CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL,
+            snippet = "Üniversite öğrencileri için kayıt son günü 14.12.2026 olarak duyuruldu. İlanda kapanış saati belirtilmiyor; başvuruyu resmî sayfada kontrol et.",
+            stage = "ULUSAL STAJ PROGRAMI · SON KAYIT GÜNÜ",
+            detectedAt = System.currentTimeMillis(),
+            eventAt = eventAt,
+            hasExplicitTime = false
+        )
+        enqueueProcessReminder(
+            context,
+            event,
+            "aries-ada-university-internship-2026-day",
+            eventAt - TimeUnit.DAYS.toMillis(1)
+        )
+        enqueueProcessReminder(
+            context,
+            event,
+            "aries-ada-university-internship-2026-dayof",
+            eventAt
         )
     }
 
@@ -1747,8 +1881,8 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                         .put("listingStatus", listingStatus)
                         .put("profileMatchScore", score)
                         .put("profileMatchReason", CareerEligibility.profileMatchReason(hit.title, hit.snippet, role, city, eligibility))
-                        .put("deadlineDate", CareerListingParser.deadlineDate(hit.snippet) ?: "")
-                        .put("deadlineStatus", CareerListingParser.deadlineStatus(hit.snippet) ?: "")
+                        .put("deadlineDate", CareerListingParser.deadlineDate(CareerListingParser.noticeText(hit.title, hit.snippet)) ?: "")
+                        .put("deadlineStatus", CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet)) ?: "")
                         .put("fingerprint", CareerSearchEngine.fingerprint(hit.title, hit.url))
                         .put("lastSeenAt", System.currentTimeMillis())
                 )
@@ -1759,7 +1893,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                     (CareerSearchEngine.friendlyDiagnostics(batch.errorMessages.joinToString(" | ")) ?: "Bazı arama sorguları sonuç döndürmedi.")
             } else null
             val freshForAlerts = fresh.filter { hit ->
-                CareerListingParser.deadlineStatus(hit.snippet)
+                CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
                     ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
             val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
@@ -1768,7 +1902,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
             val actionableProcessEvents = processEvents.filter { event ->
                 event.stage != "BAŞVURU / YENİ ALIM" &&
-                    CareerListingParser.deadlineStatus(event.snippet)
+                    CareerListingParser.deadlineStatus(CareerListingParser.noticeText(event.title, event.snippet))
                         ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
             val now = System.currentTimeMillis()

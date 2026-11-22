@@ -140,4 +140,144 @@ class CareerListingIntelligenceTest {
         assertTrue(facts.requirementSignals.any { it.contains("Elektrik") })
         assertTrue(facts.applicationStatus.contains("BİLİNMİYOR"))
     }
+
+    @Test
+    fun doesNotInferKpssScoreTypeFromEducationLevelAlone() {
+        val associate = CareerListingIntelligence.analyze(
+            "Elektrik teknikeri",
+            "Elektrik ön lisans mezunu olmak; KPSS puan türü ilanda ayrıca belirtilmelidir.",
+            "https://careers.example.com/jobs/1"
+        )
+        assertTrue(associate.requirementSignals.any { it.startsWith("Öğrenim şartı: ön lisans") })
+        assertFalse(associate.requirementSignals.any { it.contains("KPSS puan türü: P93") })
+
+        val bachelor = CareerListingIntelligence.analyze(
+            "Mühendis",
+            "Lisans mezunu olmak ve deneyim şartı aranır.",
+            "https://careers.example.com/jobs/2"
+        )
+        assertTrue(bachelor.requirementSignals.any { it.startsWith("Öğrenim şartı: lisans") })
+        assertFalse(bachelor.requirementSignals.any { it.contains("KPSS puan türü: P3") })
+
+        val secondary = CareerListingIntelligence.analyze(
+            "Üretim personeli",
+            "Lise ve dengi okul mezunu olmak.",
+            "https://careers.example.com/jobs/3"
+        )
+        assertTrue(secondary.requirementSignals.any { it.startsWith("Öğrenim şartı: ortaöğretim/lise") })
+        assertFalse(secondary.requirementSignals.any { it.contains("KPSS puan türü: P94") })
+    }
+
+    @Test
+    fun showsKpssScoreTypeOnlyWhenTheResultTextNamesItExplicitly() {
+        val p93 = CareerListingIntelligence.analyze(
+            "Tekniker alımı",
+            "Elektrik ön lisans mezunu olmak ve KPSS P93 puanına sahip olmak.",
+            "https://kariyerkapisi.gov.tr/isealim"
+        )
+        assertTrue(p93.requirementSignals.any { it == "KPSS puan türü: P93 · ön lisans" })
+        assertFalse(p93.requirementSignals.any { it.startsWith("Öğrenim şartı: ön lisans") })
+    }
+
+
+    @Test
+    fun sendsAdaletInternshipApplicantsToTheActualUlusalStajRegistrationPortal() {
+        val facts = CareerListingIntelligence.analyze(
+            "Ulusal Staj Programı başvuruları",
+            "Üniversite ve yüksekokul öğrencilerinin kayıtlarını 14.12.2026 tarihine kadar tamamlaması gerekmektedir.",
+            CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL
+        )
+        assertEquals(
+            "Adalet Bakanlığı duyurusu · kayıt Ulusal Staj Programı portalından",
+            facts.applicationChannel
+        )
+        assertEquals("14.12.2026", facts.explicitDeadline)
+    }
+
+
+    @Test
+    fun recognizesKpssScoreTypeWrittenWithHyphensOrSlashes() {
+        val p94 = CareerListingIntelligence.analyze(
+            "Ortaöğretim personel alımı",
+            "KPSS-P94 puanı ile tercih yapılacaktır.",
+            "https://www.osym.gov.tr/"
+        )
+        assertTrue(p94.requirementSignals.any { it == "KPSS puan türü: P94 · ortaöğretim" })
+
+        val p93 = CareerListingIntelligence.analyze(
+            "Elektrik teknikeri",
+            "Elektrik ön lisans mezunu ve KPSS/P93 puan türü aranıyor.",
+            "https://kariyerkapisi.gov.tr/isealim"
+        )
+        assertTrue(p93.requirementSignals.any { it == "KPSS puan türü: P93 · ön lisans" })
+    }
+
+
+    @Test
+    fun labelsStudentInternshipsAsProgrammesNotPublicVacancies() {
+        val facts = CareerListingIntelligence.analyze(
+            "Ulusal Staj Programı başvuruları",
+            "Üniversite ve yüksekokul öğrencilerinin kayıtlarını 14.12.2026 tarihine kadar tamamlaması gerekmektedir.",
+            CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL
+        )
+        assertEquals("Öğrenci / staj / gençlik programı", facts.employerGroup)
+        assertEquals("Öğrenci / staj / gençlik programı", facts.noticeType)
+        assertTrue(facts.applicationStatus.startsWith("SON TARİH BULUNDU"))
+        assertTrue(CareerEligibility.assess(
+            "Ulusal Staj Programı",
+            "Elektrik öğrencisi staj başvurusu",
+            CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL,
+            false
+        ).startsWith("ÖĞRENCİ / STAJ PROGRAMI"))
+    }
+
+
+    @Test
+    fun routesDistinctIskurSubportalsToTheirActualServicePaths() {
+        val nationalInternship = CareerListingIntelligence.analyze(
+            "Ulusal Staj Programı",
+            "Üniversite öğrencileri için kayıt işlemleri.",
+            "https://ulusalstajprogrami.iskur.gov.tr/"
+        )
+        assertEquals("Ulusal Staj Programı portalı · doğrudan kayıt", nationalInternship.applicationChannel)
+
+        val guc = CareerListingIntelligence.analyze(
+            "Geleceğim Meslekte",
+            "Meslek yüksekokulu son sınıf öğrencilerine kariyer danışmanlığı.",
+            "https://guc.iskur.gov.tr/"
+        )
+        assertEquals(
+            "İŞKUR GÜÇ · program rehberi; başvuru ilgili program portalından",
+            guc.applicationChannel
+        )
+
+        val staj = CareerListingIntelligence.analyze(
+            "Staj başvurusu",
+            "Öğrenci staj kaydı.",
+            "https://staj.iskur.gov.tr/"
+        )
+        assertEquals("İŞKUR Staj Platformu · staj başvuru portalı", staj.applicationChannel)
+
+        val highSchoolInternship = CareerListingIntelligence.analyze(
+            "Lise staj başvurusu",
+            "Lise öğrencileri için staj portalı.",
+            "https://stajportali.iskur.gov.tr/"
+        )
+        assertEquals("İŞKUR Lise Staj Portalı · ilgili staj başvuru ekranı", highSchoolInternship.applicationChannel)
+
+        val esube = CareerListingIntelligence.analyze(
+            "Açık iş ilanı",
+            "İŞKUR e-Şube üzerinden başvuru.",
+            "https://esube.iskur.gov.tr/"
+        )
+        assertEquals("İŞKUR e-Şube · açık iş / program başvurusu", esube.applicationChannel)
+
+        val otherIskurPortal = CareerListingIntelligence.analyze(
+            "Program duyurusu",
+            "İlgili programı inceleyin.",
+            "https://engelsiz.iskur.gov.tr/"
+        )
+        assertTrue(otherIskurPortal.applicationChannel.startsWith("İŞKUR alt portalı"))
+    }
+
 }

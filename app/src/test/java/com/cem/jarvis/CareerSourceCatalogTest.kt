@@ -46,7 +46,7 @@ class CareerSourceCatalogTest {
         assertTrue(names.contains("e-Devlet – İş ve Kariyer hizmetleri"))
         assertTrue(names.contains("İŞKUR Gençlik Programı"))
         assertTrue(names.contains("İŞKUR İşgücü Uyum Programı (İUP)"))
-        assertTrue(names.contains("GÜÇ – Gençliğin Üretim Çağı programları"))
+        assertTrue(names.contains("GÜÇ – Gençliğin Üretim Çağı / Geleceğim Meslekte"))
         assertTrue(names.contains("GÜÇ – program ve hizmetler"))
         assertTrue(names.contains("İŞKUR Staj Portalı – lise öğrencileri"))
         assertTrue(names.contains("İŞKUR Staj Portalı – genel giriş"))
@@ -151,4 +151,99 @@ class CareerSourceCatalogTest {
             )
         )
     }
+
+    @Test
+    fun doesNotAssumeEveryEduTrUniversityIsAStateInstitution() {
+        assertEquals(
+            "Üniversite / kamu personel alımı",
+            CareerSourceCatalog.categoryFor("https://personel.ozal.edu.tr/announcements-all")
+        )
+        assertEquals(
+            "Üniversite / statü doğrulanmalı",
+            CareerSourceCatalog.categoryFor("https://personel.vakifuni.edu.tr/duyurular")
+        )
+        assertEquals(
+            "Üniversite / statü doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Üniversite personel alımı",
+                "Başvuru duyurusu",
+                "https://personel.vakifuni.edu.tr/duyurular"
+            )
+        )
+        assertEquals(
+            "KPSS / şartı doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Personel alımı",
+                "KPSS P94 şartı aranır",
+                "https://personel.vakifuni.edu.tr/duyurular"
+            )
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Malatya Turgut Özal Üniversitesi personel alımı",
+                "Başvuru duyurusu",
+                "https://personel.vakifuni.edu.tr/duyurular"
+            )
+        )
+    }
+
+
+    @Test
+    fun doesNotAttributeGenericParentDomainsToASpecificInstitution() {
+        assertEquals("gov.tr", CareerSourceCatalog.sourceName("https://gov.tr/duyurular"))
+        assertEquals("ozal.edu.tr", CareerSourceCatalog.sourceName("https://ozal.edu.tr/"))
+        assertEquals(
+            "Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı",
+            CareerSourceCatalog.sourceName("https://personel.ozal.edu.tr/announcements-all")
+        )
+    }
+
+
+    @Test
+    fun includesCurrentUniversityInternshipAndVocationalCollegeCareerSources() {
+        val sourceByName = CareerSourceCatalog.sources.associateBy { it.name }
+        val ministryInternship = sourceByName["Adalet Bakanlığı – Ulusal Staj Programı duyurusu"]
+        assertEquals(
+            "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi20112026014736",
+            ministryInternship?.url
+        )
+        assertTrue(CareerSourceCatalog.isTrustedUrl(ministryInternship!!.url))
+        assertTrue(CareerSourceCatalog.categoryFor(ministryInternship.url).contains("Kamu"))
+
+        val vocationalCareer = sourceByName["GÜÇ – Gençliğin Üretim Çağı / Geleceğim Meslekte"]
+        assertEquals("https://guc.iskur.gov.tr/", vocationalCareer?.url)
+        assertTrue(CareerSourceCatalog.isTrustedUrl(vocationalCareer!!.url))
+    }
+
+
+    @Test
+    fun keepsInternshipsAndYouthProgramsOutOfPublicStaffAppointmentBuckets() {
+        val adalet = "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi"
+        assertEquals(
+            "Öğrenci / staj / gençlik programı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Ulusal Staj Programı başvuruları",
+                "Üniversite ve yüksekokul öğrencilerinin kayıtlarını tamamlaması gerekmektedir.",
+                adalet
+            )
+        )
+        assertEquals(
+            "Öğrenci / staj / gençlik programı",
+            CareerSourceCatalog.recruitmentGroup(
+                "İŞKUR Gençlik Programı",
+                "Üniversite öğrencileri için program başvurusu",
+                "https://esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx"
+            )
+        )
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sözleşmeli personel alımı",
+                "Başvuru duyurusu",
+                "https://www.dsi.gov.tr/duyurular"
+            )
+        )
+    }
+
 }

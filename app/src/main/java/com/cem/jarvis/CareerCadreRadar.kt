@@ -30,6 +30,10 @@ object CareerCadreRadar {
     const val KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/ortaogretim-nitelik_t1d03072026.pdf"
     const val KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/onlisans-nitelik_t1d03072026.pdf"
     const val ADALET_2026_NOTICE_URL = "https://pgm.adalet.gov.tr/Home/SayfaDetay/2026sozlesmelitasra"
+    const val ADALET_UNIVERSITY_INTERNSHIP_URL = "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi20112026014736"
+    const val ADALET_UNIVERSITY_INTERNSHIP_YEAR = 2026
+    const val ADALET_UNIVERSITY_INTERNSHIP_DAY = 14
+    const val ADALET_UNIVERSITY_INTERNSHIP_DEADLINE = "14.12.2026"
     const val ISKUR_URL = "https://esube.iskur.gov.tr/"
     const val P94_ELECTRIC_ELECTRONICS_CODE = 2023
     const val P93_ELECTRIC_PROGRAM_CODE = 3290

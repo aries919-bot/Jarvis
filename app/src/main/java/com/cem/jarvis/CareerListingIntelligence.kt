@@ -29,13 +29,15 @@ object CareerListingIntelligence {
         val host = runCatching { URI(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
             .getOrDefault("")
         val employerGroup = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
+        val studentProgram = CareerSourceCatalog.isStudentProgram(title, snippet, url)
         val stage = CareerRecruitmentTracker.detectStage(title, snippet)
-        val deadlineSource = "$title $snippet"
+        val deadlineSource = CareerListingParser.noticeText(title, snippet)
         val deadline = CareerListingParser.deadlineDate(deadlineSource)
         val deadlineStatus = CareerListingParser.deadlineStatus(deadlineSource, nowMillis)
         val processOnly = !stage.isNullOrBlank() && stage != "BAŞVURU / YENİ ALIM"
         val noticeType = when {
             processOnly -> "İşe alım süreci / sonuç duyurusu"
+            studentProgram -> "Öğrenci / staj / gençlik programı"
             stage == "BAŞVURU / YENİ ALIM" -> "Yeni alım / başvuru duyurusu"
             CareerSourceCatalog.isLikelyJobResult(title, snippet) -> "İlan adayı"
             else -> "Kariyer veya kurum duyurusu"
@@ -46,6 +48,8 @@ object CareerListingIntelligence {
             processOnly -> "SÜREÇ DUYURUSU · Bu kayıt yeni başvuru açıldığını göstermez."
             deadline != null ->
                 "SON TARİH BULUNDU · $deadline · Başvurunun hâlâ açık olduğu kaynak sayfasında teyit edilmeli."
+            studentProgram ->
+                "PROGRAM DURUMU BİLİNMİYOR · Öğrenci/staj başvurularının açık olup olmadığı resmî portalda teyit edilmeli."
             stage == "BAŞVURU / YENİ ALIM" || CareerSourceCatalog.isLikelyJobResult(title, snippet) ->
                 "BAŞVURU DURUMU BİLİNMİYOR · Arama özeti aktif başvuruyu kanıtlamaz."
             else -> "AKTİFLİK BİLİNMİYOR · Kaynak sayfasını kontrol et."
@@ -58,8 +62,22 @@ object CareerListingIntelligence {
                 "Kariyer Kapısı · e-Devlet ile başvuru"
             host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") ->
                 "e-Devlet hizmeti · ilgili başvuru ekranını aç"
-            host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") ->
-                "İŞKUR e-Şube · açık iş / başvuru"
+            host == "ulusalstajprogrami.iskur.gov.tr" ->
+                "Ulusal Staj Programı portalı · doğrudan kayıt"
+            host == "guc.iskur.gov.tr" ->
+                "İŞKUR GÜÇ · program rehberi; başvuru ilgili program portalından"
+            host == "staj.iskur.gov.tr" ->
+                "İŞKUR Staj Platformu · staj başvuru portalı"
+            host == "stajportali.iskur.gov.tr" ->
+                "İŞKUR Lise Staj Portalı · ilgili staj başvuru ekranı"
+            host == "esube.iskur.gov.tr" ->
+                "İŞKUR e-Şube · açık iş / program başvurusu"
+            host == "iskur.gov.tr" ->
+                "İŞKUR · ilgili hizmet sayfasında başvuru yolunu doğrula"
+            host.endsWith(".iskur.gov.tr") ->
+                "İŞKUR alt portalı · sayfada belirtilen başvuru yolunu doğrula"
+            host == "edb.adalet.gov.tr" ->
+                "Adalet Bakanlığı duyurusu · kayıt Ulusal Staj Programı portalından"
             CareerSourceCatalog.isSecondary(url) ->
                 "İlan platformu · işveren ve başvuru adresi doğrulanmalı"
             employerGroup.startsWith("KİT /") || employerGroup.startsWith("Savunma sanayii /") ->
@@ -72,10 +90,22 @@ object CareerListingIntelligence {
             else -> "Başvuru kanalı kaynakta doğrulanmalı"
         }
         val quotaText = extractQuota(text)
+        val hasKpssP94 = Regex("""\bkpss[\s/-]*p[\s/-]*94\b""").containsMatchIn(text)
+        val hasKpssP93 = Regex("""\bkpss[\s/-]*p[\s/-]*93\b""").containsMatchIn(text)
+        val hasKpssP3 = Regex("""\bkpss[\s/-]*p[\s/-]*3\b""").containsMatchIn(text)
+        val hasAssociateEducation = text.contains("on lisans") || text.contains("onlisans")
+        val hasBachelorEducation = !hasAssociateEducation &&
+            (text.contains("lisans mezun") || text.contains("lisans diplom"))
+        val hasSecondaryEducation = text.contains("ortaogretim") ||
+            text.contains("orta ogretim") || text.contains("lise mezunu") ||
+            text.contains("lise ve dengi")
         val requirements = buildList {
-            if (Regex("""\bkpss\s*p\s*94\b""").containsMatchIn(text) || text.contains("ortaogretim")) add("Ortaöğretim / KPSS P94")
-            if (Regex("""\bkpss\s*p\s*93\b""").containsMatchIn(text) || text.contains("on lisans")) add("Ön lisans / KPSS P93")
-            if (Regex("""\bkpss\s*p\s*3\b""").containsMatchIn(text) || text.contains("lisans mezunu")) add("Lisans / KPSS P3")
+            if (hasKpssP94) add("KPSS puan türü: P94 · ortaöğretim")
+            if (hasKpssP93) add("KPSS puan türü: P93 · ön lisans")
+            if (hasKpssP3) add("KPSS puan türü: P3 · lisans")
+            if (!hasKpssP94 && hasSecondaryEducation) add("Öğrenim şartı: ortaöğretim/lise · KPSS puan türü ayrıca belirtilmeli")
+            if (!hasKpssP93 && hasAssociateEducation) add("Öğrenim şartı: ön lisans · KPSS puan türü ayrıca belirtilmeli")
+            if (!hasKpssP3 && hasBachelorEducation) add("Öğrenim şartı: lisans · KPSS puan türü ayrıca belirtilmeli")
             if (text.contains("elektrik") || text.contains("elektrik elektronik")) add("Elektrik alanı/programı ifadesi · diploma kodu ayrıca kontrol edilmeli")
             if (Regex("""(?<!\d)2023(?!\d)""").containsMatchIn(text)) {
                 add("Nitelik kodu 2023 ifadesi · ortaöğretim elektrik-elektronik alan/ dal şartını ÖSYM tablosundan doğrula")
