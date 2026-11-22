@@ -1418,9 +1418,26 @@ class CareerActivity : Activity() {
 
         val associateNote = panel()
         associateNote.addView(label("Ön lisans · KPSS P93", 16f, true, primaryText))
-        associateNote.addView(label(CareerCadreRadar.associateTrackLabel(false), 12f, true, warningColor))
+        val associateGraduated = prefs.getBoolean("career_associate_graduated", false)
+        val associateStatus = label(CareerCadreRadar.associateTrackLabel(associateGraduated), 12f, true, warningColor)
+        associateNote.addView(associateStatus)
+        val associateGraduateSwitch = Switch(this).apply {
+            text = "Ön lisans programından mezunum"
+            textSize = 13f
+            setTextColor(primaryText)
+            isChecked = associateGraduated
+            if (Build.VERSION.SDK_INT >= 21) {
+                thumbTintList = android.content.res.ColorStateList.valueOf(accentColor)
+                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(181, 207, 218))
+            }
+            setOnCheckedChangeListener { _, checked ->
+                prefs.edit().putBoolean("career_associate_graduated", checked).apply()
+                associateStatus.text = CareerCadreRadar.associateTrackLabel(checked)
+            }
+        }
+        associateNote.addView(associateGraduateSwitch, params(-1, dp(48), 0, 4, 0, 2))
         associateNote.addView(label(
-            "Bu bölüm gelecekteki başvurular için rehberdir. Tercih tarihinde mezuniyet şartı ve ilgili ön lisans program/nitelik kodu mutlaka sağlanmalıdır.",
+            "Bu ayar yalnızca Aries'in bilgilendirme etiketini değiştirir. Her ilanın tercih/başvuru tarihindeki mezuniyet şartı ve ilgili ön lisans program kodu ayrıca kontrol edilmelidir.",
             11f, false, muted
         ))
         content.addView(associateNote, params(-1, -2, 0, 8, 0, 4))
@@ -1468,6 +1485,14 @@ class CareerActivity : Activity() {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_TABLE_URL))) }
                 .onFailure { toast("ÖSYM tablosu açılamadı.") }
         }, params(-1, dp(44), 0, 5, 0, 0))
+        historicScore.addView(button("P94 ortaöğretim nitelik kodlarını aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL))) }
+                .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
+        }, params(-1, dp(44), 0, 5, 0, 0))
+        historicScore.addView(button("P93 ön lisans program kodlarını aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL))) }
+                .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
+        }, params(-1, dp(44), 0, 5, 0, 0))
         content.addView(historicScore, params(-1, -2, 0, 0, 0, 12))
 
         val dialog = AlertDialog.Builder(this)
@@ -1478,7 +1503,7 @@ class CareerActivity : Activity() {
         dialog.setOnShowListener {
             dialog.window?.setLayout(
                 (resources.displayMetrics.widthPixels * 0.94f).toInt(),
-                dp(640)
+                (resources.displayMetrics.heightPixels * 0.84f).toInt()
             )
         }
         dialog.show()
