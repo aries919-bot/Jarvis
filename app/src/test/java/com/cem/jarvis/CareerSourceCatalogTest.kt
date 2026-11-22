@@ -46,7 +46,7 @@ class CareerSourceCatalogTest {
         assertTrue(names.contains("e-Devlet – İş ve Kariyer hizmetleri"))
         assertTrue(names.contains("İŞKUR Gençlik Programı"))
         assertTrue(names.contains("İŞKUR İşgücü Uyum Programı (İUP)"))
-        assertTrue(names.contains("GÜÇ – Gençliğin Üretim Çağı programları"))
+        assertTrue(names.contains("GÜÇ – Gençliğin Üretim Çağı / Geleceğim Meslekte"))
         assertTrue(names.contains("GÜÇ – program ve hizmetler"))
         assertTrue(names.contains("İŞKUR Staj Portalı – lise öğrencileri"))
         assertTrue(names.contains("İŞKUR Staj Portalı – genel giriş"))
