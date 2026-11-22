@@ -10,7 +10,16 @@ data class CareerCadreEntry(
     val requirementNote: String
 )
 
+data class Kpss2026_2GuideTables(
+    val p94Url: String? = null,
+    val p93Url: String? = null
+) {
+    val hasAnyTable: Boolean get() = !p94Url.isNullOrBlank() || !p93Url.isNullOrBlank()
+}
+
 object CareerCadreRadar {
+    const val P94_GUIDE_PREF_KEY = "career_kpss_2026_2_p94_guide_url"
+    const val P93_GUIDE_PREF_KEY = "career_kpss_2026_2_p93_guide_url"
     const val PREFERENCE_WINDOW = "17–24 Aralık 2026"
     const val PREFERENCE_STATUS = "Tercih tarihleri ÖSYM takviminde yayımlandı; KPSS-2026/2 kadro ve kontenjan tablosu ayrıca bekleniyor."
     const val OFFICIAL_CALENDAR_URL = "https://www.osym.gov.tr/Sayfa/SinavTakvimi"
@@ -89,10 +98,55 @@ object CareerCadreRadar {
             "MEZUNİYET SONRASI · Ön lisans kadroları için tercih tarihinde mezuniyet şartı aranabilir. Mezuniyet gerçekleşmeden P93 kadrosu uygun kabul edilmez."
         }
 
+    /**
+     * Sadece ÖSYM alan adındaki 2026/2 TABLO-1/TABLO-2 belgelerini kabul eder.
+     * 2026/1 geçmiş tabloları, arama sonuçlarındaki sıradan KPSS haberleri ve
+     * üçüncü taraf siteler gelecekteki kılavuz gibi işaretlenmez.
+     */
+    fun detect2026_2GuideTables(hits: Collection<Net.Hit>): Kpss2026_2GuideTables {
+        var p94Url: String? = null
+        var p93Url: String? = null
+
+        hits.forEach { hit ->
+            val uri = runCatching { java.net.URI(hit.url) }.getOrNull() ?: return@forEach
+            if (!uri.scheme.equals("https", ignoreCase = true)) return@forEach
+            val host = uri.host?.lowercase(Locale.ROOT).orEmpty()
+            if (host != "osym.gov.tr" && !host.endsWith(".osym.gov.tr")) return@forEach
+
+            val path = uri.path.orEmpty().lowercase(Locale.ROOT)
+            val rawText = (hit.title + " " + hit.snippet).lowercase(Locale("tr", "TR"))
+            val normalized = rawText
+                .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+                .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+            val has2026_2 = path.contains("tercih2") ||
+                rawText.contains("2026/2") || rawText.contains("2026-2")
+            if (!has2026_2) return@forEach
+
+            val hasTable1 = path.contains("tablo1") ||
+                (normalized.contains("tablo-1") || normalized.contains("tablo 1")) &&
+                    (normalized.contains("ortaogretim") || normalized.contains("p94"))
+            val hasTable2 = path.contains("tablo2") ||
+                (normalized.contains("tablo-2") || normalized.contains("tablo 2")) &&
+                    (normalized.contains("on lisans") || normalized.contains("p93"))
+
+            if (hasTable1 && p94Url == null) p94Url = uri.toString()
+            if (hasTable2 && p93Url == null) p93Url = uri.toString()
+        }
+        return Kpss2026_2GuideTables(p94Url, p93Url)
+    }
+
     fun kpss2026_2CadreStatus(hasOfficialGuide: Boolean): String =
         if (hasOfficialGuide) {
-            "ÖSYM kılavuzu yayımlandı. Kadro, kontenjan, puan türü ve nitelik kodları resmî tablodan okunmalı."
+            "ÖSYM kılavuz tablosu tespit edildi. Kadro, kontenjan, puan türü ve nitelik kodları doğrudan resmî belgede kontrol edilmeli."
         } else {
             PREFERENCE_STATUS
+        }
+
+    fun kpss2026_2CadreStatus(p94Found: Boolean, p93Found: Boolean): String =
+        when {
+            p94Found && p93Found -> "ÖSYM KPSS-2026/2 P94 TABLO-1 ve P93 TABLO-2 bağlantıları tespit edildi."
+            p94Found -> "ÖSYM KPSS-2026/2 P94 TABLO-1 tespit edildi; P93 TABLO-2 bağlantısı henüz bulunmadı."
+            p93Found -> "ÖSYM KPSS-2026/2 P93 TABLO-2 tespit edildi; P94 TABLO-1 bağlantısı henüz bulunmadı."
+            else -> PREFERENCE_STATUS
         }
 }
