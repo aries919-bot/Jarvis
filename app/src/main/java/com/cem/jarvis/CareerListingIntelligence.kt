@@ -60,6 +60,8 @@ object CareerListingIntelligence {
                 "e-Devlet hizmeti · ilgili başvuru ekranını aç"
             host == "iskur.gov.tr" || host.endsWith(".iskur.gov.tr") ->
                 "İŞKUR e-Şube · açık iş / başvuru"
+            host == "edb.adalet.gov.tr" ->
+                "Adalet Bakanlığı duyurusu · kayıt Ulusal Staj Programı portalından"
             CareerSourceCatalog.isSecondary(url) ->
                 "İlan platformu · işveren ve başvuru adresi doğrulanmalı"
             employerGroup.startsWith("KİT /") || employerGroup.startsWith("Savunma sanayii /") ->

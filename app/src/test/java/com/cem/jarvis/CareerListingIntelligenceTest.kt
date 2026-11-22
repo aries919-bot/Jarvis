@@ -179,4 +179,19 @@ class CareerListingIntelligenceTest {
         assertFalse(p93.requirementSignals.any { it.startsWith("Öğrenim şartı: ön lisans") })
     }
 
+
+    @Test
+    fun sendsAdaletInternshipApplicantsToTheActualUlusalStajRegistrationPortal() {
+        val facts = CareerListingIntelligence.analyze(
+            "Ulusal Staj Programı başvuruları",
+            "Üniversite ve yüksekokul öğrencilerinin kayıtları 14.12.2026 tarihine kadar.",
+            CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL
+        )
+        assertEquals(
+            "Adalet Bakanlığı duyurusu · kayıt Ulusal Staj Programı portalından",
+            facts.applicationChannel
+        )
+        assertEquals("14.12.2026", facts.explicitDeadline)
+    }
+
 }
