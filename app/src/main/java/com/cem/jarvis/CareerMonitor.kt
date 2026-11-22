@@ -24,7 +24,7 @@ object CareerSourceCatalog {
         Source("e-Devlet – İş ve Kariyer hizmetleri", "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama", "Kamu / e-Devlet hizmetleri"),
         Source("Kariyer Kapısı – açık kamu ilanları", "https://kariyerkapisi.gov.tr/isealim", "Kamu / başvuru ve değerlendirme"),
         Source("İŞKUR Gençlik Programı", "https://esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx", "İŞKUR / üniversite programı"),
-        Source("İŞKUR İşgücü Uyum Programı (NEET İUP)", "https://esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx", "İŞKUR / uyum programı"),
+        Source("İŞKUR İşgücü Uyum Programı (İUP)", "https://esube.iskur.gov.tr/Istihdam/IstNeetIupArama.aspx", "İŞKUR / uyum programı"),
         Source("GÜÇ – Gençliğin Üretim Çağı programları", "https://guc.iskur.gov.tr/", "Öğrenci / genç istihdam programları"),
         Source("GÜÇ – program ve hizmetler", "https://guc.iskur.gov.tr/hizmetlerimiz/", "İŞKUR / program rehberi"),
         Source("İŞKUR Staj Portalı – lise öğrencileri", "https://stajportali.iskur.gov.tr/", "İŞKUR / lise stajı"),
