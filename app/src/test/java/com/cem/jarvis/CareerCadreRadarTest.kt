@@ -95,6 +95,19 @@ class CareerCadreRadarTest {
     }
 
     @Test
+    fun officialOsymNewsPageIsNotMistakenForDirectCadrePdf() {
+        val announcement = Net.Hit(
+            "KPSS-2026/2 tercih kılavuzu yayımlandı · P94 TABLO-1",
+            "https://www.osym.gov.tr/TR,99999/kpss-20262-tercih-kilavuzu.html",
+            "Ortaöğretim TABLO-1 ve ön lisans TABLO-2 PDF bağlantıları duyuruda yer alıyor."
+        )
+        val tables = CareerCadreRadar.detect2026_2GuideTables(listOf(announcement))
+        assertEquals(null, tables.p94Url)
+        assertEquals(null, tables.p93Url)
+        assertFalse(tables.hasAnyTable)
+    }
+
+    @Test
     fun thirdPartyCopyOfKpss2026_2TableIsNotMarkedOfficial() {
         val copied = Net.Hit(
             "KPSS-2026/2 Ortaöğretim P94 TABLO-1",
