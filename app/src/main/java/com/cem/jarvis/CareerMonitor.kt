@@ -181,12 +181,14 @@ object CareerSearchEngine {
 
     fun dailySearch(): List<Net.Hit> {
         val queries = listOf(
-            "site:kamuilan.sbb.gov.tr OR site:isealimkariyerkapisi.cbiko.gov.tr OR site:ilan.gov.tr KPSS ortaöğretim personel alımı 2026",
-            "site:iskur.gov.tr OR site:malatyatso.org.tr/iskur-ilanlari Malatya elektrikçi teknisyen işçi ilanı",
+            "site:kamuilan.sbb.gov.tr OR site:isealimkariyerkapisi.cbiko.gov.tr OR site:ilan.gov.tr OR site:resmigazete.gov.tr KPSS ortaöğretim P94 lise personel alımı 2026",
+            "site:iskur.gov.tr OR site:malatyatso.org.tr/iskur-ilanlari Malatya elektrikçi teknisyen bakım işçi ilanı 2026",
+            "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr belediye işçi personel alımı 2026",
             "site:kariyer.tusas.com OR site:kariyer.roketsan.com.tr OR site:akariyer.aselsan.com teknisyen açık pozisyon 2026",
-            "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr OR site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026"
+            "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr OR site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
+            "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com OR site:enerjisa.com.tr teknisyen elektrik kariyer iş ilanı 2026"
         )
-        val executor = Executors.newFixedThreadPool(4)
+        val executor = Executors.newFixedThreadPool(6)
         return try {
             val futures = executor.invokeAll(queries.map { query -> Callable { Net.webSearch(query) } }, 12, TimeUnit.SECONDS)
             val found = ArrayList<Net.Hit>()
