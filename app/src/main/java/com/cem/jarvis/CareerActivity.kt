@@ -401,7 +401,7 @@ class CareerActivity : Activity() {
         manualScanButton = primaryButton("↻  Tüm kaynakları şimdi tara") { queueManualScan() }
         pageContent.addView(manualScanButton, params(-1, dp(52), 0, 8, 0, 7))
         pageContent.addView(button("Takip edilen kaynakları görüntüle") { showSources() }, params(-1, dp(48), 0, 0, 0, 6))
-        pageContent.addView(button("Bildirim ve pil ayarlarını kontrol et") {
+        pageContent.addView(button("Bildirim ve uygulama ayarlarını aç") {
             runCatching {
                 startActivity(Intent(
                     android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -780,7 +780,7 @@ class CareerActivity : Activity() {
         searchPage = searchPage.coerceIn(0, totalPages - 1)
         results.addView(label(
             visibleHits.size.toString() + " kayıt · Sayfa " + (searchPage + 1) + "/" + totalPages,
-            12f, true, Color.rgb(116, 207, 220)
+            12f, true, accentColor
         ))
         if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 10f, false, muted))
         val start = searchPage * pageSize
@@ -842,27 +842,27 @@ class CareerActivity : Activity() {
         }
         card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })
         if (!storedCategory.isNullOrBlank()) {
-            card.addView(label("Liste: " + category, 11f, true, Color.rgb(150, 190, 255)))
+            card.addView(label("Liste: " + category, 11f, true, accentBlue))
         }
         if (hit.snippet.isNotBlank()) card.addView(label(hit.snippet, 12f, false, muted))
         val stage = CareerRecruitmentTracker.detectStage(hit.title, hit.snippet)
-        if (stage != null) card.addView(label("İşe alım aşaması: " + stage, 11f, true, Color.rgb(116, 207, 220)))
+        if (stage != null) card.addView(label("İşe alım aşaması: " + stage, 11f, true, accentColor))
         card.addView(label(eligibility, 12f, true, warningColor).apply {
             setPadding(dp(10), dp(8), dp(10), dp(8))
             background = rounded(Color.rgb(47, 39, 27), Color.rgb(111, 84, 47))
         })
         if (!listingStatus.isNullOrBlank()) {
-            card.addView(label(listingStatus, 11f, true, Color.rgb(255, 190, 110)))
+            card.addView(label(listingStatus, 11f, true, warningColor))
         }
         val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
         if (deadline.isNotBlank()) {
-            card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
+            card.addView(label(deadline, 11f, true, warningColor))
         } else {
-            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, Color.rgb(255, 190, 110)))
+            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, warningColor))
         }
         card.addView(label(
             "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
-            11f, false, Color.rgb(150, 190, 255)
+            11f, false, accentBlue
         ))
         card.addView(primaryButton("↗  İlanın tam sayfasını aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
@@ -949,7 +949,7 @@ class CareerActivity : Activity() {
         dailyPage = dailyPage.coerceIn(0, totalPages - 1)
         parent.addView(label(
             dailyItems.size.toString() + " kayıt · Sayfa " + (dailyPage + 1) + "/" + totalPages,
-            12f, true, Color.rgb(116, 207, 220)
+            12f, true, accentColor
         ))
         val start = dailyPage * pageSize
         dailyItems.drop(start).take(pageSize).forEachIndexed { index, item ->
@@ -993,7 +993,7 @@ class CareerActivity : Activity() {
         processPage = processPage.coerceIn(0, totalPages - 1)
         parent.addView(label(
             events.size.toString() + " süreç güncellemesi · Sayfa " + (processPage + 1) + "/" + totalPages,
-            12f, true, Color.rgb(116, 207, 220)
+            12f, true, accentColor
         ))
         val start = processPage * pageSize
         events.drop(start).take(pageSize).forEach { event ->
@@ -1020,12 +1020,12 @@ class CareerActivity : Activity() {
                         (if (isUpcoming && event.hasExplicitTime) " · Bir gün ve bir saat önce hatırlatma planlandı"
                         else if (isUpcoming) " · Bir gün önce hatırlatma planlandı"
                         else " · Eski duyuru; yeni tarih var mı kontrol et"),
-                    11f, true, if (isUpcoming) Color.rgb(255, 207, 120) else Color.rgb(255, 160, 130)
+                    11f, true, if (isUpcoming) warningColor else dangerColor
                 ))
             } else {
                 card.addView(label(
                     "Tarih/saat metinden güvenle çıkarılamadı. Kurum duyurusunu açıp takvimi kontrol et.",
-                    11f, true, Color.rgb(255, 190, 110)
+                    11f, true, warningColor
                 ))
             }
             val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -1314,7 +1314,7 @@ class CareerActivity : Activity() {
         val items = (list.length() - 1 downTo 0).mapNotNull { list.optJSONObject(it) }
         val totalPages = (items.size + pageSize - 1) / pageSize
         savedPage = savedPage.coerceIn(0, (totalPages - 1).coerceAtLeast(0))
-        parent.addView(label(items.size.toString() + " kayıt · Sayfa " + (savedPage + 1) + "/" + totalPages, 12f, true, Color.rgb(116, 207, 220)))
+        parent.addView(label(items.size.toString() + " kayıt · Sayfa " + (savedPage + 1) + "/" + totalPages, 12f, true, accentColor))
         val start = savedPage * pageSize
         items.drop(start).take(pageSize).forEach { item ->
             val url = item.optString("url")
@@ -1324,7 +1324,7 @@ class CareerActivity : Activity() {
             card.addView(label(title, 14f, true))
             card.addView(label("BAŞVURU DURUMU  ·  $status", 11f, true, accentColor))
             val deadline = CareerListingParser.deadlineStatus(item.optString("snippet")).orEmpty()
-            if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, Color.rgb(255, 190, 110)))
+            if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, warningColor))
             val actions = LinearLayout(this).apply { orientation = 0 }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
@@ -1333,7 +1333,7 @@ class CareerActivity : Activity() {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     .onFailure { toast("Bağlantı açılamadı.") }
             }, LinearLayout.LayoutParams(0, dp(48), 1f))
-            actions.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            actions.addView(button("Sil") { confirmDeleteJob(url, title) }, LinearLayout.LayoutParams(0, dp(48), 1f))
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 7))
         }
@@ -1342,6 +1342,15 @@ class CareerActivity : Activity() {
             showSaved(parent)
             pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
         }
+    }
+
+    private fun confirmDeleteJob(url: String, title: String) {
+        AlertDialog.Builder(this)
+            .setTitle("İlan takip listesinden çıkarılsın mı?")
+            .setMessage(title)
+            .setNegativeButton("Vazgeç", null)
+            .setPositiveButton("Listeden çıkar") { _, _ -> deleteJob(url) }
+            .show()
     }
 
     private fun deleteJob(url: String) {
