@@ -16,6 +16,8 @@ object CareerCadreRadar {
     const val OFFICIAL_CALENDAR_URL = "https://www.osym.gov.tr/Sayfa/SinavTakvimi"
     const val KPSS_2026_1_MIDDLE_TABLE_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/tablo1_t1d03072026.pdf"
     const val KPSS_2026_1_ASSOCIATE_TABLE_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/tablo2_t1d03062026.pdf"
+    const val KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/ortaogretim-nitelik_t1d03072026.pdf"
+    const val KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/onlisans-nitelik_t1d03072026.pdf"
     const val ADALET_2026_NOTICE_URL = "https://pgm.adalet.gov.tr/Home/SayfaDetay/2026sozlesmelitasra"
     const val ISKUR_URL = "https://esube.iskur.gov.tr/"
     const val P94_ELECTRIC_ELECTRONICS_CODE = 2023
