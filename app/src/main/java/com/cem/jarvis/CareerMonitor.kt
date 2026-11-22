@@ -238,9 +238,9 @@ object CareerSourceCatalog {
         )
         fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
         val isDefenceEmployer = inDomains(defenceDomains) ||
-            Regex("""\b(?:aselsan|tusas|roketsan|havelsan)\\b""").containsMatchIn(text)
+            Regex("""\b(?:aselsan|tusas|roketsan|havelsan)\b""").containsMatchIn(text)
         val isKitEmployer = inDomains(kitDomains) ||
-            Regex("""\b(?:mke|tcdd|tcddtasimacilik|teias|euas|botas|ptt|dhmi|dmo|ilbank)\\b""").containsMatchIn(text) ||
+            Regex("""\b(?:mke|tcdd|tcddtasimacilik|teias|euas|botas|ptt|dhmi|dmo|ilbank)\b""").containsMatchIn(text) ||
             listOf("eti maden", "turkseker", "kiyi emniyeti").any(text::contains)
         val kuraTerms = listOf(
             "noter kurasi", "kura cekimi", "kura cekilisi", "kura tarihi",
@@ -287,11 +287,9 @@ object CareerSourceCatalog {
             "kpss sarti", "kpss puan", "kpss tercih",
             "kpss merkezi yerlestirme", "kpss yerles"
         )
+        // A portal/domain alone does not prove that KPSS is required; only explicit text does.
         val hasKpssRequirement = kpssRequirementTerms.any(text::contains) ||
-            Regex("""kpss p\d{1,2}""").containsMatchIn(text) ||
-            host.contains("osym.gov.tr") ||
-            host.contains("kariyerkapisi.gov.tr") ||
-            host.contains("cbiko.gov.tr")
+            Regex("""kpss p\d{1,2}""").containsMatchIn(text)
         if (hasKpssRequirement) {
             return if (publicLinked) "KPSS ile kamu alımı" else "KPSS / şartı doğrulanmalı"
         }
