@@ -571,7 +571,7 @@ object CareerSearchEngine {
      * A search provider is useful only when it yields at least one trusted, job-like result.
      * A trusted institution homepage alone must not suppress fallback providers.
      */
-    internal fun hasUsableResult(hits: Collection<Net.Hit>): Boolean =
+    internal fun containsUsableJobResult(hits: Collection<Net.Hit>): Boolean =
         hits.any { hit ->
             CareerSourceCatalog.isTrustedUrl(hit.url) &&
                 CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
@@ -603,16 +603,16 @@ object CareerSearchEngine {
                         }
 
                         attempt("DuckDuckGo", { Net.webSearch(query, 8) })
-                        var hasUsableResult = hasUsableResult(found.values)
-                        if (!hasUsableResult) {
+                        var hasUsableJobResult = containsUsableJobResult(found.values)
+                        if (!hasUsableJobResult) {
                             attempt("Bing", { Net.webSearchBing(query, 8) })
-                            hasUsableResult = hasUsableResult(found.values)
+                            hasUsableJobResult = containsUsableJobResult(found.values)
                         }
-                        if (!hasUsableResult) {
+                        if (!hasUsableJobResult) {
                             attempt("Google Haberler RSS", { Net.webSearchGoogleNews(query, 4) })
-                            hasUsableResult = hasUsableResult(found.values)
+                            hasUsableJobResult = containsUsableJobResult(found.values)
                         }
-                        if (!hasUsableResult) {
+                        if (!hasUsableJobResult) {
                             attempt("Brave", { Net.webSearchBrave(query, 6) })
                         }
 
