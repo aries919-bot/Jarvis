@@ -625,7 +625,7 @@ object CareerSearchEngine {
 
     private val duplicateNoise = setOf(
         "is", "ilan", "ilani", "ilanlari", "alimi", "alim", "personel",
-        "basvuru", "duyuru", "acik", "pozisyon", "kariyer", "aday", "liste",
+        "basvuru", "duyuru", "acik", "pozisyon", "kariyer", "aday", "liste", "ise",
         "genel", "icin", "ve", "ile", "de", "da", "2026", "2025", "2027"
     )
 
