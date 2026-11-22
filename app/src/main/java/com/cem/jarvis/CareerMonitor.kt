@@ -177,7 +177,7 @@ object CareerSourceCatalog {
         return sources.firstOrNull { source ->
             val sourceHost = normalizedHost(source.url).orEmpty()
             sourceHost.isNotBlank() &&
-                (host == sourceHost || host.endsWith(".$sourceHost") || sourceHost.endsWith(".$host"))
+                (host == sourceHost || host.endsWith(".$sourceHost"))
         }?.name ?: host
     }
 

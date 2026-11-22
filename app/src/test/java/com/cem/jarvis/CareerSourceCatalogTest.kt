@@ -188,4 +188,15 @@ class CareerSourceCatalogTest {
         )
     }
 
+
+    @Test
+    fun doesNotAttributeGenericParentDomainsToASpecificInstitution() {
+        assertEquals("gov.tr", CareerSourceCatalog.sourceName("https://gov.tr/duyurular"))
+        assertEquals("personel.ozal.edu.tr", CareerSourceCatalog.sourceName("https://ozal.edu.tr/"))
+        assertEquals(
+            "Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı",
+            CareerSourceCatalog.sourceName("https://personel.ozal.edu.tr/announcements-all")
+        )
+    }
+
 }
