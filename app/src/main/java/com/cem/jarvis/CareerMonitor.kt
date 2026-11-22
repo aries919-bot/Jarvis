@@ -515,6 +515,9 @@ object CareerListingParser {
         RegexOption.IGNORE_CASE
     )
 
+    fun noticeText(title: String, snippet: String): String =
+        listOf(title.trim(), snippet.trim()).filter { it.isNotBlank() }.joinToString(" ")
+
     fun deadlineDate(text: String): String? {
         val raw = deadlinePattern.find(text)?.groupValues?.getOrNull(1) ?: return null
         val normalized = raw.replace('/', '.').replace('-', '.').trim()
@@ -1805,8 +1808,8 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                         .put("listingStatus", listingStatus)
                         .put("profileMatchScore", score)
                         .put("profileMatchReason", CareerEligibility.profileMatchReason(hit.title, hit.snippet, role, city, eligibility))
-                        .put("deadlineDate", CareerListingParser.deadlineDate(hit.snippet) ?: "")
-                        .put("deadlineStatus", CareerListingParser.deadlineStatus(hit.snippet) ?: "")
+                        .put("deadlineDate", CareerListingParser.deadlineDate(CareerListingParser.noticeText(hit.title, hit.snippet)) ?: "")
+                        .put("deadlineStatus", CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet)) ?: "")
                         .put("fingerprint", CareerSearchEngine.fingerprint(hit.title, hit.url))
                         .put("lastSeenAt", System.currentTimeMillis())
                 )
@@ -1817,7 +1820,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                     (CareerSearchEngine.friendlyDiagnostics(batch.errorMessages.joinToString(" | ")) ?: "Bazı arama sorguları sonuç döndürmedi.")
             } else null
             val freshForAlerts = fresh.filter { hit ->
-                CareerListingParser.deadlineStatus(hit.snippet)
+                CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
                     ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
             val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
@@ -1826,7 +1829,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
             val actionableProcessEvents = processEvents.filter { event ->
                 event.stage != "BAŞVURU / YENİ ALIM" &&
-                    CareerListingParser.deadlineStatus(event.snippet)
+                    CareerListingParser.deadlineStatus(CareerListingParser.noticeText(event.title, event.snippet))
                         ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
             val now = System.currentTimeMillis()

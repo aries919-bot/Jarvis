@@ -30,7 +30,7 @@ object CareerListingIntelligence {
             .getOrDefault("")
         val employerGroup = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
         val stage = CareerRecruitmentTracker.detectStage(title, snippet)
-        val deadlineSource = "$title $snippet"
+        val deadlineSource = CareerListingParser.noticeText(title, snippet)
         val deadline = CareerListingParser.deadlineDate(deadlineSource)
         val deadlineStatus = CareerListingParser.deadlineStatus(deadlineSource, nowMillis)
         val processOnly = !stage.isNullOrBlank() && stage != "BAŞVURU / YENİ ALIM"

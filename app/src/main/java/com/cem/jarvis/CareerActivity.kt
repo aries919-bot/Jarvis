@@ -882,10 +882,11 @@ class CareerActivity : Activity() {
         }
 
         fun isExpired(hit: Net.Hit): Boolean =
-            CareerListingParser.deadlineStatus(hit.snippet)?.startsWith("SÜRESİ GEÇMİŞ", true) == true
+            CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
+                ?.startsWith("SÜRESİ GEÇMİŞ", true) == true
 
         val expiredCount = searchHits.count(::isExpired)
-        val unknownCount = searchHits.count { CareerListingParser.deadlineStatus(it.snippet).isNullOrBlank() }
+        val unknownCount = searchHits.count { CareerListingParser.deadlineStatus(CareerListingParser.noticeText(it.title, it.snippet)).isNullOrBlank() }
         addSectorFilterRow(results, searchSectorFilter) { selected ->
             searchSectorFilter = selected
             searchPage = 0
@@ -1096,14 +1097,17 @@ class CareerActivity : Activity() {
 
         fun isExpired(item: JSONObject): Boolean {
             val saved = item.optString("deadlineStatus")
-            val calculated = CareerListingParser.deadlineStatus(item.optString("snippet")).orEmpty()
+            val noticeText = CareerListingParser.noticeText(item.optString("title"), item.optString("snippet"))
+            val calculated = CareerListingParser.deadlineStatus(noticeText).orEmpty()
             return saved.startsWith("SÜRESİ GEÇMİŞ", true) || calculated.startsWith("SÜRESİ GEÇMİŞ", true)
         }
 
         val expiredCount = allItems.count(::isExpired)
         val unknownCount = allItems.count {
             val saved = it.optString("deadlineStatus")
-            saved.isBlank() && CareerListingParser.deadlineStatus(it.optString("snippet")).isNullOrBlank()
+            saved.isBlank() && CareerListingParser.deadlineStatus(
+                CareerListingParser.noticeText(it.optString("title"), it.optString("snippet"))
+            ).isNullOrBlank()
         }
 
         addSectorFilterRow(parent, dailySectorFilter) { selected ->
@@ -2031,7 +2035,7 @@ class CareerActivity : Activity() {
                     card.addView(label("SÜREÇ GEÇMİŞİ · " + recentHistory.joinToString("  →  "), 10f, false, muted))
                 }
             }
-            val deadline = CareerListingParser.deadlineStatus(snippet).orEmpty()
+            val deadline = CareerListingParser.deadlineStatus(CareerListingParser.noticeText(title, snippet)).orEmpty()
             if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, warningColor))
             val date = item.optLong("updatedAt", 0L)
             if (date > 0L) card.addView(label(

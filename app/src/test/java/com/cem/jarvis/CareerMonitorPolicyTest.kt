@@ -216,4 +216,27 @@ class CareerMonitorPolicyTest {
         assertFalse(status.startsWith("SÜRESİ GEÇMİŞ"))
     }
 
+
+    @Test
+    fun usesTitleAndSnippetTogetherForDeadlineDetection() {
+        val title = "Elektrik teknisyeni alımı · Son başvuru tarihi: 30.11.2026 saat 17:00"
+        val snippet = "Kurumun personel alım duyurusu."
+        val sourceText = CareerListingParser.noticeText(title, snippet)
+
+        assertEquals("30.11.2026", CareerListingParser.deadlineDate(sourceText))
+        assertEquals("17:00", CareerListingParser.deadlineTime(sourceText))
+
+        val beforeClosing = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("30.11.2026 16:59")!!.time
+        val afterClosing = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("30.11.2026 17:01")!!.time
+
+        assertTrue(CareerListingParser.deadlineStatus(sourceText, beforeClosing)!!.startsWith("SON TARİH BİLGİSİ"))
+        assertTrue(CareerListingParser.deadlineStatus(sourceText, afterClosing)!!.startsWith("SÜRESİ GEÇMİŞ"))
+    }
+
 }
