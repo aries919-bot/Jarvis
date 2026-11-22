@@ -48,7 +48,7 @@ object CareerContentClassifier {
         "personel alimi", "isci alimi", "surekli isci alimi",
         "memur alimi", "teknisyen alimi", "tekniker alimi",
         "muhendis alimi", "usta alimi", "operator alimi",
-        "guvenlik gorevlisi alimi", "acik pozisyon", "is ilani",
+        "guvenlik gorevlisi alimi", "acik pozisyon", "is ilani", "is ilanlari", "acik is ilanlari",
         "ise alim duyurusu", "isveren personel ariyor"
     )
 
@@ -86,16 +86,22 @@ object CareerContentClassifier {
                 "ise alim basvurulari", "recruitment opening", "job vacancy"
             ).any(text::contains)
 
-        val path = runCatching { URI(url).path.orEmpty().lowercase(Locale.ROOT) }.getOrDefault("")
+        val parsedUri = runCatching { URI(url) }.getOrNull()
+        val path = parsedUri?.path.orEmpty().lowercase(Locale.ROOT)
+        val host = parsedUri?.host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.")
         val normalizedTitle = normalize(title)
         val roleInTitle = listOf(
             "elektrik", "teknisyen", "tekniker", "muhendis",
             "operator", "bakim", "uretim", "sofor", "depo",
             "personel", "isci", "guvenlik", "destek", "saha", "teknik"
         ).any(normalizedTitle::contains)
-        val directJobPage = Regex(
-            """/(?:ilan|ilan-detay|job|jobs|position|vacancy|is-ilani|is-ilanlari)(?:/|$)"""
-        ).containsMatchIn(path) && roleInTitle
+        val directJobPage = (
+            Regex("""/(?:ilan|ilan-detay|job|jobs|position|vacancy|is-ilani|is-ilanlari)(?:/|$)""")
+                .containsMatchIn(path) && roleInTitle
+            ) || (
+                host == "esube.iskur.gov.tr" &&
+                    path.contains("istacikisilanlari")
+            ) || host == "acikisharita.iskur.gov.tr"
 
         if (explicitJobLanguage || directJobPage) {
             return CareerContentClassification(
