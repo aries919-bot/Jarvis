@@ -43,45 +43,34 @@ class CareerMonitorPolicyTest {
     }
 
     @Test
-    fun matchesTheUsersHighSchoolFieldCodeButRejectsRailSystemsCode() {
-        assertTrue(
-            CareerEligibility.assessQualificationCodes(setOf(2023))
-                .startsWith("ALAN KODU EŞLEŞİYOR")
-        )
-        assertTrue(
-            CareerEligibility.assessQualificationCodes(setOf(2086))
-                .startsWith("ALAN KODU UYUŞMUYOR")
-        )
-        assertTrue(
-            CareerEligibility.assessQualificationCodes(setOf(2023, 2086))
-                .startsWith("ALAN KODU UYUŞMUYOR")
-        )
-        assertTrue(
-            CareerEligibility.assessQualificationCodes(setOf(2001))
-                .startsWith("ORTAÖĞRETİM KODU EŞLEŞİYOR")
-        )
+    fun qualificationCodesAreNotAutoMatchedWithoutConfirmedDiplomaField() {
+        assertTrue(CareerEligibility.assessQualificationCodes(setOf(2023)).startsWith("NİTELİK KODU KONTROLÜ"))
+        assertTrue(CareerEligibility.assessQualificationCodes(setOf(2086)).startsWith("NİTELİK KODU KONTROLÜ"))
+        assertTrue(CareerEligibility.assessQualificationCodes(setOf(2023, 2086)).startsWith("NİTELİK KODU KONTROLÜ"))
+        assertTrue(CareerEligibility.assessQualificationCodes(setOf(2001)).startsWith("NİTELİK KODU KONTROLÜ"))
         assertTrue(
             CareerEligibility.assess("TCDD Teknisyen", "KPSS P94 · Nitelik kodu: 2086")
-                .startsWith("ALAN KODU UYUŞMUYOR")
+                .startsWith("P94 İLE TERCİH DEĞERLENDİRMESİ")
         )
-        val p94FieldMatch = CareerEligibility.assess(
+        val p94CodeReview = CareerEligibility.assess(
             "Elektrik Teknisyeni",
             "KPSS P94 · Nitelik kodu: 2023"
         )
-        assertTrue(p94FieldMatch.startsWith("P94 İLE TERCİH DEĞERLENDİRMESİ"))
-        assertTrue(p94FieldMatch.contains("ALAN KODU EŞLEŞİYOR"))
+        assertTrue(p94CodeReview.startsWith("P94 İLE TERCİH DEĞERLENDİRMESİ"))
+        assertTrue(p94CodeReview.contains("NİTELİK KODU KONTROLÜ"))
 
-        val wrongScoreAndRightField = CareerEligibility.assess(
+        val unknownScoreAndCode = CareerEligibility.assess(
             "Elektrik Teknisyeni",
             "KPSS P94 en az 70 puan · Nitelik kodu: 2023"
         )
-        assertTrue(wrongScoreAndRightField.startsWith("PUAN ŞARTI UYUŞMUYOR"))
+        assertTrue(unknownScoreAndCode.startsWith("P94 PUAN ŞARTI VAR"))
+        assertTrue(unknownScoreAndCode.contains("NİTELİK KODU KONTROLÜ"))
 
-        val wrongPuanTypeAndRightField = CareerEligibility.assess(
+        val wrongPuanType = CareerEligibility.assess(
             "Elektrik Teknikeri",
             "KPSS P93 · Nitelik kodu: 2023"
         )
-        assertTrue(wrongPuanTypeAndRightField.startsWith("PUAN TÜRÜ UYUŞMUYOR"))
+        assertTrue(wrongPuanType.startsWith("PUAN TÜRÜ UYUŞMUYOR"))
     }
 
     @Test
