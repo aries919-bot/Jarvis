@@ -1779,7 +1779,7 @@ class CareerActivity : Activity() {
                 item.put("status", status)
                     .put("updatedAt", now)
                 val followUpAt = item.optLong("followUpAt", 0L)
-                val finalStatuses = setOf("Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
+                val finalStatuses = setOf("Teklif alındı", "Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
                 if (status in finalStatuses) {
                     CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
                     item.remove("followUpAt")
