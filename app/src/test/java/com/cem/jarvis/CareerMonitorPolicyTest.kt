@@ -239,4 +239,22 @@ class CareerMonitorPolicyTest {
         assertTrue(CareerListingParser.deadlineStatus(sourceText, afterClosing)!!.startsWith("SÜRESİ GEÇMİŞ"))
     }
 
+
+    @Test
+    fun extractsAStudentRegistrationDeadlineWhenTheOfficialNoticeSaysKayitlariniKadar() {
+        val notice = "Ulusal Staj Programı kapsamında kayıtlarını 14.12.2026 tarihine kadar yapmaları gerekmektedir."
+        assertEquals("14.12.2026", CareerListingParser.deadlineDate(notice))
+        val before = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("13.12.2026 18:00")!!.time
+        val after = java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale("tr", "TR")
+        ).parse("15.12.2026 09:00")!!.time
+        assertTrue(CareerListingParser.deadlineStatus(notice, before)!!.startsWith("SON TARİH BİLGİSİ"))
+        assertTrue(CareerListingParser.deadlineStatus(notice, after)!!.startsWith("SÜRESİ GEÇMİŞ"))
+        assertNull(CareerListingParser.deadlineTime(notice))
+    }
+
 }

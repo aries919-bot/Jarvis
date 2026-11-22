@@ -176,4 +176,13 @@ class CareerCadreRadarTest {
         assertTrue(titles.contains("Sürekli işçi"))
         assertTrue(titles.contains("KİT sözleşmeli personel"))
     }
+
+    @Test
+    fun exposesTheOfficialAdaletUniversityInternshipDeadlineWithoutInventingAClosingHour() {
+        assertEquals("14.12.2026", CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_DEADLINE)
+        assertEquals(2026, CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_YEAR)
+        assertEquals(14, CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_DAY)
+        assertTrue(CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL.startsWith("https://edb.adalet.gov.tr/"))
+    }
+
 }

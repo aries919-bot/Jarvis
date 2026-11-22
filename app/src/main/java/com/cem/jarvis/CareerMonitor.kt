@@ -45,7 +45,7 @@ object CareerSourceCatalog {
         Source("İŞKUR Staj Portalı – lise öğrencileri", "https://stajportali.iskur.gov.tr/", "İŞKUR / lise stajı"),
         Source("İŞKUR Staj Portalı – genel giriş", "https://staj.iskur.gov.tr/", "İŞKUR / staj platformu"),
         Source("Ulusal Staj Programı – üniversite öğrencileri", "https://ulusalstajprogrami.iskur.gov.tr/", "İŞKUR / üniversite stajı"),
-        Source("Adalet Bakanlığı – Ulusal Staj Programı duyurusu", "https://edb.adalet.gov.tr/SayfaDetay/ulusal-staj-programi20112026014736", "Kamu / üniversite stajı · son tarih kurum duyurusunda"),
+        Source("Adalet Bakanlığı – Ulusal Staj Programı duyurusu", CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL, "Kamu / üniversite stajı · son tarih kurum duyurusunda"),
         Source("Malatya Turgut Özal Üniversitesi – Personel Daire Başkanlığı", "https://personel.ozal.edu.tr/announcements-all", "Üniversite / kamu personel"),
         Source("İnönü Üniversitesi – Personel Daire Başkanlığı", "https://www.inonu.edu.tr/personeldb/duyurular", "Üniversite / kamu personel"),
         Source("Fırat Üniversitesi – Personel Daire Başkanlığı", "https://personeldb.firat.edu.tr/announcements-all", "Üniversite / kamu personel"),
@@ -512,7 +512,7 @@ object CareerEligibility {
 
 object CareerListingParser {
     private val deadlinePattern = Regex(
-        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu)[^0-9]{0,45}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[\\p{L}]+\\s+\\d{4})",
+        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu|kayıtlarını|kayitlarini)[^0-9]{0,45}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[\\p{L}]+\\s+\\d{4})",
         RegexOption.IGNORE_CASE
     )
 
@@ -1379,6 +1379,7 @@ object CareerMonitorScheduler {
      */
     fun schedulePreferenceReminders(context: Context) {
         scheduleKpss2026_2PreferenceReminders(context)
+        scheduleAdaletUniversityInternshipReminder(context)
     }
 
     /**
@@ -1421,6 +1422,44 @@ object CareerMonitorScheduler {
             "KPSS-2026/2 TERCİH DÖNEMİ SON GÜNÜ",
             endAt,
             KPSS_2026_2_END_REMINDER
+        )
+    }
+
+    /**
+     * Adalet Eğitim Dairesi duyurusundaki üniversite staj kayıt son günü (14.12.2026).
+     * Kurum bir kapanış saati belirtmedi; 09.00 yalnızca uygulamanın hatırlatma saatidir.
+     */
+    private fun scheduleAdaletUniversityInternshipReminder(context: Context) {
+        val eventAt = Calendar.getInstance().apply {
+            set(
+                CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_YEAR,
+                Calendar.DECEMBER,
+                CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_DAY,
+                9, 0, 0
+            )
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val event = CareerProcessEvent(
+            id = "aries-ada-university-internship-2026",
+            title = "Adalet Bakanlığı Ulusal Staj Programı · son kayıt günü",
+            url = CareerCadreRadar.ADALET_UNIVERSITY_INTERNSHIP_URL,
+            snippet = "Üniversite öğrencileri için kayıt son günü 14.12.2026 olarak duyuruldu. İlanda kapanış saati belirtilmiyor; başvuruyu resmî sayfada kontrol et.",
+            stage = "ULUSAL STAJ PROGRAMI · SON KAYIT GÜNÜ",
+            detectedAt = System.currentTimeMillis(),
+            eventAt = eventAt,
+            hasExplicitTime = false
+        )
+        enqueueProcessReminder(
+            context,
+            event,
+            "aries-ada-university-internship-2026-day",
+            eventAt - TimeUnit.DAYS.toMillis(1)
+        )
+        enqueueProcessReminder(
+            context,
+            event,
+            "aries-ada-university-internship-2026-dayof",
+            eventAt
         )
     }
 
