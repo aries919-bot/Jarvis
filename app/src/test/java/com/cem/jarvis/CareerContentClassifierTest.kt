@@ -26,6 +26,17 @@ class CareerContentClassifierTest {
     }
 
     @Test
+    fun genericRegistrationOpeningIsNotAutomaticallyAJobVacancy() {
+        val result = CareerContentClassifier.classify(
+            "Kurum içi eğitim programı başvuruları başladı",
+            "Katılımcı kayıtları açıldı. Etkinliğe çevrim içi başvuru yapılabilir.",
+            "https://example.org/duyuru/egitim-programi"
+        )
+        assertEquals(CareerContentType.REVIEW_REQUIRED, result.type)
+        assertFalse(result.isJobListing)
+    }
+
+    @Test
     fun recognizesCommonJobBoardDetailUrls() {
         val result = CareerContentClassifier.classify(
             "Elektrik Teknisyeni",
