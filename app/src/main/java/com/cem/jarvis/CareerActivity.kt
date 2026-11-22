@@ -33,7 +33,7 @@ class CareerActivity : Activity() {
     private var processPage = 0
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Öğrenci · staj / İŞKUR gençlik programları")
+    private val filters = listOf("Tüm iş ilanları", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Haber: kura / noter / sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Haber: öğrenci / staj programları")
     // Kariyer ekranına özel tasarım paleti; ana Aries temasını değiştirmez.
     // Kariyer alanı ana uygulamadan bağımsız, açık ve yüksek kontrastlı bir görsel dile sahip.
     private val bgColor = Color.rgb(244, 247, 251)
@@ -154,7 +154,7 @@ class CareerActivity : Activity() {
             Triple("▤", "CV'im", "CV düzenle"),
             Triple("◷", "Takip", "Otomatik takip"),
             Triple("✓", "Başvuru", "Kaydedilen ve devam eden başvurular"),
-            Triple("◈", "Sonuç", "Kura, sınav ve başvuru sonuçları"),
+            Triple("◈", "Sonuç", "Kaydettiğin başvuruların sonuçları"),
             Triple("▤", "Haber", "İlan olmayan duyurular, haberler ve süreç güncellemeleri")
         )
         tabs.forEachIndexed { index, tab ->
