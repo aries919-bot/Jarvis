@@ -75,7 +75,7 @@ object Net {
     class Hit(val title: String, val url: String, val snippet: String)
 
     private fun attribute(attributes: String, name: String): String? {
-        val pattern = Regex("""(?is)\b\${Regex.escape(name)}\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""")
+        val pattern = Regex("(?is)\\\\b" + Regex.escape(name) + "\\\\s*=\\\\s*(?:\\\"([^\\\"]*)\\\"|\'([^\']*)\'|([^\\\\s>]+))")
         val match = pattern.find(attributes) ?: return null
         return (1..3).firstNotNullOfOrNull { index -> match.groups[index]?.value }
     }
@@ -201,7 +201,10 @@ object Net {
             if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
             val key = href.substringBefore("#")
             if (!seen.add(key)) continue
-            output += Hit(title, href, extractSnippet(html, "result__snippet"))
+            val blockStart = (anchor.range.first - 1400).coerceAtLeast(0)
+            val blockEnd = (anchor.range.last + 1800).coerceAtMost(html.length)
+            val localBlock = html.substring(blockStart, blockEnd)
+            output += Hit(title, href, extractSnippet(localBlock, "result__snippet"))
         }
         return output
     }
