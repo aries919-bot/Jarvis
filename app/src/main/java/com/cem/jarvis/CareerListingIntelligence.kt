@@ -74,9 +74,9 @@ object CareerListingIntelligence {
             else -> "Başvuru kanalı kaynakta doğrulanmalı"
         }
         val quotaText = extractQuota(text)
-        val hasKpssP94 = Regex("""\bkpss\s*p\s*94\b""").containsMatchIn(text)
-        val hasKpssP93 = Regex("""\bkpss\s*p\s*93\b""").containsMatchIn(text)
-        val hasKpssP3 = Regex("""\bkpss\s*p\s*3\b""").containsMatchIn(text)
+        val hasKpssP94 = Regex("""\bkpss[\s/-]*p[\s/-]*94\b""").containsMatchIn(text)
+        val hasKpssP93 = Regex("""\bkpss[\s/-]*p[\s/-]*93\b""").containsMatchIn(text)
+        val hasKpssP3 = Regex("""\bkpss[\s/-]*p[\s/-]*3\b""").containsMatchIn(text)
         val hasAssociateEducation = text.contains("on lisans") || text.contains("onlisans")
         val hasBachelorEducation = !hasAssociateEducation &&
             (text.contains("lisans mezun") || text.contains("lisans diplom"))

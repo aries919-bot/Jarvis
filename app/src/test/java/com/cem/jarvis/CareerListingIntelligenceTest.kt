@@ -194,4 +194,22 @@ class CareerListingIntelligenceTest {
         assertEquals("14.12.2026", facts.explicitDeadline)
     }
 
+
+    @Test
+    fun recognizesKpssScoreTypeWrittenWithHyphensOrSlashes() {
+        val p94 = CareerListingIntelligence.analyze(
+            "Ortaöğretim personel alımı",
+            "KPSS-P94 puanı ile tercih yapılacaktır.",
+            "https://www.osym.gov.tr/"
+        )
+        assertTrue(p94.requirementSignals.any { it == "KPSS puan türü: P94 · ortaöğretim" })
+
+        val p93 = CareerListingIntelligence.analyze(
+            "Elektrik teknikeri",
+            "Elektrik ön lisans mezunu ve KPSS/P93 puan türü aranıyor.",
+            "https://kariyerkapisi.gov.tr/isealim"
+        )
+        assertTrue(p93.requirementSignals.any { it == "KPSS puan türü: P93 · ön lisans" })
+    }
+
 }
