@@ -1,11 +1,9 @@
 package com.cem.jarvis
 
-import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -145,13 +143,19 @@ object CareerSearchEngine {
             "site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
             "site:tei.com.tr OR site:havelsan.com kariyer teknisyen elektrik 2026"
         )
+        val postAssociate = listOf(
+            "elektrik teknikeri ön lisans mezunu KPSS P93 personel alımı 2026",
+            "elektrik teknikeri MYO mezunu özel sektör tekniker açık pozisyon 2026",
+            "site:teias.gov.tr OR site:euas.gov.tr elektrik teknikeri ön lisans mezunu 2026",
+            "site:aselsan.com OR site:tusas.com elektrik teknikeri ön lisans teknisyen 2026"
+        )
         val extra = "$r $c iş ilanı başvuru şartları 2026"
         return when (category) {
             1 -> publicKpss + listOf(extra)
             2 -> publicNoKpss + listOf(extra)
             3 -> privateSector + listOf(extra)
             4 -> largeEmployers + privateSector.take(2)
-            5 -> publicKpss + publicNoKpss + privateSector + largeEmployers
+            5 -> postAssociate
             else -> publicKpss + publicNoKpss + privateSector + largeEmployers + listOf(extra)
         }
     }
@@ -189,7 +193,7 @@ object CareerSearchEngine {
             futures.forEach { future -> if (!future.isCancelled) runCatching { found.addAll(future.get()) } }
             val seen = HashSet<String>()
             found.filter { CareerSourceCatalog.isTrustedUrl(it.url) &&
-                CareerEligibility.relevance(it.title, it.snippet, "Malatya") > 0 &&
+                CareerEligibility.relevance(it.title, it.snippet, "") > 0 &&
                 seen.add(it.url.substringBefore("#").trimEnd('/').lowercase()) }
         } finally {
             executor.shutdownNow()
