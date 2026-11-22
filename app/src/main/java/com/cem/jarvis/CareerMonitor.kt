@@ -251,7 +251,15 @@ object CareerSourceCatalog {
             return if (publicLinked) "Kura ile kamu alımı"
             else "Kura duyurusu · statü doğrulanmalı"
         }
-        if (text.contains("kpss")) {
+        val kpssRequirementTerms = listOf(
+            "kpss sarti", "kpss puani", "kpss p", "kpss puan",
+            "kpss tercih", "kpss merkezi yerlestirme", "kpss yerles"
+        )
+        val hasKpssRequirement = kpssRequirementTerms.any(text::contains) ||
+            host.contains("osym.gov.tr") ||
+            host.contains("kariyerkapisi.gov.tr") ||
+            host.contains("cbiko.gov.tr")
+        if (hasKpssRequirement) {
             return if (publicLinked) "KPSS ile kamu alımı"
             else "KPSS / şartı doğrulanmalı"
         }
