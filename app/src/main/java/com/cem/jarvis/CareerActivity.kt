@@ -49,6 +49,14 @@ class CareerActivity : Activity() {
         cv = field(prefs.getString("career_cv", starterProfile).orEmpty(), "CV metnini buraya yapıştır", true)
         body.addView(cv, params(-1, dp(155), 0, 8, 0, 8))
         body.addView(button("CV'yi cihazıma kaydet") { saveCv() }, params(-1, dp(46), 0, 0, 0, 12))
+        body.addView(label(
+            "KPSS P94 puanın: 63,23366. Merkezi yerleştirmede herkese uygulanan tek bir taban puan yoktur; her kadronun nitelik kodları ve tercih edenler arasındaki puan sırası önemlidir. Lise alan/dalın: Elektrik-Elektronik Teknolojisi / Elektrik Tesisatları ve Pano Montörlüğü (6013/3). 2023 kodu alanınla eşleşebilir; 2086 Raylı Sistemler şartı senin dalınla eşleşmez. Birden fazla kod varsa hepsi sağlanmalıdır. KPSS-2026/2 tercih duyurusu açıldığında ayrıca kontrol et.",
+            12f, false, muted
+        ))
+        body.addView(button("ÖSYM tercih ve nitelik kodları sayfası") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.osym.gov.tr/Duyurular/Index"))) }
+                .onFailure { toast("ÖSYM sayfası açılamadı.") }
+        }, params(-1, dp(44), 0, 4, 0, 12))
         body.addView(label("Günlük otomatik takip", 18f, true))
         body.addView(label("Telefon her gün yaklaşık 08:20’de resmî kamu ve işveren kariyer kaynaklarını tarar. Yeni bağlantı bulursa bildirim verir. Android pil tasarrufu bu saati geciktirebilir.", 12f, false, muted))
         val dailySwitch = Switch(this).apply {
