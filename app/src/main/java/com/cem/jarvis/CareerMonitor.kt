@@ -21,6 +21,7 @@ object CareerSourceCatalog {
 
     val sources = listOf(
         Source("Kariyer Kapısı – Kamu işe alım", "https://isealimkariyerkapisi.cbiko.gov.tr/", "Kamu"),
+        Source("ÖSYM – KPSS tercih ve yerleştirme duyuruları", "https://www.osym.gov.tr/Duyurular/Index", "Kamu / KPSS"),
         Source("Kamu İlan Sistemi", "https://kamuilan.sbb.gov.tr/", "Kamu"),
         Source("İŞKUR e-Şube", "https://esube.iskur.gov.tr/", "Kamu / işçi"),
         Source("İŞKUR Açık İş Haritası", "https://acikisharita.iskur.gov.tr/", "Kamu / işçi"),
@@ -44,7 +45,7 @@ object CareerSourceCatalog {
     )
 
     private val trustedDomains = listOf(
-        "cbiko.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "ilan.gov.tr", "resmigazete.gov.tr",
+        "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "malatya.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "gethirex.com",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr"
@@ -105,7 +106,7 @@ object CareerEligibility {
     fun relevance(title: String, snippet: String, city: String): Int {
         val text = "$title $snippet".lowercase()
         var score = 0
-        listOf("elektrik", "pano", "kablolama", "bakım", "teknisyen", "tekniker", "otomasyon", "üretim", "işçi", "personel", "memur", "operatör")
+        listOf("elektrik", "pano", "kablolama", "bakım", "teknisyen", "tekniker", "otomasyon", "üretim", "işçi", "personel", "memur", "operatör", "depo", "satış", "kasiyer", "paketleme", "tekstil", "gıda", "lojistik", "temizlik", "şoför")
             .forEach { if (text.contains(it)) score += 10 }
         if (city.isNotBlank() && text.contains(city.lowercase())) score += 20
         if (text.contains("son başvuru") || text.contains("başvuru tarihi")) score += 5
@@ -119,7 +120,8 @@ object CareerSearchEngine {
         val r = role.ifBlank { "elektrik teknisyeni personel işçi" }
         val c = city.ifBlank { "Türkiye" }
         val publicKpss = listOf(
-            "site:kamuilan.sbb.gov.tr personel alımı ortaöğretim KPSS 2026 $c",
+            "site:osym.gov.tr KPSS tercih ortaöğretim P94 personel alımı 2026",
+            "site:kamuilan.sbb.gov.tr personel alımı ortaöğretim KPSS P94 2026 $c",
             "site:isealimkariyerkapisi.cbiko.gov.tr KPSS ortaöğretim lise personel 2026",
             "site:ilan.gov.tr personel alımı lise ortaöğretim KPSS 2026 $c",
             "site:resmigazete.gov.tr personel alımı atama KPSS ortaöğretim 2026"
@@ -181,7 +183,7 @@ object CareerSearchEngine {
 
     fun dailySearch(): List<Net.Hit> {
         val queries = listOf(
-            "site:kamuilan.sbb.gov.tr OR site:isealimkariyerkapisi.cbiko.gov.tr OR site:ilan.gov.tr OR site:resmigazete.gov.tr KPSS ortaöğretim P94 lise personel alımı 2026",
+            "site:osym.gov.tr OR site:kamuilan.sbb.gov.tr OR site:isealimkariyerkapisi.cbiko.gov.tr OR site:ilan.gov.tr OR site:resmigazete.gov.tr KPSS ortaöğretim P94 lise personel alımı 2026",
             "site:iskur.gov.tr OR site:malatyatso.org.tr/iskur-ilanlari Malatya elektrikçi teknisyen bakım işçi ilanı 2026",
             "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr belediye işçi personel alımı 2026",
             "site:kariyer.tusas.com OR site:kariyer.roketsan.com.tr OR site:akariyer.aselsan.com teknisyen açık pozisyon 2026",
