@@ -467,13 +467,15 @@ class CareerActivity : Activity() {
         results.removeAllViews()
         results.addView(label("Arama sağlayıcıları sırayla deneniyor. Eşleşen güvenilir kaynaklar kontrol ediliyor…", 13f, false, muted))
         Thread {
+            var exceptionMessage: String? = null
             val batch = try {
                 CareerSearchEngine.searchBatch(category.selectedItemPosition, r, p)
             } catch (error: Exception) {
+                exceptionMessage = error.message
                 null
             }
             val failure = if (batch == null) {
-                "Arama işlemi başlatılamadı. İnternet bağlantısını kontrol edip yeniden dene."
+                "Arama işlemi tamamlanamadı: " + (exceptionMessage ?: "İnternet bağlantısını ve arama kaynaklarını kontrol et.")
             } else if (!batch.hasAnySuccessfulQuery) {
                 "Arama sağlayıcılarının hiçbiri yanıt vermedi."
             } else null
