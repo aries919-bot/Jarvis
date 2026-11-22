@@ -737,14 +737,24 @@ object CareerSearchEngine {
      * A search provider is useful only when it yields at least one trusted, job-like result.
      * A trusted institution homepage alone must not suppress fallback providers.
      */
-    internal fun containsUsableJobResult(hits: Collection<Net.Hit>): Boolean =
-        hits.any { hit ->
-            CareerSourceCatalog.isTrustedUrl(hit.url) &&
-                CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
-        }
+    internal fun isEligibleSearchResult(hit: Net.Hit): Boolean =
+        (CareerSourceCatalog.isTrustedUrl(hit.url) || CareerSourceCatalog.isSecondary(hit.url)) &&
+            CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
 
-    private fun collect(queries: List<String>, timeoutSeconds: Long, city: String = "Malatya"): CareerScanBatch {
-        if (queries.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
+    internal fun containsUsableJobResult(hits: Collection<Net.Hit>): Boolean =
+        hits.any(::isEligibleSearchResult)
+
+    private fun collect(
+        queries: List<String>,
+        timeoutSeconds: Long,
+        city: String = "Malatya",
+        initialHits: Collection<Net.Hit> = emptyList(),
+        initialErrors: List<String> = emptyList(),
+        initialSuccessfulQueries: Int = 0,
+        initialFailedQueries: Int = 0,
+        initialTotalQueries: Int = 0
+    ): CareerScanBatch {
+        if (queries.isEmpty() && initialHits.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
         val executor = Executors.newFixedThreadPool(minOf(4, queries.size))
         return try {
             val futures = executor.invokeAll(
@@ -798,7 +808,7 @@ object CareerSearchEngine {
             )
 
             val outcomes = ArrayList<QueryOutcome>()
-            val errors = ArrayList<String>()
+            val errors = ArrayList<String>().apply { addAll(initialErrors) }
             var cancelled = 0
             futures.forEach { future ->
                 if (future.isCancelled) {
@@ -816,12 +826,10 @@ object CareerSearchEngine {
                 }
             }
 
-            val successful = outcomes.count { it.providerResponses > 0 }
-            val failed = (queries.size - successful).coerceAtLeast(cancelled)
-            val found = outcomes.flatMap { it.hits }.filter { hit ->
-                CareerSourceCatalog.isTrustedUrl(hit.url) &&
-                    CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
-            }
+            val successful = outcomes.count { it.providerResponses > 0 } + initialSuccessfulQueries
+            val failed = (queries.size - outcomes.count { it.providerResponses > 0 })
+                .coerceAtLeast(cancelled) + initialFailedQueries
+            val found = (initialHits + outcomes.flatMap { it.hits }).filter(::isEligibleSearchResult)
             val filtered = deduplicateHits(found).sortedByDescending {
                 CareerEligibility.relevance(it.title, it.snippet, city)
             }
@@ -830,7 +838,7 @@ object CareerSearchEngine {
                 hits = filtered,
                 successfulQueries = successful,
                 failedQueries = failed,
-                totalQueries = queries.size,
+                totalQueries = queries.size + initialTotalQueries,
                 errorMessages = errors.distinct().take(12)
             )
         } finally {
@@ -838,9 +846,39 @@ object CareerSearchEngine {
         }
     }
 
-    /** Manuel aramada bütün kaynakları bekletmemek için en alakalı sorgularla sınırlı tur yapar. */
-    fun searchBatch(category: Int, role: String, city: String): CareerScanBatch =
-        collect(queryList(category, role, city).take(12), 90, city)
+    /** Manuel aramada önce yetkili Aries Bulut araması denenir; HTML araması yedek olarak kalır. */
+    fun searchBatch(
+        category: Int,
+        role: String,
+        city: String,
+        cloudToken: String = ""
+    ): CareerScanBatch {
+        var cloud: CareerScanBatch? = null
+        var cloudErrors = emptyList<String>()
+        if (cloudToken.isNotBlank()) {
+            try {
+                cloud = Ai.kariyerAra(cloudToken, role, city, category, false)
+            } catch (error: Exception) {
+                cloudErrors = listOf("Aries Bulut kariyer araması: " +
+                    (error.message?.take(160) ?: error.javaClass.simpleName))
+            }
+        }
+        val cloudHits = cloud?.hits.orEmpty().filter(::isEligibleSearchResult)
+        if (cloudHits.size >= 5) {
+            return cloud!!.copy(hits = deduplicateHits(cloudHits).take(60))
+        }
+        val extraErrors = cloudErrors + (cloud?.errorMessages.orEmpty())
+        return collect(
+            queryList(category, role, city).take(12),
+            90,
+            city,
+            cloudHits,
+            extraErrors,
+            cloud?.successfulQueries ?: 0,
+            cloud?.failedQueries ?: 0,
+            cloud?.totalQueries ?: 0
+        )
+    }
 
     fun search(category: Int, role: String, city: String): List<Net.Hit> {
         val batch = searchBatch(category, role, city)
@@ -851,7 +889,22 @@ object CareerSearchEngine {
         return batch.hits
     }
 
-    fun dailySearchBatch(role: String, city: String): CareerScanBatch {
+    fun dailySearchBatch(role: String, city: String, cloudToken: String = ""): CareerScanBatch {
+        var cloud: CareerScanBatch? = null
+        var cloudErrors = emptyList<String>()
+        if (cloudToken.isNotBlank()) {
+            try {
+                cloud = Ai.kariyerAra(cloudToken, role, city, 0, true)
+            } catch (error: Exception) {
+                cloudErrors = listOf("Aries Bulut kariyer taraması: " +
+                    (error.message?.take(160) ?: error.javaClass.simpleName))
+            }
+        }
+        val cloudHits = cloud?.hits.orEmpty().filter(::isEligibleSearchResult)
+        if (cloudHits.size >= 5) {
+            return cloud!!.copy(hits = deduplicateHits(cloudHits))
+        }
+
         val year = Calendar.getInstance().get(Calendar.YEAR)
         val roleTerms = role.split(',', ';', '/', '|')
             .map { it.trim() }.filter { it.length >= 3 }.distinct().take(6)
@@ -932,7 +985,12 @@ object CareerSearchEngine {
         return collect(
             (profileQueries + kpssQueries + iskUrAndLocal + kuraQueries + employerQueries + platformQueries).distinct(),
             240,
-            city
+            city,
+            cloudHits,
+            cloudErrors + cloud?.errorMessages.orEmpty(),
+            cloud?.successfulQueries ?: 0,
+            cloud?.failedQueries ?: 0,
+            cloud?.totalQueries ?: 0
         )
     }
 
