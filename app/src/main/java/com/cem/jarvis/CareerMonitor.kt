@@ -252,10 +252,11 @@ object CareerSourceCatalog {
             else "Kura duyurusu · statü doğrulanmalı"
         }
         val kpssRequirementTerms = listOf(
-            "kpss sarti", "kpss puani", "kpss p", "kpss puan",
-            "kpss tercih", "kpss merkezi yerlestirme", "kpss yerles"
+            "kpss sarti", "kpss puan", "kpss tercih",
+            "kpss merkezi yerlestirme", "kpss yerles"
         )
         val hasKpssRequirement = kpssRequirementTerms.any(text::contains) ||
+            Regex("""kpss p\\d{1,2}""").containsMatchIn(text) ||
             host.contains("osym.gov.tr") ||
             host.contains("kariyerkapisi.gov.tr") ||
             host.contains("cbiko.gov.tr")
