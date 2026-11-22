@@ -137,6 +137,8 @@ class CareerActivity : Activity() {
         setContentView(root)
         renderNavigation()
         renderPage(0)
+        // KPSS-2026/2 tercih hatırlatmaları günlük ilan taramasından bağımsızdır.
+        CareerMonitorScheduler.schedulePreferenceReminders(this)
         CareerMonitorScheduler.scheduleIfEnabled(this)
     }
 
