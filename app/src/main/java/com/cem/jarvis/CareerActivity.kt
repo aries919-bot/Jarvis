@@ -1681,7 +1681,7 @@ class CareerActivity : Activity() {
             append("\nSon kontrol: ").append(time)
             if (last > 0L) {
                 append(" · ").append(lastType).append(" / ").append(lastSlot)
-                append("\nSon sonuç: ").append(resultCount).append(" tekilleştirilmiş ilan, ").append(count).append(" yeni")
+                append("\nSon tarama: ").append(resultCount).append(" toplam kayıt · ").append(count).append(" yeni iş ilanı adayı")
             }
             val ok = prefs.getInt("career_monitor_successful_queries", 0)
             val total = prefs.getInt("career_monitor_total_queries", 0)
