@@ -1310,8 +1310,13 @@ object CareerRecruitmentTracker {
         hits.forEach hitLoop@ { hit ->
             val stages = detectStages(hit.title, hit.snippet)
             if (stages.isEmpty()) return@hitLoop
+            val isJobListing = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url).isJobListing
             val normalizedTitle = normalize(hit.title).replace(Regex("""\s+"""), " ").trim()
             stages.forEach stageLoop@ { stage ->
+                // Job-opening announcements live in the listings feed; do not duplicate their
+                // generic application stage in the news/process timeline. Other stages (lottery,
+                // exam, interview, document check and final result) remain tracked separately.
+                if (isJobListing && stage == "BAŞVURU / YENİ ALIM") return@stageLoop
                 val parsed = parseEventTime(hit.title, hit.snippet, stage)
                 val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage + "|" + (parsed?.first ?: 0L)
                 val id = java.security.MessageDigest.getInstance("SHA-256")
