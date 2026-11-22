@@ -142,7 +142,13 @@ object Net {
                         val decoded = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
                         val token = decoded.removePrefix("a1")
                         val target = runCatching {
-                            String(java.util.Base64.getUrlDecoder().decode(token), Charsets.UTF_8)
+                            String(
+                                android.util.Base64.decode(
+                                    token,
+                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
+                                ),
+                                Charsets.UTF_8
+                            )
                         }.getOrDefault(decoded)
                         if (target.startsWith("http")) href = target
                     }
