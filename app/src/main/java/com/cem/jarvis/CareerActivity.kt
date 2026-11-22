@@ -32,7 +32,7 @@ class CareerActivity : Activity() {
     private var processPage = 0
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları")
+    private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Öğrenci · staj / İŞKUR gençlik programları")
     // Kariyer ekranına özel tasarım paleti; ana Aries temasını değiştirmez.
     // Kariyer alanı ana uygulamadan bağımsız, açık ve yüksek kontrastlı bir görsel dile sahip.
     private val bgColor = Color.rgb(244, 247, 251)
@@ -311,7 +311,7 @@ class CareerActivity : Activity() {
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
         filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
         filtersCard.addView(quickChipRow(
-            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye")
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye", "Öğrenci · staj")
         ) { selected ->
             val target = when (selected) {
                 "Kamu · KPSS" -> 1
@@ -320,6 +320,7 @@ class CareerActivity : Activity() {
                 "Büyük kurumlar" -> 4
                 "Özel sektör" -> 3
                 "Belediye" -> 8
+                "Öğrenci · staj" -> 9
                 else -> 0
             }
             category.setSelection(target)
@@ -775,17 +776,19 @@ class CareerActivity : Activity() {
         val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
         val publicGroups = setOf(
             "Kamu / kamu bağlantılı", "Kura ile kamu alımı",
-            "KPSS ile kamu alımı", "KPSS'siz kamu alımı"
+            "KPSS ile kamu alımı", "KPSS'siz kamu alımı",
+            "KİT / kamu şirketi alımı · usul doğrulanmalı"
         )
         return when (filter) {
             1 -> group in publicGroups
-            2 -> group == "Kura ile kamu alımı" || group == "Kura duyurusu · statü doğrulanmalı"
+            2 -> group == "Kura ile kamu alımı" || group == "Kura duyurusu · statü doğrulanmalı" ||
+                group == "Kura duyurusu · şirket süreci doğrulanmalı"
             3 -> group == "KPSS ile kamu alımı" || group == "KPSS / şartı doğrulanmalı"
             4 -> group == "KPSS'siz kamu alımı"
-            5 -> group == "Özel sektör"
+            5 -> group == "Özel sektör" || group == "Savunma sanayii / şirket alımı"
             6 -> group == "Diğer / doğrulanmalı" ||
                 group == "Platform / sektör doğrulanmalı" ||
-                group == "Kura duyurusu · statü doğrulanmalı" ||
+                group.contains("doğrulanmalı") ||
                 group == "KPSS / şartı doğrulanmalı"
             else -> true
         }
@@ -793,23 +796,27 @@ class CareerActivity : Activity() {
 
     private fun recruitmentGroupOrder(group: String): Int = when (group) {
         "Kamu / kamu bağlantılı" -> 0
-        "Kura ile kamu alımı", "Kura duyurusu · statü doğrulanmalı" -> 1
-        "KPSS ile kamu alımı", "KPSS / şartı doğrulanmalı" -> 2
-        "KPSS'siz kamu alımı" -> 3
-        "Özel sektör" -> 4
-        else -> 5
+        "KİT / kamu şirketi alımı · usul doğrulanmalı" -> 1
+        "Kura ile kamu alımı", "Kura duyurusu · statü doğrulanmalı" -> 2
+        "KPSS ile kamu alımı", "KPSS / şartı doğrulanmalı" -> 3
+        "KPSS'siz kamu alımı" -> 4
+        "Savunma sanayii / şirket alımı", "Özel sektör" -> 5
+        else -> 6
     }
 
     private fun addRecruitmentGroupHeading(parent: LinearLayout, group: String, count: Int) {
         val display = when (group) {
-            "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI"
+            "Kamu / kamu bağlantılı" -> "KAMU KURUMU / RESMÎ DUYURU"
+            "KİT / kamu şirketi alımı · usul doğrulanmalı" -> "KİT / KAMU ŞİRKETİ · İŞVEREN ALIMI"
             "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI"
             "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · KURUM STATÜSÜ DOĞRULANMALI"
+            "Kura duyurusu · şirket süreci doğrulanmalı" -> "ŞİRKET KURA DUYURUSU · SÜREÇ DOĞRULANMALI"
             "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI"
             "KPSS / şartı doğrulanmalı" -> "KPSS ŞARTI DOĞRULANMALI"
-            "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI"
-            "Özel sektör" -> "ÖZEL SEKTÖR"
-            "Platform / sektör doğrulanmalı" -> "İŞ İLANI PLATFORMU · İŞVEREN DOĞRULANMALI"
+            "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU İŞÇİSİ / ALIMI"
+            "Savunma sanayii / şirket alımı" -> "SAVUNMA SANAYİİ ŞİRKETLERİ · İŞVEREN ALIMI"
+            "Özel sektör" -> "ÖZEL SEKTÖR / İŞVEREN KARİYER PORTALI"
+            "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İŞVEREN DOĞRULANMALI"
             else -> "DİĞER / KAYNAK DOĞRULANMALI"
         }
         val block = LinearLayout(this).apply {
@@ -818,7 +825,7 @@ class CareerActivity : Activity() {
             setPadding(dp(2), dp(7), dp(2), dp(3))
         }
         block.addView(label(display, 10f, true, accentBlue), LinearLayout.LayoutParams(0, -2, 1f))
-        block.addView(label("$count ilan", 10f, true, muted))
+        block.addView(label("$count kayıt", 10f, true, muted))
         parent.addView(block, params(-1, -2, 0, 9, 0, 2))
     }
 
@@ -988,18 +995,24 @@ class CareerActivity : Activity() {
         }, LinearLayout.LayoutParams(dp(34), dp(34)).apply { setMargins(0, 0, dp(9), 0) })
         titleRow.addView(label(hit.title, 15f, true, primaryText), LinearLayout.LayoutParams(0, -2, 1f))
         card.addView(titleRow)
-        val recruitmentGroup = CareerSourceCatalog.recruitmentGroup(hit.title, hit.snippet, hit.url)
+        val facts = CareerListingIntelligence.analyze(hit.title, hit.snippet, hit.url)
+        val recruitmentGroup = facts.employerGroup
         val sourceLabel = when (recruitmentGroup) {
             "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
             "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
-            "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI · " + CareerSourceCatalog.sourceName(hit.url)
+            "Kamu / kamu bağlantılı" -> "KAMU KURUMU · " + CareerSourceCatalog.sourceName(hit.url)
+            "KİT / kamu şirketi alımı · usul doğrulanmalı" -> "KİT / KAMU ŞİRKETİ · İŞVEREN ALIMI · usul ilanda doğrulanmalı"
+            "Savunma sanayii / şirket alımı" -> "SAVUNMA SANAYİİ · ŞİRKET İŞVERENİ · kamu memur ataması değildir"
             "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI · şart ilanda açıkça belirtilmiş"
             "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · kurumun kamu/özel statüsünü doğrula"
+            "Kura duyurusu · şirket süreci doğrulanmalı" -> "ŞİRKET KURA DUYURUSU · işveren sürecini doğrula"
             "KPSS / şartı doğrulanmalı" -> "KPSS İBARESİ VAR · başvuru şartını ilanda doğrula"
             "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İşverenin kamu/özel statüsünü ilanda doğrula"
             else -> "KAYNAK SINIFLANDIRMASI DOĞRULANMALI · " + CareerSourceCatalog.sourceName(hit.url)
         }
         card.addView(label(sourceLabel, 11f, true, accentBlue).apply { setPadding(0, dp(7), 0, dp(5)) })
+        card.addView(label("Duyuru türü: " + facts.noticeType, 11f, true, primaryText))
+        card.addView(label("Başvuru yolu: " + facts.applicationChannel, 11f, false, muted))
         if (!storedCategory.isNullOrBlank()) {
             card.addView(label("Liste: " + category, 11f, true, accentBlue))
         }
@@ -1010,14 +1023,15 @@ class CareerActivity : Activity() {
             setPadding(dp(10), dp(8), dp(10), dp(8))
             background = rounded(Color.rgb(255, 245, 224), Color.rgb(230, 194, 128))
         })
-        if (!listingStatus.isNullOrBlank()) {
-            card.addView(label(listingStatus, 11f, true, warningColor))
+        card.addView(label(facts.applicationStatus, 11f, true, warningColor))
+        if (!listingStatus.isNullOrBlank() && facts.applicationStatus.startsWith("BAŞVURU DURUMU")) {
+            card.addView(label(listingStatus, 10f, false, muted))
         }
-        val deadline = storedDeadline ?: CareerListingParser.deadlineStatus(hit.snippet).orEmpty()
-        if (deadline.isNotBlank()) {
-            card.addView(label(deadline, 11f, true, warningColor))
-        } else {
-            card.addView(label("SON BAŞVURU TARİHİ BULUNAMADI · İlanın açık olduğu varsayılmaz; kaynak sayfasında kontrol et.", 11f, true, warningColor))
+        if (facts.quotaText != null) {
+            card.addView(label("Arama özetinde kontenjan/sayı ifadesi: " + facts.quotaText + " · resmî ilan metninde doğrula.", 11f, true, accentColor))
+        }
+        if (facts.requirementSignals.isNotEmpty()) {
+            card.addView(label("Görülen şart ifadeleri: " + facts.requirementSignals.take(4).joinToString(" · "), 10f, false, muted))
         }
         card.addView(label(
             "Profil ön eşleşmesi: $matchScore/100 · İşe kabul ihtimali değildir. $matchReason",
