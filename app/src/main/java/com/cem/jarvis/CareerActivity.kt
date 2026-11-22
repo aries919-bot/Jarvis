@@ -27,6 +27,8 @@ class CareerActivity : Activity() {
     private lateinit var search: Button
     private lateinit var manualScanButton: Button
     private lateinit var dailyResultsContainer: LinearLayout
+    private lateinit var processEventsContainer: LinearLayout
+    private var processPage = 0
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
     private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
@@ -294,8 +296,17 @@ class CareerActivity : Activity() {
             12f, false, muted
         ))
         dailyResultsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        pageContent.addView(dailyResultsContainer, params(-1, -2, 0, 6, 0, 8))
+        pageContent.addView(dailyResultsContainer, params(-1, -2, 0, 6, 0, 14))
         showDailyResults(dailyResultsContainer)
+
+        pageContent.addView(label("Kura, sınav ve sonuç takvimi", 18f, true))
+        pageContent.addView(label(
+            "Başvuru → evrak kontrolü → kuraya katılacaklar → noter kurası → asıl/yedek → sınav/mülakat → nihai sonuç. Aries yeni duyuruları bu aşamalara göre ayırır; kurumun asıl metni her zaman geçerlidir.",
+            12f, false, muted
+        ))
+        processEventsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 8))
+        showProcessEvents(processEventsContainer)
         queueFirstAutomaticScanIfNeeded()
     }
 
@@ -397,6 +408,7 @@ class CareerActivity : Activity() {
                     }
                     androidx.work.WorkInfo.State.SUCCEEDED -> {
                         showDailyResults(dailyResultsContainer)
+                        if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
                         manualScanButton.text = "Tüm kaynakları şimdi tara"
@@ -596,6 +608,8 @@ class CareerActivity : Activity() {
             card.addView(label("Liste: " + category, 11f, true, Color.rgb(150, 190, 255)))
         }
         if (hit.snippet.isNotBlank()) card.addView(label(hit.snippet, 12f, false, muted))
+        val stage = CareerRecruitmentTracker.detectStage(hit.title, hit.snippet)
+        if (stage != null) card.addView(label("İşe alım aşaması: " + stage, 11f, true, Color.rgb(116, 207, 220)))
         card.addView(label(eligibility, 12f, true, Color.rgb(255, 207, 120)))
         if (!listingStatus.isNullOrBlank()) {
             card.addView(label(listingStatus, 11f, true, Color.rgb(255, 190, 110)))
@@ -724,6 +738,67 @@ class CareerActivity : Activity() {
         }
     }
 
+    private fun showProcessEvents(parent: LinearLayout) {
+        parent.removeAllViews()
+        val events = CareerRecruitmentTracker.read(prefs)
+        if (events.isEmpty()) {
+            parent.addView(label(
+                "Henüz kura veya sınav aşaması duyurusu bulunmadı. Yeni evrak, kura, asıl/yedek, sınav ve sonuç duyuruları günlük taramalarda burada toplanacak.",
+                12f, false, muted
+            ))
+            return
+        }
+
+        val totalPages = (events.size + pageSize - 1) / pageSize
+        processPage = processPage.coerceIn(0, totalPages - 1)
+        parent.addView(label(
+            events.size.toString() + " süreç güncellemesi · Sayfa " + (processPage + 1) + "/" + totalPages,
+            12f, true, Color.rgb(116, 207, 220)
+        ))
+        val start = processPage * pageSize
+        events.drop(start).take(pageSize).forEach { event ->
+            val card = panel()
+            card.addView(label(event.stage, 11f, true, Color.rgb(116, 207, 220)))
+            card.addView(label(event.title, 14f, true))
+            if (event.snippet.isNotBlank()) card.addView(label(event.snippet, 12f, false, muted))
+            val detected = if (event.detectedAt > 0L) {
+                SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(event.detectedAt))
+            } else "Tespit zamanı bilinmiyor"
+            card.addView(label("Aries'in tespit zamanı: " + detected, 10f, false, muted))
+            if (event.eventAt != null) {
+                val date = SimpleDateFormat(
+                    if (event.hasExplicitTime) "dd.MM.yyyy HH:mm" else "dd.MM.yyyy",
+                    Locale("tr", "TR")
+                ).format(Date(event.eventAt))
+                card.addView(label(
+                    "Duyurudaki tarih: " + date +
+                        (if (event.hasExplicitTime) " · Bir gün ve bir saat önce hatırlatılacak" else " · Bir gün önce hatırlatma planlandı"),
+                    11f, true, Color.rgb(255, 207, 120)
+                ))
+            } else {
+                card.addView(label(
+                    "Tarih/saat metinden güvenle çıkarılamadı. Kurum duyurusunu açıp takvimi kontrol et.",
+                    11f, true, Color.rgb(255, 190, 110)
+                ))
+            }
+            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            actions.addView(button("Duyuruyu aç") {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
+                    .onFailure { toast("Kaynak açılamadı.") }
+            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            actions.addView(button("Başvurulara kaydet") {
+                saveJob(Net.Hit(event.title, event.url, event.snippet))
+            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            card.addView(actions)
+            parent.addView(card, params(-1, -2, 0, 2, 0, 8))
+        }
+        addPager(parent, processPage, totalPages) { next ->
+            processPage = next
+            showProcessEvents(parent)
+            pageScroll.post { pageScroll.smoothScrollTo(0, parent.top) }
+        }
+    }
+
     private fun addPager(parent: LinearLayout, current: Int, total: Int, onSelect: (Int) -> Unit) {
         if (total <= 1) return
         val row = LinearLayout(this).apply {
@@ -797,6 +872,7 @@ class CareerActivity : Activity() {
             queueFirstAutomaticScanIfNeeded()
             refreshMonitorStatus()
             if (::dailyResultsContainer.isInitialized) showDailyResults(dailyResultsContainer)
+            if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
         }
     }
 
@@ -897,7 +973,12 @@ class CareerActivity : Activity() {
         .replace(Regex("(\\+?90\\s?)?\\(?0?[2345]\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
 
     private val applicationStatuses = listOf(
-        "Kaydedildi", "Başvurulacak", "Başvuruldu", "Mülakat", "Teklif alındı", "Olumsuz", "Vazgeçildi"
+        "Kaydedildi", "Başvurulacak", "Başvuruldu",
+        "Evrak teslimi bekleniyor", "Kuraya katılma listesi bekleniyor",
+        "Kura tarihi bekleniyor", "Kura sonucu bekleniyor",
+        "Asıl aday", "Yedek aday", "Sınav / mülakat bekleniyor",
+        "Nihai sonuç bekleniyor", "Teklif alındı", "Yerleşti / atandı",
+        "Olumsuz", "Vazgeçildi"
     )
 
     private fun savedJobs(): JSONArray =
