@@ -25,6 +25,9 @@ class CareerSourceCatalogTest {
     fun classifiesGeneralGovernmentSitesSeparatelyFromKpssPortals() {
         assertEquals("Kamu / resmî kurum", CareerSourceCatalog.categoryFor("https://www.dsi.gov.tr/duyurular"))
         assertEquals("Kamu / KPSS ve merkezi yerleştirme", CareerSourceCatalog.categoryFor("https://www.osym.gov.tr/duyurular"))
+        assertEquals("Kamu / işe alım ve başvuru portalı", CareerSourceCatalog.categoryFor("https://kariyerkapisi.gov.tr/isealim"))
+        assertEquals("Kamu / resmî personel ilanı", CareerSourceCatalog.categoryFor("https://kamuilan.sbb.gov.tr/"))
+
         assertEquals("Belediye / kamu", CareerSourceCatalog.categoryFor("https://www.example.bel.tr/duyurular"))
     }
 
