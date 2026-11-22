@@ -794,10 +794,13 @@ class CareerActivity : Activity() {
                     if (event.hasExplicitTime) "dd.MM.yyyy HH:mm" else "dd.MM.yyyy",
                     Locale("tr", "TR")
                 ).format(Date(event.eventAt))
+                val isUpcoming = event.eventAt > System.currentTimeMillis()
                 card.addView(label(
-                    "Duyurudaki tarih: " + date +
-                        (if (event.hasExplicitTime) " · Bir gün ve bir saat önce hatırlatılacak" else " · Bir gün önce hatırlatma planlandı"),
-                    11f, true, Color.rgb(255, 207, 120)
+                    (if (isUpcoming) "YAKLAŞAN TARİH · " else "TARİHİ GEÇMİŞ · ") + date +
+                        (if (isUpcoming && event.hasExplicitTime) " · Bir gün ve bir saat önce hatırlatma planlandı"
+                        else if (isUpcoming) " · Bir gün önce hatırlatma planlandı"
+                        else " · Eski duyuru; yeni tarih var mı kontrol et"),
+                    11f, true, if (isUpcoming) Color.rgb(255, 207, 120) else Color.rgb(255, 160, 130)
                 ))
             } else {
                 card.addView(label(
