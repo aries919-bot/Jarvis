@@ -11,7 +11,11 @@ class CareerSourceCatalogTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://www.dsi.gov.tr/duyurular"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://www.sgk.gov.tr/"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.bel.tr/"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("https://sub.dsi.gov.tr/duyurular"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("HTTPS://WWW.DSI.GOV.TR/duyurular"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("http://www.dsi.gov.tr/"))
+        assertFalse(CareerSourceCatalog.isTrustedUrl("https://www.dsi.gov.tr.evil.example/"))
+        assertFalse(CareerSourceCatalog.isTrustedUrl("https://www.dsi.gov.tr@evil.example/"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("https://fake-government.example/"))
     }
 
