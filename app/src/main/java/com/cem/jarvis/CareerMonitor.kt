@@ -509,9 +509,9 @@ object CareerSearchEngine {
             "$r $c güncel iş ilanı personel alımı başvuru $year",
             "site:esube.iskur.gov.tr $r $c açık iş ilanı $year",
             "site:iskur.gov.tr $r $c işçi alımı başvuru $year"
-        ) + publicKpss.take(2) + publicKpss.drop(7).take(1) +
+        ) + publicKpss.take(2) + publicKpss.drop(7).take(2) +
             publicNoKpss.take(2) + kuraQueries.take(1) +
-            privateSector.take(1) + platforms.take(1) + listOf(extra)
+            privateSector.take(1) + platforms.take(1)
 
         val dailyPrivate = privateSector + platforms + listOf(
             "günlük işçi alımı üretim paketleme depo vardiyalı personel $year $c",
