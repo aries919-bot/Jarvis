@@ -1159,9 +1159,18 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir. " +
                     batch.errorMessages.take(3).joinToString(" | ")
             } else null
+            val freshForAlerts = fresh.filter { hit ->
+                CareerListingParser.deadlineStatus(hit.snippet)
+                    ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
+            }
             val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
             processEvents.forEach { event ->
                 CareerMonitorScheduler.scheduleProcessReminders(applicationContext, event)
+            }
+            val actionableProcessEvents = processEvents.filter { event ->
+                event.stage != "BAŞVURU / YENİ ALIM" ||
+                    CareerListingParser.deadlineStatus(event.snippet)
+                        ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
             val now = System.currentTimeMillis()
 
@@ -1172,7 +1181,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 .putLong("career_monitor_last_scan", now)
                 .putString("career_monitor_last_slot", slot)
                 .putString("career_monitor_last_run_type", if (manualRun) "Manuel" else "Otomatik")
-                .putInt("career_monitor_new_count", fresh.size)
+                .putInt("career_monitor_new_count", freshForAlerts.size)
                 .putInt("career_monitor_result_count", hits.size)
                 .putBoolean("career_monitor_initialized", true)
                 .putInt("career_monitor_successful_queries", batch.successfulQueries)
@@ -1184,11 +1193,11 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                     else "")
                 .apply()
 
-            if (!manualRun && fresh.isNotEmpty()) {
-                CareerMonitorScheduler.notifyNewJobs(applicationContext, fresh.size, fresh.first(), slot)
+            if (!manualRun && freshForAlerts.isNotEmpty()) {
+                CareerMonitorScheduler.notifyNewJobs(applicationContext, freshForAlerts.size, freshForAlerts.first(), slot)
             }
-            if (!manualRun && processEvents.isNotEmpty()) {
-                CareerMonitorScheduler.notifyProcessUpdates(applicationContext, processEvents)
+            if (!manualRun && actionableProcessEvents.isNotEmpty()) {
+                CareerMonitorScheduler.notifyProcessUpdates(applicationContext, actionableProcessEvents)
             }
             androidx.work.ListenableWorker.Result.success()
         } catch (e: Exception) {
