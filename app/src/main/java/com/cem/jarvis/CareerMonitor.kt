@@ -1509,7 +1509,15 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
             val json = JSONArray()
             val ranked = hits.map { hit ->
-                val eligibility = CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+                val eligibility = CareerEligibility.assess(
+                    hit.title,
+                    hit.snippet,
+                    hit.url,
+                    prefs.getString("career_diploma_area", "").orEmpty(),
+                    prefs.getString("career_diploma_branch", "").orEmpty(),
+                    prefs.getString("career_p94_score", "")?.replace(',', '.')?.toDoubleOrNull()
+                        ?.takeIf { it in 0.0..100.0 }
+                )
                 val score = CareerEligibility.profileMatchScore(hit.title, hit.snippet, role, city, eligibility)
                 Triple(hit, eligibility, score)
             }.sortedByDescending { it.third }
