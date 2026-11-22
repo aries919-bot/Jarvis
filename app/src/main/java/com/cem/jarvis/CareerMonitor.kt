@@ -32,7 +32,28 @@ object CareerSourceCatalog {
         Source("Malatya Büyükşehir Belediyesi", "https://www.malatya.bel.tr/", "Belediye"),
         Source("Battalgazi Belediyesi", "https://www.battalgazi.bel.tr/", "Belediye"),
         Source("Yeşilyurt Belediyesi", "https://yesilyurt.bel.tr/", "Belediye"),
-        Source("Malatya TSO – günlük İŞKUR listesi", "https://www.malatyatso.org.tr/iskur-ilanlari", "İŞKUR keşif", false),
+        Source("Malatya TSO – canlı İŞKUR listesi", "https://www.malatyatso.org.tr/", "İŞKUR keşif", false),
+        Source("Malatya Merkez 1. OSB – personel duyuruları", "https://malorsa.org.tr/", "Malatya OSB", false),
+        Source("Kariyer.net", "https://www.kariyer.net/is-ilanlari", "İlan platformu", false),
+        Source("Eleman.net", "https://www.eleman.net/is-ilanlari", "İlan platformu", false),
+        Source("SecretCV", "https://www.secretcv.com/", "İlan platformu", false),
+        Source("Yenibiriş", "https://www.yenibiris.com/", "İlan platformu", false),
+        Source("Indeed Türkiye", "https://tr.indeed.com/", "İlan platformu", false),
+        Source("LinkedIn İş İlanları", "https://www.linkedin.com/jobs/", "İlan platformu", false),
+        Source("İşbul.net", "https://www.isbul.net/", "İlan platformu", false),
+        Source("Koç Kariyerim", "https://www.kockariyerim.com/", "İşveren grubu"),
+        Source("Sabancı Kariyer", "https://www.sabanci.com/en/career/", "İşveren grubu"),
+        Source("Borusan Kariyer", "https://careers.borusan.com/", "İşveren grubu"),
+        Source("Eczacıbaşı Kariyer", "https://careers.eczacibasi.com/", "İşveren grubu"),
+        Source("Anadolu Kariyerim", "https://careers.anadolukariyerim.com/", "İşveren grubu"),
+        Source("Çalık Holding Kariyer", "https://careers.calik.com/viewalljobs/", "İşveren grubu"),
+        Source("Zorlu / Vestel Kariyer", "https://www.vestelkariyer.com/is-ilanlari", "İşveren grubu"),
+        Source("Migros Kariyer", "https://www.migroskurumsal.com/kariyer/simdi-basvurun/ilanlar", "Özel sektör"),
+        Source("Coca-Cola İçecek Kariyer", "https://careerscci.com/?locale=tr_TR", "Özel sektör"),
+        Source("Turkcell Kariyer", "https://kariyerim.turkcell.com.tr/kariyer-firsatlari", "Özel sektör"),
+        Source("Vodafone Türkiye Kariyer", "https://jobs.vodafone.com/", "Özel sektör"),
+        Source("Sütaş Kariyer", "https://www.sutas.com.tr/tr/insan-kaynaklari/acik-pozisyonlarimiz", "Özel sektör"),
+        Source("Tırsan Kariyer", "https://tirsan.com.tr/ailemize-katilin-143-pg", "Özel sektör"),
         Source("ASELSAN Kariyer", "https://akariyer.aselsan.com/", "Özel sektör"),
         Source("MKE Kariyer – ilanlar", "https://kariyer.mke.gov.tr/ilanlar", "Kamu şirketi / kariyer"),
         Source("Eti Maden Duyurular", "https://www.etimaden.gov.tr/duyurular", "Kamu şirketi"),
@@ -60,7 +81,12 @@ object CareerSourceCatalog {
         "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
-        "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr"
+        "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
+        "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
+        "indeed.com", "linkedin.com", "isbul.net", "kockariyerim.com", "sabanci.com",
+        "borusan.com", "eczacibasi.com", "anadolukariyerim.com", "calik.com", "vestelkariyer.com",
+        "vestel.com.tr", "migroskurumsal.com", "careerscci.com", "turkcell.com.tr",
+        "vodafone.com", "sutas.com.tr", "tirsan.com.tr"
     )
 
     fun isTrustedUrl(url: String): Boolean {
@@ -78,12 +104,21 @@ object CareerSourceCatalog {
         }?.name ?: host
     }
 
-    fun isSecondary(url: String): Boolean = url.contains("malatyatso.org.tr", ignoreCase = true)
+    fun isSecondary(url: String): Boolean {
+        val host = runCatching { Uri.parse(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
+            .getOrDefault("")
+        val secondaryDomains = listOf(
+            "malatyatso.org.tr", "malorsa.org.tr", "kariyer.net", "eleman.net",
+            "secretcv.com", "yenibiris.com", "indeed.com", "linkedin.com", "isbul.net"
+        )
+        return secondaryDomains.any { host == it || host.endsWith(".$it") }
+    }
 
     fun categoryFor(url: String): String {
         val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT) }.getOrDefault("")
         return when {
-            isSecondary(url) || host.contains("iskur.gov.tr") -> "İŞKUR / KPSS'siz işçi"
+            isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
+            isSecondary(url) -> "İlan platformu / ikincil keşif"
             host.contains("osym.gov.tr") || host.contains("cbiko.gov.tr") ||
                 host.contains("sbb.gov.tr") || host.contains("ilan.gov.tr") ||
                 host.contains("resmigazete.gov.tr") -> "Kamu / KPSS ve merkezi yerleştirme"
@@ -92,6 +127,13 @@ object CareerSourceCatalog {
             host.contains("tcdd") || host.contains("teias.gov.tr") || host.contains("euas.gov.tr") ||
                 host.contains("mke.gov.tr") || host.contains("etimaden.gov.tr") ||
                 host.contains("botas.gov.tr") || host.contains("turkseker.gov.tr") -> "Kamu kurumu / kamu şirketi"
+            host.contains("iskur.gov.tr") -> "İŞKUR / açık iş"
+            host.contains("tusas") || host.contains("roketsan") || host.contains("aselsan") ||
+                host.contains("havelsan") || host.contains("tupras") || host.contains("vestel") ||
+                host.contains("turkcell") || host.contains("vodafone") || host.contains("migros") ||
+                host.contains("kockariyerim") || host.contains("sabanci") || host.contains("borusan") ||
+                host.contains("eczacibasi") || host.contains("anadolukariyerim") || host.contains("calik") ||
+                host.contains("careerscci") || host.contains("sutas") || host.contains("tirsan") -> "İşveren kariyer portalı"
             else -> "Özel sektör / büyük şirket"
         }
     }
@@ -99,10 +141,11 @@ object CareerSourceCatalog {
     fun isLikelyJobResult(title: String, snippet: String): Boolean {
         val text = (title + " " + snippet).lowercase(Locale("tr", "TR"))
         val indicators = listOf(
-            "personel al", "işçi al", "is ilan", "iş ilan", "açık pozisyon", "acik pozisyon",
-            "başvuru", "basvuru", "son başvuru", "son basvuru", "teknisyen",
-            "tekniker", "memur", "işkur", "iskur", "kpss", "üretim", "uretim",
-            "bakım", "bakim", "elektrik", "pano", "operatör", "operator"
+            "personel al", "işçi al", "is ilan", "iş ilan", "ilanı", "ilanlari", "ilanları",
+            "açık pozisyon", "acik pozisyon", "başvuru", "basvuru", "son başvuru",
+            "son basvuru", "teknisyen", "tekniker", "memur", "işkur", "iskur",
+            "kpss", "üretim", "uretim", "bakım", "bakim", "elektrik", "pano",
+            "operatör", "operator", "depo", "satış", "satis", "kasiyer", "şoför", "sofor"
         )
         return indicators.any(text::contains)
     }
@@ -204,6 +247,42 @@ object CareerEligibility {
         .replace(Regex("\\s+"), " ")
         .trim()
 
+    fun profileMatchScore(title: String, snippet: String, role: String, city: String, eligibility: String): Int {
+        val text = normalize("$title $snippet")
+        val roleTerms = role.split(',', ';', '/', '|').map { normalize(it.trim()) }.filter { it.length >= 3 }.distinct()
+        val roleMatches = roleTerms.count { phrase ->
+            phrase in text || phrase.split(" ").any { it.length >= 4 && it in text }
+        }.coerceAtMost(4)
+        var score = roleMatches * 12
+        val localities = city.split(',', ';').map { normalize(it.trim()) }
+            .filter { it.length >= 3 && !it.contains("servis") && !it.contains("konaklama") && it != "turkiye geneli" }
+        if (localities.any(text::contains)) score += 25
+        if (listOf("elektrik", "pano", "kablolama", "bakim", "teknisyen", "tekniker", "otomasyon").any(text::contains)) score += 15
+        if (text.contains("kpss") && (text.contains("p94") || text.contains("ortaogretim"))) score += 12
+        if (text.contains("son basvuru") || text.contains("basvuru tarihi")) score += 6
+        if (eligibility.startsWith("PUAN TÜRÜ UYUŞMUYOR") ||
+            eligibility.startsWith("PUAN ŞARTI UYUŞMUYOR") ||
+            eligibility.startsWith("MEZUNİYET SONRASI") ||
+            eligibility.startsWith("ALAN KODU UYUŞMUYOR")) score -= 35
+        return score.coerceIn(0, 100)
+    }
+
+    fun profileMatchReason(title: String, snippet: String, role: String, city: String, eligibility: String): String {
+        val text = normalize("$title $snippet")
+        val reasons = mutableListOf<String>()
+        val matchedRoles = role.split(',', ';', '/', '|').map { it.trim() }
+            .filter { it.length >= 3 && normalize(it) in text }.take(3)
+        if (matchedRoles.isNotEmpty()) reasons += "Pozisyon: " + matchedRoles.joinToString(", ")
+        val matchedCity = city.split(',', ';').map { it.trim() }
+            .firstOrNull { it.length >= 3 && normalize(it) in text }
+        if (matchedCity != null) reasons += "Bölge: $matchedCity"
+        if (text.contains("p94") || text.contains("ortaogretim")) reasons += "Ortaöğretim KPSS ifadesi bulundu"
+        if (listOf("elektrik", "pano", "teknisyen", "bakim").any(text::contains)) reasons += "Elektrik/teknik alan eşleşmesi"
+        if (eligibility.startsWith("PUAN") || eligibility.startsWith("MEZUNİYET") ||
+            eligibility.startsWith("ALAN KODU UYUŞMUYOR")) reasons += "Zorunlu şart uyuşmazlığı olabilir; tam kılavuzu kontrol et"
+        return if (reasons.isEmpty()) "Arama terimleriyle genel eşleşme; tam ilan metni incelenmeli" else reasons.joinToString(" · ")
+    }
+
     fun relevance(title: String, snippet: String, city: String): Int {
         val text = normalize("$title $snippet")
         val terms = listOf(
@@ -219,6 +298,38 @@ object CareerEligibility {
         if (listOf("son basvuru", "basvuru tarihi", "personel alimi", "acik pozisyon", "is ilani")
                 .any(text::contains)) score += 8
         return score.coerceAtMost(100)
+    }
+}
+
+object CareerListingParser {
+    private val deadlinePattern = Regex(
+        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu)[^0-9]{0,35}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4})",
+        RegexOption.IGNORE_CASE
+    )
+    fun deadlineDate(text: String): String? {
+        val raw = deadlinePattern.find(text)?.groupValues?.getOrNull(1) ?: return null
+        val normalized = raw.replace('/', '.').replace('-', '.')
+        val parser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
+        val parsed = runCatching { parser.parse(normalized) }.getOrNull() ?: return null
+        return parser.format(parsed)
+    }
+    fun deadlineStatus(text: String, nowMillis: Long = System.currentTimeMillis()): String? {
+        val dateText = deadlineDate(text) ?: return null
+        val parser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
+        val deadline = runCatching { parser.parse(dateText) }.getOrNull() ?: return null
+        val today = Calendar.getInstance().apply {
+            timeInMillis = nowMillis
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val deadlineDay = Calendar.getInstance().apply {
+            time = deadline
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        return if (deadlineDay.before(today)) {
+            "SÜRESİ GEÇMİŞ OLABİLİR · Kaynak metninde görünen son tarih: $dateText. İlan sayfasını kontrol et."
+        } else {
+            "SON TARİH BİLGİSİ · Kaynak metninde $dateText yazıyor; başvuru sayfasında teyit et."
+        }
     }
 }
 
