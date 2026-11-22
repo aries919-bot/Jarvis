@@ -27,6 +27,8 @@ class CareerActivity : Activity() {
     private lateinit var search: Button
     private lateinit var manualScanButton: Button
     private lateinit var dailyResultsContainer: LinearLayout
+    private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
+    private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
     private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra")
     private val muted = Color.rgb(154, 161, 178)
     private lateinit var monitorStatus: TextView
@@ -143,6 +145,7 @@ class CareerActivity : Activity() {
             prefs.edit().putBoolean("career_monitor_initial_scan_queued", true).apply()
         }
         val workId = CareerMonitorScheduler.runManualNow(this)
+        manualScanObserver?.let { oldObserver -> manualScanLiveData?.removeObserver(oldObserver) }
         val live = androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(workId)
         val observer = object : androidx.lifecycle.Observer<androidx.work.WorkInfo?> {
             override fun onChanged(info: androidx.work.WorkInfo?) {
@@ -163,6 +166,8 @@ class CareerActivity : Activity() {
                         val count = prefs.getInt("career_monitor_result_count", 0)
                         toast("Tarama tamamlandı. $count bağlantı sonucu değerlendirildi.")
                         live.removeObserver(this)
+                        manualScanObserver = null
+                        manualScanLiveData = null
                     }
                     androidx.work.WorkInfo.State.FAILED,
                     androidx.work.WorkInfo.State.CANCELLED -> {
@@ -174,11 +179,15 @@ class CareerActivity : Activity() {
                         manualScanButton.text = "Benim için şimdi tüm kaynakları ara"
                         toast("Tarama tamamlanamadı. Durum bölümünü kontrol et.")
                         live.removeObserver(this)
+                        manualScanObserver = null
+                        manualScanLiveData = null
                     }
                 }
             }
         }
-        live.observe(this, observer)
+        manualScanLiveData = live
+        manualScanObserver = observer
+        live.observeForever(observer)
     }
 
     private fun searchJobs() {
@@ -368,6 +377,13 @@ class CareerActivity : Activity() {
             prefs.edit().putBoolean("career_monitor_notification_request_attempted", true).apply()
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 74031)
         }
+    }
+
+    override fun onDestroy() {
+        manualScanObserver?.let { observer -> manualScanLiveData?.removeObserver(observer) }
+        manualScanObserver = null
+        manualScanLiveData = null
+        super.onDestroy()
     }
 
     override fun onResume() {
