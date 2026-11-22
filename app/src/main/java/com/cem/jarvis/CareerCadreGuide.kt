@@ -131,7 +131,7 @@ object CareerCadreGuide {
     }
 
     fun extractQualificationCodes(text: String): Set<Int> =
-        Regex("(?<!\\d)(20\\d{2}|21\\d{2})(?!\\d)")
+        Regex("(?<!\\d)(20\\d{2}|21\\d{2})(?!\\d|/\\s*\\d)")
             .findAll(text)
             .map { it.value.toInt() }
             .toSet()
