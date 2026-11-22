@@ -945,7 +945,9 @@ class CareerActivity : Activity() {
             "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
             "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI · " + CareerSourceCatalog.sourceName(hit.url)
             "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI · " + CareerSourceCatalog.sourceName(hit.url)
-            "Özel sektör" -> "ÖZEL SEKTÖR · " + CareerSourceCatalog.sourceName(hit.url)
+            "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI · şart ilanda açıkça belirtilmiş"
+            "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · kurumun kamu/özel statüsünü doğrula"
+            "KPSS / şartı doğrulanmalı" -> "KPSS İBARESİ VAR · başvuru şartını ilanda doğrula"
             "Platform / sektör doğrulanmalı" -> "İLAN PLATFORMU · İşverenin kamu/özel statüsünü ilanda doğrula"
             else -> "KAYNAK SINIFLANDIRMASI DOĞRULANMALI · " + CareerSourceCatalog.sourceName(hit.url)
         }
@@ -1442,7 +1444,8 @@ class CareerActivity : Activity() {
             prefs.edit().putString("career_jobs", result.toString()).apply()
         }
         return result
-    }.getOrDefault(JSONArray())
+    }
+
     private fun saveJob(hit: Net.Hit) {
         val list = savedJobs()
         if ((0 until list.length()).any { index ->
@@ -1504,8 +1507,9 @@ class CareerActivity : Activity() {
             .show()
     }
     private fun showSaved(parent: LinearLayout) {
-        val allItems = (savedJobs().length() - 1 downTo 0)
-            .mapNotNull { savedJobs().optJSONObject(it) }
+        val storedItems = savedJobs()
+        val allItems = (storedItems.length() - 1 downTo 0)
+            .mapNotNull { storedItems.optJSONObject(it) }
 
         val finishedStatuses = setOf("Teklif alındı", "Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
         val queuedStatuses = setOf("Kaydedildi", "Başvurulacak")
