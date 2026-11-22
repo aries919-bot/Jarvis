@@ -68,6 +68,7 @@ class CareerActivity : Activity() {
     private var dailySectorFilter = 0
     private var newsFilter = 0
     private lateinit var newsResultsContainer: LinearLayout
+    private lateinit var newsSearchStatus: TextView
     private val pageSize = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -723,8 +724,7 @@ class CareerActivity : Activity() {
         val p = place.text.toString().trim()
         val selectedCategory = category.selectedItemPosition
         if (selectedCategory == 6 || selectedCategory == 9) {
-            newsFilter = if (selectedCategory == 6) 1 else 2
-            renderPage(5)
+            searchNewsCategory(selectedCategory)
             return
         }
         if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
@@ -1346,6 +1346,56 @@ class CareerActivity : Activity() {
         }
     }
 
+    private fun searchNewsCategory(categoryId: Int) {
+        if (categoryId != 6 && categoryId != 9) return
+        newsFilter = if (categoryId == 6) 1 else 2
+        if (currentPage != 5) renderPage(5)
+        if (::newsSearchStatus.isInitialized) {
+            newsSearchStatus.text = if (categoryId == 6) {
+                "Kura, noter çekimi, asıl-yedek ve sınav/sonuç duyuruları taranıyor…"
+            } else {
+                "Ulusal Staj, İŞKUR Gençlik ve öğrenci programları taranıyor…"
+            }
+        }
+        if (::newsResultsContainer.isInitialized) {
+            newsResultsContainer.removeAllViews()
+            val loading = panel().apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            loading.addView(ProgressBar(this).apply { isIndeterminate = true },
+                LinearLayout.LayoutParams(dp(30), dp(30)).apply { setMargins(0, 0, dp(12), 0) })
+            loading.addView(label("İlgili resmî kaynaklar aranıyor", 13f, true, primaryText))
+            newsResultsContainer.addView(loading, params(-1, -2, 0, 2, 0, 8))
+        }
+        val roleText = if (::role.isInitialized) role.text.toString().trim()
+            else prefs.getString("career_role", "Elektrik teknisyeni").orEmpty()
+        val cityText = if (::place.isInitialized) place.text.toString().trim()
+            else prefs.getString("career_place", "Malatya").orEmpty()
+        val cloudToken = prefs.getString("bulut", "").orEmpty()
+        Thread {
+            var failure: String? = null
+            val batch = try {
+                CareerSearchEngine.searchBatch(categoryId, roleText, cityText, cloudToken)
+            } catch (error: Exception) {
+                failure = error.message ?: error.javaClass.simpleName
+                null
+            }
+            runOnUiThread {
+                if (batch != null) {
+                    cacheNewsCandidates(batch.hits)
+                    newsSearchStatus.text = buildString {
+                        append(batch.hits.size).append(" kaynak sonucu incelendi · ")
+                        append(batch.successfulQueries).append("/").append(batch.totalQueries).append(" sorgu tamamlandı.")
+                        append(if (categoryId == 6) " Kura/sonuç kayıtları listeleniyor." else " Öğrenci/program kayıtları listeleniyor.")
+                        if (batch.failedQueries > 0) append(" Bazı kaynaklar geçici olarak yanıt vermedi.")
+                    }
+                } else {
+                    newsSearchStatus.text = "Tarama tamamlanamadı. " +
+                        (failure ?: "İnternet bağlantısını kontrol edip yeniden dene.")
+                }
+                if (::newsResultsContainer.isInitialized) renderNewsResults(newsResultsContainer)
+            }
+        }.start()
+    }
+
     private fun buildNewsPage() {
         val hero = panel()
         hero.addView(label("ARIES  /  HABER & DUYURULAR", 10f, true, accentColor))
@@ -1357,6 +1407,21 @@ class CareerActivity : Activity() {
             12f, false, muted
         ))
         pageContent.addView(hero, params(-1, -2, 0, 2, 0, 12))
+
+        val scanCard = panel()
+        scanCard.addView(label("İLGİLİ KAYNAKLARI ŞİMDİ TARA", 10f, true, accentColor))
+        newsSearchStatus = label(
+            "Kura, sonuç, staj ve öğrenci programları için ayrı kaynak taraması başlatabilirsin.",
+            11f, false, muted
+        )
+        scanCard.addView(newsSearchStatus, params(-1, -2, 0, 5, 0, 6))
+        scanCard.addView(primaryButton("Kura / noter / sınav / sonuçları tara") {
+            searchNewsCategory(6)
+        }, params(-1, dp(46), 0, 2, 0, 5))
+        scanCard.addView(button("Staj / İŞKUR Gençlik / öğrenci programlarını tara") {
+            searchNewsCategory(9)
+        }, params(-1, dp(44), 0, 2, 0, 0))
+        pageContent.addView(scanCard, params(-1, -2, 0, 2, 0, 12))
 
         val items = newsCandidates()
         val counts = CareerContentType.values().associateWith { type ->
