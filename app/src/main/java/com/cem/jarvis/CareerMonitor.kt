@@ -51,7 +51,7 @@ object CareerSourceCatalog {
     private val trustedDomains = listOf(
         "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
-        "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "gethirex.com",
+        "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr"
     )
 
@@ -280,10 +280,13 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
         return try {
             val hits = CareerSearchEngine.dailySearch()
             if (hits.isEmpty()) {
-                prefs.edit().putString("career_monitor_last_error",
-                    "Bu taramada kaynaklardan doğrulanabilir sonuç alınamadı. Sonuç yok demek değildir; sonraki günlük kontrolde yeniden denenecek.")
+                prefs.edit()
+                    .putLong("career_monitor_last_scan", System.currentTimeMillis())
+                    .putInt("career_monitor_new_count", 0)
+                    .putString("career_monitor_last_error",
+                        "Bu taramada doğrulanabilir sonuç alınamadı. Bu, hiç ilan olmadığı anlamına gelmez; bir sonraki günlük kontrolde yeniden taranacak.")
                     .apply()
-                return androidx.work.Result.retry()
+                return androidx.work.Result.success()
             }
             val previous = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty()
             val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
