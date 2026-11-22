@@ -286,6 +286,101 @@ object Net {
         return results
     }
 
+    private fun resolveGoogleNewsArticle(rawUrl: String): String? {
+        val connection = runCatching { URL(rawUrl).openConnection() as HttpURLConnection }.getOrNull() ?: return null
+        connection.instanceFollowRedirects = true
+        connection.connectTimeout = 5000
+        connection.readTimeout = 7000
+        connection.requestMethod = "GET"
+        connection.setRequestProperty(
+            "User-Agent",
+            "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36"
+        )
+        return try {
+            val code = connection.responseCode
+            val finalUrl = connection.url.toString()
+            if (code !in 200..399) return null
+            val uri = runCatching { java.net.URI(finalUrl) }.getOrNull() ?: return null
+            val host = uri.host.orEmpty().lowercase(Locale.ROOT)
+            if (host == "news.google.com" || host.endsWith(".google.com")) null else finalUrl
+        } catch (_: Exception) {
+            null
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    /** Google Haberler RSS, arama motorlarının HTML sayfaları engellendiğinde yayıncı bağlantısı keşfi için son yedektir. */
+    fun webSearchGoogleNews(query: String, maxResults: Int = 4): List<Hit> {
+        val address = "https://news.google.com/rss/search?q=" +
+            URLEncoder.encode(query, "UTF-8") + "&hl=tr&gl=TR&ceid=TR:tr"
+        val connection = URL(address).openConnection() as HttpURLConnection
+        connection.connectTimeout = 7000
+        connection.readTimeout = 10000
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 Aries/1.12")
+        val raw = ArrayList<Hit>()
+        try {
+            if (connection.responseCode !in 200..299) throw IOException("Google Haberler RSS yanıt vermedi.")
+            connection.inputStream.use { input ->
+                val parser = Xml.newPullParser()
+                parser.setInput(input, "UTF-8")
+                var inItem = false
+                var field = ""
+                var title = ""
+                var link = ""
+                var description = ""
+                var event = parser.eventType
+                while (event != XmlPullParser.END_DOCUMENT && raw.size < maxResults.coerceIn(1, 8) * 3) {
+                    if (event == XmlPullParser.START_TAG) {
+                        when (parser.name.lowercase(Locale.ROOT)) {
+                            "item" -> {
+                                inItem = true
+                                title = ""
+                                link = ""
+                                description = ""
+                            }
+                            "title", "link", "description" -> if (inItem) field = parser.name.lowercase(Locale.ROOT)
+                        }
+                    } else if (event == XmlPullParser.TEXT || event == XmlPullParser.CDSECT) {
+                        if (inItem) {
+                            when (field) {
+                                "title" -> title += parser.text.orEmpty()
+                                "link" -> link += parser.text.orEmpty()
+                                "description" -> description += parser.text.orEmpty()
+                            }
+                        }
+                    } else if (event == XmlPullParser.END_TAG) {
+                        if (parser.name.equals("title", true) ||
+                            parser.name.equals("link", true) ||
+                            parser.name.equals("description", true)
+                        ) field = ""
+                        if (parser.name.equals("item", true)) {
+                            inItem = false
+                            if (title.isNotBlank() && link.isNotBlank()) {
+                                raw += Hit(stripTags(title), link.trim(), stripTags(description))
+                            }
+                        }
+                    }
+                    event = parser.next()
+                }
+            }
+        } finally {
+            connection.disconnect()
+        }
+
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for (item in raw) {
+            if (output.size >= maxResults.coerceIn(1, 8)) break
+            val url = if (item.url.contains("news.google.com", true)) {
+                resolveGoogleNewsArticle(item.url) ?: continue
+            } else item.url
+            if (!url.startsWith("https://") || !seen.add(url.substringBefore("#"))) continue
+            output += Hit(item.title, url, item.snippet)
+        }
+        return output
+    }
+
     // Brave üçüncü sağlayıcı olarak yalnızca ilk iki sağlayıcı yeterli sonuç üretmediğinde denenir.
     fun webSearchBrave(query: String, maxResults: Int = 6): List<Hit> {
         val address = "https://search.brave.com/search?q=" + URLEncoder.encode(query, "UTF-8") + "&source=web"
