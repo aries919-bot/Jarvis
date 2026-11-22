@@ -1738,6 +1738,13 @@ class CareerActivity : Activity() {
                 }
                 item.put("status", status)
                     .put("updatedAt", now)
+                val followUpAt = item.optLong("followUpAt", 0L)
+                if (followUpAt > now) {
+                    CareerMonitorScheduler.scheduleApplicationFollowUp(
+                        this, item.optString("title"), url, status, followUpAt
+                    )
+                    item.put("followUpStatus", status)
+                }
             }
             updated.put(item)
         }
@@ -2083,6 +2090,7 @@ class CareerActivity : Activity() {
     }
 
     private fun deleteJob(url: String) {
+        CareerMonitorScheduler.cancelApplicationFollowUp(this, url)
         val old = savedJobs()
         val fresh = JSONArray()
         for (i in 0 until old.length()) {
