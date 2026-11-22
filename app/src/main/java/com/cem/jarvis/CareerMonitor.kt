@@ -789,7 +789,10 @@ data class CareerProcessEvent(
 object CareerRecruitmentTracker {
     private val stageRules = listOf(
         "NİHAİ SONUÇ / YERLEŞTİRME" to listOf("nihai sonuc", "nihai liste", "yerlestirme sonucu", "ise baslama"),
-        "SINAV SONUCU" to listOf("sinav sonucu", "mulakat sonucu", "sozlu sinav sonucu", "yazili sinav sonucu"),
+        "SINAV SONUCU" to listOf(
+            "sinav sonucu", "sinav sonuclari", "mulakat sonucu", "mulakat sonuclari",
+            "sozlu sinav sonucu", "sozlu sinav sonuclari", "yazili sinav sonucu", "yazili sinav sonuclari"
+        ),
         "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurasi sonuc", "kura sonucu", "kura sonuclari", "asil ve yedek", "asil aday", "yedek aday"),
         "SINAV / MÜLAKAT TARİHİ" to listOf("sinav tarihi", "sinava girecek", "sozlu sinav", "yazili sinav", "mulakat tarihi"),
         "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("kura cekimi", "kura cekilisi", "kura tarihi", "kuraya katilacak", "noter kurasi duyurusu", "noter kurasina katilacak", "kura listesi"),
@@ -815,7 +818,14 @@ object CareerRecruitmentTracker {
 
     fun parseEventTime(title: String, snippet: String, stage: String? = null): Pair<Long, Boolean>? {
         val text = title + " " + snippet
+        val isResultStage =
+            stage?.startsWith("NOTER KURASI SONUCU") == true ||
+                stage?.startsWith("SINAV SONUCU") == true ||
+                stage?.startsWith("NİHAİ SONUÇ") == true
         val markerPattern = when {
+            isResultStage -> Regex(
+                """(?i)(?:kura(?:sı)?\\s+sonuç(?:ları|lari|lar|u)?|sınav\\s+sonuç(?:ları|lari|lar|u)?|sinav\\s+sonuc(?:lari|lar|u)?|mülakat\\s+sonuç(?:ları|lari|lar|u)?|mulakat\\s+sonuc(?:lari|lar|u)?|nihai\\s+sonuç(?:ları|lari|lar|u)?|yerleştirme\\s+sonuç(?:ları|lari|lar|u)?|yerlestirme\\s+sonuc(?:lari|lar|u)?|sonuçların\\s+açıklanacağı|sonuclarin\\s+aciklanacagi)"""
+            )
             stage?.startsWith("BAŞVURU") == true ->
                 Regex("""(?i)(?:son\s+başvuru(?:\s+tarihi)?|son\s+müracaat(?:\s+tarihi)?|başvuruların\s+son\s+günü|son\s+basvuru(?:\s+tarihi)?)""")
             stage?.startsWith("EVRAK") == true ->
@@ -824,9 +834,6 @@ object CareerRecruitmentTracker {
                 Regex("""(?i)(?:kura\s+(?:çekimi|çekilişi|tarihi|cekimi|cekilisi)|kuraya\s+katılacak|kuraya\s+katilacak|noter\s+kurası|noter\s+kurasi|noter\s+huzurunda)""")
             stage?.startsWith("SINAV /") == true ->
                 Regex("""(?i)(?:sınav(?:ın|a|i)?\s*(?:yeri|tarihi)?|sinav(?:in|a|i)?\s*(?:yeri|tarihi)?|mülakat(?:ın)?\s+tarihi|mulakat(?:in)?\s+tarihi)""")
-            stage?.startsWith("NOTER KURASI SONUCU") == true ||
-                stage?.startsWith("SINAV SONUCU") == true ||
-                stage?.startsWith("NİHAİ SONUÇ") == true -> return null
             else -> Regex("""(?i)(?:kura\s+(?:çekimi|tarihi|cekimi)|son\s+başvuru|son\s+basvuru|sınav\s+tarihi|sinav\s+tarihi|evrak\s+teslim|belge\s+teslim)""")
         }
         val marker = markerPattern.find(text) ?: return null
@@ -843,9 +850,15 @@ object CareerRecruitmentTracker {
         val parsedDate = runCatching { dateParser.parse(normalizedDate) }.getOrNull() ?: return null
         val afterDate = tail.substring(dateMatch.range.last + 1).take(180)
         val normalizedAfterDate = normalize(afterDate)
-        if (listOf("duyurulacak", "ilan edilecek", "aciklanacak", "yayimlanacak").any(normalizedAfterDate::contains)) {
-            return null
-        }
+        val publicationIntent = listOf(
+            "duyurulacak", "ilan edilecek", "aciklanacak", "yayimlanacak", "yayinlanacak",
+            "aciklanmasi beklen", "duyurulmasi beklen", "belli olacak"
+        ).any(normalizedAfterDate::contains)
+        // For result stages, schedule a reminder only when the date is explicitly announced
+        // as a future publication date. For other stages, that wording is an announcement
+        // date, not the event date (for example, a later notice about a kura date).
+        if (isResultStage && !publicationIntent) return null
+        if (!isResultStage && publicationIntent) return null
         val timeText = Regex("""(?i)(?:saat\s*)?([01]?\d|2[0-3])[:.]([0-5]\d)""")
             .find(afterDate)
         val calendar = Calendar.getInstance().apply {
