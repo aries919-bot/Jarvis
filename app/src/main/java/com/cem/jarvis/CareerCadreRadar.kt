@@ -18,6 +18,13 @@ object CareerCadreRadar {
     const val KPSS_2026_1_ASSOCIATE_TABLE_URL = "https://dokuman.osym.gov.tr/pdfdokuman/2026/KPSS/TERCIH1/tablo2_t1d03062026.pdf"
     const val ADALET_2026_NOTICE_URL = "https://pgm.adalet.gov.tr/Home/SayfaDetay/2026sozlesmelitasra"
     const val ISKUR_URL = "https://esube.iskur.gov.tr/"
+    const val P94_ELECTRIC_ELECTRONICS_CODE = 2023
+    const val P93_ELECTRIC_PROGRAM_CODE = 3290
+    const val P93_ELECTRIC_TEDAS_NOTE =
+        "2026/1 TABLO-2'de TEDAŞ Tekniker kadrolarında 3290 kodu kullanıldı. ÖSYM'nin 3290 tanımı: Elektrik veya Elektrik Teknolojisi ön lisans programından mezun olmak. Mezuniyet ve diğer özel koşullar sağlanmadan uygun sayılmaz."
+
+    const val P94_ELECTRIC_CODE_NOTE =
+        "2026/1 ortaöğretim nitelik kodu 2023; Elektrik-Elektronik Teknolojisi alan ve dalları ile belirtilen Endüstriyel Otomasyon dallarını kapsar. Diploma alanı/dalı kod açıklamasına tam uymalıdır."
 
     // 2026/1 ÖSYM TABLO-1: Ortaöğretim mezunlarının tercih edebildiği unvan örnekleri.
     val p94History = listOf(
@@ -46,6 +53,7 @@ object CareerCadreRadar {
     // 2026/1 ÖSYM TABLO-2: Ön lisans tablosunda görülen unvan örnekleri.
     val p93History = listOf(
         CareerCadreEntry("Tekniker", "TCDD Taşımacılık, DHMİ, EÜAŞ, TEİAŞ, Tapu ve Kadastro, TİGEM, Et ve Süt Kurumu", "Program kodları çok önemlidir; her tekniker kadrosu Elektrik programı mezunlarına açık değildir."),
+        CareerCadreEntry("Tekniker · Elektrik (3290)", "Türkiye Elektrik Dağıtım A.Ş. (TEDAŞ)", P93_ELECTRIC_TEDAS_NOTE),
         CareerCadreEntry("Sağlık teknikeri", "Kafkas Üniversitesi ve Nevşehir Hacı Bektaş Veli Üniversitesi", "Sağlık ön lisans programı ve unvan şartı aranır."),
         CareerCadreEntry("Büro personeli", "Sosyal Güvenlik Kurumu ve üniversiteler", "Büro yönetimi veya diğer program/nitelik kodları ilanın özel şartına göre değişir."),
         CareerCadreEntry("İcra memuru", "Sosyal Güvenlik Kurumu", "Özel program ve nitelik kodları bulunur."),
