@@ -26,7 +26,7 @@ class CareerMonitorPolicyTest {
     fun p94CutoffIsNotJudgedWithoutAUserConfirmedScore() {
         val result = CareerEligibility.assess("Personel alımı", "KPSS P94 en az 70 puan şartı aranıyor.")
         assertTrue(result.startsWith("P94 PUAN ŞARTI VAR"))
-        assertTrue(result.contains("doğrulanmadığı"))
+        assertTrue(result.contains("puanı girilmediği"))
         assertFalse(result.startsWith("PUAN ŞARTI UYUŞMUYOR"))
     }
 
@@ -75,7 +75,7 @@ class CareerMonitorPolicyTest {
 
     @Test
     fun extractsFourDigitQualificationCodesWithoutTreatingYearsAsTheOnlyMatch() {
-        assertEquals(setOf(2001, 2023, 2086), CareerEligibility.extractQualificationCodes("Nitelik kodları: 2001, 2023, 2086, 2026"))
+        assertEquals(setOf(2001, 2023, 2086), CareerEligibility.extractQualificationCodes("KPSS-2026/2 · Nitelik kodları: 2001, 2023, 2086"))
     }
 
     @Test
