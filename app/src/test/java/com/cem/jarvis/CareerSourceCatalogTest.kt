@@ -12,6 +12,8 @@ class CareerSourceCatalogTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://www.sgk.gov.tr/"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.bel.tr/"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://sub.dsi.gov.tr/duyurular"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("https://engelsiz.iskur.gov.tr/faaliyetlerimiz/iskur-genclik-programi"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.edu.tr/staj"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("HTTPS://WWW.DSI.GOV.TR/duyurular"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("http://www.dsi.gov.tr/"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("https://www.dsi.gov.tr.evil.example/"))
@@ -39,6 +41,10 @@ class CareerSourceCatalogTest {
         assertTrue(names.contains("Fırat Üniversitesi – Personel Daire Başkanlığı"))
         assertTrue(names.contains("Adıyaman Üniversitesi – Personel Daire Başkanlığı"))
         assertTrue(names.contains("e-Devlet – İş ve Kariyer hizmetleri"))
+        assertTrue(names.contains("İŞKUR Gençlik Programı"))
+        assertTrue(names.contains("İŞKUR İşgücü Uyum Programı (İUP)"))
+        assertTrue(names.contains("GÜÇ – Gençliğin Üretim Çağı programları"))
+        assertTrue(names.contains("Kariyer Kapısı – açık kamu ilanları"))
         assertTrue(names.contains("İçişleri Bakanlığı – duyurular"))
         assertTrue(names.contains("Millî Savunma Bakanlığı – Personel Temin Sistemi"))
         assertTrue(names.contains("Jandarma Genel Komutanlığı – duyurular"))
@@ -66,12 +72,20 @@ class CareerSourceCatalogTest {
             CareerSourceCatalog.recruitmentGroup("Teknisyen alımı", "Başvuru duyurusu", "https://www.dsi.gov.tr/")
         )
         assertEquals(
-            "Kamu / kamu bağlantılı",
+            "Savunma sanayii / şirket alımı",
             CareerSourceCatalog.recruitmentGroup("Teknik personel", "Açık pozisyon", "https://akariyer.aselsan.com/")
         )
         assertEquals(
             "Özel sektör",
             CareerSourceCatalog.recruitmentGroup("Elektrik teknisyeni", "Açık pozisyon", "https://careers.borusan.com/")
+        )
+        assertEquals(
+            "Savunma sanayii / şirket alımı",
+            CareerSourceCatalog.recruitmentGroup("Elektrik-elektronik bakım teknisyeni", "Açık pozisyon", "https://kariyer.tusas.com/acik-pozisyonlarimiz")
+        )
+        assertEquals(
+            "KİT / kamu şirketi alımı · usul doğrulanmalı",
+            CareerSourceCatalog.recruitmentGroup("Teknisyen alımı", "Başvuru duyurusu", "https://www.tcdd.gov.tr/duyurular")
         )
         assertEquals(
             "Platform / sektör doğrulanmalı",
