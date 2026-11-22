@@ -521,15 +521,15 @@ object CareerSearchEngine {
 
                         attempt("DuckDuckGo", { Net.webSearch(query, 8) })
                         var trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
-                        if (trustedCount < 2) {
+                        if (trustedCount < 1) {
                             attempt("Bing", { Net.webSearchBing(query, 8) })
                             trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
                         }
-                        if (trustedCount < 2) {
+                        if (trustedCount < 1) {
                             attempt("Google Haberler RSS", { Net.webSearchGoogleNews(query, 4) })
                             trustedCount = found.values.count { CareerSourceCatalog.isTrustedUrl(it.url) }
                         }
-                        if (trustedCount < 2) {
+                        if (trustedCount < 1) {
                             attempt("Brave", { Net.webSearchBrave(query, 6) })
                         }
 
