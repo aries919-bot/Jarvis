@@ -41,7 +41,15 @@ object CareerContentClassifier {
     )
 
     private val vacancyPattern = Regex(
-        """\b(?:personel|surekli isci|isci|memur|teknisyen|tekniker|muhendis|usta|operator|sofor|guvenlik gorevlisi|destek personeli)\s+(?:alim[i]?|ilan[i]?|istihdam|alacak|alimi)\b"""
+        """\b(?:personel|surekli isci|isci|memur|teknisyen|tekniker|muhendis|usta|operator|sofor|guvenlik gorevlisi|destek personeli)\b.{0,55}\b(?:alim|alimi|ilan|ilani|istihdam|alinacak|acik pozisyon)\b|\b(?:alim|alimi|alinacak|istihdam)\b.{0,55}\b(?:personel|surekli isci|isci|memur|teknisyen|tekniker|muhendis|usta|operator|sofor)\b"""
+    )
+
+    private val vacancyTerms = listOf(
+        "personel alimi", "isci alimi", "surekli isci alimi",
+        "memur alimi", "teknisyen alimi", "tekniker alimi",
+        "muhendis alimi", "usta alimi", "operator alimi",
+        "guvenlik gorevlisi alimi", "acik pozisyon", "is ilani",
+        "ise alim duyurusu", "isveren personel ariyor"
     )
 
     fun classify(title: String, snippet: String, url: String): CareerContentClassification {
@@ -70,8 +78,9 @@ object CareerContentClassifier {
         }
 
         val explicitJobLanguage = vacancyPattern.containsMatchIn(text) ||
+            vacancyTerms.any(text::contains) ||
             listOf(
-                "is ilani", "acik pozisyon", "basvuruya acildi",
+                "basvuruya acildi", "basvurular basladi",
                 "personel alim ilan", "isci alim ilan", "memur alim ilan",
                 "teknisyen alim ilan", "tekniker alim ilan",
                 "ise alim basvurulari", "recruitment opening", "job vacancy"
