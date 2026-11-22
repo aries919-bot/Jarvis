@@ -1704,6 +1704,9 @@ class CareerActivity : Activity() {
                 .put("createdAt", System.currentTimeMillis())
                 .put("updatedAt", System.currentTimeMillis())
                 .put("note", "")
+                .put("history", JSONArray().put(
+                    JSONObject().put("from", "").put("to", "Kaydedildi").put("at", System.currentTimeMillis())
+                ))
         )
         prefs.edit().putString("career_jobs", list.toString()).apply()
         toast("İlan takip listene eklendi.")
@@ -1720,8 +1723,21 @@ class CareerActivity : Activity() {
         for (i in 0 until old.length()) {
             val item = old.optJSONObject(i) ?: continue
             if (item.optString("url") == url) {
+                val oldStatus = item.optString("status", "Kaydedildi")
+                val now = System.currentTimeMillis()
+                if (oldStatus != status) {
+                    val history = item.optJSONArray("history") ?: JSONArray()
+                    history.put(
+                        JSONObject()
+                            .put("from", oldStatus)
+                            .put("to", status)
+                            .put("at", now)
+                    )
+                    while (history.length() > 15) history.remove(0)
+                    item.put("history", history)
+                }
                 item.put("status", status)
-                    .put("updatedAt", System.currentTimeMillis())
+                    .put("updatedAt", now)
             }
             updated.put(item)
         }
@@ -1945,6 +1961,21 @@ class CareerActivity : Activity() {
             card.addView(label(title, 14f, true))
             card.addView(label(group.uppercase(Locale("tr", "TR")), 10f, true, accentBlue))
             card.addView(label("BAŞVURU DURUMU · $status", 11f, true, accentColor))
+            val history = item.optJSONArray("history") ?: JSONArray()
+            if (history.length() > 0) {
+                val recentHistory = (maxOf(0, history.length() - 3) until history.length()).mapNotNull { index ->
+                    val event = history.optJSONObject(index) ?: return@mapNotNull null
+                    val at = event.optLong("at", 0L)
+                    val to = event.optString("to")
+                    if (to.isBlank()) null else {
+                        val dateText = if (at > 0L) SimpleDateFormat("dd.MM HH:mm", Locale("tr", "TR")).format(Date(at)) else ""
+                        (if (dateText.isBlank()) "" else "$dateText · ") + to
+                    }
+                }
+                if (recentHistory.isNotEmpty()) {
+                    card.addView(label("SÜREÇ GEÇMİŞİ · " + recentHistory.joinToString("  →  "), 10f, false, muted))
+                }
+            }
             val deadline = CareerListingParser.deadlineStatus(snippet).orEmpty()
             if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, warningColor))
             val date = item.optLong("updatedAt", 0L)
