@@ -1,0 +1,114 @@
+package com.cem.jarvis
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+class CareerSearchParsingTest {
+    @Test
+    fun parsesDuckDuckGoResultsWhenAttributeOrderAndQuoteStyleChange() {
+        val html = """
+            <div class="result">
+              <h2><a rel="nofollow" class="result__a" href="https://www.osym.gov.tr/duyuru/1">ÖSYM Personel Duyurusu</a></h2>
+              <a class="result__snippet">Ortaöğretim KPSS ve tercih duyurusu.</a>
+            </div>
+            <div class="result">
+              <h2><a href='https://www.kgm.gov.tr/duyuru/2' class='result__a'>Karayolları İşçi Alımı</a></h2>
+              <a class='result__snippet'>Noter kurası ve asıl yedek aday listesi.</a>
+            </div>
+        """.trimIndent()
+
+        val results = Net.parseDuckDuckGoHtml(html, 8)
+
+        assertEquals(2, results.size)
+        assertEquals("ÖSYM Personel Duyurusu", results[0].title)
+        assertEquals("https://www.osym.gov.tr/duyuru/1", results[0].url)
+        assertTrue(results[0].snippet.contains("Ortaöğretim KPSS"))
+        assertEquals("Karayolları İşçi Alımı", results[1].title)
+        assertEquals("https://www.kgm.gov.tr/duyuru/2", results[1].url)
+        assertTrue(results[1].snippet.contains("Noter kurası"))
+    }
+
+    @Test
+    fun parsesBingHeadingsAndKeepsTheirOwnCaptions() {
+        val html = """
+            <li class="b_algo">
+              <h2><a href="https://www.ogm.gov.tr/duyuru/3">Orman Genel Müdürlüğü Kura</a></h2>
+              <div class="b_caption"><p>Elektrikçi alımı noter kurası 08.10.2026 saat 11:00.</p></div>
+            </li>
+            <li class="b_algo">
+              <h2><a href="https://www.ant.gov.tr/haberler.html">ANT Personel Alımı</a></h2>
+              <div class="b_caption"><p>Asıl ve yedek kura sonuçları yayımlandı.</p></div>
+            </li>
+        """.trimIndent()
+
+        val results = Net.parseBingHtml(html, 8)
+
+        assertEquals(2, results.size)
+        assertEquals("https://www.ogm.gov.tr/duyuru/3", results[0].url)
+        assertTrue(results[0].snippet.contains("08.10.2026"))
+        assertTrue(results[1].snippet.contains("Asıl ve yedek"))
+    }
+
+    @Test
+    fun identifiesTheTurkishRecruitmentProcessStages() {
+        assertEquals(
+            "KURA TARİHİ / KURAYA KATILACAKLAR",
+            CareerRecruitmentTracker.detectStage(
+                "Noter kurası duyurusu",
+                "Elektrikçi kadrosu için kura çekimi 08.10.2026 tarihinde yapılacaktır."
+            )
+        )
+        assertEquals(
+            "NOTER KURASI SONUCU · ASIL / YEDEK",
+            CareerRecruitmentTracker.detectStage(
+                "Noter kurası sonuçları belli oldu",
+                "Asıl ve yedek aday listesi yayımlandı."
+            )
+        )
+        assertEquals(
+            "EVRAK / BELGE KONTROLÜ",
+            CareerRecruitmentTracker.detectStage(
+                "Evrak kontrol duyurusu",
+                "Belgelerin teslim tarihi ilan edildi."
+            )
+        )
+        assertEquals(
+            "SINAV / MÜLAKAT TARİHİ",
+            CareerRecruitmentTracker.detectStage(
+                "Sözlü sınav tarihi açıklandı",
+                "Sınava girecek adaylar listesi."
+            )
+        )
+        assertEquals(
+            "SINAV SONUCU",
+            CareerRecruitmentTracker.detectStage(
+                "Mülakat sonucu",
+                "Sınav sonucu duyurusu."
+            )
+        )
+    }
+
+    @Test
+    fun extractsOnlyExplicitKuraDateAndTimeForReminder() {
+        val parsed = CareerRecruitmentTracker.parseEventTime(
+            "Noter kurası tarihi açıklandı",
+            "Kura çekimi 08.10.2026 Perşembe günü saat 11:00'de yapılacaktır."
+        )
+
+        assertNotNull(parsed)
+        assertTrue(parsed!!.second)
+        val formatted = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(java.util.Date(parsed.first))
+        assertEquals("08.10.2026 11:00", formatted)
+
+        val noDate = CareerRecruitmentTracker.parseEventTime(
+            "Kura sonuçları yayımlandı",
+            "Asıl ve yedek aday listesi erişime açılmıştır."
+        )
+        assertEquals(null, noDate)
+    }
+}
