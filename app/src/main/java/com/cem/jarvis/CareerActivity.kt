@@ -285,13 +285,13 @@ class CareerActivity : Activity() {
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
         filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
         filtersCard.addView(quickChipRow(
-            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Kamu şirketleri", "Özel sektör", "Belediye")
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / noter", "Büyük kurumlar", "Özel sektör", "Belediye")
         ) { selected ->
             val target = when (selected) {
                 "Kamu · KPSS" -> 1
                 "KPSS'siz kamu" -> 2
                 "Kura / noter" -> 6
-                "Kamu şirketleri" -> 4
+                "Büyük kurumlar" -> 4
                 "Özel sektör" -> 3
                 "Belediye" -> 8
                 else -> 0
@@ -1532,14 +1532,10 @@ class CareerActivity : Activity() {
             status !in finishedStatuses && status !in queuedStatuses
         }
         val queuedCount = allItems.count { it.optString("status", "Kaydedildi") in queuedStatuses }
-        val finishedCount = allItems.count { it.optString("status", "Kaydedildi") in finishedStatuses }
-
         val summary = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         summary.addView(statCard("KAYDEDİLEN", queuedCount.toString(), "Henüz başvurulmadı"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, dp(4), 0) })
         summary.addView(statCard("SÜREÇTE", activeCount.toString(), "Başvuru / kura / sınav"),
-            LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
-        summary.addView(statCard("SONUÇLANAN", finishedCount.toString(), "Teklif / atama / sonuç"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(4), 0, 0, 0) })
         parent.addView(summary, params(-1, -2, 0, 4, 0, 10))
 
@@ -1629,8 +1625,9 @@ class CareerActivity : Activity() {
     private fun showFinishedApplications(parent: LinearLayout) {
         parent.removeAllViews()
         val finishedStatuses = setOf("Teklif alındı", "Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
-        val items = (savedJobs().length() - 1 downTo 0)
-            .mapNotNull { savedJobs().optJSONObject(it) }
+        val stored = savedJobs()
+        val items = (stored.length() - 1 downTo 0)
+            .mapNotNull { stored.optJSONObject(it) }
             .filter { it.optString("status", "Kaydedildi") in finishedStatuses }
 
         if (items.isEmpty()) {
