@@ -559,35 +559,48 @@ object CareerSearchEngine {
 
 object CareerMonitorScheduler {
     const val CHANNEL_ID = "aries_career_alerts"
-    private const val UNIQUE_WORK = "aries_daily_career_scan"
-    private const val UNIQUE_NOW = "aries_career_scan_now"
+    private const val UNIQUE_LEGACY = "aries_daily_career_scan"
+    private const val UNIQUE_MORNING = "aries_career_morning_scan"
+    private const val UNIQUE_EVENING = "aries_career_evening_scan"
+    private const val UNIQUE_MANUAL = "aries_career_manual_scan"
 
     private fun constraints() = androidx.work.Constraints.Builder()
         .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
         .build()
 
-    /** WorkManager kalıcı iş kuyruğudur; Android pil yönetimi nedeniyle tam saat garantisi vermez. */
-    fun schedule(context: Context) {
+    private fun nextDelay(hour: Int, minute: Int): Long {
         val now = Calendar.getInstance()
         val target = (now.clone() as Calendar).apply {
-            set(Calendar.HOUR_OF_DAY, 8)
-            set(Calendar.MINUTE, 20)
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             if (timeInMillis <= now.timeInMillis) add(Calendar.DAY_OF_YEAR, 1)
         }
-        val delay = (target.timeInMillis - now.timeInMillis).coerceAtLeast(0L)
+        return (target.timeInMillis - now.timeInMillis).coerceAtLeast(0L)
+    }
+
+    private fun scheduleSlot(context: Context, uniqueName: String, label: String, hour: Int, minute: Int) {
         val request = androidx.work.PeriodicWorkRequestBuilder<CareerDailyWorker>(24, TimeUnit.HOURS)
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInitialDelay(nextDelay(hour, minute), TimeUnit.MILLISECONDS)
             .setConstraints(constraints())
             .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
-            .addTag(UNIQUE_WORK)
+            .setInputData(androidx.work.workDataOf("manual_run" to false, "scan_slot" to label))
+            .addTag(uniqueName)
             .build()
         androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            UNIQUE_WORK,
+            uniqueName,
             androidx.work.ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+    }
+
+    /** Two independent daily windows. WorkManager can defer them under Android battery management. */
+    fun schedule(context: Context) {
+        val wm = androidx.work.WorkManager.getInstance(context)
+        wm.cancelUniqueWork(UNIQUE_LEGACY)
+        scheduleSlot(context, UNIQUE_MORNING, "Sabah", 8, 30)
+        scheduleSlot(context, UNIQUE_EVENING, "Akşam", 20, 30)
     }
 
     fun scheduleIfEnabled(context: Context) {
@@ -596,22 +609,27 @@ object CareerMonitorScheduler {
         if (enabled) schedule(context) else cancel(context)
     }
 
-    fun runNow(context: Context) {
+    /** Manual full-source scan works even when automatic monitoring is switched off. */
+    fun runManualNow(context: Context): java.util.UUID {
         val request = androidx.work.OneTimeWorkRequestBuilder<CareerDailyWorker>()
             .setConstraints(constraints())
             .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
-            .addTag(UNIQUE_NOW)
+            .setInputData(androidx.work.workDataOf("manual_run" to true, "scan_slot" to "Manuel"))
+            .addTag(UNIQUE_MANUAL)
             .build()
         androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
-            UNIQUE_NOW,
-            androidx.work.ExistingWorkPolicy.KEEP,
+            UNIQUE_MANUAL,
+            androidx.work.ExistingWorkPolicy.REPLACE,
             request
         )
+        return request.id
     }
 
     fun cancel(context: Context) {
-        androidx.work.WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_WORK)
-        androidx.work.WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_NOW)
+        val wm = androidx.work.WorkManager.getInstance(context)
+        wm.cancelUniqueWork(UNIQUE_LEGACY)
+        wm.cancelUniqueWork(UNIQUE_MORNING)
+        wm.cancelUniqueWork(UNIQUE_EVENING)
     }
 
     fun ensureChannel(context: Context) {
@@ -623,7 +641,7 @@ object CareerMonitorScheduler {
         }
     }
 
-    fun notifyNewJobs(context: Context, count: Int, first: Net.Hit?) {
+    fun notifyNewJobs(context: Context, count: Int, first: Net.Hit?, slot: String) {
         ensureChannel(context)
         if (Build.VERSION.SDK_INT >= 33 &&
             context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -636,16 +654,16 @@ object CareerMonitorScheduler {
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, CHANNEL_ID)
             else Notification.Builder(context)
         builder.setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Aries: yeni iş ilanı bağlantısı")
-            .setContentText("$count yeni resmî/kurumsal kaynak sonucu bulundu.")
+            .setContentTitle("Aries: $slot taramasında yeni ilan bağlantıları")
+            .setContentText("$count yeni resmî/kurumsal/platform sonucu bulundu.")
             .setAutoCancel(true)
             .setContentIntent(pending)
             .setStyle(Notification.BigTextStyle().bigText(
                 (first?.title?.plus(" · ") ?: "") +
-                    "$count yeni sonuç. İlanın hâlâ açık olduğunu ve başvuru koşullarını resmî sayfada doğrula."
+                    "$count yeni sonuç bulundu. İlanın aktifliğini ve son başvuru tarihini kaynak sayfasında doğrula."
             ))
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(74023, builder.build())
+        manager.notify(if (slot == "Akşam") 74024 else 74023, builder.build())
     }
 }
 
@@ -654,21 +672,33 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
 
     override fun doWork(): androidx.work.ListenableWorker.Result {
         val prefs = applicationContext.getSharedPreferences("j", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("career_monitor_enabled", false)) return androidx.work.ListenableWorker.Result.success()
+        val manualRun = inputData.getBoolean("manual_run", false)
+        val slot = inputData.getString("scan_slot").orEmpty().ifBlank { if (manualRun) "Manuel" else "Otomatik" }
+        if (!manualRun && !prefs.getBoolean("career_monitor_enabled", false)) {
+            return androidx.work.ListenableWorker.Result.success()
+        }
+
+        prefs.edit()
+            .putLong("career_monitor_last_attempt", System.currentTimeMillis())
+            .putString("career_monitor_running_slot", slot)
+            .putBoolean("career_monitor_is_running", true)
+            .apply()
+
         return try {
             val role = prefs.getString(
                 "career_role",
-                "elektrik teknisyeni pano montaj bakım üretim operatör depo satış işçi personel"
+                "elektrik teknisyeni, pano montajı, bakım-onarım, üretim, depo, operatör, satış, beden işçisi"
             ).orEmpty()
             val city = prefs.getString(
                 "career_place",
-                "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman"
+                "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
             ).orEmpty()
             val batch = CareerSearchEngine.dailySearchBatch(role, city)
             if (!batch.hasAnySuccessfulQuery) {
                 prefs.edit()
+                    .putBoolean("career_monitor_is_running", false)
                     .putString("career_monitor_last_error",
-                        "Kaynak taraması başarısız: hiçbir arama sorgusu tamamlanamadı. İnternet erişimi/arama servisi kontrol edilecek ve yeniden denenecek.")
+                        "Kaynak taraması başarısız: hiçbir arama sorgusu tamamlanamadı. İnternet/arama servisi kontrol edilip yeniden denenecek.")
                     .apply()
                 return androidx.work.ListenableWorker.Result.retry()
             }
@@ -676,8 +706,8 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             val hits = batch.hits
             val orderedSeen = LinkedHashSet<String>()
             val oldOrder = runCatching {
-                org.json.JSONArray(prefs.getString("career_monitor_seen_order", "[]"))
-            }.getOrDefault(org.json.JSONArray())
+                JSONArray(prefs.getString("career_monitor_seen_order", "[]"))
+            }.getOrDefault(JSONArray())
             for (index in 0 until oldOrder.length()) {
                 val fingerprint = oldOrder.optString(index)
                 if (fingerprint.isNotBlank()) orderedSeen.add(fingerprint)
@@ -691,16 +721,27 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 isNew
             }
             hits.forEach { hit -> orderedSeen.add(CareerSearchEngine.fingerprint(hit.title, hit.url)) }
-            while (orderedSeen.size > 2000) {
+            while (orderedSeen.size > 3000) {
                 val oldest = orderedSeen.firstOrNull() ?: break
                 orderedSeen.remove(oldest)
             }
             val boundedSeen = orderedSeen.toSet()
-            val seenOrderJson = org.json.JSONArray().apply { orderedSeen.forEach { put(it) } }
+            val seenOrderJson = JSONArray().apply { orderedSeen.forEach { put(it) } }
 
             val json = JSONArray()
-            hits.take(60).forEach { hit ->
+            val ranked = hits.map { hit ->
+                val eligibility = CareerEligibility.assess(hit.title, hit.snippet, hit.url)
+                val score = CareerEligibility.profileMatchScore(hit.title, hit.snippet, role, city, eligibility)
+                Triple(hit, eligibility, score)
+            }.sortedByDescending { it.third }
+
+            ranked.take(100).forEach { (hit, eligibility, score) ->
                 val category = CareerSourceCatalog.categoryFor(hit.url)
+                val listingStatus = if (CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)) {
+                    "İlan adayı · açık olup olmadığı ve başvuru kabulü sayfada doğrulanmalı"
+                } else {
+                    "Kariyer/duyuru kaynağı · açık ilan olduğu doğrulanmadı"
+                }
                 json.put(
                     JSONObject()
                         .put("title", hit.title)
@@ -708,33 +749,49 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                         .put("snippet", hit.snippet)
                         .put("source", CareerSourceCatalog.sourceName(hit.url))
                         .put("category", category)
-                        .put("eligibility", CareerEligibility.assess(hit.title, hit.snippet, hit.url))
-                        .put("listingStatus", if (CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet))
-                            "İlan adayı · güncellik ve açık başvuru durumu sayfada doğrulanmalı"
-                        else "Kariyer/duyuru kaynağı · açık ilan olduğu doğrulanmadı")
+                        .put("isSecondary", CareerSourceCatalog.isSecondary(hit.url))
+                        .put("eligibility", eligibility)
+                        .put("listingStatus", listingStatus)
+                        .put("profileMatchScore", score)
+                        .put("profileMatchReason", CareerEligibility.profileMatchReason(hit.title, hit.snippet, role, city, eligibility))
+                        .put("deadlineDate", CareerListingParser.deadlineDate(hit.snippet) ?: "")
+                        .put("deadlineStatus", CareerListingParser.deadlineStatus(hit.snippet) ?: "")
                         .put("fingerprint", CareerSearchEngine.fingerprint(hit.title, hit.url))
+                        .put("lastSeenAt", System.currentTimeMillis())
                 )
             }
+
             val partialWarning = if (batch.failedQueries > 0) {
                 "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir."
             } else null
+            val now = System.currentTimeMillis()
 
             prefs.edit()
                 .putStringSet("career_monitor_seen", boundedSeen)
                 .putString("career_monitor_seen_order", seenOrderJson.toString())
                 .putString("career_monitor_results", json.toString())
-                .putLong("career_monitor_last_scan", System.currentTimeMillis())
+                .putLong("career_monitor_last_scan", now)
+                .putString("career_monitor_last_slot", slot)
+                .putString("career_monitor_last_run_type", if (manualRun) "Manuel" else "Otomatik")
                 .putInt("career_monitor_new_count", fresh.size)
+                .putInt("career_monitor_result_count", hits.size)
                 .putBoolean("career_monitor_initialized", true)
                 .putInt("career_monitor_successful_queries", batch.successfulQueries)
                 .putInt("career_monitor_total_queries", batch.totalQueries)
+                .putBoolean("career_monitor_is_running", false)
                 .putString("career_monitor_last_error", partialWarning)
+                .putString("career_monitor_empty_reason",
+                    if (hits.isEmpty()) "Arama sorguları çalıştı ancak bu turda eşleşen ilan bağlantısı bulunamadı. Bu, kaynaklarda ilan olmadığı anlamına gelmez."
+                    else "")
                 .apply()
 
-            if (fresh.isNotEmpty()) CareerMonitorScheduler.notifyNewJobs(applicationContext, fresh.size, fresh.first())
+            if (!manualRun && fresh.isNotEmpty()) {
+                CareerMonitorScheduler.notifyNewJobs(applicationContext, fresh.size, fresh.first(), slot)
+            }
             androidx.work.ListenableWorker.Result.success()
         } catch (e: Exception) {
             prefs.edit()
+                .putBoolean("career_monitor_is_running", false)
                 .putString("career_monitor_last_error",
                     "Tarama tamamlanamadı: ${e.message ?: "bağlantı veya kaynak hatası"}")
                 .apply()
@@ -742,3 +799,4 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
         }
     }
 }
+
