@@ -136,13 +136,26 @@ object CareerCadreGuide {
             .map { it.value.toInt() }
             .toSet()
 
-    fun explainQualificationCodes(codes: Set<Int>): String {
+    fun explainQualificationCodes(
+        codes: Set<Int>,
+        diplomaField: String = "",
+        diplomaBranch: String = ""
+    ): String {
         if (codes.isEmpty()) {
             return "Nitelik kodu başlık/özetten çıkarılamadı. İlanın tam metni ve güncel ÖSYM kılavuzu kontrol edilmeli."
         }
-        return codes.sorted().joinToString("\n") { code ->
+        val descriptions = codes.sorted().joinToString("\n") { code ->
             "$code · " + (qualificationCodeExplanation(code)
                 ?: "Bu kodun güncel kılavuzdaki açıklamasını ve ilandaki özel koşulları ayrıca kontrol et.")
         }
+        val requiresFieldConfirmation = codes.any { it in setOf(2023, 2047, 2061, 2065, 2069, 2085, 2086, 2111, 2112, 2117, 2119) }
+        if (!requiresFieldConfirmation) return descriptions
+        val diploma = listOf(diplomaField.trim(), diplomaBranch.trim()).filter { it.isNotBlank() }.joinToString(" / ")
+        val profileNote = if (diploma.isBlank()) {
+            "Lise alanı/dalı profilinde henüz girilmedi. Diploma bilgisi olmadan bu nitelik kodlarının sana uyduğu doğrulanamaz."
+        } else {
+            "Profilinde kayıtlı lise alanı/dalı: $diploma. Bu metin diploma/MEB alan-dal koduyla otomatik doğrulanmış değildir; resmî kılavuzdaki şartla karşılaştır."
+        }
+        return "$descriptions\n$profileNote"
     }
 }
