@@ -12,7 +12,7 @@ class CareerSearchProviderFallbackTest {
             "https://www.sg.gov.tr/",
             "Kurum ana sayfası"
         )
-        assertFalse(CareerSearchEngine.hasUsableResult(listOf(homepage)))
+        assertFalse(CareerSearchEngine.containsUsableJobResult(listOf(homepage)))
     }
 
     @Test
@@ -22,7 +22,7 @@ class CareerSearchProviderFallbackTest {
             "https://www.sg.gov.tr/duyurular",
             "Personel alımı, başvuru ve sınav takvimi"
         )
-        assertTrue(CareerSearchEngine.hasUsableResult(listOf(notice)))
+        assertTrue(CareerSearchEngine.containsUsableJobResult(listOf(notice)))
     }
 
     @Test
@@ -32,6 +32,6 @@ class CareerSearchProviderFallbackTest {
             "https://example.invalid/ilan",
             "Başvuru ve son tarih"
         )
-        assertFalse(CareerSearchEngine.hasUsableResult(listOf(untrusted)))
+        assertFalse(CareerSearchEngine.containsUsableJobResult(listOf(untrusted)))
     }
 }
