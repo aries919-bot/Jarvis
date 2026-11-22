@@ -388,7 +388,7 @@ class CareerActivity : Activity() {
 
         manualScanButton = primaryButton("↻  Tüm kaynakları şimdi tara") { queueManualScan() }
         pageContent.addView(manualScanButton, params(-1, dp(52), 0, 8, 0, 7))
-        pageContent.addView(button("Takip edilen kaynakları görüntüle") { showSources() }, params(-1, dp(44), 0, 0, 0, 6))
+        pageContent.addView(button("Takip edilen kaynakları görüntüle") { showSources() }, params(-1, dp(48), 0, 0, 0, 6))
         pageContent.addView(button("Bildirim ve pil ayarlarını kontrol et") {
             runCatching {
                 startActivity(Intent(
@@ -552,7 +552,7 @@ class CareerActivity : Activity() {
         val message = if (missing.isEmpty()) {
             "Köşeli parantezli boş alan görünmüyor. Bilgilerinin doğru ve güncel olduğunu yine de kontrol et."
         } else {
-            "Tamamlanması gereken alanlar:\\n\\n" + missing.joinToString("\\n") { "• " + it }
+            "Tamamlanması gereken alanlar:\n\n" + missing.joinToString("\n") { "• " + it }
         }
         AlertDialog.Builder(this).setTitle("CV kontrolü").setMessage(message)
             .setPositiveButton("Düzenle", null).show()
@@ -635,7 +635,15 @@ class CareerActivity : Activity() {
         searchFailure = null
         searchDiagnostic = ""
         results.removeAllViews()
-        results.addView(label("Arama sağlayıcıları sırayla deneniyor. Eşleşen güvenilir kaynaklar kontrol ediliyor…", 13f, false, muted))
+        val loadingCard = panel().apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        val progress = ProgressBar(this).apply { isIndeterminate = true }
+        loadingCard.addView(progress, LinearLayout.LayoutParams(dp(30), dp(30)).apply { setMargins(0, 0, dp(12), 0) })
+        loadingCard.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(label("Kaynaklar taranıyor", 14f, true, primaryText))
+            addView(label("Arama motorları ve güvenilir kurum bağlantıları sırayla kontrol ediliyor…", 11f, false, muted))
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        results.addView(loadingCard, params(-1, -2, 0, 2, 0, 8))
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
@@ -673,18 +681,27 @@ class CareerActivity : Activity() {
         if (!::results.isInitialized) return
         results.removeAllViews()
         if (failed) {
-            results.addView(label(searchFailure ?: "Tarama tamamlanamadı.", 13f, true, Color.rgb(255, 190, 110)))
-            if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 11f, false, muted))
-            results.addView(button("Yeniden dene") { searchJobs() }, params(-1, dp(44), 0, 6, 0, 6))
+            val errorCard = panel()
+            errorCard.addView(label("Arama tamamlanamadı", 15f, true, warningColor))
+            errorCard.addView(label(searchFailure ?: "Tarama tamamlanamadı.", 12f, false, primaryText))
+            if (searchDiagnostic.isNotBlank()) errorCard.addView(label(searchDiagnostic, 11f, false, muted))
+            errorCard.addView(primaryButton("↻  Yeniden dene") { searchJobs() }, params(-1, dp(48), 0, 8, 0, 0))
+            results.addView(errorCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
         if (!hasSearchRun) {
-            results.addView(label("Arama yaptığında ilanlar burada görünecek. Her sayfada en fazla beş ilan gösterilir.", 13f, false, muted))
+            val emptyCard = panel()
+            emptyCard.addView(label("İlk aramanı başlat", 15f, true, primaryText))
+            emptyCard.addView(label("Pozisyonunu ve bölgeni seçtikten sonra ilanlar burada listelenecek. Her sayfada beş fırsat gösterilir.", 12f, false, muted))
+            results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
         if (searchHits.isEmpty()) {
-            results.addView(label("Arama servisleri yanıt verdi ancak bu filtrede güvenilir kaynaklardan eşleşen bir ilan bağlantısı çıkarılamadı. Bu, iş ilanı yok anlamına gelmez.", 13f, false, muted))
-            if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 11f, false, muted))
+            val emptyCard = panel()
+            emptyCard.addView(label("Bu aramada eşleşen ilan bulunamadı", 15f, true, primaryText))
+            emptyCard.addView(label("Arama servisleri yanıt verdi ancak güvenilir kaynaklardan uygun ilan bağlantısı çıkarılamadı. Bu, iş ilanı olmadığı anlamına gelmez.", 12f, false, muted))
+            if (searchDiagnostic.isNotBlank()) emptyCard.addView(label(searchDiagnostic, 11f, false, muted))
+            results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             results.addView(button("Daha geniş arama yap") {
                 role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
                 category.setSelection(0)
@@ -692,10 +709,10 @@ class CareerActivity : Activity() {
             }, params(-1, dp(44), 0, 6, 0, 6))
             results.addView(button("Resmî ve kurumsal kaynakları aç") {
                 showSources()
-            }, params(-1, dp(44), 0, 2, 0, 6))
+            }, params(-1, dp(48), 0, 2, 0, 6))
             results.addView(button("Günlük tam kaynak taramasına geç") {
                 renderPage(2)
-            }, params(-1, dp(44), 0, 2, 0, 6))
+            }, params(-1, dp(48), 0, 2, 0, 6))
             return
         }
 
@@ -711,7 +728,7 @@ class CareerActivity : Activity() {
                 searchPage = 0
                 renderSearchResults()
             }
-            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(48), 1f).apply {
                 setMargins(dp(3), 0, dp(3), 0)
             })
         }
@@ -861,22 +878,16 @@ class CareerActivity : Activity() {
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val filterLabels = listOf("Kontrol listesi", "Tümü", "Süresi geçmiş")
         filterLabels.forEachIndexed { index, title ->
-            val chip = button(title) {
+            val chip = chipButton(title, dailyFilter == index) {
                 dailyFilter = index
                 dailyPage = 0
                 showDailyResults(parent)
             }
-            chip.textSize = 9f
-            chip.setTextColor(if (dailyFilter == index) Color.rgb(8, 20, 29) else Color.WHITE)
-            chip.setBackground(rounded(
-                if (dailyFilter == index) Color.rgb(89, 220, 210) else Color.rgb(39, 52, 72),
-                Color.TRANSPARENT
-            ))
-            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(40), 1f).apply {
-                setMargins(dp(2), 0, dp(2), 0)
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+                setMargins(dp(3), 0, dp(3), 0)
             })
         }
-        parent.addView(filterRow, params(-1, dp(40), 0, 4, 0, 8))
+        parent.addView(filterRow, params(-1, dp(46), 0, 4, 0, 8))
         parent.addView(label(
             allItems.size.toString() + " ilan adayı · " + expiredCount + " geçmiş tarihli · " +
                 unknownCount + " son tarihi bulunamayan kayıt. İlanın açık olduğu kaynak sayfasında doğrulanmalı.",
@@ -938,10 +949,13 @@ class CareerActivity : Activity() {
         parent.removeAllViews()
         val events = CareerRecruitmentTracker.read(prefs)
         if (events.isEmpty()) {
-            parent.addView(label(
-                "Henüz kura veya sınav aşaması duyurusu bulunmadı. Yeni evrak, kura, asıl/yedek, sınav ve sonuç duyuruları günlük taramalarda burada toplanacak.",
+            val emptyCard = panel()
+            emptyCard.addView(label("Süreç güncellemesi bekleniyor", 14f, true, primaryText))
+            emptyCard.addView(label(
+                "Yeni evrak, kura, asıl/yedek, sınav ve sonuç duyuruları günlük taramalarda burada toplanacak.",
                 12f, false, muted
             ))
+            parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
 
@@ -954,8 +968,12 @@ class CareerActivity : Activity() {
         val start = processPage * pageSize
         events.drop(start).take(pageSize).forEach { event ->
             val card = panel()
-            card.addView(label(event.stage, 11f, true, Color.rgb(116, 207, 220)))
-            card.addView(label(event.title, 14f, true))
+            card.addView(label("SÜREÇ AŞAMASI", 9f, true, muted))
+            card.addView(label(event.stage, 12f, true, accentColor).apply {
+                setPadding(dp(10), dp(7), dp(10), dp(7))
+                background = rounded(Color.rgb(19, 49, 56), Color.rgb(48, 111, 112))
+            })
+            card.addView(label(event.title, 15f, true, primaryText))
             if (event.snippet.isNotBlank()) card.addView(label(event.snippet, 12f, false, muted))
             val detected = if (event.detectedAt > 0L) {
                 SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(event.detectedAt))
@@ -984,10 +1002,10 @@ class CareerActivity : Activity() {
             actions.addView(button("Duyuruyu aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
                     .onFailure { toast("Kaynak açılamadı.") }
-            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
             actions.addView(button("Başvurulara kaydet") {
                 saveJob(Net.Hit(event.title, event.url, event.snippet))
-            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
@@ -1007,7 +1025,7 @@ class CareerActivity : Activity() {
         }
         val previous = button("‹") { onSelect((current - 1).coerceAtLeast(0)) }
         previous.isEnabled = current > 0
-        row.addView(previous, LinearLayout.LayoutParams(0, dp(42), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+        row.addView(previous, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
 
         val first = (current - 1).coerceAtLeast(0)
         val last = (first + 2).coerceAtMost(total - 1)
@@ -1018,12 +1036,12 @@ class CareerActivity : Activity() {
                 Color.TRANSPARENT
             ))
             if (page == current) number.setTextColor(bgColor)
-            row.addView(number, LinearLayout.LayoutParams(0, dp(42), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+            row.addView(number, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
         }
 
         val next = button("›") { onSelect((current + 1).coerceAtMost(total - 1)) }
         next.isEnabled = current < total - 1
-        row.addView(next, LinearLayout.LayoutParams(0, dp(42), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+        row.addView(next, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
         parent.addView(row, params(-1, dp(54), 0, 4, 0, 2))
     }
 
@@ -1256,7 +1274,11 @@ class CareerActivity : Activity() {
     private fun showSaved(parent: LinearLayout) {
         val list = savedJobs()
         if (list.length() == 0) {
-            parent.addView(label("Henüz kaydedilmiş ilan yok. Beğendiğin ilanlarda Kaydet düğmesini kullan.", 12f, false, muted))
+            val emptyCard = panel()
+            emptyCard.addView(label("Takip listen henüz boş", 15f, true, primaryText))
+            emptyCard.addView(label("Beğendiğin bir ilanda “Kaydet” düğmesine dokun. Başvuru durumunu daha sonra buradan güncelleyebilirsin.", 12f, false, muted))
+            emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(48), 0, 8, 0, 0))
+            parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
         val items = (list.length() - 1 downTo 0).mapNotNull { list.optJSONObject(it) }
@@ -1276,12 +1298,12 @@ class CareerActivity : Activity() {
             val actions = LinearLayout(this).apply { orientation = 0 }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
-            }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
             actions.addView(button("İlanı aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     .onFailure { toast("Bağlantı açılamadı.") }
-            }, LinearLayout.LayoutParams(0, dp(42), 1f))
-            actions.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(0, dp(42), 1f))
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            actions.addView(button("Sil") { deleteJob(url) }, LinearLayout.LayoutParams(0, dp(48), 1f))
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 7))
         }
