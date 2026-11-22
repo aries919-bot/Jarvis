@@ -996,7 +996,7 @@ object CareerSearchEngine {
             "site:osym.gov.tr KPSS-2026/2 tercih kılavuzu ön lisans P93 TABLO-2 kadro kontenjan nitelik kodu",
             "site:osym.gov.tr KPSS-$year/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise $year tercih nitelik kodları",
-            "site:engelsiz.iskur.gov.tr İŞKUR Gençlik Programı üniversite öğrencisi başvuru şartları $year",
+            "site:guc.iskur.gov.tr OR site:esube.iskur.gov.tr/Istihdam/IstIskurGenclikProgramArama.aspx OR site:staj.iskur.gov.tr OR site:ulusalstajprogrami.iskur.gov.tr İŞKUR Gençlik Programı Ulusal Staj Programı öğrenci teknik staj İUP $year",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
             "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
