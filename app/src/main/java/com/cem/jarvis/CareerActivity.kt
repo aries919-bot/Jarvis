@@ -232,11 +232,13 @@ class CareerActivity : Activity() {
         card.addView(label(index.toString() + ". " + hit.title, 15f, true))
         val sourceLabel = when {
             CareerSourceCatalog.isSecondary(hit.url) ->
-                "İkincil ilan/keşif platformu: " + CareerSourceCatalog.sourceName(hit.url) + " · Başvuruyu ve ilanı kaynağında doğrula"
-            category.contains("İşveren kariyer") ->
-                "İşverenin kariyer portalı: " + CareerSourceCatalog.sourceName(hit.url)
+                "İkincil ilan/keşif platformu: " + CareerSourceCatalog.sourceName(hit.url) + " · İlan ve başvuruyu platform/işveren sayfasında doğrula"
+            category.contains("İşveren kariyer") || category.contains("Özel sektör") ->
+                "İşveren/özel sektör sayfası: " + CareerSourceCatalog.sourceName(hit.url) + " · Devlet ilanı değildir"
+            category.contains("Kamu") || category.contains("Belediye") || category.contains("İŞKUR") ->
+                "Resmî kamu/İŞKUR kaynağı: " + CareerSourceCatalog.sourceName(hit.url)
             else ->
-                "Resmî/kurumsal kaynak: " + CareerSourceCatalog.sourceName(hit.url)
+                "Kurumsal kaynak: " + CareerSourceCatalog.sourceName(hit.url) + " · İlan durumu kaynak sayfasında doğrulanmalı"
         }
         card.addView(label(sourceLabel, 11f, true, Color.rgb(150, 190, 255)))
         if (!storedCategory.isNullOrBlank()) {
@@ -370,7 +372,15 @@ class CareerActivity : Activity() {
 
     private fun showSources() {
         val sources = CareerSourceCatalog.sources
-        val names = sources.map { (if (it.official) "RESMÎ · " else "İKİNCİL KEŞİF · ") + it.category + " · " + it.name }.toTypedArray()
+        val names = sources.map {
+            val label = when {
+                !it.official -> "İKİNCİL KEŞİF"
+                it.category.contains("Kamu") || it.category.contains("İŞKUR") ||
+                    it.category.contains("Belediye") || it.category.contains("Resmî") -> "RESMÎ KAMU"
+                else -> "İŞVERENİN KENDİ PORTALI"
+            }
+            "$label · " + it.category + " · " + it.name
+        }.toTypedArray()
         AlertDialog.Builder(this).setTitle("Takip edilen kaynaklar")
             .setItems(names) { _, which ->
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(sources[which].url))) }
