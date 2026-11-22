@@ -773,7 +773,11 @@ object CareerRecruitmentTracker {
                 eventAt = item.optLong("eventAt", 0L).takeIf { it > 0L },
                 hasExplicitTime = item.optBoolean("hasExplicitTime", false)
             )
-        }.sortedByDescending { it.detectedAt }
+        }.sortedWith(
+            compareBy<CareerProcessEvent> { event ->
+                event.eventAt?.takeIf { it >= System.currentTimeMillis() } ?: Long.MAX_VALUE
+            }.thenByDescending { it.detectedAt }
+        )
     }
 
     fun recordNew(
