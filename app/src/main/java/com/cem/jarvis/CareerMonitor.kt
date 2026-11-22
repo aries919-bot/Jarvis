@@ -23,8 +23,8 @@ object CareerSourceCatalog {
         Source("Kariyer Kapısı – Kamu işe alım", "https://isealimkariyerkapisi.cbiko.gov.tr/", "Kamu"),
         Source("ÖSYM – KPSS tercih ve yerleştirme duyuruları", "https://www.osym.gov.tr/Duyurular/Index", "Kamu / KPSS"),
         Source("Kamu İlan Sistemi", "https://kamuilan.sbb.gov.tr/", "Kamu"),
-        Source("İŞKUR e-Şube", "https://esube.iskur.gov.tr/", "Kamu / işçi"),
-        Source("İŞKUR Açık İş Haritası", "https://acikisharita.iskur.gov.tr/", "Kamu / işçi"),
+        Source("İŞKUR e-Şube", "https://esube.iskur.gov.tr/", "İŞKUR / açık iş"),
+        Source("İŞKUR Açık İş Haritası", "https://acikisharita.iskur.gov.tr/", "İŞKUR / açık iş"),
         Source("ilan.gov.tr – Personel alımı", "https://www.ilan.gov.tr/", "Resmî ilan"),
         Source("Resmî Gazete", "https://www.resmigazete.gov.tr/", "Resmî ilan"),
         Source("Yerel Yönetimler Genel Müdürlüğü", "https://yerelyonetimler.csb.gov.tr/", "Belediye"),
@@ -33,6 +33,10 @@ object CareerSourceCatalog {
         Source("Yeşilyurt Belediyesi", "https://yesilyurt.bel.tr/", "Belediye"),
         Source("Malatya TSO – günlük İŞKUR listesi", "https://www.malatyatso.org.tr/iskur-ilanlari", "İŞKUR keşif", false),
         Source("ASELSAN Kariyer", "https://akariyer.aselsan.com/", "Özel sektör"),
+        Source("MKE Kariyer – ilanlar", "https://kariyer.mke.gov.tr/ilanlar", "Kamu şirketi / kariyer"),
+        Source("Eti Maden Duyurular", "https://www.etimaden.gov.tr/duyurular", "Kamu şirketi"),
+        Source("Şişecam Kariyer", "https://www.sisecam.com/tr/kariyer", "Özel sektör"),
+        Source("Türk Telekom Kariyer", "https://www.turktelekomkariyer.com.tr/", "Özel sektör"),
         Source("TCDD", "https://www.tcdd.gov.tr/", "Kamu şirketi"),
         Source("TCDD Taşımacılık – işe alım duyuruları", "https://www.tcddtasimacilik.gov.tr/duyurular/", "Kamu şirketi"),
         Source("TEİAŞ Duyurular", "https://www.teias.gov.tr/duyurular", "Kamu şirketi"),
@@ -50,7 +54,7 @@ object CareerSourceCatalog {
     )
 
     private val trustedDomains = listOf(
-        "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "ilan.gov.tr", "resmigazete.gov.tr",
+        "cbiko.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
         "csb.gov.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr"
@@ -146,6 +150,8 @@ object CareerSearchEngine {
         val largeEmployers = listOf(
             "site:teias.gov.tr personel alımı işçi teknisyen 2026",
             "site:euas.gov.tr kariyer personel alımı teknisyen 2026",
+            "site:kariyer.mke.gov.tr elektrik teknisyen personel ilanları 2026",
+            "site:etimaden.gov.tr personel işçi KPSS alımı duyurular 2026",
             "site:botas.gov.tr personel alımı teknisyen 2026",
             "site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
             "site:tei.com.tr OR site:havelsan.com kariyer teknisyen elektrik 2026"
@@ -193,7 +199,9 @@ object CareerSearchEngine {
             "site:yerelyonetimler.csb.gov.tr OR site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr belediye işçi personel alımı 2026",
             "site:kariyer.tusas.com OR site:kariyer.roketsan.com.tr OR site:akariyer.aselsan.com teknisyen açık pozisyon 2026",
             "site:teias.gov.tr OR site:euas.gov.tr OR site:botas.gov.tr OR site:tcdd.gov.tr OR site:tcddtasimacilik.gov.tr personel alımı işçi teknisyen 2026",
-            "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com OR site:enerjisa.com.tr teknisyen elektrik kariyer iş ilanı 2026"
+            "site:kariyer.mke.gov.tr OR site:etimaden.gov.tr personel alımı teknisyen işçi kariyer 2026",
+            "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com OR site:enerjisa.com.tr teknisyen elektrik kariyer iş ilanı 2026",
+            "site:sisecam.com OR site:turktelekomkariyer.com.tr açık pozisyon üretim teknisyen 2026"
         )
         val executor = Executors.newFixedThreadPool(6)
         return try {
