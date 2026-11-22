@@ -100,7 +100,7 @@ object CareerSourceCatalog {
         val text = (title + " " + snippet).lowercase(Locale("tr", "TR"))
         val indicators = listOf(
             "personel al", "işçi al", "is ilan", "iş ilan", "açık pozisyon", "acik pozisyon",
-            "kariyer", "başvuru", "basvuru", "son başvuru", "son basvuru", "teknisyen",
+            "başvuru", "basvuru", "son başvuru", "son basvuru", "teknisyen",
             "tekniker", "memur", "işkur", "iskur", "kpss", "üretim", "uretim",
             "bakım", "bakim", "elektrik", "pano", "operatör", "operator"
         )
@@ -208,7 +208,9 @@ object CareerEligibility {
             "lojistik", "temizlik", "sofor", "guvenlik", "cagri merkezi"
         )
         var score = terms.count { text.contains(normalize(it)) } * 8
-        if (city.isNotBlank() && text.contains(normalize(city))) score += 20
+        val localities = city.split(',', ';').map { normalize(it.trim()) }
+            .filter { it.isNotBlank() && !it.contains("servis") && !it.contains("konaklama") && it != "turkiye geneli" }
+        if (localities.any(text::contains)) score += 20
         if (listOf("son basvuru", "basvuru tarihi", "personel alimi", "acik pozisyon", "is ilani")
                 .any(text::contains)) score += 8
         return score.coerceAtMost(100)
@@ -309,7 +311,7 @@ object CareerSearchEngine {
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
-    private fun collect(queries: List<String>, timeoutSeconds: Long): CareerScanBatch {
+    private fun collect(queries: List<String>, timeoutSeconds: Long, city: String = "Malatya"): CareerScanBatch {
         if (queries.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
         val executor = Executors.newFixedThreadPool(minOf(6, queries.size))
         return try {
@@ -339,7 +341,7 @@ object CareerSearchEngine {
                     CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet) &&
                     seen.add(fingerprint(hit.title, hit.url))
             }.sortedByDescending {
-                CareerEligibility.relevance(it.title, it.snippet, "Malatya")
+                CareerEligibility.relevance(it.title, it.snippet, city)
             }
             CareerScanBatch(filtered, succeeded, failed, queries.size)
         } finally {
@@ -348,7 +350,7 @@ object CareerSearchEngine {
     }
 
     fun searchBatch(category: Int, role: String, city: String): CareerScanBatch =
-        collect(queryList(category, role, city), 75)
+        collect(queryList(category, role, city), 75, city)
 
     fun search(category: Int, role: String, city: String): List<Net.Hit> {
         val batch = searchBatch(category, role, city)
