@@ -1199,7 +1199,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 CareerMonitorScheduler.scheduleProcessReminders(applicationContext, event)
             }
             val actionableProcessEvents = processEvents.filter { event ->
-                event.stage != "BAŞVURU / YENİ ALIM" ||
+                event.stage != "BAŞVURU / YENİ ALIM" &&
                     CareerListingParser.deadlineStatus(event.snippet)
                         ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
             }
