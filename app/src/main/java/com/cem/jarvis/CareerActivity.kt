@@ -1952,6 +1952,21 @@ class CareerActivity : Activity() {
                 "Son güncelleme: " + SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(date)),
                 10f, false, muted
             ))
+            val note = item.optString("note").trim()
+            if (note.isNotBlank()) {
+                card.addView(label("NOT · " + note, 11f, false, primaryText).apply {
+                    setPadding(dp(9), dp(7), dp(9), dp(7))
+                    background = rounded(surfaceRaised, borderColor)
+                })
+            }
+            val followUpAt = item.optLong("followUpAt", 0L)
+            if (followUpAt > 0L) {
+                val whenText = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(followUpAt))
+                card.addView(label(
+                    (if (followUpAt > System.currentTimeMillis()) "TAKİP HATIRLATMASI · " else "PLANLANAN TAKİP ZAMANI · ") + whenText,
+                    10f, true, if (followUpAt > System.currentTimeMillis()) accentColor else warningColor
+                ))
+            }
             val actions = LinearLayout(this).apply { orientation = 0 }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
@@ -1963,6 +1978,14 @@ class CareerActivity : Activity() {
             actions.addView(button("Sil") { confirmDeleteJob(url, title) },
                 LinearLayout.LayoutParams(0, dp(46), 0.6f).apply { setMargins(dp(3), 0, 0, 0) })
             card.addView(actions)
+            val followActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            followActions.addView(button(if (followUpAt > 0L) "Hatırlatmayı düzenle" else "Takip hatırlatması") {
+                chooseFollowUpReminder(url, title, status)
+            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(0, dp(4), dp(3), 0) })
+            followActions.addView(button(if (note.isBlank()) "Not ekle" else "Notu düzenle") {
+                editJobNote(url, title, note)
+            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), dp(4), 0, 0) })
+            card.addView(followActions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 7))
         }
         addPager(parent, savedPage, totalPages) { next ->
