@@ -37,6 +37,17 @@ class CareerContentClassifierTest {
     }
 
     @Test
+    fun recognizesIskurOpenJobSearchPortal() {
+        val result = CareerContentClassifier.classify(
+            "İŞKUR Açık İş İlanları",
+            "Türkiye İş Kurumu açık iş arama ekranı.",
+            "https://esube.iskur.gov.tr/Istihdam/IstAcikIsIlanlari.aspx"
+        )
+        assertEquals(CareerContentType.JOB_LISTING, result.type)
+        assertTrue(result.isJobListing)
+    }
+
+    @Test
     fun putsKuraExamAndFinalResultNoticesOutsideTheJobListingFeed() {
         val examples = listOf(
             "Noter kurası sonuçları açıklandı" to "Asıl ve yedek aday listesi yayımlandı.",
