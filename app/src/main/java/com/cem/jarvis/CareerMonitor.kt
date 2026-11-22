@@ -453,7 +453,14 @@ object CareerSearchEngine {
         val executor = Executors.newFixedThreadPool(minOf(4, queries.size))
         return try {
             val futures = executor.invokeAll(
-                queries.map { query -> Callable { Net.webSearch(query, 8) } },
+                queries.map { query ->
+                    Callable {
+                        val primary = runCatching { Net.webSearch(query, 8) }.getOrDefault(emptyList())
+                        // Use a second engine only for low-yield queries to limit requests and throttling.
+                        if (primary.size >= 4) primary
+                        else primary + runCatching { Net.webSearchBing(query, 8) }.getOrDefault(emptyList())
+                    }
+                },
                 timeoutSeconds,
                 TimeUnit.SECONDS
             )
