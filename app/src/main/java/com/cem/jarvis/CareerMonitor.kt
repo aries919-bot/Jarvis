@@ -347,7 +347,7 @@ data class CareerScanBatch(
  * sayfanın güncel ilan olduğunu doğrulamaz. Başvuru şartı ve son tarih ilanın kendisinden okunmalıdır. */
 object CareerSearchEngine {
     private fun queryList(category: Int, role: String, city: String): List<String> {
-        val r = role.ifBlank { "elektrik teknisyeni pano montaj bakım üretim işçi personel" }
+        val r = role.ifBlank { "elektrik teknisyeni pano montaj bakım üretim depo operatör satış işçi personel" }
         val c = city.ifBlank { "Malatya Türkiye" }
         val publicKpss = listOf(
             "site:osym.gov.tr KPSS-2026/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
@@ -359,12 +359,13 @@ object CareerSearchEngine {
         )
         val publicNoKpss = listOf(
             "site:esube.iskur.gov.tr açık iş ilanı $r $c 2026",
-            "site:acikisharita.iskur.gov.tr Malatya elektrik teknisyen işçi 2026",
-            "site:yerelyonetimler.csb.gov.tr belediye işçi personel alımı 2026 Malatya",
+            "site:acikisharita.iskur.gov.tr $c elektrik teknisyen işçi açık iş 2026",
+            "site:yerelyonetimler.csb.gov.tr belediye işçi personel alımı 2026 $c",
             "site:malatya.bel.tr personel alımı iş ilanı 2026",
             "site:battalgazi.bel.tr personel işçi alımı 2026",
             "site:yesilyurt.bel.tr personel işçi alımı 2026",
-            "site:malatyatso.org.tr/iskur-ilanlari Malatya açık iş ilanları 2026"
+            "site:malatyatso.org.tr İŞKUR açık iş ilanları 2026",
+            "site:malorsa.org.tr personel alım ilanı Malatya OSB 2026"
         )
         val privateSector = listOf(
             "site:akariyer.aselsan.com teknisyen elektrik üretim açık pozisyon",
@@ -372,18 +373,30 @@ object CareerSearchEngine {
             "site:kariyer.roketsan.com.tr/jobs teknisyen elektronik üretim bakım 2026",
             "site:tupras.gethirex.com/o/tupras elektrik teknisyen bakım açık pozisyon",
             "site:sisecam.com/tr/kariyer elektrik bakım teknisyen üretim açık pozisyon",
-            "site:turktelekomkariyer.com.tr teknisyen teknik personel açık pozisyon"
+            "site:turktelekomkariyer.com.tr teknisyen teknik personel açık pozisyon",
+            "site:kockariyerim.com elektrik teknisyen üretim iş ilanı",
+            "site:sabanci.com/en/career elektrik teknisyen personel iş ilanı",
+            "site:careers.borusan.com teknisyen elektrik üretim bakım",
+            "site:careers.eczacibasi.com teknisyen elektrik bakım üretim",
+            "site:careers.anadolukariyerim.com teknisyen üretim depo personel",
+            "site:careers.calik.com elektrik teknisyen iş ilanı",
+            "site:vestelkariyer.com/is-ilanlari elektrik teknisyen üretim",
+            "site:migroskurumsal.com/kariyer/simdi-basvurun/ilanlar depo mağaza personel",
+            "site:careerscci.com elektrik üretim bakım teknisyen",
+            "site:kariyerim.turkcell.com.tr/kariyer-firsatlari teknisyen mağaza depo satış",
+            "site:jobs.vodafone.com Türkiye teknisyen satış mağaza personel",
+            "site:pladis.wd3.myworkdayjobs.com Türkiye üretim operatör personel",
+            "site:sutas.com.tr/tr/insan-kaynaklari elektrik teknisyen üretim",
+            "site:tirsan.com.tr ailemize-katilin teknisyen üretim personel"
         )
-        val publicEmployers = listOf(
-            "site:teias.gov.tr personel alımı işçi teknisyen 2026",
-            "site:euas.gov.tr personel alımı teknisyen işçi 2026",
-            "site:kariyer.mke.gov.tr elektrik teknisyen personel ilanları",
-            "site:etimaden.gov.tr personel işçi KPSS alımı duyurular 2026",
-            "site:kariyer.tubitak.gov.tr teknik personel açık pozisyon 2026",
-            "site:turkseker.gov.tr personel işçi alımı duyurular 2026",
-            "site:botas.gov.tr personel alımı teknisyen 2026",
-            "site:tcdd.gov.tr personel alımı işçi teknisyen 2026",
-            "site:tcddtasimacilik.gov.tr duyurular personel alımı teknisyen 2026"
+        val platforms = listOf(
+            "site:kariyer.net/is-ilani $r $c iş ilanı 2026",
+            "site:eleman.net/is-ilanlari $r $c iş ilanı 2026",
+            "site:secretcv.com/is-ilanlari $r $c iş ilanı 2026",
+            "site:yenibiris.com/is-ilanlari $r $c iş ilanı 2026",
+            "site:tr.indeed.com/jobs $r $c 2026",
+            "site:linkedin.com/jobs/view $r $c Türkiye 2026",
+            "site:isbul.net $r $c iş ilanı 2026"
         )
         val postAssociate = listOf(
             "elektrik teknikeri ön lisans mezunu KPSS P93 personel alımı 2026",
@@ -395,10 +408,10 @@ object CareerSearchEngine {
         return when (category) {
             1 -> publicKpss + listOf(extra)
             2 -> publicNoKpss + listOf(extra)
-            3 -> privateSector + listOf(extra)
-            4 -> publicEmployers + privateSector
+            3 -> privateSector + platforms + listOf(extra)
+            4 -> privateSector + platforms + listOf(extra)
             5 -> postAssociate
-            else -> publicKpss + publicNoKpss + publicEmployers + privateSector + listOf(extra)
+            else -> publicKpss + publicNoKpss + privateSector + platforms + listOf(extra)
         }.distinct()
     }
 
@@ -429,10 +442,10 @@ object CareerSearchEngine {
 
     private fun collect(queries: List<String>, timeoutSeconds: Long, city: String = "Malatya"): CareerScanBatch {
         if (queries.isEmpty()) return CareerScanBatch(emptyList(), 0, 0, 0)
-        val executor = Executors.newFixedThreadPool(minOf(6, queries.size))
+        val executor = Executors.newFixedThreadPool(minOf(4, queries.size))
         return try {
             val futures = executor.invokeAll(
-                queries.map { query -> Callable { Net.webSearch(query) } },
+                queries.map { query -> Callable { Net.webSearch(query, 8) } },
                 timeoutSeconds,
                 TimeUnit.SECONDS
             )
@@ -466,7 +479,7 @@ object CareerSearchEngine {
     }
 
     fun searchBatch(category: Int, role: String, city: String): CareerScanBatch =
-        collect(queryList(category, role, city), 75, city)
+        collect(queryList(category, role, city), 100, city)
 
     fun search(category: Int, role: String, city: String): List<Net.Hit> {
         val batch = searchBatch(category, role, city)
@@ -475,31 +488,37 @@ object CareerSearchEngine {
     }
 
     fun dailySearchBatch(role: String, city: String): CareerScanBatch {
-        val profileRole = role.ifBlank {
-            "elektrik teknisyeni pano montaj bakım üretim operatör depo satış işçi personel"
-        }
+        val roleTerms = role.split(',', ';', '/', '|')
+            .map { it.trim() }.filter { it.length >= 3 }.distinct().take(6)
         val preferredCities = city.split(',', ';')
             .map { it.trim() }
-            .filter { it.isNotBlank() && !it.contains("servis", true) && !it.contains("konaklama", true) }
+            .filter { it.length >= 3 && !it.contains("servis", true) && !it.contains("konaklama", true) }
         val primaryCity = preferredCities.firstOrNull() ?: "Malatya"
-        val profileQueries = listOf(
-            "$profileRole $primaryCity lise mezunu iş ilanı başvuru 2026",
-            "$profileRole $primaryCity KPSS'siz işçi teknisyen açık iş 2026",
-            "$profileRole Malatya Battalgazi Yeşilyurt Elazığ Adıyaman elektrik bakım pano üretim 2026",
-            "$profileRole Türkiye geneli servis lojman konaklama teknisyen üretim 2026"
+
+        val profileQueries = roleTerms.map { term ->
+            "$term $primaryCity Türkiye iş ilanı başvuru 2026"
+        } + listOf(
+            "$role $primaryCity personel işçi teknisyen iş ilanı 2026",
+            "$role Malatya Battalgazi Yeşilyurt Elazığ Adıyaman iş ilanı 2026",
+            "$role Türkiye geneli servis lojman konaklama iş ilanı 2026"
         )
-        val officialQueries = listOf(
+        val kpssQueries = listOf(
             "site:osym.gov.tr KPSS-2026/2 ortaöğretim P94 merkezi yerleştirme tercih kılavuzu",
             "site:osym.gov.tr KPSS ortaöğretim P94 lise 2026 tercih nitelik kodları",
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı 2026",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS 2026",
             "site:ilan.gov.tr personel alımı lise KPSS 2026",
-            "site:resmigazete.gov.tr atama personel alımı 2026",
-            "site:esube.iskur.gov.tr $primaryCity elektrik teknisyen bakım işçi açık iş ilanı 2026",
-            "site:acikisharita.iskur.gov.tr $primaryCity açık iş ilanları 2026",
-            "site:malatyatso.org.tr/iskur-ilanlari Malatya İŞKUR ilanları elektrik işçi 2026",
-            "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr işçi personel alımı 2026",
-            "site:yerelyonetimler.csb.gov.tr belediye personel alımı işçi 2026",
+            "site:resmigazete.gov.tr atama personel alımı 2026"
+        )
+        val iskUrAndLocal = listOf(
+            "site:esube.iskur.gov.tr $primaryCity açık iş elektrik teknisyen üretim depo işçi 2026",
+            "site:acikisharita.iskur.gov.tr $primaryCity açık iş ilanları elektrik üretim depo 2026",
+            "site:malatyatso.org.tr İŞKUR iş ilanları Malatya Yeşilyurt Battalgazi 2026",
+            "site:malorsa.org.tr Malatya Merkez 1 OSB personel alımı iş ilanı 2026",
+            "site:malatya.bel.tr OR site:battalgazi.bel.tr OR site:yesilyurt.bel.tr personel işçi alımı 2026",
+            "site:yerelyonetimler.csb.gov.tr belediye personel işçi alımı 2026"
+        )
+        val employerQueries = listOf(
             "site:akariyer.aselsan.com teknisyen elektrik açık pozisyon",
             "site:kariyer.tusas.com teknisyen elektrik bakım açık pozisyon 2026",
             "site:kariyer.roketsan.com.tr/jobs elektronik üretim teknisyeni bakım 2026",
@@ -508,9 +527,27 @@ object CareerSearchEngine {
             "site:kariyer.mke.gov.tr OR site:etimaden.gov.tr OR site:kariyer.tubitak.gov.tr personel alımı teknisyen 2026",
             "site:tupras.gethirex.com OR site:yetenek.tei.com.tr OR site:havelsan.com teknisyen kariyer açık pozisyon",
             "site:sisecam.com/tr/kariyer OR site:turktelekomkariyer.com.tr açık pozisyon üretim teknisyen 2026",
-            "site:enerjisa.com.tr/tr/enerjisa-hakkinda/kariyer elektrik teknisyen personel 2026"
+            "site:kockariyerim.com OR site:sabanci.com/en/career elektrik teknisyen üretim iş ilanı",
+            "site:careers.borusan.com OR site:careers.eczacibasi.com teknisyen elektrik bakım üretim",
+            "site:careers.anadolukariyerim.com OR site:careers.calik.com personel teknisyen üretim ilan",
+            "site:vestelkariyer.com OR site:migroskurumsal.com/kariyer elektrik teknisyen depo personel",
+            "site:careerscci.com OR site:kariyerim.turkcell.com.tr OR site:jobs.vodafone.com Türkiye teknisyen üretim satış",
+            "site:pladis.wd3.myworkdayjobs.com OR site:sutas.com.tr OR site:tirsan.com.tr Türkiye üretim teknisyen personel"
         )
-        return collect((profileQueries + officialQueries).distinct(), 120, city)
+        val platformQueries = listOf(
+            "site:kariyer.net/is-ilani $role $primaryCity",
+            "site:eleman.net/is-ilanlari $role $primaryCity",
+            "site:secretcv.com/is-ilanlari $role $primaryCity",
+            "site:yenibiris.com/is-ilanlari $role $primaryCity",
+            "site:tr.indeed.com/jobs $role $primaryCity",
+            "site:linkedin.com/jobs/view $role $primaryCity Türkiye",
+            "site:isbul.net $role $primaryCity iş ilanı"
+        )
+        return collect(
+            (profileQueries + kpssQueries + iskUrAndLocal + employerQueries + platformQueries).distinct(),
+            180,
+            city
+        )
     }
 
     fun dailySearch(role: String = "", city: String = "Malatya"): List<Net.Hit> {
