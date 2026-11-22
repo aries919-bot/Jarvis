@@ -189,6 +189,7 @@ object CareerSearchEngine {
             futures.forEach { future -> if (!future.isCancelled) runCatching { found.addAll(future.get()) } }
             val seen = HashSet<String>()
             found.filter { CareerSourceCatalog.isTrustedUrl(it.url) &&
+                CareerEligibility.relevance(it.title, it.snippet, "Malatya") > 0 &&
                 seen.add(it.url.substringBefore("#").trimEnd('/').lowercase()) }
         } finally {
             executor.shutdownNow()
@@ -266,6 +267,12 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
         if (!prefs.getBoolean("career_monitor_enabled", false)) return androidx.work.Result.success()
         return try {
             val hits = CareerSearchEngine.dailySearch()
+            if (hits.isEmpty()) {
+                prefs.edit().putString("career_monitor_last_error",
+                    "Bu taramada kaynaklardan doğrulanabilir sonuç alınamadı. Sonuç yok demek değildir; sonraki günlük kontrolde yeniden denenecek.")
+                    .apply()
+                return androidx.work.Result.retry()
+            }
             val previous = prefs.getStringSet("career_monitor_seen", emptySet()).orEmpty()
             val firstRun = !prefs.getBoolean("career_monitor_initialized", false)
             val seen = previous.toMutableSet()
