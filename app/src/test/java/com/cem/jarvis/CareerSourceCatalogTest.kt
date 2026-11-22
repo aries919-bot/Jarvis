@@ -98,6 +98,26 @@ class CareerSourceCatalogTest {
     }
 
     @Test
+    fun doesNotInferKpssRequirementFromKariyerKapisiDomainAlone() {
+        assertEquals(
+            "Kamu / kamu bağlantılı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sözleşmeli personel alımı",
+                "Başvuru koşulları ve değerlendirme süreci kurum ilanında açıklanmıştır.",
+                "https://kariyerkapisi.gov.tr/isealim"
+            )
+        )
+        assertEquals(
+            "KPSS ile kamu alımı",
+            CareerSourceCatalog.recruitmentGroup(
+                "Sözleşmeli personel alımı",
+                "KPSS P94 puanı ile başvuru alınacaktır.",
+                "https://kariyerkapisi.gov.tr/isealim"
+            )
+        )
+    }
+
+    @Test
     fun identifiesExplicitKpssFreePublicRecruitmentWithoutGuessingFromMissingKpssText() {
         assertEquals(
             "KPSS'siz kamu alımı",
