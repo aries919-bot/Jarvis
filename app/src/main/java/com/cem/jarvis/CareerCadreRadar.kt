@@ -1,5 +1,7 @@
 package com.cem.jarvis
 
+import java.util.Locale
+
 /**
  * Resmî kaynaklarda yayımlanmış geçmiş merkezi yerleştirme tablolarındaki unvan örnekleri.
  * Bu katalog gelecek alım vaadi değildir; her yeni kılavuz kendi kadro tablosuyla doğrulanmalıdır.
