@@ -64,10 +64,24 @@ class CareerMonitorPolicyTest {
             CareerEligibility.assess("TCDD Teknisyen", "KPSS P94 · Nitelik kodu: 2086")
                 .startsWith("ALAN KODU UYUŞMUYOR")
         )
-        assertTrue(
-            CareerEligibility.assess("Elektrik Teknisyeni", "KPSS P94 · Nitelik kodu: 2023")
-                .startsWith("ALAN KODU EŞLEŞİYOR")
+        val p94FieldMatch = CareerEligibility.assess(
+            "Elektrik Teknisyeni",
+            "KPSS P94 · Nitelik kodu: 2023"
         )
+        assertTrue(p94FieldMatch.startsWith("P94 İLE TERCİH DEĞERLENDİRMESİ"))
+        assertTrue(p94FieldMatch.contains("ALAN KODU EŞLEŞİYOR"))
+
+        val wrongScoreAndRightField = CareerEligibility.assess(
+            "Elektrik Teknisyeni",
+            "KPSS P94 en az 70 puan · Nitelik kodu: 2023"
+        )
+        assertTrue(wrongScoreAndRightField.startsWith("PUAN ŞARTI UYUŞMUYOR"))
+
+        val wrongPuanTypeAndRightField = CareerEligibility.assess(
+            "Elektrik Teknikeri",
+            "KPSS P93 · Nitelik kodu: 2023"
+        )
+        assertTrue(wrongPuanTypeAndRightField.startsWith("PUAN TÜRÜ UYUŞMUYOR"))
     }
 
     @Test
