@@ -437,19 +437,13 @@ class CareerActivity : Activity() {
     }
 
     private fun buildSavedPage() {
-        val listCount = savedJobs().length()
         pageContent.addView(label("Başvuru takip listem", 21f, true, primaryText))
         pageContent.addView(label(
-            "Kaydettiğin ilanların başvuru durumunu güncelle. Başvuruyu sen yaparsın; Aries süreci düzenli tutmana yardımcı olur.",
+            "Kaydedilen ilanları, aktif başvuruları ve sonuçlanan süreçleri ayrı bölümlerde yönet.",
             12f, false, muted
         ))
-        val overview = panel()
-        overview.addView(label("TAKİP ETTİĞİN İLAN", 10f, true, accentColor))
-        overview.addView(label(listCount.toString(), 28f, true, primaryText))
-        overview.addView(label("Kaydedilmiş fırsat ve başvuru kaydı", 11f, false, muted))
-        pageContent.addView(overview, params(-1, -2, 0, 10, 0, 12))
         val savedContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        pageContent.addView(savedContainer, params(-1, -2, 0, 0, 0, 8))
+        pageContent.addView(savedContainer, params(-1, -2, 0, 8, 0, 8))
         showSaved(savedContainer)
     }
 
