@@ -5,7 +5,8 @@ on:
     branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor ]
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  # Isolate each commit so a stale runner for an earlier push cannot block the latest verification.
+  group: android-apk-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
