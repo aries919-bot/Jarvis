@@ -435,14 +435,31 @@ object CareerSearchEngine {
             "site:teias.gov.tr OR site:euas.gov.tr elektrik teknikeri ön lisans mezunu $year",
             "site:aselsan.com OR site:tusas.com elektrik teknikeri ön lisans mezunu $year"
         )
+        val kuraQueries = listOf(
+            "site:ogm.gov.tr noter kurası elektrikçi teknisyen işçi alımı $year",
+            "site:kgm.gov.tr noter kurası işçi alımı kura sonuçları $year",
+            "site:ant.gov.tr personel alımı noter kurası asıl yedek sonuç $year",
+            "site:iskur.gov.tr kura ile işçi alımı başvuru kura sonuçları $year",
+            "noter kurası işçi alımı elektrikçi teknisyen Malatya Elazığ Adıyaman $year",
+            "kamu işçi alımı evrak kontrol kuraya katılacaklar kura sonucu $year",
+            "kamu personel alımı kura tarihi saat asıl yedek liste sonuçları $year",
+            "işçi alımı sınav yeri sınav tarihi mülakat sonucu nihai liste $year"
+        )
         val extra = "$r $c iş ilanı başvuru şartları son başvuru tarihi $year"
+        val generalQuick = listOf(
+            "$r $c güncel iş ilanı personel alımı başvuru $year",
+            "site:esube.iskur.gov.tr $r $c açık iş ilanı $year",
+            "site:iskur.gov.tr $r $c işçi alımı başvuru $year"
+        ) + publicKpss.take(2) + publicNoKpss.take(2) +
+            privateSector.take(3) + platforms.take(2) + kuraQueries.take(2) + listOf(extra)
+
         return when (category) {
-            1 -> publicKpss + listOf(extra)
-            2 -> publicNoKpss + listOf(extra)
-            3 -> privateSector + platforms + listOf(extra)
-            4 -> privateSector + platforms + listOf(extra)
+            1 -> publicKpss + kuraQueries + listOf(extra)
+            2 -> publicNoKpss + kuraQueries + listOf(extra)
+            3 -> privateSector.take(10) + platforms.take(5) + listOf(extra)
+            4 -> privateSector.take(12) + kuraQueries + listOf(extra)
             5 -> postAssociate
-            else -> publicKpss + publicNoKpss + privateSector + platforms + listOf(extra)
+            else -> generalQuick
         }.distinct()
     }
 
