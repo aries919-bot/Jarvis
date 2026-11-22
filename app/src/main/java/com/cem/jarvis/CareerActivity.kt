@@ -33,17 +33,18 @@ class CareerActivity : Activity() {
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
     private val filters = listOf("Tüm ilanlar", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Kura · noter · asıl/yedek · sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları")
     // Kariyer ekranına özel tasarım paleti; ana Aries temasını değiştirmez.
-    private val bgColor = Color.rgb(7, 12, 24)
-    private val surfaceColor = Color.rgb(16, 25, 42)
-    private val surfaceRaised = Color.rgb(23, 35, 56)
-    private val borderColor = Color.rgb(43, 61, 86)
-    private val accentColor = Color.rgb(78, 220, 202)
-    private val accentBlue = Color.rgb(105, 157, 255)
-    private val primaryText = Color.rgb(241, 246, 253)
-    private val muted = Color.rgb(157, 173, 194)
-    private val successColor = Color.rgb(93, 211, 163)
-    private val warningColor = Color.rgb(255, 197, 111)
-    private val dangerColor = Color.rgb(255, 139, 132)
+    // Kariyer alanı ana uygulamadan bağımsız, açık ve yüksek kontrastlı bir görsel dile sahip.
+    private val bgColor = Color.rgb(244, 247, 251)
+    private val surfaceColor = Color.rgb(255, 255, 255)
+    private val surfaceRaised = Color.rgb(235, 242, 249)
+    private val borderColor = Color.rgb(211, 224, 237)
+    private val accentColor = Color.rgb(8, 127, 115)
+    private val accentBlue = Color.rgb(39, 96, 184)
+    private val primaryText = Color.rgb(24, 39, 58)
+    private val muted = Color.rgb(91, 109, 132)
+    private val successColor = Color.rgb(20, 126, 87)
+    private val warningColor = Color.rgb(153, 91, 17)
+    private val dangerColor = Color.rgb(184, 54, 65)
     private lateinit var monitorStatus: TextView
     private lateinit var pageScroll: ScrollView
     private lateinit var pageContent: LinearLayout
@@ -57,6 +58,7 @@ class CareerActivity : Activity() {
     private var searchDiagnostic = ""
     private var searchFailure: String? = null
     private var savedPage = 0
+    private var savedFilter = 0
     private var dailyItems: List<JSONObject> = emptyList()
     private var dailyPage = 0
     private var dailyFilter = 0
@@ -69,7 +71,9 @@ class CareerActivity : Activity() {
 
         window.statusBarColor = bgColor
         window.navigationBarColor = bgColor
-        window.decorView.systemUiVisibility = 0
+        window.decorView.systemUiVisibility =
+            android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
+                android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         val root = LinearLayout(this).apply {
@@ -531,7 +535,7 @@ class CareerActivity : Activity() {
         minHeight = dp(48)
         isAllCaps = false
         setTypeface(typeface, android.graphics.Typeface.BOLD)
-        setTextColor(bgColor)
+        setTextColor(Color.WHITE)
         setPadding(dp(12), dp(5), dp(12), dp(5))
         background = ripple(android.graphics.drawable.GradientDrawable(
             android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
@@ -547,7 +551,7 @@ class CareerActivity : Activity() {
         minHeight = dp(44)
         isAllCaps = false
         setTypeface(typeface, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-        setTextColor(if (selected) bgColor else primaryText)
+        setTextColor(if (selected) Color.WHITE else primaryText)
         setPadding(dp(9), dp(3), dp(9), dp(3))
         background = ripple(rounded(if (selected) accentColor else surfaceRaised, if (selected) accentColor else borderColor))
         setOnClickListener { action() }
@@ -650,7 +654,6 @@ class CareerActivity : Activity() {
         manualScanObserver = observer
         live.observeForever(observer)
     }
-
     private fun searchJobs() {
         (getSystemService(INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager)
             ?.hideSoftInputFromWindow(if (::role.isInitialized) role.windowToken else window.decorView.windowToken, 0)
@@ -670,7 +673,7 @@ class CareerActivity : Activity() {
         loadingCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             addView(label("Kaynaklar taranıyor", 14f, true, primaryText))
-            addView(label("Arama motorları ve güvenilir kurum bağlantıları sırayla kontrol ediliyor…", 11f, false, muted))
+            addView(label("Aynı ilanlar tekilleştiriliyor; kamu, kura, KPSS ve özel sektör ayrı gruplara ayrılıyor…", 11f, false, muted))
         }, LinearLayout.LayoutParams(0, -2, 1f))
         results.addView(loadingCard, params(-1, -2, 0, 2, 0, 8))
         Thread {
@@ -681,26 +684,27 @@ class CareerActivity : Activity() {
                 exceptionMessage = error.message
                 null
             }
-            val failure = if (batch == null) {
-                "Arama işlemi tamamlanamadı: " + (exceptionMessage ?: "İnternet bağlantısını ve arama kaynaklarını kontrol et.")
-            } else if (!batch.hasAnySuccessfulQuery) {
-                "Arama sağlayıcılarının hiçbiri yanıt vermedi."
-            } else null
+            val friendlyErrors = CareerSearchEngine.friendlyDiagnostics(batch?.errorMessages?.joinToString(" | "))
+            val failure = when {
+                batch == null -> "Arama tamamlanamadı. İnternet bağlantısını ve kaynakların geçici durumunu kontrol et."
+                !batch.hasAnySuccessfulQuery -> "Arama servisleri bu turda okunabilir sonuç döndürmedi. Bir süre sonra yeniden dene."
+                else -> null
+            }
 
             runOnUiThread {
                 search.isEnabled = true
                 search.text = "İlanları yeniden ara"
-                searchHits = batch?.hits?.take(60).orEmpty()
+                searchHits = CareerSearchEngine.deduplicateHits(batch?.hits.orEmpty()).take(60)
                 searchPage = 0
                 searchFilter = 0
                 searchSectorFilter = 0
                 hasSearchRun = true
                 searchFailure = failure
                 searchDiagnostic = if (batch == null) {
-                    "Arama sonucu alınamadı."
+                    "Arama sonucu alınamadı." + (exceptionMessage?.let { " $it" } ?: "")
                 } else {
-                    "Çalışan sorgu: ${batch.successfulQueries}/${batch.totalQueries} · Tamamlanamayan: ${batch.failedQueries}" +
-                        (batch.errorMessages.take(3).joinToString(" | ").takeIf { it.isNotBlank() }?.let { "\n$it" } ?: "")
+                    "Tamamlanan sorgu: ${batch.successfulQueries}/${batch.totalQueries} · Tamamlanamayan: ${batch.failedQueries}" +
+                        (friendlyErrors?.let { "\n$it" } ?: "")
                 }
                 renderSearchResults(failure != null)
             }
@@ -708,18 +712,56 @@ class CareerActivity : Activity() {
     }
 
 
-    private val sectorFilterLabels = listOf("Tümü", "Kamu", "Kura", "KPSS", "Özel", "Diğer")
-
+    private val sectorFilterLabels = listOf("Tümü", "Kamu", "Kura", "KPSS", "KPSS'siz", "Özel", "Doğrula")
     private fun matchesSectorFilter(title: String, snippet: String, url: String, filter: Int): Boolean {
         val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
+        val publicGroups = setOf(
+            "Kamu / kamu bağlantılı", "Kura ile kamu alımı",
+            "KPSS ile kamu alımı", "KPSS'siz kamu alımı"
+        )
         return when (filter) {
-            1 -> group == "Kamu / kamu bağlantılı"
-            2 -> group == "Kura ile kamu alımı"
-            3 -> group == "KPSS ile kamu alımı"
-            4 -> group == "Özel sektör"
-            5 -> group == "Diğer / doğrulanmalı" || group == "Platform / sektör doğrulanmalı"
+            1 -> group in publicGroups
+            2 -> group == "Kura ile kamu alımı" || group == "Kura duyurusu · statü doğrulanmalı"
+            3 -> group == "KPSS ile kamu alımı" || group == "KPSS / şartı doğrulanmalı"
+            4 -> group == "KPSS'siz kamu alımı"
+            5 -> group == "Özel sektör"
+            6 -> group == "Diğer / doğrulanmalı" ||
+                group == "Platform / sektör doğrulanmalı" ||
+                group == "Kura duyurusu · statü doğrulanmalı" ||
+                group == "KPSS / şartı doğrulanmalı"
             else -> true
         }
+    }
+
+    private fun recruitmentGroupOrder(group: String): Int = when (group) {
+        "Kamu / kamu bağlantılı" -> 0
+        "Kura ile kamu alımı", "Kura duyurusu · statü doğrulanmalı" -> 1
+        "KPSS ile kamu alımı", "KPSS / şartı doğrulanmalı" -> 2
+        "KPSS'siz kamu alımı" -> 3
+        "Özel sektör" -> 4
+        else -> 5
+    }
+
+    private fun addRecruitmentGroupHeading(parent: LinearLayout, group: String, count: Int) {
+        val display = when (group) {
+            "Kamu / kamu bağlantılı" -> "KAMU / KAMU BAĞLANTILI"
+            "Kura ile kamu alımı" -> "KURA İLE KAMU ALIMI"
+            "Kura duyurusu · statü doğrulanmalı" -> "KURA DUYURUSU · KURUM STATÜSÜ DOĞRULANMALI"
+            "KPSS ile kamu alımı" -> "KPSS İLE KAMU ALIMI"
+            "KPSS / şartı doğrulanmalı" -> "KPSS ŞARTI DOĞRULANMALI"
+            "KPSS'siz kamu alımı" -> "KPSS'SİZ KAMU ALIMI"
+            "Özel sektör" -> "ÖZEL SEKTÖR"
+            "Platform / sektör doğrulanmalı" -> "İŞ İLANI PLATFORMU · İŞVEREN DOĞRULANMALI"
+            else -> "DİĞER / KAYNAK DOĞRULANMALI"
+        }
+        val block = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(2), dp(7), dp(2), dp(3))
+        }
+        block.addView(label(display, 10f, true, accentBlue), LinearLayout.LayoutParams(0, -2, 1f))
+        block.addView(label("$count ilan", 10f, true, muted))
+        parent.addView(block, params(-1, -2, 0, 9, 0, 2))
     }
 
     private fun addSectorFilterRow(parent: LinearLayout, selected: Int, onSelected: (Int) -> Unit) {
@@ -738,42 +780,53 @@ class CareerActivity : Activity() {
         parent.addView(horizontal, params(-1, dp(48), 0, 4, 0, 4))
     }
 
+    private fun addSectorFilterRow(parent: LinearLayout, selected: Int, onSelected: (Int) -> Unit) {
+        val horizontal = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+        }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        sectorFilterLabels.forEachIndexed { index, title ->
+            row.addView(chipButton(title, selected == index) { onSelected(index) },
+                LinearLayout.LayoutParams(-2, dp(42)).apply {
+                    setMargins(dp(3), dp(2), dp(3), dp(2))
+                })
+        }
+        horizontal.addView(row)
+        parent.addView(horizontal, params(-1, dp(48), 0, 4, 0, 4))
+    }
     private fun renderSearchResults(failed: Boolean = false) {
         if (!::results.isInitialized) return
         results.removeAllViews()
         if (failed) {
             val errorCard = panel()
             errorCard.addView(label("Arama tamamlanamadı", 15f, true, warningColor))
-            errorCard.addView(label(searchFailure ?: "Tarama tamamlanamadı.", 12f, false, primaryText))
+            errorCard.addView(label(searchFailure ?: "Arama servisleri geçici olarak sonuç döndürmedi.", 12f, false, primaryText))
             if (searchDiagnostic.isNotBlank()) errorCard.addView(label(searchDiagnostic, 11f, false, muted))
-            errorCard.addView(primaryButton("↻  Yeniden dene") { searchJobs() }, params(-1, dp(48), 0, 8, 0, 0))
+            errorCard.addView(primaryButton("Yeniden dene") { searchJobs() }, params(-1, dp(48), 0, 8, 0, 0))
             results.addView(errorCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
         if (!hasSearchRun) {
             val emptyCard = panel()
             emptyCard.addView(label("İlk aramanı başlat", 15f, true, primaryText))
-            emptyCard.addView(label("Pozisyonunu ve bölgeni seçtikten sonra ilanlar burada listelenecek. Her sayfada beş fırsat gösterilir.", 12f, false, muted))
+            emptyCard.addView(label("Pozisyonunu ve bölgeni seç. Eşleşen ilanlar kamu, kura, KPSS ve özel sektör başlıkları altında ayrı gösterilecek.", 12f, false, muted))
             results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
         if (searchHits.isEmpty()) {
             val emptyCard = panel()
-            emptyCard.addView(label("Bu aramada eşleşen ilan bulunamadı", 15f, true, primaryText))
-            emptyCard.addView(label("Arama servisleri yanıt verdi ancak güvenilir kaynaklardan uygun ilan bağlantısı çıkarılamadı. Bu, iş ilanı olmadığı anlamına gelmez.", 12f, false, muted))
+            emptyCard.addView(label("Bu aramada doğrulanabilir ilan bağlantısı bulunamadı", 15f, true, primaryText))
+            emptyCard.addView(label("Bu, ilan olmadığı anlamına gelmez. Bazı arama servisleri güvenlik kontrolü veya geçici istek sınırı nedeniyle sonuçları göstermemiş olabilir.", 12f, false, muted))
             if (searchDiagnostic.isNotBlank()) emptyCard.addView(label(searchDiagnostic, 11f, false, muted))
             results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
-            results.addView(primaryButton("⌕  Daha geniş arama yap") {
+            results.addView(primaryButton("Daha geniş arama yap") {
                 role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
                 category.setSelection(0)
                 searchJobs()
             }, params(-1, dp(48), 0, 6, 0, 6))
-            results.addView(button("Resmî ve kurumsal kaynakları aç") {
-                showSources()
-            }, params(-1, dp(48), 0, 2, 0, 6))
-            results.addView(button("Günlük tam kaynak taramasına geç") {
-                renderPage(2)
-            }, params(-1, dp(48), 0, 2, 0, 6))
+            results.addView(button("Resmî ve kurumsal kaynakları aç") { showSources() }, params(-1, dp(48), 0, 2, 0, 6))
+            results.addView(button("Günlük tam kaynak taramasına geç") { renderPage(2) }, params(-1, dp(48), 0, 2, 0, 6))
             return
         }
 
@@ -787,37 +840,43 @@ class CareerActivity : Activity() {
             searchPage = 0
             renderSearchResults()
         }
-        val sectorCount = searchHits.count { matchesSectorFilter(it.title, it.snippet, it.url, searchSectorFilter) }
-        results.addView(label("Kategori: " + sectorFilterLabels[searchSectorFilter] + " · " + sectorCount + " kayıt", 11f, true, accentBlue))
+        val sectorHits = searchHits.filter { matchesSectorFilter(it.title, it.snippet, it.url, searchSectorFilter) }
+        results.addView(label(
+            "Kategori: " + sectorFilterLabels[searchSectorFilter] + " · " + sectorHits.size + " kayıt",
+            11f, true, accentBlue
+        ))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        listOf("Kontrol listesi", "Tümü", "Süresi geçmiş").forEachIndexed { index, title ->
+        listOf("Tarihi geçmemiş / belirsiz", "Tümü", "Süresi geçmiş").forEachIndexed { index, title ->
             val chip = chipButton(title, searchFilter == index) {
                 searchFilter = index
                 searchPage = 0
                 renderSearchResults()
             }
-            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(48), 1f).apply {
-                setMargins(dp(3), 0, dp(3), 0)
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+                setMargins(dp(2), 0, dp(2), 0)
             })
         }
-        results.addView(filterRow, params(-1, dp(40), 0, 2, 0, 6))
+        results.addView(filterRow, params(-1, dp(46), 0, 2, 0, 6))
         results.addView(label(
-            searchHits.size.toString() + " aday · " + expiredCount + " geçmiş tarihli · " +
-                unknownCount + " son tarihi bulunamayan. İlanın açık olduğu kaynak sayfasında doğrulanmalı.",
+            searchHits.size.toString() + " tekilleştirilmiş ilan · " + expiredCount +
+                " geçmiş tarihli · " + unknownCount +
+                " son tarihi bulunamayan. Başvuru durumu kaynak sayfasında doğrulanmalı.",
             11f, false, muted
         ))
 
-        val sectorHits = searchHits.filter { matchesSectorFilter(it.title, it.snippet, it.url, searchSectorFilter) }
-        val visibleHits = when (searchFilter) {
+        val eligibleHits = when (searchFilter) {
             2 -> sectorHits.filter(::isExpired)
             1 -> sectorHits
             else -> sectorHits.filterNot(::isExpired)
         }
+        val visibleHits = if (searchSectorFilter == 0) {
+            eligibleHits.sortedBy { recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url)) }
+        } else eligibleHits
+
         if (visibleHits.isEmpty()) {
-            results.addView(label("Bu filtrede ilan yok.", 12f, false, muted))
+            results.addView(label("Bu filtrede gösterilecek ilan yok.", 12f, false, muted))
             return
         }
-
         val totalPages = (visibleHits.size + pageSize - 1) / pageSize
         searchPage = searchPage.coerceIn(0, totalPages - 1)
         results.addView(label(
@@ -826,7 +885,16 @@ class CareerActivity : Activity() {
         ))
         if (searchDiagnostic.isNotBlank()) results.addView(label(searchDiagnostic, 10f, false, muted))
         val start = searchPage * pageSize
+        var previousGroup = ""
         visibleHits.drop(start).take(pageSize).forEachIndexed { index, hit ->
+            val group = CareerSourceCatalog.recruitmentGroup(hit.title, hit.snippet, hit.url)
+            if (group != previousGroup) {
+                addRecruitmentGroupHeading(
+                    results, group,
+                    visibleHits.count { CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url) == group }
+                )
+                previousGroup = group
+            }
             showHit(start + index + 1, hit)
         }
         addPager(results, searchPage, totalPages) { next ->
@@ -890,7 +958,7 @@ class CareerActivity : Activity() {
         if (stage != null) card.addView(label("İşe alım aşaması: " + stage, 11f, true, accentColor))
         card.addView(label(eligibility, 12f, true, warningColor).apply {
             setPadding(dp(10), dp(8), dp(10), dp(8))
-            background = rounded(Color.rgb(47, 39, 27), Color.rgb(111, 84, 47))
+            background = rounded(Color.rgb(255, 245, 224), Color.rgb(230, 194, 128))
         })
         if (!listingStatus.isNullOrBlank()) {
             card.addView(label(listingStatus, 11f, true, warningColor))
@@ -919,16 +987,43 @@ class CareerActivity : Activity() {
         card.addView(actions)
         parent.addView(card, params(-1, -2, 0, 0, 0, 8))
     }
-
     private fun showDailyResults(parent: LinearLayout) {
         parent.removeAllViews()
         val data = runCatching { JSONArray(prefs.getString("career_monitor_results", "[]")) }
             .getOrDefault(JSONArray())
         val allItems = ArrayList<JSONObject>()
+        var removedDuplicates = false
         for (i in 0 until data.length()) {
             val item = data.optJSONObject(i) ?: continue
             if (item.optString("title").isBlank() || item.optString("url").isBlank()) continue
-            allItems.add(item)
+            val candidateHit = Net.Hit(item.optString("title"), item.optString("url"), item.optString("snippet"))
+            val duplicateIndex = allItems.indexOfFirst { old ->
+                CareerSearchEngine.areDuplicates(
+                    Net.Hit(old.optString("title"), old.optString("url"), old.optString("snippet")),
+                    candidateHit
+                )
+            }
+            if (duplicateIndex < 0) {
+                allItems.add(item)
+            } else {
+                removedDuplicates = true
+                val old = allItems[duplicateIndex]
+                val oldUrl = old.optString("url")
+                val newUrl = item.optString("url")
+                val preferNew = (CareerSourceCatalog.isSecondary(oldUrl) && !CareerSourceCatalog.isSecondary(newUrl)) ||
+                    (CareerSourceCatalog.isSecondary(oldUrl) == CareerSourceCatalog.isSecondary(newUrl) &&
+                        item.optString("snippet").length > old.optString("snippet").length + 35)
+                val keep = if (preferNew) JSONObject(item.toString()) else old
+                keep.put("profileMatchScore", maxOf(old.optInt("profileMatchScore"), item.optInt("profileMatchScore")))
+                    .put("createdAt", listOf(old.optLong("createdAt"), item.optLong("createdAt")).filter { it > 0L }.minOrNull() ?: 0L)
+                    .put("lastSeenAt", maxOf(old.optLong("lastSeenAt"), item.optLong("lastSeenAt")))
+                allItems[duplicateIndex] = keep
+            }
+        }
+        if (removedDuplicates) {
+            val cleaned = JSONArray()
+            allItems.forEach { cleaned.put(it) }
+            prefs.edit().putString("career_monitor_results", cleaned.toString()).apply()
         }
 
         fun isExpired(item: JSONObject): Boolean {
@@ -953,41 +1048,43 @@ class CareerActivity : Activity() {
         }
         parent.addView(label("Kategori: " + sectorFilterLabels[dailySectorFilter] + " · " + sectorItems.size + " kayıt", 11f, true, accentBlue))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val filterLabels = listOf("Kontrol listesi", "Tümü", "Süresi geçmiş")
-        filterLabels.forEachIndexed { index, title ->
+        listOf("Tarihi geçmemiş / belirsiz", "Tümü", "Süresi geçmiş").forEachIndexed { index, title ->
             val chip = chipButton(title, dailyFilter == index) {
                 dailyFilter = index
                 dailyPage = 0
                 showDailyResults(parent)
             }
-            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
-                setMargins(dp(3), 0, dp(3), 0)
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+                setMargins(dp(2), 0, dp(2), 0)
             })
         }
-        parent.addView(filterRow, params(-1, dp(46), 0, 4, 0, 8))
+        parent.addView(filterRow, params(-1, dp(46), 0, 4, 0, 7))
         parent.addView(label(
-            allItems.size.toString() + " ilan adayı · " + expiredCount + " geçmiş tarihli · " +
-                unknownCount + " son tarihi bulunamayan kayıt. İlanın açık olduğu kaynak sayfasında doğrulanmalı.",
+            allItems.size.toString() + " tekilleştirilmiş ilan · " + expiredCount +
+                " geçmiş tarihli · " + unknownCount +
+                " son tarihi bulunamayan. İlanın açık olduğu varsayılmaz.",
             11f, false, muted
         ))
 
-        dailyItems = when (dailyFilter) {
+        val filtered = when (dailyFilter) {
             2 -> sectorItems.filter(::isExpired)
             1 -> sectorItems
             else -> sectorItems.filterNot(::isExpired)
-        }.sortedWith(compareByDescending<JSONObject> {
-            it.optInt("profileMatchScore", 0)
-        }.thenByDescending {
-            it.optLong("createdAt", 0L)
-        })
+        }.sortedWith(compareByDescending<JSONObject> { it.optInt("profileMatchScore", 0) }
+            .thenByDescending { it.optLong("createdAt", 0L) })
+        dailyItems = if (dailySectorFilter == 0) {
+            filtered.sortedBy {
+                recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(
+                    it.optString("title"), it.optString("snippet"), it.optString("url")
+                ))
+            }
+        } else filtered
 
         if (dailyItems.isEmpty()) {
             val message = if (allItems.isEmpty()) {
                 prefs.getString("career_monitor_empty_reason", null)
                     ?: "Henüz tarama sonucu yok. Otomatik takip veya manuel taramayı kullan."
-            } else {
-                "Bu filtrede gösterilecek ilan yok."
-            }
+            } else "Bu filtrede gösterilecek ilan yok."
             val emptyCard = panel()
             emptyCard.addView(label(if (allItems.isEmpty()) "İlk tarama bekleniyor" else "Bu filtrede kayıt yok", 14f, true, primaryText))
             emptyCard.addView(label(message, 12f, false, muted))
@@ -1002,10 +1099,21 @@ class CareerActivity : Activity() {
             12f, true, accentColor
         ))
         val start = dailyPage * pageSize
+        var previousGroup = ""
         dailyItems.drop(start).take(pageSize).forEachIndexed { index, item ->
             val title = item.optString("title")
             val url = item.optString("url")
             val snippet = item.optString("snippet")
+            val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
+            if (group != previousGroup) {
+                addRecruitmentGroupHeading(
+                    parent, group,
+                    dailyItems.count {
+                        CareerSourceCatalog.recruitmentGroup(it.optString("title"), it.optString("snippet"), it.optString("url")) == group
+                    }
+                )
+                previousGroup = group
+            }
             showHit(
                 start + index + 1,
                 Net.Hit(title, url, snippet),
@@ -1051,7 +1159,7 @@ class CareerActivity : Activity() {
             card.addView(label("SÜREÇ AŞAMASI", 9f, true, muted))
             card.addView(label(event.stage, 12f, true, accentColor).apply {
                 setPadding(dp(10), dp(7), dp(10), dp(7))
-                background = rounded(Color.rgb(19, 49, 56), Color.rgb(48, 111, 112))
+                background = rounded(Color.rgb(226, 247, 241), Color.rgb(130, 198, 177))
             })
             card.addView(label(event.title, 15f, true, primaryText))
             if (event.snippet.isNotBlank()) card.addView(label(event.snippet, 12f, false, muted))
@@ -1177,7 +1285,6 @@ class CareerActivity : Activity() {
             if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
         }
     }
-
     private fun refreshMonitorStatus() {
         if (!::monitorStatus.isInitialized) return
         val enabled = prefs.getBoolean("career_monitor_enabled", false)
@@ -1197,13 +1304,14 @@ class CareerActivity : Activity() {
             append("\nSon kontrol: ").append(time)
             if (last > 0L) {
                 append(" · ").append(lastType).append(" / ").append(lastSlot)
-                append("\nSon sonuç: ").append(resultCount).append(" bağlantı, ").append(count).append(" yeni")
+                append("\nSon sonuç: ").append(resultCount).append(" tekilleştirilmiş ilan, ").append(count).append(" yeni")
             }
             val ok = prefs.getInt("career_monitor_successful_queries", 0)
             val total = prefs.getInt("career_monitor_total_queries", 0)
-            if (total > 0) append("\nBaşarılı arama sorguları: ").append(ok).append("/").append(total)
+            if (total > 0) append("\nTamamlanan arama sorguları: ").append(ok).append("/").append(total)
             if (!notificationsAllowed) append("\nBildirim izni kapalı; yeni ilan uyarıları ekrana düşmeyebilir.")
-            if (!error.isNullOrBlank()) append("\n").append(error)
+            val friendly = CareerSearchEngine.friendlyDiagnostics(error)
+            if (!friendly.isNullOrBlank()) append("\n").append(friendly)
         }
     }
 
@@ -1282,26 +1390,70 @@ class CareerActivity : Activity() {
         "Nihai sonuç bekleniyor", "Teklif alındı", "Yerleşti / atandı",
         "Olumsuz", "Vazgeçildi"
     )
-
-    private fun savedJobs(): JSONArray =
-        runCatching { JSONArray(prefs.getString("career_jobs", "[]")) }.getOrDefault(JSONArray())
-
+    private fun savedJobs(): JSONArray {
+        val stored = runCatching { JSONArray(prefs.getString("career_jobs", "[]")) }.getOrDefault(JSONArray())
+        val unique = ArrayList<JSONObject>()
+        var changed = false
+        for (i in 0 until stored.length()) {
+            val candidate = stored.optJSONObject(i) ?: continue
+            val title = candidate.optString("title")
+            val url = candidate.optString("url")
+            if (title.isBlank() || url.isBlank()) { changed = true; continue }
+            val hit = Net.Hit(title, url, candidate.optString("snippet"))
+            val duplicateIndex = unique.indexOfFirst { old ->
+                CareerSearchEngine.areDuplicates(
+                    Net.Hit(old.optString("title"), old.optString("url"), old.optString("snippet")),
+                    hit
+                )
+            }
+            if (duplicateIndex < 0) {
+                unique.add(candidate)
+            } else {
+                changed = true
+                val old = unique[duplicateIndex]
+                val oldStatus = old.optString("status", "Kaydedildi")
+                val newStatus = candidate.optString("status", "Kaydedildi")
+                val oldUpdated = old.optLong("updatedAt", 0L)
+                val newUpdated = candidate.optLong("updatedAt", 0L)
+                val preferNew = (CareerSourceCatalog.isSecondary(old.optString("url")) &&
+                    !CareerSourceCatalog.isSecondary(url)) ||
+                    (CareerSourceCatalog.isSecondary(old.optString("url")) ==
+                        CareerSourceCatalog.isSecondary(url) &&
+                        candidate.optString("snippet").length > old.optString("snippet").length + 35)
+                val merged = JSONObject((if (preferNew) candidate else old).toString())
+                val retainedStatus = when {
+                    oldStatus != "Kaydedildi" && newStatus == "Kaydedildi" -> oldStatus
+                    newStatus != "Kaydedildi" && oldStatus == "Kaydedildi" -> newStatus
+                    newUpdated > oldUpdated -> newStatus
+                    else -> oldStatus
+                }
+                merged.put("status", retainedStatus)
+                    .put("createdAt", listOf(old.optLong("createdAt"), candidate.optLong("createdAt"))
+                        .filter { it > 0L }.minOrNull() ?: 0L)
+                    .put("updatedAt", maxOf(oldUpdated, newUpdated))
+                    .put("note", old.optString("note").ifBlank { candidate.optString("note") })
+                    .put("fingerprint", CareerSearchEngine.fingerprint(merged.optString("title"), merged.optString("url")))
+                unique[duplicateIndex] = merged
+            }
+        }
+        val result = JSONArray()
+        unique.forEach { result.put(it) }
+        if (changed || unique.size != stored.length()) {
+            prefs.edit().putString("career_jobs", result.toString()).apply()
+        }
+        return result
+    }.getOrDefault(JSONArray())
     private fun saveJob(hit: Net.Hit) {
         val list = savedJobs()
-        val fingerprint = CareerSearchEngine.fingerprint(hit.title, hit.url)
         if ((0 until list.length()).any { index ->
                 val saved = list.optJSONObject(index) ?: return@any false
-                val oldFingerprint = saved.optString("fingerprint").ifBlank {
-                    val oldTitle = saved.optString("title")
-                    val oldUrl = saved.optString("url")
-                    if (oldTitle.isNotBlank() && oldUrl.isNotBlank()) {
-                        CareerSearchEngine.fingerprint(oldTitle, oldUrl)
-                    } else ""
-                }
-                oldFingerprint == fingerprint
+                CareerSearchEngine.areDuplicates(
+                    Net.Hit(saved.optString("title"), saved.optString("url"), saved.optString("snippet")),
+                    hit
+                )
             }
         ) {
-            toast("Bu ilan zaten kayıtlı.")
+            toast("Bu ilan zaten takip listende; tekrar eklenmedi.")
             return
         }
         list.put(
@@ -1310,14 +1462,15 @@ class CareerActivity : Activity() {
                 .put("url", hit.url)
                 .put("snippet", hit.snippet)
                 .put("category", CareerSourceCatalog.categoryFor(hit.url))
-                .put("fingerprint", fingerprint)
+                .put("recruitmentGroup", CareerSourceCatalog.recruitmentGroup(hit.title, hit.snippet, hit.url))
+                .put("fingerprint", CareerSearchEngine.fingerprint(hit.title, hit.url))
                 .put("status", "Kaydedildi")
                 .put("createdAt", System.currentTimeMillis())
                 .put("updatedAt", System.currentTimeMillis())
                 .put("note", "")
         )
         prefs.edit().putString("career_jobs", list.toString()).apply()
-        toast("İlan takip listene kaydedildi.")
+        toast("İlan takip listene eklendi.")
         if (currentPage == 3) refreshSavedList()
     }
 
@@ -1350,40 +1503,103 @@ class CareerActivity : Activity() {
             .setNegativeButton("Vazgeç", null)
             .show()
     }
-
     private fun showSaved(parent: LinearLayout) {
-        val list = savedJobs()
-        if (list.length() == 0) {
+        val allItems = (savedJobs().length() - 1 downTo 0)
+            .mapNotNull { savedJobs().optJSONObject(it) }
+
+        val finishedStatuses = setOf("Teklif alındı", "Yerleşti / atandı", "Olumsuz", "Vazgeçildi")
+        val queuedStatuses = setOf("Kaydedildi", "Başvurulacak")
+        val activeCount = allItems.count {
+            val status = it.optString("status", "Kaydedildi")
+            status !in finishedStatuses && status !in queuedStatuses
+        }
+        val queuedCount = allItems.count { it.optString("status", "Kaydedildi") in queuedStatuses }
+        val finishedCount = allItems.count { it.optString("status", "Kaydedildi") in finishedStatuses }
+
+        val summary = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        summary.addView(statCard("KAYDEDİLEN", queuedCount.toString(), "Henüz başvurulmadı"),
+            LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, dp(4), 0) })
+        summary.addView(statCard("SÜREÇTE", activeCount.toString(), "Başvuru / kura / sınav"),
+            LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
+        summary.addView(statCard("SONUÇLANAN", finishedCount.toString(), "Teklif / atama / sonuç"),
+            LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(4), 0, 0, 0) })
+        parent.addView(summary, params(-1, -2, 0, 4, 0, 10))
+
+        val choices = listOf("Başvuru süreci", "Kaydedilenler", "Sonuçlanan", "Tümü")
+        val horizontal = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+        }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        choices.forEachIndexed { index, text ->
+            row.addView(chipButton(text, savedFilter == index) {
+                savedFilter = index
+                savedPage = 0
+                showSaved(parent)
+            }, LinearLayout.LayoutParams(-2, dp(42)).apply {
+                setMargins(dp(3), dp(2), dp(3), dp(2))
+            })
+        }
+        horizontal.addView(row)
+        parent.addView(horizontal, params(-1, dp(48), 0, 0, 0, 8))
+
+        val items = when (savedFilter) {
+            0 -> allItems.filter {
+                val status = it.optString("status", "Kaydedildi")
+                status !in queuedStatuses && status !in finishedStatuses
+            }
+            1 -> allItems.filter { it.optString("status", "Kaydedildi") in queuedStatuses }
+            2 -> allItems.filter { it.optString("status", "Kaydedildi") in finishedStatuses }
+            else -> allItems
+        }
+        if (items.isEmpty()) {
             val emptyCard = panel()
-            emptyCard.addView(label("Takip listen henüz boş", 15f, true, primaryText))
-            emptyCard.addView(label("Beğendiğin bir ilanda “Kaydet” düğmesine dokun. Başvuru durumunu daha sonra buradan güncelleyebilirsin.", 12f, false, muted))
-            emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(48), 0, 8, 0, 0))
+            val message = when (savedFilter) {
+                0 -> "Henüz başvuruya dönüştürdüğün bir kayıt yok. Bir ilanı kaydettikten sonra durumunu “Başvuruldu” veya ilgili kura/sınav aşamasına getir."
+                1 -> "Kaydedilmiş bekleyen ilan yok. İlanlar sekmesinde beğendiğin fırsatın “Kaydet” düğmesine dokun."
+                2 -> "Henüz sonuçlanmış başvuru bulunmuyor. Atama, teklif, olumsuz sonuç ve vazgeçilen kayıtlar burada toplanır."
+                else -> "Takip listesi henüz boş. İlanlar sekmesinden bir fırsatı kaydedebilirsin."
+            }
+            emptyCard.addView(label("Bu bölüm şu an boş", 15f, true, primaryText))
+            emptyCard.addView(label(message, 12f, false, muted))
+            if (savedFilter == 1 || savedFilter == 3) {
+                emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(46), 0, 8, 0, 0))
+            }
             parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
-        val items = (list.length() - 1 downTo 0).mapNotNull { list.optJSONObject(it) }
+
         val totalPages = (items.size + pageSize - 1) / pageSize
-        savedPage = savedPage.coerceIn(0, (totalPages - 1).coerceAtLeast(0))
+        savedPage = savedPage.coerceIn(0, totalPages - 1)
         parent.addView(label(items.size.toString() + " kayıt · Sayfa " + (savedPage + 1) + "/" + totalPages, 12f, true, accentColor))
         val start = savedPage * pageSize
         items.drop(start).take(pageSize).forEach { item ->
             val url = item.optString("url")
             val title = item.optString("title")
+            val snippet = item.optString("snippet")
             val status = item.optString("status", "Kaydedildi")
+            val group = CareerSourceCatalog.recruitmentGroup(title, snippet, url)
             val card = panel().apply { setPadding(dp(15), dp(13), dp(15), dp(13)) }
             card.addView(label(title, 14f, true))
-            card.addView(label("BAŞVURU DURUMU  ·  $status", 11f, true, accentColor))
-            val deadline = CareerListingParser.deadlineStatus(item.optString("snippet")).orEmpty()
+            card.addView(label(group.uppercase(Locale("tr", "TR")), 10f, true, accentBlue))
+            card.addView(label("BAŞVURU DURUMU · $status", 11f, true, accentColor))
+            val deadline = CareerListingParser.deadlineStatus(snippet).orEmpty()
             if (deadline.isNotBlank()) card.addView(label(deadline, 11f, true, warningColor))
+            val date = item.optLong("updatedAt", 0L)
+            if (date > 0L) card.addView(label(
+                "Son güncelleme: " + SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(date)),
+                10f, false, muted
+            ))
             val actions = LinearLayout(this).apply { orientation = 0 }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
-            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(3), 0) })
             actions.addView(button("İlanı aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-                    .onFailure { toast("Bağlantı açılamadı.") }
-            }, LinearLayout.LayoutParams(0, dp(48), 1f))
-            actions.addView(button("Sil") { confirmDeleteJob(url, title) }, LinearLayout.LayoutParams(0, dp(48), 1f))
+                    .onFailure { toast("İlan bağlantısı açılamadı.") }
+            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(3), 0, dp(3), 0) })
+            actions.addView(button("Sil") { confirmDeleteJob(url, title) },
+                LinearLayout.LayoutParams(0, dp(46), 0.6f).apply { setMargins(dp(3), 0, 0, 0) })
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 7))
         }
@@ -1460,7 +1676,7 @@ class CareerActivity : Activity() {
         setOnClickListener { action() }
     }
 
-    private fun label(value: String, size: Float, bold: Boolean, color: Int = Color.WHITE) = TextView(this).apply {
+    private fun label(value: String, size: Float, bold: Boolean, color: Int = primaryText) = TextView(this).apply {
         text = value
         textSize = size
         setTextColor(color)
@@ -1471,7 +1687,7 @@ class CareerActivity : Activity() {
 
     private fun ripple(content: android.graphics.drawable.Drawable): android.graphics.drawable.Drawable =
         android.graphics.drawable.RippleDrawable(
-            android.content.res.ColorStateList.valueOf(Color.argb(56, 78, 220, 202)),
+            android.content.res.ColorStateList.valueOf(Color.argb(42, 8, 127, 115)),
             content,
             rounded(Color.WHITE, Color.TRANSPARENT)
         )
