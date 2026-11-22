@@ -693,13 +693,13 @@ data class CareerProcessEvent(
 
 object CareerRecruitmentTracker {
     private val stageRules = listOf(
-        "NİHAİ SONUÇ / YERLEŞTİRME" to listOf("nihai sonuç", "nihai liste", "yerleştirme sonucu", "yerlestirme sonucu", "işe başlama", "ise baslama"),
-        "SINAV SONUCU" to listOf("sınav sonucu", "sinav sonucu", "mülakat sonucu", "mulakat sonucu", "sözlü sınav sonucu", "yazılı sınav sonucu"),
-        "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurası sonuç", "noter kurasi sonuc", "kura sonuç", "kura sonuc", "asıl ve yedek", "asil ve yedek", "asil aday", "asıl aday", "yedek aday"),
-        "SINAV / MÜLAKAT TARİHİ" to listOf("sınav tarihi", "sinav tarihi", "sınava girecek", "sinava girecek", "sözlü sınav", "sozlu sinav", "yazılı sınav", "yazili sinav", "mülakat tarihi", "mulakat tarihi"),
-        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("noter kurası", "noter kurasi", "kura çekimi", "kura cekimi", "kura tarihi", "kuraya katılacak", "kuraya katilacak", "kura listesi"),
+        "NİHAİ SONUÇ / YERLEŞTİRME" to listOf("nihai sonuc", "nihai liste", "yerlestirme sonucu", "ise baslama"),
+        "SINAV SONUCU" to listOf("sinav sonucu", "mulakat sonucu", "sozlu sinav sonucu", "yazili sinav sonucu"),
+        "NOTER KURASI SONUCU · ASIL / YEDEK" to listOf("noter kurasi sonuc", "kura sonucu", "kura sonuclari", "asil ve yedek", "asil aday", "yedek aday"),
+        "SINAV / MÜLAKAT TARİHİ" to listOf("sinav tarihi", "sinava girecek", "sozlu sinav", "yazili sinav", "mulakat tarihi"),
+        "KURA TARİHİ / KURAYA KATILACAKLAR" to listOf("noter kurasi", "kura cekimi", "kura tarihi", "kuraya katilacak", "kura listesi"),
         "EVRAK / BELGE KONTROLÜ" to listOf("evrak kontrol", "belge kontrol", "evrak teslim", "belgelerin teslim", "eksik evrak", "evrak inceleme"),
-        "BAŞVURU / YENİ ALIM" to listOf("personel alımı", "personel alimi", "işçi alımı", "isci alimi", "işkur başvuru", "iskur basvuru", "başvurular başladı", "basvurular basladi", "son başvuru", "son basvuru")
+        "BAŞVURU / YENİ ALIM" to listOf("personel alimi", "isci alimi", "iskur basvuru", "basvurular basladi", "son basvuru")
     )
 
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
@@ -776,13 +776,12 @@ object CareerRecruitmentTracker {
         hits.forEach { hit ->
             val stage = detectStage(hit.title, hit.snippet) ?: return@forEach
             val normalizedTitle = normalize(hit.title).replace(Regex("""\s+"""), " ").trim()
-            val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage
+            val parsed = parseEventTime(hit.title, hit.snippet)
+            val rawId = normalizedTitle + "|" + hit.url.substringBefore("#") + "|" + stage + "|" + (parsed?.first ?: 0L)
             val id = java.security.MessageDigest.getInstance("SHA-256")
                 .digest(rawId.toByteArray(Charsets.UTF_8))
                 .joinToString("") { "%02x".format(it) }
             if (!seen.add(id)) return@forEach
-
-            val parsed = parseEventTime(hit.title, hit.snippet)
             val event = CareerProcessEvent(
                 id = id,
                 title = hit.title,
@@ -1132,7 +1131,8 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
 
             val partialWarning = if (batch.failedQueries > 0) {
-                "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir."
+                "${batch.successfulQueries}/${batch.totalQueries} arama sorgusu tamamlandı; sonuçlar kısmi olabilir. " +
+                    batch.errorMessages.take(3).joinToString(" | ")
             } else null
             val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
             processEvents.forEach { event ->
