@@ -97,7 +97,7 @@ class FinanceActivity : Activity() {
         stockCard.addView(Ui.text(this, "Finnhub bağlantısı", 15f, Pal.TEXT, true))
         stockCard.addView(Ui.text(
             this,
-            "Kişisel Finnhub API anahtarını buraya kaydet. Anahtar yalnızca bu telefondaki Aries ayarlarında saklanır; sohbet veya kaynak koduna yazılmaz.",
+            "Finnhub API anahtarını buraya kaydet. Aries anahtarı Android Keystore ile şifreler; anahtar kaynak koduna veya sohbete yazılmaz. Uygulama yedeği başka cihaza taşınırsa yeniden girmen gerekebilir.",
             12f, Pal.MUTED
         ), margins(4, 8))
         apiKeyInput = Ui.input(this, "Finnhub API anahtarı").apply {
@@ -107,12 +107,12 @@ class FinanceActivity : Activity() {
         stockCard.addView(apiKeyInput, margins(bottom = 6))
         apiKeyStatus = Ui.text(
             this,
-            if (prefs.getString("finnhub", "").orEmpty().isBlank()) "API anahtarı kaydedilmedi."
-            else "Finnhub anahtarı bu cihazda kayıtlı.",
+            if (!FinanceKeyStore.hasKey(this)) "API anahtarı kaydedilmedi."
+            else "Finnhub anahtarı Android Keystore ile şifreli.",
             11f, Pal.MUTED
         )
         stockCard.addView(apiKeyStatus)
-        stockCard.addView(Ui.button(this, "Anahtarı kaydet") { saveFinnhubKey() }, margins(6, 14))
+        stockCard.addView(Ui.button(this, "Android Keystore ile şifrele ve kaydet") { saveFinnhubKey() }, margins(6, 14))
 
         stockCard.addView(Ui.text(this, "Hisse ara", 14f, Pal.TEXT, true))
         symbolInput = Ui.input(this, "Hisse kodu veya şirket adı").apply { setSingleLine(true) }
@@ -227,7 +227,7 @@ class FinanceActivity : Activity() {
     private fun saveFinnhubKey() {
         val key = apiKeyInput.text.toString().trim()
         if (key.isBlank()) {
-            apiKeyStatus.text = if (prefs.getString("finnhub", "").orEmpty().isBlank()) {
+            apiKeyStatus.text = if (!FinanceKeyStore.hasKey(this)) {
                 "Anahtar girilmedi."
             } else "Mevcut kayıtlı anahtar korundu."
             return
@@ -236,14 +236,17 @@ class FinanceActivity : Activity() {
             apiKeyStatus.text = "Anahtar biçimi geçersiz. Finnhub panelinden kopyaladığını kontrol et."
             return
         }
-        prefs.edit().putString("finnhub", key).apply()
+        if (!FinanceKeyStore.save(this, key)) {
+            apiKeyStatus.text = "Anahtar Android Keystore ile saklanamadı. Cihaz güvenlik durumunu kontrol et."
+            return
+        }
         apiKeyInput.text.clear()
-        apiKeyStatus.text = "Finnhub anahtarı bu cihazda kaydedildi."
+        apiKeyStatus.text = "Finnhub anahtarı Android Keystore ile şifrelendi."
         refreshStocks()
     }
 
     private fun searchSymbols() {
-        val key = prefs.getString("finnhub", "").orEmpty()
+        val key = FinanceKeyStore.read(this)
         val query = symbolInput.text.toString().trim()
         if (key.isBlank()) {
             lookupRows.removeAllViews()
@@ -291,7 +294,7 @@ class FinanceActivity : Activity() {
         if (!::stockRows.isInitialized) return
         stockRows.removeAllViews()
         val watch = Store(this).watch().distinct().take(12)
-        val key = prefs.getString("finnhub", "").orEmpty()
+        val key = FinanceKeyStore.read(this)
         if (watch.isEmpty()) {
             stockRows.addView(Ui.text(this, "Henüz hisse eklemedin. Yukarıdaki aramayla sembol bulabilirsin.", 12f, Pal.MUTED))
             return
@@ -538,7 +541,7 @@ class FinanceAlertWorker(context: Context, params: WorkerParameters) : Worker(co
         ) return Result.success()
 
         val market = runCatching { FinanceData.fetchTurkishMarket() }.getOrNull()
-        val token = prefs.getString("finnhub", "").orEmpty()
+        val token = FinanceKeyStore.read(applicationContext)
         var changed = false
         for (i in 0 until alerts.length()) {
             val item = alerts.optJSONObject(i) ?: continue

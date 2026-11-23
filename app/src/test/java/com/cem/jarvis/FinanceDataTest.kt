@@ -26,7 +26,7 @@ class FinanceDataTest {
 
         val snapshot = FinanceData.parseTurkishMarket(json)
 
-        assertEquals("2026-11-21", snapshot.date)
+        assertEquals("2026-11-23", snapshot.date)
         assertFalse(snapshot.stale)
         assertEquals(listOf("tcmb", "truncgil"), snapshot.sources)
         assertEquals(2, snapshot.prices.size)

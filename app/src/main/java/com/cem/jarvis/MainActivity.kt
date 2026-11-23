@@ -1634,8 +1634,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun fetchWatchlist(speak: Boolean) {
         val list = store.watch()
-        val token = store.str("finnhub")
-        if (token.isBlank() || list.isEmpty()) return
+        val token = FinanceKeyStore.read(this)
+        if (list.isEmpty()) {
+            setStockText("İzlenen hisse yok. Piyasa Merkezi'nden hisse ekleyebilirsin.")
+            return
+        }
+        if (token.isBlank()) {
+            setStockText("Hisse listesi kayıtlı. Fiyatları görmek için Piyasa Merkezi'nden Finnhub anahtarını güvenli biçimde kaydet.")
+            return
+        }
         thread {
             val lines = list.map { sym -> try { Net.quote(sym, token) } catch (e: Exception) { "$sym: hata" } }
             runOnUiThread { setStockText(lines.joinToString("\n")) }
