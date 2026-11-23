@@ -3,9 +3,9 @@ name: Aries Full Application QA
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ kariyer-modulu ]
+    branches: [ kariyer-modulu, is/kariyer-1-21-verified-search ]
   push:
-    branches: [ kariyer-modulu ]
+    branches: [ kariyer-modulu, is/c3-ilan-semasi-ai-kaynak-kaniti ]
 
 permissions:
   contents: read
