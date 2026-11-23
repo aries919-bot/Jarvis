@@ -1,9 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    dependencies {
-        testImplementation("junit:junit:4.13.2")
-    }
 }
 android {
     namespace = "com.cem.jarvis"
@@ -37,4 +34,7 @@ android {
             if (!System.getenv("KEYSTORE_PATH").isNullOrBlank()) signingConfig = signingConfigs.getByName("aries")
         }
     }
+}
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }
