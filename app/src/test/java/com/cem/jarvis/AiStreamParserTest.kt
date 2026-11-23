@@ -25,6 +25,13 @@ class AiStreamParserTest {
     }
 
     @Test
+    fun requiresGeminiFinishReasonToTreatStreamAsComplete() {
+        assertTrue(AiStreamParser.geminiFinished("""{"candidates":[{"finishReason":"STOP"}]}"""))
+        assertTrue(!AiStreamParser.geminiFinished("""{"candidates":[{"content":{"parts":[{"text":"partial"}]}}]}"""))
+        assertTrue(!AiStreamParser.geminiFinished("""{"candidates":[]}"""))
+    }
+
+    @Test
     fun readsPartialReplyBeforeJsonCloses() {
         assertEquals("Merhaba", AiStreamParser.partialReply("""{"command":"","reply":"Merhaba"""))
     }
