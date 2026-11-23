@@ -226,6 +226,16 @@ object CareerListingPagePolicy {
         if (captchaMarkers.any(normalized::contains)) {
             return CareerListingPageCheck(false, "Kaynak CAPTCHA / bot kontrolü gösteriyor. Bu kontrol aşılmayacak.", "", false)
         }
+        val candidateResultMarkers = listOf(
+            "asil ve yedek aday listesi", "asil aday listesi", "yedek aday listesi",
+            "adaylarin ad soyad listesi", "aday adi soyadi listesi",
+            "kura sonuc listesi", "noter kurasi sonuc listesi",
+            "sinav sonuc listesi", "mulakat sonuc listesi",
+            "kazanan aday listesi", "yerlesen aday listesi"
+        )
+        if (candidateResultMarkers.any(normalized::contains)) {
+            return CareerListingPageCheck(false, "Bu sayfa aday/kura/sınav sonuç listesi içeriyor olabilir. Başka adayların verisi işlenmeyecek.", "", false)
+        }
         val loginMarkers = listOf(
             "giris yaparak devam edin", "oturum acarak devam edin",
             "login required", "sign in to continue", "please log in to continue"
@@ -242,6 +252,12 @@ object CareerListingPagePolicy {
             truncated
         )
     }
+
+    fun sanitizeForAi(value: String): String = value
+        .replace(Regex("[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}"), "[E-POSTA]")
+        .replace(Regex("\\b\\d{11}\\b"), "[KIMLIK NUMARASI]")
+        .replace(Regex("\\bTR\\d{2}(?:\\s?\\d{4}){5}\\s?\\d{2}\\b", RegexOption.IGNORE_CASE), "[IBAN]")
+        .replace(Regex("(\\+?90\\s?)?\\(?0?[2345]\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
 
     private fun normalizePageText(value: String): String = value.lowercase(Locale("tr", "TR"))
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
