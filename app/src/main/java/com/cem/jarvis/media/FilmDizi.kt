@@ -167,20 +167,27 @@ class MediaVM : ViewModel() {
 fun FilmDiziCard(onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF1B2440)).clickable(onClick = onClick).padding(16.dp),
+            .background(Ap.Card2).clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF8FB4FF)), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
+        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Ap.Accent), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
         Spacer(Modifier.width(12.dp))
         Column {
-            Text("Film ve Dizi", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("Ara, keşfet, izle", color = Color(0xFF9AA1B2), fontSize = 12.sp)
+            Text("Film ve Dizi", color = Ap.Text, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("Ara, keşfet, izle", color = Ap.Muted, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
 fun MediaRoot(onExit: () -> Unit, vm: MediaVM = viewModel(), lib: LibraryVM = viewModel()) {
+    AriesMaterialTheme {
+        MediaRootContent(onExit, vm, lib)
+    }
+}
+
+@Composable
+private fun MediaRootContent(onExit: () -> Unit, vm: MediaVM, lib: LibraryVM) {
     var detail by remember { mutableStateOf<Item?>(null) }
     var trailer by remember { mutableStateOf<String?>(null) }
     when {
@@ -220,7 +227,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
         }
         return
     }
-    Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
             Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
