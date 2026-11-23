@@ -265,6 +265,25 @@ def find_pattern(rule):
     return None
 
 
+NOISE_TITLE = re.compile(
+    r"uyelik|cerez|gizlilik|log in|login|skip to|teskilat|genel mudur|"
+    r"e hizmet|iletisim|hakkimizda|kvkk|site haritasi|sikca sorulan|"
+    r"ana sayfa|erisilebilirlik|kullanim|main content|jobs opportunities|"
+    r"yargi ilan|yonetmelik|kayit ol|giris yap")
+JOB_WORDS = re.compile(
+    r"alim|personel|sozlesmeli|kadro|isci|memur|sinav|kura|pozisyon|"
+    r"basvuru|ilan|vacanc|job|position|recruit|hiring|staj|uzman|ogretim")
+
+
+def is_real_listing(title):
+    t = normalize_title(title)
+    if len(t) < 12 or len(t.split()) < 3:
+        return False
+    if NOISE_TITLE.search(t):
+        return False
+    return bool(JOB_WORDS.search(t))
+
+
 def audit_source(src):
     now = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
     rule = src.get("rule") or {}
@@ -295,9 +314,11 @@ def audit_source(src):
                                         html.unescape(m.group("href")))
             items.append({"title": m.group("title"), "url": href})
     items = [i for i in dedupe_listings(items) if i["title"]]
+    res["raw_link_count"] = len(items)
+    items = [i for i in items if is_real_listing(i["title"])]
     res["listing_count"] = len(items)
     res["examples"] = items[:3]
-    need = max(1, int(src.get("expected_min_listings") or 0))
+    need = max(3, int(src.get("expected_min_listings") or 0))
     if len(items) >= need:
         res["decision"] = "ok"
     elif res["marker_hits"]:
