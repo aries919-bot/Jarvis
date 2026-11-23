@@ -108,30 +108,6 @@
       "note": "2 uzman; 25.11–14.12.2026. 23 Kasım itibarıyla henüz başvuru açılmadı."
     },
     {
-      "id": "csgb",
-      "name": "Çalışma ve Sosyal Güvenlik Bakanlığı Duyurular",
-      "group": "kamu",
-      "url": "https://www.csgb.gov.tr/duyurular/",
-      "probeUrl": "https://www.csgb.gov.tr/duyurular/",
-      "readerMode": "html_index",
-      "expectedMarkers": [
-        "duyurular"
-      ],
-      "note": "Eski sınav/sonuç kayıtları da var; yalnız doğrudan personel ilanı sayılır."
-    },
-    {
-      "id": "milli_saraylar",
-      "name": "Millî Saraylar Personel Alımı",
-      "group": "kamu",
-      "url": "https://www.millisaraylar.gov.tr/Kurumsal/PersonelAlimDuyuru",
-      "probeUrl": "https://www.millisaraylar.gov.tr/Kurumsal/PersonelAlimDuyuru",
-      "readerMode": "html_index",
-      "expectedMarkers": [
-        "personnel recruitment"
-      ],
-      "note": "Tarihî sınav/sonuç ilanları da var; sınıflandırılmalı."
-    },
-    {
       "id": "tga",
       "name": "TGA Kariyer",
       "group": "kamu_baglantili",
@@ -196,17 +172,6 @@
       "note": "Elle doğrulama timeout; CI yeniden ölçecek."
     },
     {
-      "id": "adiyaman_pdb",
-      "name": "Adıyaman Üniversitesi Personel Daire",
-      "group": "universite",
-      "url": "https://pdb.adiyaman.edu.tr/tr/duyurular",
-      "probeUrl": "https://pdb.adiyaman.edu.tr/tr/duyurular",
-      "readerMode": "html_index",
-      "expectedMarkers": [
-        "personel daire başkanlığı"
-      ]
-    },
-    {
       "id": "battalgazi",
       "name": "Battalgazi Belediyesi Duyurular",
       "group": "belediye",
@@ -220,15 +185,72 @@
       "note": "İhale ilanları iş ilanı sayılmamalı."
     },
     {
-      "id": "yesilyurt",
-      "name": "Yeşilyurt Belediyesi Güncel/Duyuru",
-      "group": "belediye",
-      "url": "https://yesilyurt.bel.tr/",
-      "probeUrl": "https://yesilyurt.bel.tr/",
+      "id": "tusas_jobs",
+      "name": "TUSAŞ – Açık Pozisyonlar",
+      "group": "buyuk_sirket",
+      "publisher": "Türk Havacılık ve Uzay Sanayii",
+      "url": "https://kariyer.tusas.com/acik-pozisyonlarimiz?sirala=DESC",
+      "probeUrl": "https://kariyer.tusas.com/acik-pozisyonlarimiz?sirala=DESC",
       "readerMode": "html_index",
       "expectedMarkers": [
-        "güncel"
-      ]
+        "açık pozisyonlarımız",
+        "son başvuru"
+      ],
+      "candidateTerms": [
+        "mühendis",
+        "teknisyen"
+      ],
+      "note": "Resmî liste herkese açık. 23.11.2026 kontrolünde 4 açık pozisyon; genel mühendis/teknisyen başvuruları ve kurumsal kaynak yönetimi mühendisi ilanı görünüyordu."
+    },
+    {
+      "id": "roketsan_jobs",
+      "name": "ROKETSAN – Açık Pozisyonlar",
+      "group": "buyuk_sirket",
+      "publisher": "ROKETSAN",
+      "url": "https://kariyer.roketsan.com.tr/jobs",
+      "probeUrl": "https://kariyer.roketsan.com.tr/jobs",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "roketsan kariyer iş ilanları"
+      ],
+      "candidateTerms": [
+        "teknisyen",
+        "mühendis",
+        "uzman",
+        "itfaiye eri"
+      ],
+      "note": "Resmî açık ilan listesi herkese açık. 23.11.2026 kontrolünde 16.11.2026 tarihli teknisyen ilanları ve mühendis pozisyonları listeleniyordu."
+    },
+    {
+      "id": "tei_jobs",
+      "name": "TEI – Açık Pozisyonlar ve Yetenek Programları",
+      "group": "buyuk_sirket",
+      "publisher": "TUSAŞ Motor Sanayii A.Ş.",
+      "url": "https://yetenek.tei.com.tr/jobs",
+      "probeUrl": "https://yetenek.tei.com.tr/jobs",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "tusas engine industries jobs"
+      ],
+      "candidateTerms": [
+        "genel başvuru",
+        "engelli çalışan"
+      ],
+      "programmeTerms": [
+        "jet talent",
+        "back to core"
+      ],
+      "note": "Resmî ilan/program listesi herkese açık. 20.11.2026 tarihli Jet Talent 2026 programı ayrı program sayılmalı; genel başvuru kayıtları iş akışında ayrıca sınıflandırılmalı."
+    },
+    {
+      "id": "aselsan_career",
+      "name": "ASELSAN – Kariyer ve Yetenek Programları",
+      "group": "buyuk_sirket",
+      "publisher": "ASELSAN",
+      "url": "https://www.aselsan.com/tr/kariyer/basvuru",
+      "readerMode": "manual_only",
+      "browserStatus": "accessible_career_info_no_public_job_list_verified",
+      "note": "Resmî kariyer alanları, profesyonel başvuru ve öğrenci/yeni mezun/yetenek programları açık. Bu kontrolde makinece okunabilir açık pozisyon listesi doğrulanmadı; otomatik reader sayılmayacak."
     }
   ]
 }
