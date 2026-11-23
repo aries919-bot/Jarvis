@@ -1189,6 +1189,7 @@ class CareerActivity : Activity() {
      * This fallback is intentionally launched only from the user's tap on a listing card.
      * It never runs in CareerDailyWorker or during search/background refresh.
      */
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
     private fun openListingPageExtractor(hit: Net.Hit) {
         CareerListingPagePolicy.validateHttpsUrl(hit.url)?.let {
             toast(it)
@@ -1248,7 +1249,7 @@ class CareerActivity : Activity() {
                 if (pageError != null) {
                     statusView.text = "Sayfa okunamadı: " + pageError.orEmpty()
                     readButton.isEnabled = false
-                } else if (httpStatus != null && httpStatus !in 200..299) {
+                } else if (httpStatus?.let { it !in 200..299 } == true) {
                     statusView.text = CareerListingPagePolicy.inspect(httpStatus, "", "").message
                     readButton.isEnabled = false
                 } else {
@@ -1362,7 +1363,7 @@ class CareerActivity : Activity() {
         }
 
         readButton.setOnClickListener {
-            if (httpStatus != null && httpStatus !in 200..299) {
+            if (httpStatus?.let { it !in 200..299 } == true) {
                 statusView.text = CareerListingPagePolicy.inspect(httpStatus, "", "").message
                 return@setOnClickListener
             }
