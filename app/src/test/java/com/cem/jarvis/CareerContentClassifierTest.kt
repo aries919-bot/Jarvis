@@ -135,4 +135,17 @@ class CareerContentClassifierTest {
         assertTrue(result.isJobListing)
     }
 
+
+    @Test
+    fun keepsEvenApparentlyOpenMemur365StoriesInNewsUntilPrimarySourceIsFound() {
+        val result = CareerContentClassifier.classify(
+            "Uzman erbaş alımı başvuruları başladı",
+            "Başvurular başladı. Son başvuru tarihi: 07.12.2026. Ayrıntılar haberimizde.",
+            "https://memur365.com/kamu-personel-alimi/uzman-erbas"
+        )
+        assertEquals(CareerContentType.NEWS, result.type)
+        assertFalse(result.isJobListing)
+        assertTrue(result.reason.contains("doğrudan kurumun"))
+    }
+
 }
