@@ -1474,10 +1474,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                     else say(reply.ifEmpty { raw.toString().ifBlank { "Anlaşılamadı." } })
                 }
             } catch (e: Exception) {
+                val partial = AiStreamParser.partialReply(raw.toString()).orEmpty()
                 runOnUiThread {
                     hideThinking()
                     chatBox.removeView(streamBubble)
-                    say(Ai.friendly(e))
+                    if (partial.isNotBlank()) {
+                        say("$partial\\n\\nYanıt akışı tamamlanamadı: ${Ai.friendly(e)}")
+                    } else {
+                        say(Ai.friendly(e))
+                    }
                 }
             }
         }
