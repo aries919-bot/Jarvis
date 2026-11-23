@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
   push:
-    branches: [ main, master, film-dizi-v2 ]
+    branches: [ main, master, film-dizi-v2, is/a2-expressive-theme ]
 
 jobs:
   build:
