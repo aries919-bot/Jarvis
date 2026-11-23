@@ -124,8 +124,16 @@ jobs:
             adb shell settings put global animator_duration_scale 0
             gradle connectedDebugAndroidTest --no-daemon
             TEST_EXIT=$?
-            adb pull /sdcard/Android/data/com.cem.jarvis/files/AriesQA qa-output/ui
+            # Read test evidence from app-private filesDir. External storage is not
+            # guaranteed to be mounted in headless emulators; run-as works for debug APKs.
+            mkdir -p qa-output/ui
+            adb exec-out run-as com.cem.jarvis tar -cf - files/AriesQA > qa-output/ui-evidence.tar
             PULL_EXIT=$?
+            if [ "$PULL_EXIT" -eq 0 ]; then
+              tar -xf qa-output/ui-evidence.tar -C qa-output/ui --strip-components=2
+              PULL_EXIT=$?
+            fi
+            rm -f qa-output/ui-evidence.tar
             adb logcat -d -v threadtime > qa-output/logcat.txt
             adb shell dumpsys activity activities > qa-output/activities.txt
             adb shell dumpsys meminfo com.cem.jarvis > qa-output/meminfo.txt
