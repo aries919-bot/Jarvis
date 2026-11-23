@@ -68,5 +68,7 @@
 - `AGENTS.md`
 - `is.sh`
 - `denetle.py`
+- `harita.sh`
+- `HARITA.md`
 - `docs/JARVIS_GIZLILIK_ANALIZI.md`
 - `docs/EK_BULGULAR.md`
