@@ -37,6 +37,19 @@ class Tests(unittest.TestCase):
         self.assertEqual("job_candidate",mod.kind("CNC Torna Teknisyeni Ankara", "https://kariyer.roketsan.com.tr/ilan.job", ["teknisyen","mühendis"]))
     def test_early_career_programmes_are_not_mixed_with_jobs(self):
         self.assertEqual("programme_candidate",mod.kind("Jet Talent (JT-2026)", "https://yetenek.tei.com.tr/jet.job", [], ["jet talent","back to core"]))
+    def test_public_programme_index_reader_is_separate_from_job_vacancies(self):
+        from unittest.mock import patch
+        source={"id":"tei","name":"TEI programmes","url":"https://example.gov.tr/jobs","probeUrl":"https://example.gov.tr/jobs","readerMode":"html_index","expectedMarkers":["jet talent"],"candidateTerms":["genel başvuru"],"programmeTerms":["jet talent","back to core"]}
+        html='<html><body><h1>Jet Talent</h1><a href="/jet-talent">Jet Talent (JT-2026)</a></body></html>'
+        with patch.object(mod,"fetch",return_value=(200,"https://example.gov.tr/jobs","text/html",html)):
+            result=mod.probe(source)
+        summary=mod.report([source],[result])
+        self.assertTrue(result["readerOk"])
+        self.assertEqual(0,result["candidateCount"])
+        self.assertEqual(1,result["programmeCount"])
+        self.assertEqual(1,summary["programmeReaderCount"])
+        self.assertEqual(0,summary["vacancyLinkCount"])
+        self.assertEqual(1,summary["programmeLinkCount"])
     def test_blank_html_is_not_a_working_reader(self):
         from unittest.mock import patch
         source={"id":"blank","name":"Blank","url":"https://example.gov.tr/","probeUrl":"https://example.gov.tr/","readerMode":"html_index"}
