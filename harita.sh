@@ -97,7 +97,7 @@ for heading, folder in (("Birim testleri", Path("app/src/test")), ("Emülatör /
 
 for heading, files in (
     ("Derleme ve Android yapılandırması", ["build.gradle.kts", "settings.gradle.kts", "gradle.properties", "app/build.gradle.kts", "app/src/main/AndroidManifest.xml", "app/src/main/res/values/themes.xml"]),
-    ("Otomatik kalite kontrol", [".github/workflows/android.yml", ".github/workflows/aries-full-app-qa.yml", "qa/README.md", "scripts/qa/build_qa_report.py"]),
+    ("Otomatik kalite kontrol", [".github/workflows/android.yml", ".github/workflows/aries-full-app-qa.yml", "qa/README.md", "scripts/qa/build_qa_report.py", "scripts/qa/test_repo_maintenance.py"]),
     ("Proje yönergeleri ve güvenlik belgeleri", ["AGENTS.md", "is.sh", "denetle.py", "docs/JARVIS_GIZLILIK_ANALIZI.md", "docs/EK_BULGULAR.md"]),
 ):
     lines.extend([f"## {heading}", ""])
