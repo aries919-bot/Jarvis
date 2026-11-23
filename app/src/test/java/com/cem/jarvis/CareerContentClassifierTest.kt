@@ -117,7 +117,7 @@ class CareerContentClassifierTest {
         val result = CareerContentClassifier.classify(
             "Jandarmaya 10 Bin Personel Alımı Geliyor",
             "Başvuru tarihi bekleniyor; henüz resmî başvuru ilanı yayımlanmadı.",
-            "https://www.memurlar.net/haber/123456"
+            "https://memur365.com/kamu-personel-alimi/jandarma-10-bin-personel"
         )
         assertEquals(CareerContentType.NEWS, result.type)
         assertFalse(result.isJobListing)
