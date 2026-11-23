@@ -102,6 +102,31 @@ class CareerListingSchemaTest {
     }
 
     @Test
+    fun pagePolicyDoesNotSendCandidateResultListsToAi() {
+        val checked = CareerListingPagePolicy.inspect(
+            200,
+            "Kura sonuçları",
+            "Asıl ve yedek aday listesi yayımlandı."
+        )
+        assertFalse(checked.ready)
+        assertTrue(checked.message.contains("Başka adayların verisi"))
+    }
+
+    @Test
+    fun masksContactAndIdentityDataBeforeAiExtraction() {
+        val raw = "İletişim: aday@example.org, 0505 111 22 33, 12345678901, TR120006200000000000123456"
+        val safe = CareerListingPagePolicy.sanitizeForAi(raw)
+        assertFalse(safe.contains("aday@example.org"))
+        assertFalse(safe.contains("0505 111 22 33"))
+        assertFalse(safe.contains("12345678901"))
+        assertFalse(safe.contains("TR120006200000000000123456"))
+        assertTrue(safe.contains("[E-POSTA]"))
+        assertTrue(safe.contains("[TELEFON]"))
+        assertTrue(safe.contains("[KIMLIK NUMARASI]"))
+        assertTrue(safe.contains("[IBAN]"))
+    }
+
+    @Test
     fun pagePolicyAcceptsHttpsAndCapsOversizedPageText() {
         assertEquals(null, CareerListingPagePolicy.validateHttpsUrl(url))
         assertTrue(CareerListingPagePolicy.validateHttpsUrl("http://example.gov.tr/ilan") != null)
