@@ -76,6 +76,8 @@ class ClientSecretBuildTests(unittest.TestCase):
         self.assertIn('.remove(LEGACY_PREF)', store_file)
         self.assertIn('CloudKeyStore.read(this)', main_activity)
         self.assertIn('CloudKeyStore.save(this, value)', main_activity)
+        self.assertNotIn('store.str("bulut")', main_activity)
+        self.assertIn('CloudKeyStore.read(applicationContext)', main_activity)
         self.assertIn("CloudKeyStore.clear(appContext)", store_file)
 
 

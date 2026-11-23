@@ -1090,7 +1090,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
     }
 
     private fun oyGonder(v: Int, t: String) {
-        val tk = store.str("bulut")
+        val tk = CloudKeyStore.read(applicationContext)
         if (tk.isBlank()) return
         Thread { Ai.oyVer(tk, v, t) }.start()
     }
@@ -1520,7 +1520,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
             return true
         }
 
-        val flm = Regex("^(film|dizi) (ara|bul)[:,]? +(.+)$").find(s); if (flm != null) { val tk = store.str("bulut"); if (tk.isBlank()) { say("Aries Bulut anahtarı yok."); return true }; showThinking(); thread { try { val r = Ai.film(tk, flm.groupValues[3]); runOnUiThread { hideThinking(); say(r) } } catch (e: Exception) { runOnUiThread { hideThinking(); say(Ai.friendly(e)) } } }; return true }
+        val flm = Regex("^(film|dizi) (ara|bul)[:,]? +(.+)$").find(s); if (flm != null) { val tk = CloudKeyStore.read(applicationContext); if (tk.isBlank()) { say("Aries Bulut anahtarı yok."); return true }; showThinking(); thread { try { val r = Ai.film(tk, flm.groupValues[3]); runOnUiThread { hideThinking(); say(r) } } catch (e: Exception) { runOnUiThread { hideThinking(); say(Ai.friendly(e)) } } }; return true }
         val res = Regex("^araştır[:,]?\\s+(.+)$").find(s)
         if (res != null) {
             doResearch(res.groupValues[1])
@@ -1553,7 +1553,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
         return false
     }
 
-    private fun hasAiKey(): Boolean = store.str("bulut").isNotBlank() || Ai.ALL.any { store.str(keyName(it)).isNotBlank() }
+    private fun hasAiKey(): Boolean = CloudKeyStore.read(applicationContext).isNotBlank() || Ai.ALL.any { store.str(keyName(it)).isNotBlank() }
     private fun keyName(who: String): String = if (who == "gemini") "key" else who
     private fun providerKeys(): Map<String, String> = Ai.ALL.associateWith { store.str(keyName(it)) }
     private fun providerModels(): Map<String, String> = mapOf(
@@ -1576,7 +1576,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
         thread {
             try {
                 uiHandler.post { orbThink(4) }
-                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), SYS, hist)
+                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to CloudKeyStore.read(applicationContext)), providerModels(), SYS, hist)
                 val (cmd, reply) = Ai.parseReply(raw)
                 runOnUiThread {
                     hideThinking()
@@ -1599,7 +1599,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
         thread {
             try {
                 uiHandler.post { orbThink(5) }
-                var hz = "ok"; val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
+                var hz = "ok"; val tk = CloudKeyStore.read(applicationContext); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to CloudKeyStore.read(applicationContext)), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
                     say(a.text.ifEmpty { "Sonuç bulamadım." }, a.text, a.sources.take(5).map { it.title to it.url }, ai = true)
@@ -1750,7 +1750,7 @@ Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. A
 
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
-        val tk = store.str("bulut")
+        val tk = CloudKeyStore.read(applicationContext)
         val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
         val unutN = Regex("^unut\\s*(?::\\s*|\\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
         if (unutN != null) {
