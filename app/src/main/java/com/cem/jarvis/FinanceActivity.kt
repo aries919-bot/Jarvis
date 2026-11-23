@@ -113,6 +113,18 @@ class FinanceActivity : Activity() {
         )
         stockCard.addView(apiKeyStatus)
         stockCard.addView(Ui.button(this, "Android Keystore ile şifrele ve kaydet") { saveFinnhubKey() }, margins(6, 14))
+        stockCard.addView(Ui.button(this, "Finnhub anahtarını sil") {
+            AlertDialog.Builder(this)
+                .setTitle("Finnhub anahtarı silinsin mi?")
+                .setMessage("Kayıtlı API anahtarı bu cihazdan ve Android Keystore alanından silinecek. Hisse fiyatlarını yeniden görmek için anahtarı tekrar girmen gerekir.")
+                .setPositiveButton("Sil") { _, _ ->
+                    FinanceKeyStore.clear(this)
+                    apiKeyStatus.text = "Finnhub anahtarı silindi."
+                    refreshStocks()
+                }
+                .setNegativeButton("Vazgeç", null)
+                .show()
+        }, margins(4, 14))
 
         stockCard.addView(Ui.text(this, "Hisse ara", 14f, Pal.TEXT, true))
         symbolInput = Ui.input(this, "Hisse kodu veya şirket adı").apply { setSingleLine(true) }

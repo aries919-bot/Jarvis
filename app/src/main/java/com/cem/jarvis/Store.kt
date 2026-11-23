@@ -8,6 +8,7 @@ import org.json.JSONObject
 class Conv(val id: String, var title: String, var updated: Long, val msgs: MutableList<Pair<String, String>>)
 
 class Store(ctx: Context) {
+    private val appContext = ctx.applicationContext
     val prefs: SharedPreferences = ctx.getSharedPreferences("j", Context.MODE_PRIVATE)
     private val cache = ArrayList<Conv>()
 

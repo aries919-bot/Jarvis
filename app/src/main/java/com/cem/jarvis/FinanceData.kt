@@ -281,6 +281,19 @@ object FinanceKeyStore {
         return ""
     }
 
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .remove(ENCRYPTED_PREF)
+            .remove(LEGACY_PREF)
+            .apply()
+        runCatching {
+            KeyStore.getInstance("AndroidKeyStore").apply {
+                load(null)
+                deleteEntry(KEY_ALIAS)
+            }
+        }
+    }
+
     private fun getOrCreateKey(): SecretKey {
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         val existing = keyStore.getKey(KEY_ALIAS, null) as? SecretKey

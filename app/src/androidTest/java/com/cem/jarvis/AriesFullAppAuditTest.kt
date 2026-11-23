@@ -167,6 +167,23 @@ class AriesFullAppAuditTest {
             }
         }
 
+        // Audit the finance market center added to the main sidebar.
+        val financeMenuOpened = clickDescription("Menü")
+        val financeOpened = financeMenuOpened && clickTextContains("Piyasa Merkezi")
+        if (financeOpened) {
+            val financeVisible = device.wait(Until.hasObject(By.textContains("Piyasa Merkezi")), 8_000)
+            if (!financeVisible) {
+                recordFinding("error", "navigation-destination", "finance", "FinanceActivity opened, but its Piyasa Merkezi heading was not visible.")
+            }
+            SystemClock.sleep(700)
+            captureAndAudit("10-finance-market-center")
+            device.pressBack()
+            device.wait(Until.hasObject(By.desc("Menü")), 8_000)
+            SystemClock.sleep(500)
+        } else {
+            recordFinding("error", "navigation", "sidebar", "The Piyasa Merkezi entry could not be opened from the main menu.")
+        }
+
         val settingsOpened = clickDescription("Ayarlar")
         if (settingsOpened) {
             SystemClock.sleep(400)
