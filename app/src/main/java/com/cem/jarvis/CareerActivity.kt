@@ -2097,14 +2097,14 @@ class CareerActivity : Activity() {
         val events = if (processFilter == 1) historicalEvents else upcomingEvents
 
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        filterRow.addView(chipButton("Yaklaşan / kontrol (" + upcomingEvents.size + ")", processFilter == 0) {
+        filterRow.addView(chipButton("Yaklaşan (" + upcomingEvents.size + ")", processFilter == 0) {
             processFilter = 0
             processPage = 0
             showProcessEvents(parent)
         }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
             setMargins(0, 0, dp(4), 0)
         })
-        filterRow.addView(chipButton("Geçmiş sonuç arşivi (" + historicalEvents.size + ")", processFilter == 1) {
+        filterRow.addView(chipButton("Geçmiş / doğrulanmamış (" + historicalEvents.size + ")", processFilter == 1) {
             processFilter = 1
             processPage = 0
             showProcessEvents(parent)
@@ -2139,7 +2139,14 @@ class CareerActivity : Activity() {
             val publishedResult = CareerRecruitmentTracker.isCompletedResultNotice(event.title, event.snippet)
             val card = panel()
             card.addView(label(
-                if (historical) "GEÇMİŞ / YAYIMLANMIŞ SONUÇ · ARŞİV" else "TAKİP EDİLEN SÜREÇ",
+                when {
+                    CareerRecruitmentTracker.isCompletedResultNotice(event.title, event.snippet) ->
+                        "YAYIMLANMIŞ SONUÇ · GEÇMİŞ ARŞİV"
+                    event.eventAt != null && event.eventAt < System.currentTimeMillis() ->
+                        "TARİHİ GEÇMİŞ · ARŞİV"
+                    historical -> "TARİHİ DOĞRULANAMADI · ARŞİV"
+                    else -> "TAKİP EDİLEN SÜREÇ"
+                },
                 9f, true, if (historical) dangerColor else muted
             ))
             card.addView(label(event.stage, 12f, true, accentColor).apply {
