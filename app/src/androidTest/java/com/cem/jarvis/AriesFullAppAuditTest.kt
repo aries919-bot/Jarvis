@@ -266,7 +266,7 @@ class AriesFullAppAuditTest {
                 .toString(2)
         )
         File(outputDir, "visited-screens.txt").writeText(
-            (0 until screenRecords.length()).joinToString("\\n") {
+            (0 until screenRecords.length()).joinToString("\n") {
                 screenRecords.getJSONObject(it).getString("name")
             }
         )
