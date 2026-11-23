@@ -138,6 +138,47 @@ def inspect_hierarchies(qa_dir: Path, density: float) -> list[dict[str, Any]]:
     return findings
 
 
+def measure_screen_density(qa_dir: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    metrics: list[dict[str, Any]] = []
+    findings: list[dict[str, Any]] = []
+    for file in qa_dir.rglob("*.xml"):
+        if file.name.startswith("TEST-"):
+            continue
+        try:
+            root = ET.parse(file).getroot()
+        except (ET.ParseError, OSError):
+            continue
+        texts = []
+        for node in root.iter("node"):
+            value = (node.attrib.get("text") or "").strip()
+            if value:
+                texts.append(value)
+        if not texts:
+            continue
+        total_chars = sum(len(value) for value in texts)
+        long_blocks = [value for value in texts if len(value) >= 120]
+        stat = {
+            "screen": file.stem,
+            "visibleTextNodes": len(texts),
+            "totalTextCharacters": total_chars,
+            "longTextBlocks": len(long_blocks),
+            "longTextSamples": [value[:180] for value in long_blocks[:4]],
+        }
+        metrics.append(stat)
+        if len(texts) > 36 or len(long_blocks) > 5:
+            findings.append({
+                "severity": "review",
+                "category": "content-density",
+                "screen": file.stem,
+                "message": (
+                    f"Potentially dense screen: {len(texts)} visible text nodes, "
+                    f"{total_chars} characters and {len(long_blocks)} long text blocks. "
+                    "Review screenshot for hierarchy, grouping and unnecessary repetition."
+                ),
+            })
+    return metrics, findings
+
+
 def static_source_audit(root: Path) -> dict[str, Any]:
     main_path = root / "app/src/main/java/com/cem/jarvis/MainActivity.kt"
     career_path = root / "app/src/main/java/com/cem/jarvis/CareerActivity.kt"
@@ -288,10 +329,11 @@ def render_html(report: dict[str, Any], out_dir: Path) -> None:
         f"<tr><td>{esc(x.get('severity'))}</td><td>{esc(x.get('category'))}</td><td>{esc(x.get('screen'))}</td><td>{esc(x.get('message'))}</td></tr>"
         for x in issues
     ) or '<tr><td colspan="4">No automated findings recorded.</td></tr>'
+    stats_by_name = {s.get("screen"): s for s in report["ui"].get("screenStats", [])}
     screen_rows = "".join(
-        f"<tr><td>{esc(s.get('name'))}</td><td>{esc(s.get('clickableCount'))}</td><td>{esc(s.get('smallTouchTargets'))}</td><td>{esc(s.get('unlabeledTargets'))}</td></tr>"
+        f"<tr><td>{esc(s.get('name'))}</td><td>{esc(s.get('clickableCount'))}</td><td>{esc(s.get('smallTouchTargets'))}</td><td>{esc(s.get('unlabeledTargets'))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('visibleTextNodes', 0))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('longTextBlocks', 0))}</td></tr>"
         for s in screens
-    ) or '<tr><td colspan="4">No UI screens captured.</td></tr>'
+    ) or '<tr><td colspan="6">No UI screens captured.</td></tr>'
     test_rows = "".join(
         f"<tr><td>{esc(t.get('classname'))}</td><td>{esc(t.get('name'))}</td><td>{esc(t.get('outcome'))}</td><td>{esc(t.get('time'))}</td></tr>"
         for t in cases
@@ -332,7 +374,7 @@ code{{overflow-wrap:anywhere}}.note{{border-left:3px solid var(--warn);padding:1
 <h2>Çalıştırma kapsamı</h2><p>{esc(report["coverage"])} </p>
 <div class="note">{esc(visual_note)}</div>
 <h2>UI ekran ve kullanılabilirlik taraması</h2>
-<table><thead><tr><th>Ekran</th><th>Tıklanabilir</th><th>48dp altı</th><th>Etiketsiz</th></tr></thead><tbody>{screen_rows}</tbody></table>
+<table><thead><tr><th>Ekran</th><th>Tıklanabilir</th><th>48dp altı</th><th>Etiketsiz</th><th>Metin öğesi</th><th>Uzun blok</th></tr></thead><tbody>{screen_rows}</tbody></table>
 <h2>Bulgu ve uyarılar</h2>
 <table><thead><tr><th>Önem</th><th>Kategori</th><th>Ekran</th><th>Açıklama</th></tr></thead><tbody>{issue_rows}</tbody></table>
 <h2>JUnit sonuçları</h2>
@@ -364,6 +406,7 @@ def main() -> int:
     ui = parse_ui_bundle(qa_dir)
     device_density = float(ui.get("device", {}).get("density", 1.0) or 1.0)
     ui_hierarchy_findings = inspect_hierarchies(qa_dir, device_density)
+    screen_density, density_findings = measure_screen_density(qa_dir)
     lint = lint_summary(root)
     pipeline = parse_pipeline_status(qa_dir)
 
@@ -374,6 +417,7 @@ def main() -> int:
         if item.get("category") not in {"touch-target", "accessibility-label"}
     ]
     findings.extend(ui_hierarchy_findings)
+    findings.extend(density_findings)
     findings.extend(source.get("warnings", []))
     findings.extend(scan_logcat(qa_dir))
     findings.extend(
@@ -411,7 +455,7 @@ def main() -> int:
         "source": source,
         "summary": summary,
         "tests": tests,
-        "ui": ui,
+        "ui": {**ui, "screenStats": screen_density},
         "lint": lint,
         "pipeline": pipeline,
         "findings": findings,
