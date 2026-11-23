@@ -2,6 +2,7 @@ package com.cem.jarvis
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -92,5 +93,20 @@ class CareerSearchProviderFallbackTest {
                 ).type
             )
         }
+    }
+
+    @Test
+    fun scanOrHeadlineDateIsNotTreatedAsSourcePublicationDate() {
+        val undated = "Kura sonuçları 22.11.2025 tarihinde açıklandı"
+        assertNull(CareerListingParser.publicationDate(undated))
+        assertNull(CareerListingParser.publicationTimestamp(undated))
+    }
+
+    @Test
+    fun explicitlyLabelledPublicationDateIsExtractedSeparately() {
+        assertEquals(
+            "22.11.2025",
+            CareerListingParser.publicationDate("Yayın tarihi: 22.11.2025")
+        )
     }
 }
