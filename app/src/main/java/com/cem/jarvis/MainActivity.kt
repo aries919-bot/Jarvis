@@ -78,13 +78,14 @@ class MainActivity : Activity() {
     private val PICK_FILE_REQUEST = 1001
     private lateinit var fileListView: LinearLayout
 
-    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true)
+    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true, "memShareOn" to false)
     private var pendingFact: String? = null
     private val flagTitles = mapOf(
         "heyJarvis" to "Hey Jarvis",
         "aiOn" to "Yapay zekâ",
         "histOn" to "Sohbet kaydı",
-        "memOn" to "Hafıza"
+        "memOn" to "Hafıza",
+        "memShareOn" to "Hafızayı yapay zekâ ile paylaş"
     )
 
     private val SYS = """
@@ -1441,7 +1442,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         thread {
             try {
                 uiHandler.post { orbThink(4) }
-                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), SYS, hist)
+                val memoryPrompt = AiMemory.appendContext(SYS, store.facts(), store.flag("memOn", true), store.flag("memShareOn", false))
+                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), memoryPrompt, hist)
                 val (cmd, reply) = Ai.parseReply(raw)
                 runOnUiThread {
                     hideThinking()
