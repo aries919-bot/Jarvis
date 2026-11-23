@@ -219,7 +219,8 @@ object CareerListingPagePolicy {
         val normalized = normalizePageText(combined)
         val captchaMarkers = listOf(
             "captcha", "verify you are human", "i am not a robot",
-            "checking your browser", "cloudflare", "guvenlik dogrulamasi",
+            "checking your browser", "attention required", "cloudflare ray id",
+            "enable javascript and cookies to continue", "guvenlik dogrulamasi",
             "robot olmadiginizi", "insan oldugunuzu dogrulayin"
         )
         if (captchaMarkers.any(normalized::contains)) {
