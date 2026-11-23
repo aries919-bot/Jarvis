@@ -1,0 +1,92 @@
+name: K1 Kariyer Kaynak Denetimi
+
+# K1: kamu kariyer kaynak matrisi (career/sources.json) canlı okuyucu denetimi.
+# - Kaynaklar giriş/CAPTCHA olmadan erişilebilir olmalı, robots.txt sonucu kaydedilir.
+# - Anahtar/token kullanılmaz; gizli bilgi gerekmez, bu yüzden secrets.* hiç geçmez.
+on:
+  workflow_dispatch:
+    inputs:
+      min_ok:
+        description: "En az kaç kaynak açık (otomasyon-ready) olmalı"
+        required: false
+        default: "3"
+  schedule:
+    - cron: "20 5 * * 1"  # Pazartesi 05:20 UTC
+  push:
+    paths:
+      - "career/sources.json"
+      - "scripts/career_source_audit.py"
+      - "scripts/test_career_source_audit.py"
+      - "docs/KARIYER_KAYNAK_DENETIMI.md"
+      - ".github/workflows/career-source-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  denetim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      MIN_OK: ${{ github.event.inputs.min_ok || '3' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Birim testler (çevrimdışı, ağ istemi yok)
+        run: python3 scripts/test_career_source_audit.py -v
+
+      - name: Canlı okuyucu denetimi
+        run: |
+          mkdir -p career-audit-report
+          python3 scripts/career_source_audit.py \
+            --sources career/sources.json \
+            --out-dir career-audit-report \
+            --min-ok "$MIN_OK"
+
+      - name: robots.txt özetini iş özetine yaz
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          veri = json.load(open("career/sources.json", encoding="utf-8"))
+          satirlar = ["## K1 kaynak / robots.txt özeti", "",
+                      "| kaynak | robots | izinli yol | HTTP | süre (ms) | eşleşen kural | otomasyon | ilan |",
+                      "|---|---|---|---|---|---|---|---|"]
+          for k in veri["sources"]:
+              r, s = k["robots_txt"], k["last_check"]
+              satirlar.append("| %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                  k["id"], r["result"], "evet" if r["path_allowed"] else "hayir",
+                  r["http_status"], r["fetch_ms"], r["matching_rule"],
+                  k["automation"], s["listing_count"]))
+          acik = [k["id"] for k in veri["sources"] if k["automation"] == "acik"]
+          satirlar += ["", "Otomasyona acik kaynak sayisi: %d (alt sinir %s)" % (
+              len(acik), os.environ.get("MIN_OK", "3")),
+              "Kaynak matrisi denetim zamani: %s" % veri["generated_at"]]
+          ozet = os.environ.get("GITHUB_STEP_SUMMARY")
+          if ozet:
+              open(ozet, "a", encoding="utf-8").write("\n".join(satirlar) + "\n")
+          print("\n".join(satirlar))
+          PY
+
+      - name: Denetim notunu rapora ekle
+        if: always()
+        run: |
+          mkdir -p career-audit-report
+          {
+            echo "K1 denetim zamani (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "Kullanim: python3 scripts/career_source_audit.py --sources career/sources.json --out-dir career-audit-report --min-ok 3"
+            echo "robots.txt sonuclari career/sources.json icinde, kaynak basina robots_txt alaniinda saklanir."
+          } > career-audit-report/ci-notu.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: career-audit-report
+          path: career-audit-report/
+          if-no-files-found: warn
+          retention-days: 30

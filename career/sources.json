@@ -1,0 +1,530 @@
+{
+  "schema_version": 1,
+  "sources_file": "career/sources.json",
+  "audit_script": "scripts/career_source_audit.py",
+  "report_dir": "career-audit-report",
+  "task": "K1 - kamu kariyer kaynak matrisi canlı okuyucu denetimi",
+  "generated_at": "2026-11-23T18:38:29Z",
+  "generated_by": "scripts/career_source_audit.py kurallariyla canli okuma; kaynak matrigi bu dosyadir",
+  "policy": {
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 JarvisK1Audit/1.0",
+    "timeout_seconds": 20.0,
+    "max_bytes_per_page": 2500000,
+    "min_ok_sources": 3,
+    "request_delay_seconds": 1.0,
+    "robots_txt": {
+      "honor": true,
+      "result_values": [
+        "izinli",
+        "reddedildi",
+        "yok",
+        "gecersiz",
+        "erisilemedi"
+      ],
+      "default_rule": "Hedef yol icin 'User-agent: *' (veya JarvisK1Audit) grubunda Allow/Disallow yoksa izinli sayilir.",
+      "not_izinli_action": "automation=kapali; yalniz elle gezinme",
+      "gecersiz_action": "robots.txt HTML/bos donerse kisit bilinmez; varsayilan guvenli: automation=kapali"
+    },
+    "no_login_sources": true,
+    "no_captcha_bypass": true,
+    "no_secrets_in_matrix": true,
+    "https_only": true
+  },
+  "sources": [
+    {
+      "id": "iskur-acik-is-ilanlari",
+      "name": "İŞKUR Açık İş İlanları Arama",
+      "owner": "Türkiye İş Kurumu (İŞKUR)",
+      "url": "https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx",
+      "kind": "search",
+      "content_type": "ilan",
+      "expected_min_listings": 0,
+      "rule": {
+        "base_url": "https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/Istihdam/IsIlaniDetay\\.aspx",
+        "requires_post": true,
+        "js_rendered": false,
+        "min_examples": 3
+      },
+      "notes": "Sonuçlar GET ile boş form dönüyor; ilan listesi meslek/il parametreleriyle POST sonrası üretiliyor. Sade GET çekimi formu doğrular, ilan sayımı yapılamaz; bu yüzden beklenen ilan 0 ve otomasyon manuel. robots.txt izinli. Otomasyon kapalı/manuel sebebi: içerik GET ile tam çizilmiyor.",
+      "login_required": false,
+      "automation": "manuel",
+      "robots_txt": {
+        "url": "https://esube.iskur.gov.tr/robots.txt",
+        "checked_at": "2026-11-23T18:38:11Z",
+        "http_status": 200,
+        "fetch_ms": 200,
+        "content_type": "text/plain",
+        "crawl_delay": null,
+        "sitemaps": [],
+        "applies_to_user_agent": "*",
+        "matching_rule": "Allow: /",
+        "path_allowed": true,
+        "result": "izinli",
+        "notes": "Kural Allow: / ile eşleşti.",
+        "automation_effect": "acik"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:11Z",
+        "http_status": 200,
+        "fetch_ms": 375,
+        "bytes_download": 85202,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 0,
+        "examples": [],
+        "marker_hits": [
+          "login:giriş\\s*yap(ın|iniz)?"
+        ],
+        "decision": "ok"
+      }
+    },
+    {
+      "id": "iskur-kurumsal-duyurular",
+      "name": "İŞKUR Kurumsal Duyurular",
+      "owner": "Türkiye İş Kurumu (İŞKUR)",
+      "url": "https://www.iskur.gov.tr/duyurular",
+      "kind": "index",
+      "content_type": "duyuru",
+      "expected_min_listings": 3,
+      "rule": {
+        "base_url": "https://www.iskur.gov.tr/duyurular",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/duyurular/[a-z0-9\\-]",
+        "requires_post": false,
+        "js_rendered": false,
+        "min_examples": 3
+      },
+      "notes": "Sunucu tarafında çizilen duyuru listesi; personel alım ve sınav duyuruları burada yayımlanıyor. Doğrudan alınabilir kaynak.",
+      "login_required": false,
+      "automation": "acik",
+      "robots_txt": {
+        "url": "https://www.iskur.gov.tr/robots.txt",
+        "checked_at": "2026-11-23T18:38:12Z",
+        "http_status": 200,
+        "fetch_ms": 177,
+        "content_type": "text/plain",
+        "crawl_delay": "1",
+        "sitemaps": [
+          "https://iskur.gov.tr/sitemap.xml"
+        ],
+        "applies_to_user_agent": "*",
+        "matching_rule": "uygulanan kural yok; varsayılan izin",
+        "path_allowed": true,
+        "result": "izinli",
+        "notes": "robots.txt okundu, hedef yol için kısıt bulunmadı.",
+        "automation_effect": "acik"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:13Z",
+        "http_status": 200,
+        "fetch_ms": 251,
+        "bytes_download": 197663,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 8,
+        "examples": [
+          {
+            "title": "Sözleşmeli Bilişim Personeli Sözlü/Uygulamalı Sınava Girmeye Hak Kazananlar Hakkında Duyuru",
+            "url": "https://iskur.gov.tr/duyurular/sozlesmeli-bilisim-personeli-sozlu-uygulamali-sinava-girmeye-hak-kazananlar-hakkinda-duyuru-1"
+          },
+          {
+            "title": "2026/6. Dönemi Engelli ve Eski Hükümlü Proje Başvuruları Başladı!",
+            "url": "https://iskur.gov.tr/duyurular/2026-6-donemi-engelli-ve-eski-hukumlu-proje-basvurulari-basladi"
+          },
+          {
+            "title": "2026/5. Dönemi Engelli ve Eski Hükümlü Proje Başvuruları Başladı!",
+            "url": "https://iskur.gov.tr/duyurular/2026-5-donemi-engelli-ve-eski-hukumlu-proje-basvurulari-basladi"
+          }
+        ],
+        "marker_hits": [],
+        "decision": "ok"
+      }
+    },
+    {
+      "id": "resmigazete-guncel-sayi",
+      "name": "Resmî Gazete Güncel Sayı (İlan ve Atamalar)",
+      "owner": "Türkiye Cumhuriyeti Resmî Gazete",
+      "url": "https://www.resmigazete.gov.tr/",
+      "kind": "index",
+      "content_type": "duyuru",
+      "expected_min_listings": 3,
+      "rule": {
+        "base_url": "https://www.resmigazete.gov.tr/",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/(eskiler|ilanlar)/",
+        "requires_post": false,
+        "js_rendered": false,
+        "min_examples": 3
+      },
+      "notes": "Günlük Resmî Gazete sayfaları atama kararları, kurum ilanları ve yönetmelik bağlantılarını statik HTML olarak veriyor; en sağlam kamu kaynağı.",
+      "login_required": false,
+      "automation": "acik",
+      "robots_txt": {
+        "url": "https://www.resmigazete.gov.tr/robots.txt",
+        "checked_at": "2026-11-23T18:38:14Z",
+        "http_status": 200,
+        "fetch_ms": 158,
+        "content_type": "text/plain",
+        "crawl_delay": null,
+        "sitemaps": [],
+        "applies_to_user_agent": null,
+        "matching_rule": "robots.txt içinde * grubu yok; varsayılan izin",
+        "path_allowed": true,
+        "result": "izinli",
+        "notes": "robots.txt okundu, hedef yol için kısıt bulunmadı.",
+        "automation_effect": "acik"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:14Z",
+        "http_status": 200,
+        "fetch_ms": 187,
+        "bytes_download": 199813,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 6,
+        "examples": [
+          {
+            "title": "–– Biruni Üniversitesi Ana Yönetmeliğinde Değişiklik Yapılmasına Dair Yönetmelik",
+            "url": "https://resmigazete.gov.tr/eskiler/2026/11/20261123-1.htm"
+          },
+          {
+            "title": "–– Biruni Üniversitesi Lisansüstü Eğitim-Öğretim ve Sınav Yönetmeliğinde Değişiklik Yapılmasına Dair Yönetmelik",
+            "url": "https://resmigazete.gov.tr/eskiler/2026/11/20261123-2.htm"
+          },
+          {
+            "title": "a - Yargı İlânları",
+            "url": "https://resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261123-2.htm"
+          }
+        ],
+        "marker_hits": [
+          "captcha:captcha",
+          "soft_404:404"
+        ],
+        "decision": "ok"
+      }
+    },
+    {
+      "id": "csb-duyurular",
+      "name": "Çalışma ve Sosyal Güvenlik Bakanlığı Duyuruları",
+      "owner": "T.C. Çalışma ve Sosyal Güvenlik Bakanlığı",
+      "url": "https://www.csb.gov.tr/duyurular",
+      "kind": "index",
+      "content_type": "duyuru",
+      "expected_min_listings": 0,
+      "rule": {
+        "base_url": "https://www.csb.gov.tr/duyurular",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/duyuru/",
+        "requires_post": false,
+        "js_rendered": true,
+        "min_examples": 3
+      },
+      "notes": "Sayfa 200 dönüyor ama duyuru bağlantıları istemcide JavaScript ile üretiliyor; düz GET ile ilan sayısı çıkarılamıyor. robots.txt izinli, çekim sınırlı (manuel). Otomasyon kapalı/manuel sebebi: içerik GET ile tam çizilmiyor.",
+      "login_required": false,
+      "automation": "manuel",
+      "robots_txt": {
+        "url": "https://www.csb.gov.tr/robots.txt",
+        "checked_at": "2026-11-23T18:38:15Z",
+        "http_status": 200,
+        "fetch_ms": 561,
+        "content_type": "text/plain",
+        "crawl_delay": null,
+        "sitemaps": [
+          "https://csb.gov.tr/sitemap.xml"
+        ],
+        "applies_to_user_agent": "*",
+        "matching_rule": "Allow: /",
+        "path_allowed": true,
+        "result": "izinli",
+        "notes": "Kural Allow: / ile eşleşti.",
+        "automation_effect": "acik"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:16Z",
+        "http_status": 200,
+        "fetch_ms": 675,
+        "bytes_download": 291257,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 0,
+        "examples": [],
+        "marker_hits": [
+          "soft_404:404"
+        ],
+        "decision": "ok"
+      }
+    },
+    {
+      "id": "osym-duyurular",
+      "name": "ÖSYM Duyuruları",
+      "owner": "Ölçme, Seçme ve Yerleştirme Merkezi Başkanlığı",
+      "url": "https://www.osym.gov.tr/Duyurular",
+      "kind": "index",
+      "content_type": "duyuru",
+      "expected_min_listings": 0,
+      "rule": {
+        "base_url": "https://www.osym.gov.tr/Duyurular",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/(Duyuru|Haber|duyuru)/",
+        "requires_post": false,
+        "js_rendered": true,
+        "min_examples": 3
+      },
+      "notes": "robots.txt adresi HTML sayfa dönüyor (geçersiz robots). Liste istemcide üretiliyor; kaynak yalnız elle takipte, otomasyon kapalı. Otomasyon kapalı/manuel sebebi: robots.txt sonucu: gecersiz.",
+      "login_required": false,
+      "automation": "kapali",
+      "robots_txt": {
+        "url": "https://www.osym.gov.tr/robots.txt",
+        "checked_at": "2026-11-23T18:38:17Z",
+        "http_status": 200,
+        "fetch_ms": 750,
+        "content_type": "text/html",
+        "crawl_delay": null,
+        "sitemaps": [],
+        "applies_to_user_agent": null,
+        "matching_rule": "robots.txt makine okunur degil (HTML dondu); kural cikarilamadi",
+        "path_allowed": false,
+        "result": "gecersiz",
+        "notes": "robots.txt adresi HTML sayfa dönüyor; makine okunur kural yok. Güvenli varsayılan: otomasyon kapalı.",
+        "automation_effect": "kapali"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:19Z",
+        "http_status": 200,
+        "fetch_ms": 646,
+        "bytes_download": 814790,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 0,
+        "examples": [],
+        "marker_hits": [
+          "soft_404:404"
+        ],
+        "decision": "ok"
+      }
+    },
+    {
+      "id": "euraxess-jobs",
+      "name": "EURAXESS Researcher Jobs",
+      "owner": "European Commission (EURAXESS)",
+      "url": "https://euraxess.ec.europa.eu/jobs/search",
+      "kind": "search",
+      "content_type": "ilan",
+      "expected_min_listings": 3,
+      "rule": {
+        "base_url": "https://euraxess.ec.europa.eu/jobs/search",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>(?:(?!</a>).){10,300}?)</a>",
+        "href_filter": "/jobs/\\d+",
+        "requires_post": false,
+        "js_rendered": false,
+        "min_examples": 3
+      },
+      "notes": "Arama sayfası ilan bağlantılarını (/jobs/<id>) sunucu tarafında basıyor; araştırmacı kariyer ilanları için açık kaynak.",
+      "login_required": false,
+      "automation": "acik",
+      "robots_txt": {
+        "url": "https://euraxess.ec.europa.eu/robots.txt",
+        "checked_at": "2026-11-23T18:38:20Z",
+        "http_status": 200,
+        "fetch_ms": 247,
+        "content_type": "text/plain",
+        "crawl_delay": null,
+        "sitemaps": [
+          "https://euraxess.ec.europa.eu/sitemap.xml"
+        ],
+        "applies_to_user_agent": "*",
+        "matching_rule": "Allow: /jobs",
+        "path_allowed": true,
+        "result": "izinli",
+        "notes": "Kural Allow: /jobs ile eşleşti.",
+        "automation_effect": "acik"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:20Z",
+        "http_status": 200,
+        "fetch_ms": 250,
+        "bytes_download": 181055,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 10,
+        "examples": [
+          {
+            "title": "University teacher in the functional position of Professor",
+            "url": "https://euraxess.ec.europa.eu/jobs/482356"
+          },
+          {
+            "title": "One (1) Laboratory Animal (mouse) Caretaker Position [Ref # ORZ-0950]",
+            "url": "https://euraxess.ec.europa.eu/jobs/482355"
+          },
+          {
+            "title": "ASSISTANT IN THE SCIENTIFIC FIELD OF BIOMEDICINE AND HEALTH, SCIENTIFIC FIELD OF CLINICAL MEDICAL SCIENCES (UNTIL THE RETURN OF THE EMPLOYEE FROM MATERNITY/PARENTAL LEAVE)",
+            "url": "https://euraxess.ec.europa.eu/jobs/482354"
+          }
+        ],
+        "marker_hits": [
+          "login:log\\s*in",
+          "soft_404:404"
+        ],
+        "decision": "ok"
+      }
+    },
+    {
+      "id": "eures-find-a-job",
+      "name": "EURES Avrupa İş Bulma Portalı",
+      "owner": "European Commission (EURES)",
+      "url": "https://www.eures.europa.eu/find-a-job_en",
+      "kind": "search",
+      "content_type": "ilan",
+      "expected_min_listings": 0,
+      "rule": {
+        "base_url": "https://www.eures.europa.eu/find-a-job_en",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/find-a-job/",
+        "requires_post": false,
+        "js_rendered": true,
+        "min_examples": 3
+      },
+      "notes": "Bu ortamdan robots.txt istemi TLS el sıkışma hatasıyla düştü; izin durumu doğrulanamadı. Robots teyit edilene kadar otomasyon kapalı. Otomasyon kapalı/manuel sebebi: robots.txt sonucu: erisilemedi.",
+      "login_required": false,
+      "automation": "kapali",
+      "robots_txt": {
+        "url": "https://www.eures.europa.eu/robots.txt",
+        "checked_at": "2026-11-23T18:38:21Z",
+        "http_status": null,
+        "fetch_ms": 213,
+        "content_type": null,
+        "crawl_delay": null,
+        "sitemaps": [],
+        "applies_to_user_agent": null,
+        "matching_rule": "robots.txt cekilemedi; kural bilinmiyor",
+        "path_allowed": false,
+        "result": "erisilemedi",
+        "notes": "robots.txt istemi ağ hatası verdi: URLError: <urlopen error [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] ssl/tls alert handshake failure (_ssl.",
+        "automation_effect": "kapali"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:22Z",
+        "http_status": null,
+        "fetch_ms": 220,
+        "bytes_download": 0,
+        "content_type": null,
+        "error": "URLError: <urlopen error [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] ssl/tls alert handshake failure (_ssl.",
+        "listing_count": 0,
+        "examples": [],
+        "marker_hits": [],
+        "decision": "erisilemedi"
+      }
+    },
+    {
+      "id": "kariyer-kapisi",
+      "name": "Kariyer Kapısı (Kamu İşe Alım Platformu)",
+      "owner": "Cumhurbaşkanlığı İnsan Kaynakları Ofisi",
+      "url": "https://isealimkariyerkapisi.cbiko.gov.tr/",
+      "kind": "index",
+      "content_type": "duyuru",
+      "expected_min_listings": 0,
+      "rule": {
+        "base_url": "https://isealimkariyerkapisi.cbiko.gov.tr/",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/isealim/",
+        "requires_post": false,
+        "js_rendered": true,
+        "min_examples": 3
+      },
+      "notes": "Kamu alımlarının merkezi portalı; içerik e-Devlet girişi sonrası açılıyor ve robots.txt bu ortamdan çözümlenemedi. Giriş gerektiren kaynak kural gereği otomasyon dışı. Otomasyon kapalı/manuel sebebi: robots.txt sonucu: erisilemedi; giriş gerekiyor.",
+      "login_required": true,
+      "automation": "kapali",
+      "robots_txt": {
+        "url": "https://isealimkariyerkapisi.cbiko.gov.tr/robots.txt",
+        "checked_at": "2026-11-23T18:38:23Z",
+        "http_status": null,
+        "fetch_ms": 2217,
+        "content_type": null,
+        "crawl_delay": null,
+        "sitemaps": [],
+        "applies_to_user_agent": null,
+        "matching_rule": "robots.txt cekilemedi; kural bilinmiyor",
+        "path_allowed": false,
+        "result": "erisilemedi",
+        "notes": "robots.txt istemi ağ hatası verdi: URLError: <urlopen error [Errno -2] Name or service not known>",
+        "automation_effect": "kapali"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:25Z",
+        "http_status": null,
+        "fetch_ms": 95,
+        "bytes_download": 0,
+        "content_type": null,
+        "error": "URLError: <urlopen error [Errno -2] Name or service not known>",
+        "listing_count": 0,
+        "examples": [],
+        "marker_hits": [],
+        "decision": "erisilemedi"
+      }
+    },
+    {
+      "id": "unjobs",
+      "name": "UNjobs (Uluslararası Kuruluş İlanları)",
+      "owner": "UNjobs (bağımsız derleyici)",
+      "url": "https://unjobs.org/",
+      "kind": "index",
+      "content_type": "ilan",
+      "expected_min_listings": 3,
+      "rule": {
+        "base_url": "https://unjobs.org/",
+        "item_regex": "(?is)<a\\b[^>]*href=\"(?P<href>[^\"]+)\"[^>]*>(?P<title>[^<]{15,220})</a>",
+        "href_filter": "/vacancies/\\d+",
+        "requires_post": false,
+        "js_rendered": false,
+        "min_examples": 3
+      },
+      "notes": "Sayfa statik ve ilan bağlantıları açık; ancak robots.txt 'User-agent: * / Disallow: /' ile tüm botları reddediyor. Kural gereği otomasyon kapalı, elle gezinmede sorun yok. Otomasyon kapalı/manuel sebebi: robots.txt sonucu: reddedildi.",
+      "login_required": false,
+      "automation": "kapali",
+      "robots_txt": {
+        "url": "https://unjobs.org/robots.txt",
+        "checked_at": "2026-11-23T18:38:26Z",
+        "http_status": 200,
+        "fetch_ms": 417,
+        "content_type": "text/plain",
+        "crawl_delay": null,
+        "sitemaps": [],
+        "applies_to_user_agent": "*",
+        "matching_rule": "Disallow: /",
+        "path_allowed": false,
+        "result": "reddedildi",
+        "notes": "Kural Disallow: / ile eşleşti.",
+        "automation_effect": "kapali"
+      },
+      "last_check": {
+        "checked_at": "2026-11-23T18:38:28Z",
+        "http_status": 200,
+        "fetch_ms": 1234,
+        "bytes_download": 35414,
+        "content_type": "text/html",
+        "error": null,
+        "listing_count": 25,
+        "examples": [
+          {
+            "title": "Asociado/a senior en Monitoreo y Evaluación, Choluteca, Tegucigalpa",
+            "url": "https://unjobs.org/vacancies/1795456987317"
+          },
+          {
+            "title": "Associado(a) de suporte a projetos, Recife, Brazil",
+            "url": "https://unjobs.org/vacancies/1795456987638"
+          },
+          {
+            "title": "Oficial Senior en Gestión de la Cadena de Suministro, Tegucigalpa",
+            "url": "https://unjobs.org/vacancies/1795456987919"
+          }
+        ],
+        "marker_hits": [
+          "captcha:turnstile"
+        ],
+        "decision": "ok"
+      }
+    }
+  ]
+}
