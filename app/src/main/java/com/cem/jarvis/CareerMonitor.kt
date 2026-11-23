@@ -693,6 +693,18 @@ object CareerListingParser {
         }
     }
 }
+data class CareerScanBatch(
+    val hits: List<Net.Hit>,
+    val successfulQueries: Int,
+    val failedQueries: Int,
+    val totalQueries: Int,
+    val errorMessages: List<String> = emptyList()
+) {
+    val hasAnySuccessfulQuery: Boolean get() = successfulQueries > 0
+}
+
+/** DuckDuckGo results are discovery only. Returned listings must be classified and checked. */
+
 object CareerSearchEngine {
     private fun queryList(category: Int, role: String, city: String): List<String> {
         val year = Calendar.getInstance().get(Calendar.YEAR)
