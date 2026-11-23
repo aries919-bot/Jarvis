@@ -23,6 +23,7 @@ class AriesFullAppAuditTest {
     private lateinit var outputDir: File
     private val screenRecords = JSONArray()
     private val findings = JSONArray()
+    private var launchToVisibleMs: Long? = null
 
     @Before
     fun setUp() {
@@ -49,12 +50,14 @@ class AriesFullAppAuditTest {
         val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
         assertNotNull("Aries launcher activity could not be resolved", launchIntent)
         launchIntent!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+        val launchStartedAt = SystemClock.elapsedRealtime()
         context.startActivity(launchIntent)
 
         assertTrue(
             "Aries did not appear in the foreground after launch",
             device.wait(Until.hasObject(By.pkg(packageName)), 20_000)
         )
+        launchToVisibleMs = SystemClock.elapsedRealtime() - launchStartedAt
         SystemClock.sleep(1_200)
         handleRuntimePermissionDialogs()
         captureAndAudit("01-home")
@@ -268,6 +271,7 @@ class AriesFullAppAuditTest {
                         .put("screenWidthPx", InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.widthPixels)
                         .put("screenHeightPx", InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.heightPixels)
                 )
+                .put("metrics", JSONObject().put("launchToVisibleMs", launchToVisibleMs ?: JSONObject.NULL))
                 .put("screens", screenRecords)
                 .put("findings", findings)
                 .toString(2)
