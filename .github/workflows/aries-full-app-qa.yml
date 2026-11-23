@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: aries-full-app-qa-${{ github.head_ref || github.ref }}
+  group: aries-full-app-qa-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
