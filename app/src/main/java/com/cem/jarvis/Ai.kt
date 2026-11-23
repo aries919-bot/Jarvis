@@ -6,6 +6,7 @@ import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.URLEncoder
 
@@ -40,6 +41,52 @@ object Net {
         val stream = if (c.responseCode in 200..299) c.inputStream else c.errorStream
         val text = stream?.bufferedReader()?.use { it.readText() } ?: ""
         return Pair(c.responseCode, text)
+    }
+
+    /**
+     * Reads server-sent events one data record at a time. The connection is
+     * always closed, including on timeout, cancellation or parser failure.
+     */
+    fun streamPost(url: String, headers: Map<String, String>, body: JSONObject, onData: (String) -> Unit) {
+        val c = URL(url).openConnection() as HttpURLConnection
+        try {
+            c.requestMethod = "POST"
+            c.connectTimeout = 8000
+            c.readTimeout = 45000
+            c.doOutput = true
+            c.setRequestProperty("Content-Type", "application/json")
+            c.setRequestProperty("Accept", "text/event-stream")
+            c.setRequestProperty("Cache-Control", "no-cache")
+            for ((k, v) in headers) c.setRequestProperty(k, v)
+            c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+
+            val code = c.responseCode
+            if (code !in 200..299) {
+                val detail = c.errorStream?.bufferedReader()?.use { it.readText() }?.take(400).orEmpty()
+                throw ApiError(code, detail.ifBlank { "HTTP $code" })
+            }
+
+            c.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
+                while (true) {
+                    if (Thread.currentThread().isInterrupted) throw IOException("Akış iptal edildi.")
+                    val line = reader.readLine() ?: break
+                    val value = line.trim()
+                    if (value.isEmpty() || value.startsWith(":") || value.startsWith("event:")) continue
+                    val data = when {
+                        value.startsWith("data:") -> value.substring(5).trim()
+                        value.startsWith("{") -> value
+                        else -> continue
+                    }
+                    if (data.isEmpty()) continue
+                    if (data == "[DONE]") break
+                    onData(data)
+                }
+            }
+        } catch (e: SocketTimeoutException) {
+            throw IOException("Yapay zekâ yanıtı zaman aşımına uğradı.", e)
+        } finally {
+            c.disconnect()
+        }
     }
 
     fun newsTitles(topic: String): List<String> {
@@ -196,6 +243,56 @@ object Ai {
         throw last
     }
 
+    /**
+     * Prefer native streaming providers; Aries Bulut remains a compatible
+     * non-streaming fallback until its Worker endpoint exposes SSE.
+     * Never switch providers after a partial answer has already been emitted.
+     */
+    fun chatStream(
+        order: List<String>,
+        keys: Map<String, String>,
+        models: Map<String, String>,
+        sys: String,
+        hist: List<Pair<String, String>>,
+        onToken: (String) -> Unit
+    ) {
+        var last: Exception = RuntimeException("Yapay zekâya ulaşılamadı.")
+        for (who in order) {
+            val key = keys[who].orEmpty()
+            if (key.isBlank()) continue
+            val model = models[who].orEmpty().ifBlank { defaultModel(who) }
+            var emitted = false
+            val emit: (String) -> Unit = { token ->
+                if (token.isNotEmpty()) {
+                    emitted = true
+                    onToken(token)
+                }
+            }
+            try {
+                when (who) {
+                    "bulut" -> emit(bulut(key, sys, hist))
+                    "gemini" -> {
+                        try {
+                            geminiStream(key, model, sys, hist, emit)
+                        } catch (e: ApiError) {
+                            if (emitted || !e.temporary) throw e
+                            geminiStream(key, GEMINI_FALLBACK, sys, hist, emit)
+                        }
+                    }
+                    "groq" -> openAiStream(displayName(who), GROQ_URL, key, model, sys, hist, emit)
+                    "mistral" -> openAiStream(displayName(who), MISTRAL_URL, key, model, sys, hist, emit)
+                    else -> continue
+                }
+                if (!emitted) throw IOException(displayName(who) + " boş yanıt verdi.")
+                return
+            } catch (e: Exception) {
+                last = e
+                if (emitted) throw e
+            }
+        }
+        throw last
+    }
+
     fun oyVer(token: String, v: Int, a: String) {
         try { Net.post("https://jarvis-cloud.aydincem919.workers.dev/oy_sohbet", mapOf("Authorization" to "Bearer $token"), JSONObject().put("v", v).put("a", a)) } catch (e: Exception) {}
     }
@@ -262,6 +359,59 @@ object Ai {
         if (code != 200) throw ApiError(code, errText(name, code))
         return JSONObject(txt).getJSONArray("choices").getJSONObject(0)
             .getJSONObject("message").getString("content")
+    }
+
+    private fun openAiStream(
+        name: String,
+        url: String,
+        key: String,
+        model: String,
+        sys: String,
+        hist: List<Pair<String, String>>,
+        onToken: (String) -> Unit
+    ) {
+        val msgs = JSONArray().put(JSONObject().put("role", "system").put("content", sys))
+        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", t))
+        val body = JSONObject()
+            .put("model", model)
+            .put("messages", msgs)
+            .put("temperature", 0.3)
+            .put("max_tokens", 600)
+            .put("stream", true)
+        try {
+            Net.streamPost(url, mapOf("Authorization" to "Bearer $key"), body) { data ->
+                val token = try {
+                    AiStreamParser.openAiDelta(data)
+                } catch (e: Exception) {
+                    throw IOException("$name akış yanıtı çözümlenemedi.", e)
+                }
+                if (token.isNotEmpty()) onToken(token)
+            }
+        } catch (e: ApiError) {
+            throw ApiError(e.code, errText(name, e.code))
+        }
+    }
+
+    private fun geminiStream(
+        key: String,
+        model: String,
+        sys: String,
+        hist: List<Pair<String, String>>,
+        onToken: (String) -> Unit
+    ) {
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:streamGenerateContent?alt=sse"
+        try {
+            Net.streamPost(url, mapOf("x-goog-api-key" to key), geminiBody(sys, hist, true, false)) { data ->
+                val token = try {
+                    AiStreamParser.geminiDelta(data)
+                } catch (e: Exception) {
+                    throw IOException("Gemini akış yanıtı çözümlenemedi.", e)
+                }
+                if (token.isNotEmpty()) onToken(token)
+            }
+        } catch (e: ApiError) {
+            throw ApiError(e.code, errText("Gemini", e.code))
+        }
     }
 
     private fun geminiBody(sys: String, hist: List<Pair<String, String>>, json: Boolean, search: Boolean): JSONObject {
