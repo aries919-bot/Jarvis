@@ -89,4 +89,36 @@ class CareerRecruitmentTrackerTest {
         assertTrue(CareerRecruitmentTracker.isHistoricalEvent(oldResult))
         assertFalse(CareerRecruitmentTracker.shouldNotifyAsNew(oldResult))
     }
+
+    @Test
+    fun undatedResultHeadlineIsNotShownAsUpcomingWithoutFutureAnnouncementEvidence() {
+        val unknown = CareerProcessEvent(
+            id = "unknown-result",
+            title = "Kura sonuçları",
+            url = "https://example.gov.tr/sonuc",
+            snippet = "",
+            stage = "NOTER KURASI SONUCU · ASIL / YEDEK",
+            detectedAt = System.currentTimeMillis(),
+            eventAt = null,
+            hasExplicitTime = false
+        )
+        assertTrue(CareerRecruitmentTracker.isHistoricalEvent(unknown))
+        assertFalse(CareerRecruitmentTracker.shouldNotifyAsNew(unknown))
+    }
+
+    @Test
+    fun undatedResultWithExplicitFutureAnnouncementWordingStaysInUpcomingChecks() {
+        val upcoming = CareerProcessEvent(
+            id = "future-result-no-date",
+            title = "Kura sonuçları ilerleyen günlerde açıklanacaktır",
+            url = "https://example.gov.tr/sonuc",
+            snippet = "",
+            stage = "NOTER KURASI SONUCU · ASIL / YEDEK",
+            detectedAt = System.currentTimeMillis(),
+            eventAt = null,
+            hasExplicitTime = false
+        )
+        assertFalse(CareerRecruitmentTracker.isHistoricalEvent(upcoming))
+        assertTrue(CareerRecruitmentTracker.shouldNotifyAsNew(upcoming))
+    }
 }
