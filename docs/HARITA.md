@@ -1,54 +1,48 @@
 # Aries — Durum Haritası
 
 > Tek gerçek durum dosyası. Sohbet geçmişinden önce bu dosya okunur.
-> Son yeniden kurma: 23.11.2026. Repo: `aries919-bot/Jarvis`.
+> Son kontrol: 23.11.2026. Repo: `aries919-bot/Jarvis`.
 > Bu dal yalnızca proje notları içindir; Android kodu burada geliştirilmez.
 
 ## Repo gerçeği
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a`.
-- `durum` dalı main'den oluşturuldu; `docs/HARITA.md` ve `docs/TALIMAT.md` ilk kez burada tutuluyor.
-- Main'de bu iki dosya yoktu. PR #23'teki kök `HARITA.md` yalnızca kod dosyası yönlendirme haritasıdır; bu durum dosyasının yerine geçmez ve PR #23 `kariyer-modulu` tabanlıdır.
-- Açık taslak PR'lar: #24 K1 (main tabanlı); #23 kod haritası, #22 Aries 1.22, #18 tema, #17 QA laboratuvarı, #9 KPSS kadro radarı, #4 medya, #3 kariyer, #2/#1 medya (çoğu `kariyer-modulu` tabanlı). Base'i farklı PR'lar main'e alınmış sayılmaz.
-- Son kontrol: PR #24 açık/taslak, head `297a60969bc40387c55243c880c11483a266cf32`, base `main`, mergeable. Son QA 45160335723 ve 45160326703: ikisi de SUCCESS.
-- PR #22 head `865ab4ec52bcdafb372ddab3e079e199d8742ac9`, #23 `b3e9982906967a10ddae29366f76674377a81c4a`, #18 `edf1434e6af8ffc8e70c46b9f099dae06c4099c8`, #17 `3deb19a36227761527858576654012776c9ae604`. Bunlar açık/taslak ve `kariyer-modulu` tabanlı; K1 PR'ına karıştırılmaz.
-
-## K1 — İş & Kariyer kaynak envanteri
-- Durum: **PR AÇIK** (CI YEŞİL; hakem onayı bekliyor). Dal: `is/kariyer-kaynak-denetimi-1`; PR #24.
-- Son commit: `297a60969bc40387c55243c880c11483a266cf32`.
-- Dosyalar: `career/sources.json`, `scripts/career_source_audit.py`, `scripts/test_career_source_audit.py`, `.github/workflows/career-source-audit.yml`, `docs/KARIYER_KAYNAK_DENETIMI.md`.
-- Canlı rapor (23.11.2026): 20 kayıt; 14 probed; **5 çalışan okuyucu** = 3 HTML detay + 2 HTML indeks; **3 aktif açık ilan detay kaynağı**.
-- Detay kaynakları: Sayıştay (11–25.11.2026), Anadolu Üniversitesi (16–30.11.2026), TGA (03.11–04.12.2026). En az 3 ilan kaynak sayfasından elle doğrulandı; ayrıca Zafer Kalkınma Ajansı (25.11–14.12.2026, duyurulmuş ama henüz açılmamış) tarayıcıda doğrulandı.
-- İndeks okuyucuları ÇSGB ve Özal Üniversitesi; geçmiş/sonuç kayıtları içerebildiği için açık ilan sayısına dahil edilmez.
-- Kısıtlar: Kariyer Kapısı ve İŞKUR dinamik; e-Devlet oturumlu; Resmî Gazete PDF okuyucu bekliyor; ilan.gov.tr ve İnönü SSL sertifika hatası; Fırat timeout; Zafer ve Battalgazi güvenlik/CAPTCHA işareti verdi ve otomasyon durdu; aşma yok.
-- CI: [45160335723](https://github.com/aries919-bot/Jarvis/actions/runs/45160335723) ve [45160326703](https://github.com/aries919-bot/Jarvis/actions/runs/45160326703), SUCCESS. Artifact: `aries-career-source-status`.
-- Hakem notu: Patch bu asistan tarafından yazıldı. Kendi yamamı APPROVE/ONAYLANDI yapamam. PR #24 bağımsız inceleme bekliyor. Kaynak sayısı API/toplayıcı üretimde çalışıyor demek değildir; yalnızca denetim probe'u doğrulandı.
+- Notlar `durum` dalında; repo erişimi ve yazma izni doğrulandı.
+- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `8d6c2c3873a81001c59096f7fe657f8e7b613e7d`, mergeable.
+- Diğer açık PR'lar: #22/#23/#18/#17/#9/#4/#3/#2/#1; farklı tabanlı eski PR'lar main'e alınmış sayılmaz.
+- Son QA kayıtları #24 için 45160335723 ve 45160326703; ikisi de SUCCESS (iş ayrıntısı/artefakt incelemesi sürüyor).
 
 ## İş listesi
 | İş | Durum | Not |
 |---|---|---|
-| K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | 20 kaynak; 5 reader; bağımsız hakem bekliyor |
-| A1 Tema: 2 ekran taslağı | YAPILMADI | Koda geçmeden Cem'e İş & Kariyer + Ana ekran taslağı sun |
+| K1 Kaynak tablosu ve okuyucu sağlığı | DEVAM | PR #24 bağımsız hakem incelemesi; kaynak raporu + tam diff/CI kanıtı doğrulanıyor. Yama yazarı hakem onayı veremez. |
+| A1 Tema: 2 ekran taslağı | YAPILMADI | Koda geçmeden önce İş & Kariyer + Ana ekran taslağını Cem'e sun; seçim bekle |
 | A2 Material 3 Expressive tüm uygulama | YAPILMADI | A1 seçimi sonrası; eski PR #18 ayrı incelenecek |
 | B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | YAPILMADI | Ücretsiz; güvenli onaylı eylemler |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
-| C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | KPSS'li/kpss'siz kamu, bağlı kurum, belediye, özel, büyük şirket, staj, kura |
+| C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
 | C4 CV + KPSS tercih modülü | YAPILMADI | Profil ve nitelik kodları telefonda kalır |
 | C5 Gelecek alım, takvim ve bildirim | YAPILMADI | Resmî tarih / tahmin ayrı |
-| D1 Film & Dizi | YAPILMADI | Yasal kaynak; TMDB JustWatch atfı; Media3 ve sezon/bölüm |
-| E1 Altın/Borsa + Xiaomi | YAPILMADI | PR #22'de kısmi Finance geliştirmesi var, ana dala alınmış değil |
-| Z1 Gerçek telefon testleri | TELEFONDA DENENECEK | Mikrofon, Xiaomi pil, exact alarm/bildirim, canlı API, gerçek video |
+| D1 Film & Dizi | YAPILMADI | Yasal kaynak; TMDB/JustWatch atfı; Media3 ve sezon/bölüm |
+| E1 Altın/Borsa + Xiaomi | YAPILMADI | PR #22'de kısmi çalışma var; main'e alınmış değil |
+| Z1 Gerçek telefon testleri | TELEFONDA DENENECEK | Mikrofon, Xiaomi pil, alarm/bildirim, canlı API, gerçek video |
 
-## En son 10 kayıt
-1. K1: 20 kaynaklık liste ve ücretsiz kaynak sağlık probe'u eklendi.
-2. QA ilk turda T.C. normalizasyon hash hatasını buldu; düzeltildi.
-3. QA Türkçe ay adlı tarih penceresini buldu; düzeltildi ve regresyon testi eklendi.
-4. TGA doğrudan detay okuyucu olarak eklendi.
-5. Rapor 5 okuyucu / 3 aktif detay ilan kaynağı olarak ayrıştırıldı.
-6. K1 PR #24 açıldı; CI son committe yeşil.
-7. Hiçbir PR bu turda merge edilmedi veya bağımsız onay almadı.
-8. Mevcut mobil kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback'ine sahip; C1 bunu kaldıracak.
-9. Önceki açık PR #22/#23/#18/#17 farklı base dalında; otomatik olarak main'e taşınmayacak.
-10. Sonraki iş, K1 için bağımsız hakem incelemesi; ardından C1 sunucu toplayıcı.
+## K1 kanıt özeti
+- Envanter: 20 kaynak; son raporda 14 otomatik probe, 5 çalışan HTML okuyucu (3 detay + 2 indeks), 3 aktif detay ilanı.
+- Açık detay örnekleri: Sayıştay, Anadolu Üniversitesi, TGA; Zafer Kalkınma Ajansı süreç duyurusu, güvenlik/CAPTCHA işareti nedeniyle otomasyondan hariç.
+- PR kapsamı yalnız envanter + sağlık denetimi; sunucu JSON toplayıcı, dinamik Kariyer Kapısı/İŞKUR ve uygulama feed bağlantısı kapsam dışı.
+- PR #24 yazarı bu oturumdaki hakemle aynı çalışma hattı; bu hakem kendi yamayı ONAYLAYAMAZ veya merge edemez. Bağımsız insan incelemesi gereklidir.
 
-**SONRAKİ ADIM:** PR #24'ü yamayı yazmamış bağımsız bir gözle incelet; sonuç ONAYLANDI değilse düzelt. Sonra C1 için ayrı dal/PR aç.
+## Son 10 kayıt
+1. K1 için 20 kaynaklık liste ve ücretsiz kaynak sağlık probe'u eklendi.
+2. QA Türkçe T.C. normalizasyon hash hatasını buldu; düzeltildi.
+3. QA Türkçe ay adı tarih penceresi hatasını buldu; düzeltildi ve regresyon testi eklendi.
+4. TGA detay okuyucu eklendi.
+5. Rapor 5 okuyucu / 3 aktif detay kaynak olarak ayrıştırıldı.
+6. K1 PR #24 açıldı; son görülen CI SUCCESS.
+7. Bu turda kod PR'ı merge edilmedi.
+8. Mevcut Android kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback kullanıyor; C1 bunu kaldıracak.
+9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
+10. Sonraki: PR #24 bağımsız hakem kararı; sonra C1 (A1 bu haritada ayrı ve ilk tamamlanmamış tasarım işi olarak bekliyor).
+
+**SONRAKİ ADIM:** K1'in tam kod ve canlı QA artefaktını bağımsız gözle incele; kendi yamanı ONAYLAMA.
