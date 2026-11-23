@@ -15,8 +15,8 @@
 | İş | Durum | Not |
 |---|---|---|
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
-| A1 Tema: 2 ekran taslağı | DEVAM | İlk taslaklar sadeleştirilip yenilendi: Ana ekran kontrol merkezi + İş & Kariyer filtreli liste. Kod yok; Cem'in yeni taslak onayı bekleniyor. |
-| A2 Material 3 Expressive tüm uygulama | YAPILMADI | A1 seçimi sonrası; eski PR #18 ayrı incelenecek |
+| A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem iki tasarımı da onayladı; A2'ye geçildi. |
+| A2 Material 3 Expressive tüm uygulama | DEVAM | A1 onaylandı. Main tabanı 63e877d; PR #18 eski kariyer-modulu tabanlı, doğrudan birleştirilmeyecek. Yeni dalda mevcut View mimarisi korunarak ortak tasarım sistemi ve ilk ekran yenilemesi yapılacak. |
 | B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | YAPILMADI | Ücretsiz; güvenli onaylı eylemler |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
