@@ -305,12 +305,12 @@ def scan_logcat(qa_dir: Path) -> list[dict[str, str]]:
         return []
     text = read_text(logs[0])
     patterns = [
-        ("crash", re.compile(r"FATAL EXCEPTION|Fatal signal \\d+", re.I)),
-        ("anr", re.compile(r"\\bANR in\\b|Application Not Responding", re.I)),
+        ("crash", re.compile(r"FATAL EXCEPTION|Fatal signal \d+", re.I)),
+        ("anr", re.compile(r"\bANR in\b|Application Not Responding", re.I)),
         # Ignore unrelated Android/Google helper processes. Only an unexpected
         # death of the Aries process is relevant to this application's QA.
         ("process-death", re.compile(
-            r"(?:Process com\\.cem\\.jarvis\\b.* has died|Killing \\d+:com\\.cem\\.jarvis\\b.*)",
+            r"(?:Process com\.cem\.jarvis\b.* has died|Killing \d+:com\.cem\.jarvis\b.*)",
             re.I,
         )),
     ]
@@ -330,7 +330,7 @@ def scan_logcat(qa_dir: Path) -> list[dict[str, str]]:
             results.append({
                 "severity": "error" if category in {"crash", "anr"} else "warning",
                 "category": category,
-                "message": "\\n".join(lines[max(0, i - 1):min(len(lines), i + 4)])[:1600],
+                "message": "\n".join(lines[max(0, i - 1):min(len(lines), i + 4)])[:1600],
             })
     return results
 
