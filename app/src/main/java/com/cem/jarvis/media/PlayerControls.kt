@@ -125,7 +125,7 @@ fun PlayerControls(
     ) {
         hud?.let { Text(it, color = Color.White, fontSize = 16.sp, modifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp).background(Color(0xAA000000), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 8.dp)) }
 
-        if (show && locked) Text("🔒", fontSize = 28.sp, modifier = Modifier.align(Alignment.CenterEnd).padding(24.dp).clickable { locked = false })
+        if (show && locked) Text("🔒", fontSize = 28.sp, modifier = Modifier.align(Alignment.CenterEnd).defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { locked = false }.padding(12.dp))
 
         if (show && !locked) Column(
             Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xAA000000), Color.Transparent, Color(0xBB000000)))).padding(16.dp),
@@ -133,9 +133,9 @@ fun PlayerControls(
         ) {
             // Üst: geri, başlık, kilit
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("‹", color = Color.White, fontSize = 34.sp, modifier = Modifier.clickable(onClick = onClose).padding(end = 12.dp))
+                Text("‹", color = Color.White, fontSize = 34.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable(onClick = onClose).padding(end = 12.dp))
                 Text(title, color = Color.White, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1)
-                Text("🔓", fontSize = 24.sp, modifier = Modifier.clickable { locked = true; show = false })
+                Text("🔓", fontSize = 24.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { locked = true; show = false }.padding(12.dp))
             }
             // Orta: -10 / oynat / +10
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -208,9 +208,9 @@ fun PlayerControls(
 
 @Composable private fun Opt(text: String, enabled: Boolean = true, onClick: () -> Unit) =
     Text(text, color = if (enabled) Color.White else Color(0x66FFFFFF), fontSize = 12.sp,
-        modifier = Modifier.clickable(enabled = enabled, onClick = onClick).padding(8.dp))
+        modifier = Modifier.defaultMinSize(minHeight = 48.dp).clickable(enabled = enabled, onClick = onClick).padding(8.dp))
 
 @Composable private fun MenuItem(text: String, selected: Boolean, onClick: () -> Unit) =
     Text(text, color = Color.White, fontSize = 14.sp,
-        modifier = Modifier.fillMaxWidth().background(if (selected) Ap.Raised else Color.Transparent, RoundedCornerShape(10.dp))
+        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).background(if (selected) Ap.Raised else Color.Transparent, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick).padding(horizontal = 18.dp, vertical = 10.dp))
