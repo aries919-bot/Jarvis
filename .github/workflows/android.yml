@@ -2,9 +2,9 @@ name: Android APK
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ kariyer-modulu, is/kariyer-1-21-verified-search ]
+    branches: [ kariyer-modulu, is/kariyer-1-21-verified-search, is/c3-ilan-semasi-ai-kaynak-kaniti ]
   push:
-    branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor, career-ui-dedup-separation, is/kamu-kariyer-arama-ayristirma, is/kadro-radari-ve-kpss-2026-2, is/kariyer-platform-derinlestirme, is/1-18-kariyer-guvenilirlik-ve-akilli-tarih, is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi, is/1-20-kariyer-ilan-dogrulama, is/1-20-tarih-ayristirma-duzeltmesi, is/c3-ilan-semasi-ai-kaynak-kaniti ]
+    branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor, career-ui-dedup-separation, is/kamu-kariyer-arama-ayristirma, is/kadro-radari-ve-kpss-2026-2, is/kariyer-platform-derinlestirme, is/1-18-kariyer-guvenilirlik-ve-akilli-tarih, is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi, is/1-20-kariyer-ilan-dogrulama, is/1-20-tarih-ayristirma-duzeltmesi, is/c3-ilan-semasi-ai-kaynak-kaniti, fix/c3-ai-consent-and-navigation-guard ]
 
 permissions:
   contents: read
