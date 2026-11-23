@@ -87,6 +87,16 @@ class CareerListingSchemaTest {
         CareerListingSchemaParser.parse("{not-json}", page, url, 10L, false)
     }
 
+    @Test(expected = Exception::class)
+    fun emptyAiResponseFailsClosed() {
+        CareerListingSchemaParser.parse("", page, url, 10L, false)
+    }
+
+    @Test(expected = Exception::class)
+    fun providerErrorTextCannotBeMistakenForListingData() {
+        CareerListingSchemaParser.parse("401 invalid API key", page, url, 10L, false)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rejectsHttpOrUnsafeSourceUrls() {
         CareerListingSchemaParser.parse(validAiJson(), page, "http://example.gov.tr/ilan", 10L, false)
