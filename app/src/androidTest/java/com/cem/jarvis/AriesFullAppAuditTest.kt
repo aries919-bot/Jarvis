@@ -29,6 +29,13 @@ class AriesFullAppAuditTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         packageName = context.packageName
+        // The first career-module open otherwise schedules a real background scan.
+        // Keep emulator UI coverage deterministic and network/API-key independent.
+        context.getSharedPreferences("j", android.content.Context.MODE_PRIVATE).edit()
+            .putBoolean("career_monitor_auto_default_applied", true)
+            .putBoolean("career_monitor_enabled", false)
+            .putBoolean("career_monitor_initial_scan_queued", true)
+            .apply()
         device = UiDevice.getInstance(instrumentation)
         outputDir = File(context.getExternalFilesDir(null), "AriesQA").apply {
             deleteRecursively()
