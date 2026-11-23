@@ -64,6 +64,7 @@ object CareerSourceCatalog {
         Source("İçişleri Bakanlığı – duyurular", "https://www.icisleri.gov.tr/duyurular", "Kamu / bakanlık"),
         Source("Millî Savunma Bakanlığı – Personel Temin Sistemi", "https://personeltemin.msb.gov.tr/", "Kamu / personel temin"),
         Source("Jandarma Genel Komutanlığı – duyurular", "https://jandarma.gov.tr/duyurular", "Kamu / güvenlik personeli"),
+        Source("Jandarma Personel Temin Sistemi", "https://personeltemin.jandarma.gov.tr/", "Kamu / personel temin ve güvenlik alımı"),
         Source("Sahil Güvenlik Komutanlığı", "https://www.sg.gov.tr/", "Kamu / güvenlik personeli"),
         Source("Çalışma ve Sosyal Güvenlik Bakanlığı – duyurular", "https://www.csgb.gov.tr/duyurular/", "Kamu / bakanlık"),
         Source("Kültür ve Turizm Bakanlığı – Personel Genel Müdürlüğü", "https://pgm.ktb.gov.tr/", "Kamu / personel genel müdürlüğü"),
@@ -543,15 +544,35 @@ object CareerEligibility {
 
 object CareerListingParser {
     private val deadlinePattern = Regex(
-        "(?:son\\s+başvuru(?:\\s+tarihi)?|son\\s+müracaat(?:\\s+tarihi)?|başvuruların\\s+son\\s+günü|basvurularin\\s+son\\s+gunu|kayıtlarını|kayıtları|kayitlarini|kayitlari)[^0-9]{0,45}(\\d{1,2}[./-]\\d{1,2}[./-]\\d{4}|\\d{1,2}\\s+[\\p{L}]+\\s+\\d{4})",
+        """(?:son\s+başvuru(?:\s+tarihi)?|son\s+müracaat(?:\s+tarihi)?|başvuruların\s+son\s+günü|basvurularin\s+son\s+gunu|kayıtlarını|kayıtları|kayitlarini|kayitlari)[^0-9]{0,45}(\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+[\p{L}]+\s+\d{4})""",
         RegexOption.IGNORE_CASE
+    )
+    private val publicationDatePattern = Regex(
+        """(?:ilan|duyuru|yayın|yayin|yayımlanma|yayinlanma|posted|published)\s*(?:tarihi|date)?[^0-9]{0,30}(\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+[\p{L}]+\s+\d{4})""",
+        RegexOption.IGNORE_CASE
+    )
+    private val closedApplicationPhrases = listOf(
+        "basvurular sona erdi", "basvurular sona ermistir",
+        "basvuru sureci sona erdi", "basvuru sureci sona ermistir",
+        "basvuru suresi doldu", "basvuru suresi dolmustur",
+        "basvurular tamamlandi", "basvuru alimi tamamlandi",
+        "basvuruya kapatildi", "basvuru kabul edilmiyor",
+        "basvuru kabul edilmemektedir", "ilan kapatildi",
+        "ilan yayindan kaldirildi", "pozisyon dolduruldu",
+        "pozisyon kapandi", "son basvuru tarihi gecti"
     )
 
     fun noticeText(title: String, snippet: String): String =
         listOf(title.trim(), snippet.trim()).filter { it.isNotBlank() }.joinToString(" ")
 
-    fun deadlineDate(text: String): String? {
-        val raw = deadlinePattern.find(text)?.groupValues?.getOrNull(1) ?: return null
+    private fun normalizeStatusText(value: String): String = value.lowercase(Locale("tr", "TR"))
+        .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
+        .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
+        .replace(Regex("[^a-z0-9 ]"), " ")
+        .replace(Regex("\\s+"), " ")
+        .trim()
+
+    private fun parseDate(raw: String): String? {
         val normalized = raw.replace('/', '.').replace('-', '.').trim()
         val formats = if (normalized.any { it.isLetter() }) {
             listOf("d MMMM yyyy", "dd MMMM yyyy", "d MMM yyyy", "dd MMM yyyy")
@@ -565,6 +586,13 @@ object CareerListingParser {
         }
         return null
     }
+
+    fun deadlineDate(text: String): String? =
+        deadlinePattern.find(text)?.groupValues?.getOrNull(1)?.let(::parseDate)
+
+    /** Publication date is intentionally separate from the application deadline. */
+    fun publicationDate(text: String): String? =
+        publicationDatePattern.find(text)?.groupValues?.getOrNull(1)?.let(::parseDate)
 
     /**
      * Returns a closing time only when it appears immediately after an explicitly labelled
@@ -582,8 +610,45 @@ object CareerListingParser {
         return String.format(Locale.ROOT, "%02d:%02d", hour, minute)
     }
 
+    fun isInactiveStatus(status: String?): Boolean =
+        status?.startsWith("SÜRESİ GEÇMİŞ", true) == true ||
+            status?.startsWith("ESKİ KAYIT", true) == true
+
+    /** A future deadline is a useful search filter, but not proof the application page is open. */
+    fun hasFutureDeadline(status: String?): Boolean =
+        status?.startsWith("SON TARİH BİLGİSİ", true) == true ||
+            status?.startsWith("SON GÜN", true) == true
+
     fun deadlineStatus(text: String, nowMillis: Long = System.currentTimeMillis()): String? {
-        val dateText = deadlineDate(text) ?: return null
+        val normalizedText = normalizeStatusText(text)
+        if (closedApplicationPhrases.any(normalizedText::contains)) {
+            return "SÜRESİ GEÇMİŞ · Kaynak metni başvurunun kapandığını veya tamamlandığını söylüyor. Bu kayıt aktif ilan olarak gösterilmemeli."
+        }
+
+        val dateText = deadlineDate(text)
+        if (dateText == null) {
+            val publishedText = publicationDate(text) ?: return null
+            val publishedDate = parseDate(publishedText) ?: return null
+            val today = Calendar.getInstance().apply {
+                timeInMillis = nowMillis
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val publishedDay = Calendar.getInstance().apply {
+                time = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).parse(publishedDate)!!
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val ageDays = TimeUnit.MILLISECONDS.toDays(today.timeInMillis - publishedDay.timeInMillis)
+            return if (ageDays > 180L) {
+                "ESKİ KAYIT · Yayın/duyuru tarihi $publishedDate ve kayıt 180 günden eski. Başvuru süresi kaynakta bulunmadığı için aktifliği doğrulanamadı; yeni ilan gibi gösterilmemeli."
+            } else null
+        }
+
         val parser = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).apply { isLenient = false }
         val deadline = runCatching { parser.parse(dateText) }.getOrNull() ?: return null
         val today = Calendar.getInstance().apply {
@@ -628,19 +693,6 @@ object CareerListingParser {
         }
     }
 }
-data class CareerScanBatch(
-    val hits: List<Net.Hit>,
-    val successfulQueries: Int,
-    val failedQueries: Int,
-    val totalQueries: Int,
-    val errorMessages: List<String> = emptyList()
-) {
-    val hasAnySuccessfulQuery: Boolean get() = successfulQueries > 0
-}
-
-/** DuckDuckGo sonuçları yalnızca keşif içindir; kayda giren bağlantılar güvenilir resmî alan adlarıyla sınırlıdır. */
-/** Arama motoru yalnızca keşif katmanıdır. Her gösterilen sonuç güvenilir kurum alan adıyla sınırlanır;
- * sayfanın güncel ilan olduğunu doğrulamaz. Başvuru şartı ve son tarih ilanın kendisinden okunmalıdır. */
 object CareerSearchEngine {
     private fun queryList(category: Int, role: String, city: String): List<String> {
         val year = Calendar.getInstance().get(Calendar.YEAR)
@@ -656,6 +708,7 @@ object CareerSearchEngine {
             "site:resmigazete.gov.tr personel alımı atama ortaöğretim KPSS $year $c",
             "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B sözleşmeli personel alımı KPSS ortaöğretim $year",
             "site:icisleri.gov.tr OR site:personeltemin.msb.gov.tr OR site:jandarma.gov.tr OR site:sg.gov.tr personel temin memur işçi sınav kura sonuç $year",
+            "site:personeltemin.jandarma.gov.tr uzman erbaş astsubay personel alımı başvuru son tarih $year",
             "site:csgb.gov.tr OR site:pgm.ktb.gov.tr OR site:ssb.gov.tr sözleşmeli personel alımı başvuru sınav yedek sonuç $year"
         )
         val publicNoKpss = listOf(
@@ -1095,6 +1148,7 @@ object CareerSearchEngine {
             "site:kamuilan.sbb.gov.tr ortaöğretim lise KPSS P94 personel alımı $year",
             "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
+            "site:personeltemin.jandarma.gov.tr uzman erbaş astsubay personel temin başvuru son tarih $year",
             "site:ilan.gov.tr personel alımı lise KPSS $year",
             "site:resmigazete.gov.tr atama personel alımı $year",
             "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B personel alımı ön değerlendirme yedek sonuç kura $year"
