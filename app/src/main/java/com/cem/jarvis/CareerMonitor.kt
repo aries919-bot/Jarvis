@@ -719,7 +719,7 @@ data class CareerScanBatch(
 /** DuckDuckGo results are discovery only. Returned listings must be classified and checked. */
 
 object CareerSearchEngine {
-    private fun queryList(category: Int, role: String, city: String): List<String> {
+    internal fun queryList(category: Int, role: String, city: String): List<String> {
         val year = Calendar.getInstance().get(Calendar.YEAR)
         val r = role.ifBlank { "elektrik teknisyeni pano montaj bakım üretim depo operatör satış işçi personel" }
         val c = city.ifBlank { "Malatya Türkiye" }
@@ -1216,7 +1216,7 @@ object CareerSearchEngine {
         val extraErrors = cloudErrors + (cloud?.errorMessages.orEmpty())
         val collected = collect(
             queryList(category, role, city).take(12),
-            90,
+            if (category == 10) 45 else 90,
             city,
             cloudHits,
             extraErrors,
