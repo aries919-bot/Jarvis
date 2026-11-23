@@ -1730,6 +1730,7 @@ class CareerActivity : Activity() {
         for (i in 0 until stored.length()) {
             stored.optJSONObject(i)?.let { items.add(JSONObject(it.toString())) }
         }
+        val scannedAt = System.currentTimeMillis()
         hits.forEach { hit ->
             val classification = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url)
             if (classification.isJobListing || hit.url.isBlank()) return@forEach
@@ -1739,26 +1740,38 @@ class CareerActivity : Activity() {
                     hit
                 )
             }
+            val previous = items.getOrNull(index)
+            val previousSnippet = previous?.optString("snippet").orEmpty()
+            val chosenSnippet = if (previousSnippet.length > hit.snippet.length) previousSnippet else hit.snippet
+            val notice = CareerListingParser.noticeText(hit.title, chosenSnippet)
+            val publishedDate = CareerListingParser.publicationDate(notice)
+                ?: previous?.optString("publishedDate")?.takeIf { it.isNotBlank() }
+            val publishedAt = CareerListingParser.publicationTimestamp(notice)
+                ?: previous?.optLong("publishedAt", 0L)?.takeIf { it > 0L }
+            val firstSeenAt = previous?.optLong(
+                "firstSeenAt",
+                previous.optLong("createdAt", 0L)
+            )?.takeIf { it > 0L } ?: scannedAt
+
             val item = JSONObject()
                 .put("title", hit.title)
                 .put("url", hit.url)
-                .put("snippet", hit.snippet)
+                .put("snippet", chosenSnippet)
                 .put("contentType", classification.type.name)
                 .put("contentLabel", classification.label)
                 .put("contentReason", classification.reason)
                 .put("contentConfidence", classification.confidence)
-                .put("lastSeenAt", System.currentTimeMillis())
-            if (index < 0) items.add(item)
-            else if (hit.snippet.length > items[index].optString("snippet").length) {
-                item.put("createdAt", items[index].optLong("createdAt", 0L))
-                items[index] = item
-            } else {
-                items[index].put("lastSeenAt", System.currentTimeMillis())
-            }
+                .put("firstSeenAt", firstSeenAt)
+                .put("lastSeenAt", scannedAt)
+                .put("publishedAt", publishedAt ?: 0L)
+            if (publishedDate != null) item.put("publishedDate", publishedDate)
+            if (index < 0) items.add(item) else items[index] = item
         }
         val output = JSONArray()
-        items.sortedByDescending { it.optLong("lastSeenAt", 0L) }.take(100)
-            .forEach { output.put(it) }
+        items.sortedWith(
+            compareByDescending<JSONObject> { it.optLong("publishedAt", 0L) }
+                .thenByDescending { it.optLong("firstSeenAt", 0L) }
+        ).take(100).forEach { output.put(it) }
         prefs.edit().putString("career_news_items", output.toString()).apply()
     }
 
@@ -1789,19 +1802,28 @@ class CareerActivity : Activity() {
                 }
                 if (duplicate < 0) {
                     val copy = JSONObject(item.toString())
+                    val publicationText = CareerListingParser.noticeText(title, item.optString("snippet"))
+                    val publishedDate = item.optString("publishedDate").takeIf { it.isNotBlank() }
+                        ?: CareerListingParser.publicationDate(publicationText)
+                    val publishedAt = item.optLong("publishedAt", 0L).takeIf { it > 0L }
+                        ?: CareerListingParser.publicationTimestamp(publicationText)
                     copy.put("contentType", classification.type.name)
                         .put("contentLabel", classification.label)
                         .put("contentReason", classification.reason)
                         .put("contentConfidence", classification.confidence)
+                        .put("publishedAt", publishedAt ?: 0L)
+                        .put("firstSeenAt", item.optLong("firstSeenAt", item.optLong("createdAt", 0L)))
+                    if (publishedDate != null) copy.put("sourcePublishedDate", publishedDate)
                     combined.add(copy)
                 } else if (item.optString("snippet").length > combined[duplicate].optString("snippet").length) {
                     combined[duplicate] = JSONObject(item.toString())
                 }
             }
         }
-        return combined.sortedByDescending {
-            maxOf(it.optLong("lastSeenAt", 0L), it.optLong("createdAt", 0L))
-        }
+        return combined.sortedWith(
+            compareByDescending<JSONObject> { it.optLong("publishedAt", 0L) }
+                .thenByDescending { it.optLong("firstSeenAt", 0L) }
+        )
     }
 
     private fun searchNewsCategory(categoryId: Int, resetArchiveFilter: Boolean = false) {
@@ -2014,11 +2036,25 @@ class CareerActivity : Activity() {
                     " · Sınıflandırma güveni: " + classification.confidence,
                 10f, true, muted
             ).apply { setPadding(0, dp(6), 0, dp(2)) })
-            val seenAt = maxOf(item.optLong("lastSeenAt", 0L), item.optLong("createdAt", 0L))
-            if (seenAt > 0L) {
+            val publishedDate = item.optString("sourcePublishedDate").takeIf { it.isNotBlank() }
+                ?: item.optString("publishedDate").takeIf { it.isNotBlank() }
+            if (publishedDate != null) {
                 card.addView(label(
-                    "Aries'in son gördüğü: " +
-                        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(seenAt)),
+                    "Kaynağın yayın tarihi: $publishedDate",
+                    10f, true, muted
+                ))
+            } else {
+                card.addView(label(
+                    "Kaynak yayın tarihi doğrulanamadı · bu kayıt yeni duyuru olarak kabul edilmez",
+                    10f, true, warningColor
+                ))
+            }
+            val lastScanAt = item.optLong("lastSeenAt", 0L)
+            if (lastScanAt > 0L) {
+                card.addView(label(
+                    "Aries'in son tarama zamanı: " +
+                        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(lastScanAt)) +
+                        " · yayın tarihi değildir",
                     10f, false, muted
                 ))
             }
@@ -2032,17 +2068,41 @@ class CareerActivity : Activity() {
 
     private fun showProcessEvents(parent: LinearLayout) {
         parent.removeAllViews()
-        val events = CareerRecruitmentTracker.read(prefs).filterNot { event ->
+        val allEvents = CareerRecruitmentTracker.read(prefs).filterNot { event ->
             event.stage == "BAŞVURU / YENİ ALIM" &&
                 CareerContentClassifier.classify(event.title, event.snippet, event.url).isJobListing
         }
+        val upcomingEvents = allEvents.filterNot { CareerRecruitmentTracker.isHistoricalEvent(it) }
+        val historicalEvents = allEvents.filter { CareerRecruitmentTracker.isHistoricalEvent(it) }
+        val events = if (processFilter == 1) historicalEvents else upcomingEvents
+
+        val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        filterRow.addView(chipButton("Yaklaşan / kontrol (" + upcomingEvents.size + ")", processFilter == 0) {
+            processFilter = 0
+            processPage = 0
+            showProcessEvents(parent)
+        }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
+            setMargins(0, 0, dp(4), 0)
+        })
+        filterRow.addView(chipButton("Geçmiş sonuç arşivi (" + historicalEvents.size + ")", processFilter == 1) {
+            processFilter = 1
+            processPage = 0
+            showProcessEvents(parent)
+        }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
+            setMargins(dp(4), 0, 0, 0)
+        })
+        parent.addView(filterRow, params(-1, dp(52), 0, 2, 0, 8))
+
         if (events.isEmpty()) {
             val emptyCard = panel()
-            emptyCard.addView(label("Süreç güncellemesi bekleniyor", 14f, true, primaryText))
-            emptyCard.addView(label(
-                "Yeni evrak, kura, asıl/yedek, sınav ve sonuç duyuruları günlük taramalarda burada toplanacak.",
-                12f, false, muted
-            ))
+            val title = if (processFilter == 1) "Geçmiş kura / sonuç kaydı yok" else "Yaklaşan süreç güncellemesi yok"
+            val description = if (processFilter == 1) {
+                "Yayımlandığı veya tarihi geçtiği belirlenen kura, sınav ve sonuç kayıtları burada arşivlenir."
+            } else {
+                "Yalnız gelecekteki tarih veya henüz tamamlanmamış süreç işaretleri bu listede görünür. Yayın tarihi yeni diye varsayılmaz."
+            }
+            emptyCard.addView(label(title, 14f, true, primaryText))
+            emptyCard.addView(label(description, 12f, false, muted))
             parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
@@ -2055,8 +2115,13 @@ class CareerActivity : Activity() {
         ))
         val start = processPage * pageSize
         events.drop(start).take(pageSize).forEach { event ->
+            val historical = CareerRecruitmentTracker.isHistoricalEvent(event)
+            val publishedResult = CareerRecruitmentTracker.isCompletedResultNotice(event.title, event.snippet)
             val card = panel()
-            card.addView(label("SÜREÇ AŞAMASI", 9f, true, muted))
+            card.addView(label(
+                if (historical) "GEÇMİŞ / YAYIMLANMIŞ SONUÇ · ARŞİV" else "TAKİP EDİLEN SÜREÇ",
+                9f, true, if (historical) dangerColor else muted
+            ))
             card.addView(label(event.stage, 12f, true, accentColor).apply {
                 setPadding(dp(10), dp(7), dp(10), dp(7))
                 background = rounded(Color.parseColor(Pal.ACCENT_SOFT), Color.rgb(84, 70, 140))
@@ -2066,7 +2131,7 @@ class CareerActivity : Activity() {
             val detected = if (event.detectedAt > 0L) {
                 SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(event.detectedAt))
             } else "Tespit zamanı bilinmiyor"
-            card.addView(label("Aries'in tespit zamanı: " + detected, 10f, false, muted))
+            card.addView(label("Aries'in ilk tespit zamanı: " + detected + " · bu, duyurunun yayın tarihi değildir", 10f, false, muted))
             if (event.eventAt != null) {
                 val date = SimpleDateFormat(
                     if (event.hasExplicitTime) "dd.MM.yyyy HH:mm" else "dd.MM.yyyy",
@@ -2080,9 +2145,14 @@ class CareerActivity : Activity() {
                         else " · Eski duyuru; yeni tarih var mı kontrol et"),
                     11f, true, if (isUpcoming) warningColor else dangerColor
                 ))
+            } else if (publishedResult) {
+                card.addView(label(
+                    "SONUÇ YAYIMLANMIŞ · GEÇMİŞ KAYIT · Kaynakta yeni kura/sonuç tarihi doğrulanmadı.",
+                    11f, true, dangerColor
+                ))
             } else {
                 card.addView(label(
-                    "Tarih/saat metinden güvenle çıkarılamadı. Kurum duyurusunu açıp takvimi kontrol et.",
+                    "Tarih/saat metinden güvenle çıkarılamadı. Yaklaşan tarih olduğu varsayılmaz; kurum duyurusunu kontrol et.",
                     11f, true, warningColor
                 ))
             }
@@ -2091,9 +2161,11 @@ class CareerActivity : Activity() {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
                     .onFailure { toast("Kaynak açılamadı.") }
             }, LinearLayout.LayoutParams(0, dp(48), 1f))
-            actions.addView(button("Başvurulara kaydet") {
-                saveJob(Net.Hit(event.title, event.url, event.snippet))
-            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            if (!historical) {
+                actions.addView(button("Başvurulara kaydet") {
+                    saveJob(Net.Hit(event.title, event.url, event.snippet))
+                }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            }
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
