@@ -1933,7 +1933,7 @@ class CareerActivity : Activity() {
         )
         scanCard.addView(newsSearchStatus, params(-1, -2, 0, 5, 0, 6))
         scanCard.addView(primaryButton("Kura / noter / sınav / sonuçları tara") {
-            searchNewsCategory(6)
+            searchNewsCategory(CareerNewsNavigation.processQueryCategory())
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
         scanCard.addView(button("Staj / İŞKUR Gençlik / öğrenci programlarını tara") {
             searchNewsCategory(9)
