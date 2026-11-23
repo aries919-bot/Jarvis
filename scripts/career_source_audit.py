@@ -15,8 +15,10 @@ TIMEOUT=12
 UA="AriesCareerSourceAudit/1.0 (+https://github.com/aries919-bot/Jarvis)"
 JOB_TERMS=("personel alım","işçi alım","sözleşmeli personel","açık pozisyon","iş ilan","uzman personel","memur alım","personel recruitment")
 PROCESS_TERMS=("kura sonucu","asıl yedek","sınav sonucu","mülakat tarihi","başvuru değerlendirme","nihai sonuç")
-DATE_RE=re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
-RANGE_RE=re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})\s*(?:-|–|—|ile|/|\bve\b)\s*(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)",re.I)
+MONTH_NAMES="Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik"
+DATE_ATOM=r"(?:\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+(?:"+MONTH_NAMES+r")\s+\d{4})"
+DATE_RE=re.compile(DATE_ATOM,re.I)
+RANGE_RE=re.compile(r"(?<!\d)("+DATE_ATOM+r")\s*(?:-|–|—|ile|/|\bve\b)\s*("+DATE_ATOM+r")(?!\d)",re.I)
 BLOCK=("verify you are human","captcha","robot olmadığınızı","security challenge","automated requests","unusual traffic")
 LOGIN=("giriş yap","e-devlet ile giriş","oturum aç")
 
@@ -48,16 +50,25 @@ class Parser(HTMLParser):
             self.links.append(self.anchor); self.anchor=None
 
 def date_of(s):
-    try: return dt.date(*reversed([int(x) for x in s.replace("/","-").replace(".","-").split("-")]))
+    s=s.strip()
+    numeric=re.fullmatch(r"(\d{1,2})[./-](\d{1,2})[./-](\d{4})",s)
+    if numeric:
+        try: return dt.date(int(numeric.group(3)),int(numeric.group(2)),int(numeric.group(1)))
+        except (ValueError,TypeError): return None
+    named=re.fullmatch(r"(\d{1,2})\s+([A-Za-zÇĞİÖŞÜçğıöşü]+)\s+(\d{4})",s,re.I)
+    if not named: return None
+    months={"ocak":1,"şubat":2,"subat":2,"mart":3,"nisan":4,"mayıs":5,"mayis":5,"haziran":6,"temmuz":7,"ağustos":8,"agustos":8,"eylül":9,"eylul":9,"ekim":10,"kasım":11,"kasim":11,"aralık":12,"aralik":12}
+    month=months.get(named.group(2).lower())
+    if month is None: return None
+    try: return dt.date(int(named.group(3)),month,int(named.group(1)))
     except (ValueError,TypeError): return None
 
 def application_window(text,today=None):
     today=today or dt.date.today(); m=RANGE_RE.search(text); start=end=None
     if m:
-        start=date_of(".".join(m.group(i) for i in (1,2,3)))
-        end=date_of(".".join(m.group(i) for i in (4,5,6)))
+        start=date_of(m.group(1)); end=date_of(m.group(2))
     else:
-        m=re.search(r"(?:son\s+başvuru|son\s+basvuru)[^\d]{0,60}(\d{1,2}[./-]\d{1,2}[./-]\d{4})",text,re.I)
+        m=re.search(r"(?:son\s+başvuru|son\s+basvuru)[^\d]{0,60}("+DATE_ATOM+r")",text,re.I)
         if m: end=date_of(m.group(1))
     if not start and not end: status="unknown"
     elif start and start>today: status="announced_not_open"
@@ -77,8 +88,8 @@ def fetch(url):
 
 def kind(label,href):
     value=norm(label+" "+href)
-    if any(norm(x) in value for x in JOB_TERMS): return "job_candidate"
     if any(norm(x) in value for x in PROCESS_TERMS): return "process_notice"
+    if any(norm(x) in value for x in JOB_TERMS): return "job_candidate"
     return None
 
 def probe(source):
@@ -132,7 +143,12 @@ def validate(sources):
 
 def report(sources,results):
     working=[x for x in results if x["readerOk"] and x["candidateCount"]>0]
-    return {"schemaVersion":1,"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceCount":len(sources),"probedCount":sum(x["status"]!="not_probed_by_design" for x in results),"workingReaderCount":len(working),"sourcesWithCandidates":len(working),"results":results}
+    detail=[x for x in working if x["readerMode"]=="html_detail"]
+    index=[x for x in working if x["readerMode"]=="html_index"]
+    open_sources=[x for x in detail if x["applicationWindow"]["status"]=="open"]
+    announced=[x for x in detail if x["applicationWindow"]["status"]=="announced_not_open"]
+    expired=[x for x in detail if x["applicationWindow"]["status"]=="expired"]
+    return {"schemaVersion":1,"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceCount":len(sources),"probedCount":sum(x["status"]!="not_probed_by_design" for x in results),"workingReaderCount":len(working),"workingDetailReaderCount":len(detail),"workingIndexReaderCount":len(index),"activeVacancySourceCount":len(open_sources),"announcedNotOpenSourceCount":len(announced),"expiredDetailSourceCount":len(expired),"sourcesWithCandidates":len(working),"results":results}
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--probe",action="store_true"); ap.add_argument("--min-working",type=int,default=0); ap.add_argument("--output",type=Path); args=ap.parse_args()
