@@ -233,20 +233,9 @@
       "group": "buyuk_sirket",
       "publisher": "TUSAŞ Motor Sanayii A.Ş.",
       "url": "https://yetenek.tei.com.tr/jobs",
-      "probeUrl": "https://yetenek.tei.com.tr/jobs",
-      "readerMode": "html_index",
-      "expectedMarkers": [
-        "jet talent"
-      ],
-      "candidateTerms": [
-        "genel başvuru",
-        "engelli çalışan"
-      ],
-      "programmeTerms": [
-        "jet talent",
-        "back to core"
-      ],
-      "note": "Resmî ilan/program listesi herkese açık. 20.11.2026 tarihli Jet Talent 2026 programı ayrı program sayılmalı; genel başvuru kayıtları iş akışında ayrıca sınıflandırılmalı."
+      "readerMode": "manual_only",
+      "note": "TEI job/program list was visible in a manual public-browser check (Jet Talent, Back To Core, accessibility/general applications). GitHub Actions receives HTTP 403; do not retry around or bypass the restriction. Keep as official manual link only, not an automated reader.",
+      "browserStatus": "accessible_in_browser_http403_in_ci"
     },
     {
       "id": "aselsan_career",
