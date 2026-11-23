@@ -58,6 +58,17 @@ class DiffReviewTests(unittest.TestCase):
         self.assertEqual("RED", DENETLE._verdict(""))
 
 
+class ClientSecretBuildTests(unittest.TestCase):
+    def test_tmdb_token_is_not_embedded_in_mobile_apk(self) -> None:
+        build_file = (ROOT / "app" / "build.gradle.kts").read_text(encoding="utf-8")
+        android_workflow = (ROOT / ".github" / "workflows" / "android.yml").read_text(encoding="utf-8")
+        qa_workflow = (ROOT / ".github" / "workflows" / "aries-full-app-qa.yml").read_text(encoding="utf-8")
+        self.assertIn('val tmdbToken: String = ""', build_file)
+        self.assertNotIn('System.getenv("TMDB_TOKEN")', build_file)
+        self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', android_workflow)
+        self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', qa_workflow)
+
+
 class QaLogcatTests(unittest.TestCase):
     def _scan(self, text: str) -> list[dict[str, str]]:
         with tempfile.TemporaryDirectory() as tmp:

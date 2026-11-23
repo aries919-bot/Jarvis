@@ -5,12 +5,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val tmdbToken: String = run {
-    val f = rootProject.file("local.properties")
-    val p = Properties()
-    if (f.exists()) f.inputStream().use { p.load(it) }
-    p.getProperty("TMDB_TOKEN") ?: System.getenv("TMDB_TOKEN") ?: ""
-}
+// A provider credential shipped in a client APK can be extracted.
+// Use the open catalogue fallback until a server-side proxy is available.
+val tmdbToken: String = ""
 
 android {
     namespace = "com.cem.jarvis"
