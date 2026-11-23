@@ -606,10 +606,16 @@ object Ui {
             if (onVote != null) {
                 val vk = text.hashCode()
                 val gri = "#B4B9D0"
-                val up = icon(ctx, "jup", 18, if (oyDurum[vk] == 1) Pal.WHITE else gri)
-                val dn = icon(ctx, "jdown", 18, if (oyDurum[vk] == 0) Pal.WHITE else gri)
-                up.setPadding(dp(ctx, 10), dp(ctx, 8), dp(ctx, 10), dp(ctx, 6))
-                dn.setPadding(dp(ctx, 10), dp(ctx, 8), dp(ctx, 10), dp(ctx, 6))
+                val up = icon(ctx, "jup", 18, if (oyDurum[vk] == 1) Pal.WHITE else gri).apply {
+                    layoutParams = LinearLayout.LayoutParams(dp(ctx, Tok.MIN_TOUCH_DP), dp(ctx, Tok.MIN_TOUCH_DP))
+                    scaleType = ImageView.ScaleType.CENTER_INSIDE
+                    isClickable = true
+                }
+                val dn = icon(ctx, "jdown", 18, if (oyDurum[vk] == 0) Pal.WHITE else gri).apply {
+                    layoutParams = LinearLayout.LayoutParams(dp(ctx, Tok.MIN_TOUCH_DP), dp(ctx, Tok.MIN_TOUCH_DP))
+                    scaleType = ImageView.ScaleType.CENTER_INSIDE
+                    isClickable = true
+                }
                 up.setOnClickListener { oyDurum[vk] = 1; up.setColorFilter(Color.parseColor(Pal.WHITE)); dn.setColorFilter(Color.parseColor(gri)); onVote(1) }
                 dn.setOnClickListener { oyDurum[vk] = 0; dn.setColorFilter(Color.parseColor(Pal.WHITE)); up.setColorFilter(Color.parseColor(gri)); onVote(0) }
                 row.addView(up)
