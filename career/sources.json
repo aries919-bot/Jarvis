@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-23",
+  "policy": {
+    "noPaidServices": true,
+    "noLoginScraping": true,
+    "noCaptchaBypass": true,
+    "noSearchEngineHtmlScraping": true
+  },
+  "sources": [
+    {
+      "id": "kariyer_kapisi",
+      "name": "Kariyer Kapısı",
+      "group": "kamu",
+      "url": "https://kariyerkapisi.gov.tr/isealim",
+      "probeUrl": "https://kariyerkapisi.gov.tr/isealim",
+      "readerMode": "dynamic",
+      "note": "JS ile doldurulan aktif ilan tablosu; public JSON/API doğrulanmadı."
+    },
+    {
+      "id": "iskur_open_jobs",
+      "name": "İŞKUR Açık İş Haritası",
+      "group": "kamu",
+      "url": "https://acikisharita.iskur.gov.tr/",
+      "probeUrl": "https://acikisharita.iskur.gov.tr/",
+      "readerMode": "dynamic",
+      "note": "Lütfen bekleyiniz ara sayfası; API doğrulanmadı."
+    },
+    {
+      "id": "edevlet",
+      "name": "e-Devlet İş İlanları ve Başvuru",
+      "group": "kamu",
+      "url": "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama",
+      "readerMode": "manual_only",
+      "note": "Kimlik doğrulama gerektirir; yalnız resmî link açılır, otomatik giriş yok."
+    },
+    {
+      "id": "ilan_gov",
+      "name": "ilan.gov.tr",
+      "group": "kamu",
+      "url": "https://www.ilan.gov.tr/",
+      "probeUrl": "https://www.ilan.gov.tr/",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "ilan"
+      ],
+      "note": "Elle doğrulamada timeout; CI yeniden ölçecek."
+    },
+    {
+      "id": "resmi_gazete",
+      "name": "Resmî Gazete",
+      "group": "kamu",
+      "url": "https://www.resmigazete.gov.tr/",
+      "readerMode": "pdf_archive",
+      "note": "PDF arşivi; ayrı sınırlı PDF okuyucusu gerekli."
+    },
+    {
+      "id": "osym",
+      "name": "ÖSYM Duyurular",
+      "group": "kamu",
+      "url": "https://osym.gov.tr/Duyurular/Index",
+      "probeUrl": "https://osym.gov.tr/Duyurular/Index",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "duyurular",
+        "kpss"
+      ],
+      "note": "KPSS takvim/kılavuz kaynağı; her duyuru iş ilanı değildir."
+    },
+    {
+      "id": "sayistay_4b",
+      "name": "Sayıştay Sözleşmeli Çözümleyici ve Programcı",
+      "group": "kamu",
+      "url": "https://www.sayistay.gov.tr/duyuru/818-sozlesmeli-cozumleyici-ve-sozlesmeli-prog",
+      "probeUrl": "https://www.sayistay.gov.tr/duyuru/818-sozlesmeli-cozumleyici-ve-sozlesmeli-prog",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "sözleşmeli çözümleyici",
+        "25.11.2026"
+      ],
+      "note": "3 çözümleyici, 9 lisans programcı, 4 ön lisans programcı; 11–25.11.2026."
+    },
+    {
+      "id": "anadolu_4b",
+      "name": "Anadolu Üniversitesi Sözleşmeli Personel",
+      "group": "universite",
+      "url": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "probeUrl": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "sözleşmeli personel alımı",
+        "30.11.2026"
+      ],
+      "note": "1 adet 4/B pozisyon; başvuru 16–30.11.2026."
+    },
+    {
+      "id": "zafer_expert",
+      "name": "Zafer Kalkınma Ajansı Uzman Personel",
+      "group": "kamu_baglantili",
+      "url": "https://zafer.gov.tr/duyurular/227",
+      "probeUrl": "https://zafer.gov.tr/duyurular/227",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "2 uzman personel",
+        "25.11.2026",
+        "14.12.2026"
+      ],
+      "note": "2 uzman; 25.11–14.12.2026. 23 Kasım itibarıyla henüz başvuru açılmadı."
+    },
+    {
+      "id": "csgb",
+      "name": "Çalışma ve Sosyal Güvenlik Bakanlığı Duyurular",
+      "group": "kamu",
+      "url": "https://www.csgb.gov.tr/duyurular/",
+      "probeUrl": "https://www.csgb.gov.tr/duyurular/",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "duyurular"
+      ],
+      "note": "Eski sınav/sonuç kayıtları da var; yalnız doğrudan personel ilanı sayılır."
+    },
+    {
+      "id": "milli_saraylar",
+      "name": "Millî Saraylar Personel Alımı",
+      "group": "kamu",
+      "url": "https://www.millisaraylar.gov.tr/Kurumsal/PersonelAlimDuyuru",
+      "probeUrl": "https://www.millisaraylar.gov.tr/Kurumsal/PersonelAlimDuyuru",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personnel recruitment"
+      ],
+      "note": "Tarihî sınav/sonuç ilanları da var; sınıflandırılmalı."
+    },
+    {
+      "id": "tga",
+      "name": "TGA Kariyer",
+      "group": "kamu_baglantili",
+      "url": "https://tga.gov.tr/kariyer",
+      "probeUrl": "https://tga.gov.tr/kariyer",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "kariyer"
+      ],
+      "note": "Resmî Gazete ilanı var; kariyer indeksi okuyucusu henüz doğrulanmadı."
+    },
+    {
+      "id": "turkak_pdf",
+      "name": "TÜRKAK Resmî Gazete İlanı",
+      "group": "kamu",
+      "url": "https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf",
+      "readerMode": "pdf_detail",
+      "note": "PDF okuyucu olmadan çalışan kaynak sayılmaz."
+    },
+    {
+      "id": "sahil_guvenlik_pdf",
+      "name": "Sahil Güvenlik Memur Alımı",
+      "group": "kamu",
+      "url": "https://www.resmigazete.gov.tr/eskiler/2026/11/20261113.pdf",
+      "readerMode": "pdf_detail",
+      "note": "Resmî Gazete PDF; e-Devlet başvurusu kazınmaz."
+    },
+    {
+      "id": "ozal_pdb",
+      "name": "Malatya Turgut Özal Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://personel.ozal.edu.tr/announcements-all",
+      "probeUrl": "https://personel.ozal.edu.tr/announcements-all",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel daire başkanlığı"
+      ]
+    },
+    {
+      "id": "inonu_pdb",
+      "name": "İnönü Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://www.inonu.edu.tr/personeldb/duyurular",
+      "probeUrl": "https://www.inonu.edu.tr/personeldb/duyurular",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel"
+      ],
+      "note": "Elle doğrulama timeout; CI yeniden ölçecek."
+    },
+    {
+      "id": "firat_pdb",
+      "name": "Fırat Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://personeldb.firat.edu.tr/announcements-all",
+      "probeUrl": "https://personeldb.firat.edu.tr/announcements-all",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel"
+      ],
+      "note": "Elle doğrulama timeout; CI yeniden ölçecek."
+    },
+    {
+      "id": "adiyaman_pdb",
+      "name": "Adıyaman Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://pdb.adiyaman.edu.tr/tr/duyurular",
+      "probeUrl": "https://pdb.adiyaman.edu.tr/tr/duyurular",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel daire başkanlığı"
+      ]
+    },
+    {
+      "id": "battalgazi",
+      "name": "Battalgazi Belediyesi Duyurular",
+      "group": "belediye",
+      "url": "https://www.battalgazi.bel.tr/",
+      "probeUrl": "https://www.battalgazi.bel.tr/",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "duyurular",
+        "ihale ilanları"
+      ],
+      "note": "İhale ilanları iş ilanı sayılmamalı."
+    },
+    {
+      "id": "yesilyurt",
+      "name": "Yeşilyurt Belediyesi Güncel/Duyuru",
+      "group": "belediye",
+      "url": "https://yesilyurt.bel.tr/",
+      "probeUrl": "https://yesilyurt.bel.tr/",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "güncel"
+      ]
+    }
+  ]
+}
