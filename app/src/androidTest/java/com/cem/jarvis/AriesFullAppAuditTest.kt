@@ -113,7 +113,7 @@ class AriesFullAppAuditTest {
 
         if (clickDescription("Ekle")) {
             SystemClock.sleep(250)
-            val assistantOpened = clickText("Hatırlatıcılar ve görevler")
+            val assistantOpened = clickText("Hatırlatmalar ve görevler")
             if (assistantOpened) {
                 SystemClock.sleep(500)
                 captureAndAudit("11-assistant-tasks-reminders")
