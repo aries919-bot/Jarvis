@@ -148,4 +148,15 @@ class CareerContentClassifierTest {
         assertTrue(result.reason.contains("doğrudan kurumun"))
     }
 
+    @Test
+    fun recognizesAsciiSpelledDeadlineOnAnOfficialRecruitmentNotice() {
+        val result = CareerContentClassifier.classify(
+            "Jandarmaya 10 Bin Personel Alımı Geliyor",
+            "Son basvuru tarihi: 07.12.2026",
+            "https://jandarma.gov.tr/duyurular/personel-alimi"
+        )
+        assertEquals(CareerContentType.JOB_LISTING, result.type)
+        assertTrue(result.isJobListing)
+    }
+
 }

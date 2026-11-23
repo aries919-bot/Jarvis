@@ -85,7 +85,8 @@ object CareerContentClassifier {
             "basvuru kabul ediliyor", "basvuru kabul edilmektedir",
             "basvurular kabul edilmektedir", "basvuru yapilabilir"
         )
-        val hasApplicationEvidence = CareerListingParser.deadlineDate(text) != null ||
+        val rawNoticeText = CareerListingParser.noticeText(title, snippet)
+        val hasApplicationEvidence = CareerListingParser.deadlineDate(rawNoticeText) != null ||
             confirmedApplicationPhrases.any(text::contains)
         if (unconfirmedFuturePhrases.any(text::contains) && !hasApplicationEvidence &&
             (stage == null || stage == "BAŞVURU / YENİ ALIM")) {

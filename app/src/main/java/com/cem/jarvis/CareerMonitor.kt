@@ -555,7 +555,7 @@ object CareerEligibility {
 
 object CareerListingParser {
     private val deadlinePattern = Regex(
-        """(?:son\s+başvuru(?:\s+tarihi)?|son\s+müracaat(?:\s+tarihi)?|başvuruların\s+son\s+günü|basvurularin\s+son\s+gunu|kayıtlarını|kayıtları|kayitlarini|kayitlari)[^0-9]{0,45}(\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+[\p{L}]+\s+\d{4})""",
+        """(?:son\s+başvuru(?:\s+tarihi)?|son\s+basvuru(?:\s+tarihi)?|son\s+müracaat(?:\s+tarihi)?|son\s+muracaat(?:\s+tarihi)?|başvuruların\s+son\s+günü|basvurularin\s+son\s+gunu|kayıtlarını|kayıtları|kayitlarini|kayitlari)[^0-9]{0,45}(\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+[\p{L}]+\s+\d{4})""",
         RegexOption.IGNORE_CASE
     )
     private val publicationDatePattern = Regex(

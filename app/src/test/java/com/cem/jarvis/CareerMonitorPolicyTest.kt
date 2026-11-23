@@ -292,4 +292,20 @@ class CareerMonitorPolicyTest {
         assertFalse(CareerListingParser.isInactiveStatus(future))
     }
 
+    @Test
+    fun parsesApplicationDeadlinesWithAndWithoutTurkishDiacritics() {
+        assertEquals(
+            "07.12.2026",
+            CareerListingParser.deadlineDate("Son başvuru tarihi: 07.12.2026")
+        )
+        assertEquals(
+            "07.12.2026",
+            CareerListingParser.deadlineDate("Son basvuru tarihi: 07.12.2026")
+        )
+        assertEquals(
+            "07.12.2026",
+            CareerListingParser.deadlineDate("Son muracaat tarihi: 07.12.2026")
+        )
+    }
+
 }
