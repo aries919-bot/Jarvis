@@ -1,6 +1,7 @@
 package com.cem.jarvis
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class CareerNewsNavigationTest {
