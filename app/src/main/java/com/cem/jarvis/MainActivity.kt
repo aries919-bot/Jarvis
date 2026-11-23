@@ -1446,20 +1446,37 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val c = store.current()
         val hist = c.msgs.filter { it.first == "user" || it.first == "assistant" }.takeLast(20)
         showThinking()
+        val (streamBubble, streamText) = Ui.streamLine(this, "Yanıt hazırlanıyor…")
+        chatBox.addView(streamBubble)
+        chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
         thread {
+            val raw = StringBuilder()
             try {
                 uiHandler.post { orbThink(4) }
                 val memoryPrompt = AiMemory.appendContext(SYS, store.facts(), store.flag("memOn", true), store.flag("memShareOn", false))
-                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), memoryPrompt, hist)
-                val (cmd, reply) = Ai.parseReply(raw)
+                // Direct providers support SSE; Aries Bulut is retained as a compatible fallback.
+                Ai.chatStream(providerOrder() + listOf("bulut"), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), memoryPrompt, hist) { token ->
+                    raw.append(token)
+                    val partial = AiStreamParser.partialReply(raw.toString())
+                    if (!partial.isNullOrEmpty()) {
+                        runOnUiThread {
+                            hideThinking()
+                            streamText.text = partial
+                            chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+                        }
+                    }
+                }
+                val (cmd, reply) = Ai.parseReply(raw.toString())
                 runOnUiThread {
                     hideThinking()
+                    chatBox.removeView(streamBubble)
                     if (cmd.isNotBlank()) handle(cmd, true)
-                    else say(reply.ifEmpty { "Anlaşılamadı." })
+                    else say(reply.ifEmpty { raw.toString().ifBlank { "Anlaşılamadı." } })
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     hideThinking()
+                    chatBox.removeView(streamBubble)
                     say(Ai.friendly(e))
                 }
             }
