@@ -339,7 +339,14 @@ class FinanceActivity : Activity() {
             formatTry(quote.current) + " · " + (quote.changePercent?.let { "%+.2f%%".format(Locale.US, it) } ?: "değişim yok"),
             15f, if ((quote.changePercent ?: 0.0) >= 0) Pal.GREEN else Pal.RED, true
         ))
-        labels.addView(Ui.text(this, quoteTimeLabel(quote.timestampSeconds), 10f, Pal.MUTED))
+        labels.addView(
+            Ui.text(
+                this,
+                quoteTimeLabel(quote.timestampSeconds),
+                10f,
+                if (quoteIsStale(quote.timestampSeconds)) Pal.AMBER else Pal.MUTED
+            )
+        )
         top.addView(labels, LinearLayout.LayoutParams(0, -2, 1f))
         top.addView(Ui.button(this, "Sil") { removeWatch(quote.symbol) })
         card.addView(top)
@@ -435,12 +442,17 @@ class FinanceActivity : Activity() {
         else -> source.uppercase(Locale("tr", "TR"))
     }
 
+    private fun quoteIsStale(seconds: Long): Boolean {
+        if (seconds <= 0L) return true
+        val age = System.currentTimeMillis() - seconds * 1000L
+        return age > TimeUnit.HOURS.toMillis(24) || age < -TimeUnit.MINUTES.toMillis(5)
+    }
+
     private fun quoteTimeLabel(seconds: Long): String {
         if (seconds <= 0L) return "Veri zamanı sağlayıcı tarafından verilmedi"
         val time = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
             .format(Date(seconds * 1000L))
-        val age = System.currentTimeMillis() - seconds * 1000L
-        return if (age > TimeUnit.HOURS.toMillis(24)) "Eski veri · " + time else "Veri zamanı · " + time
+        return if (quoteIsStale(seconds)) "Eski/veri zamanı şüpheli · " + time else "Veri zamanı · " + time
     }
 
     private fun formatIso(value: String): String {
@@ -570,7 +582,7 @@ class FinanceAlertWorker(context: Context, params: WorkerParameters) : Worker(co
             val title = item.optString("title", key)
             val value = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale("tr", "TR"))).format(price)
             FinanceAlerts.notify(
-                applicationContext, key.hashCode(), "Aries · Fiyat alarmı",
+                applicationContext, item.optString("id", key).hashCode(), "Aries · Fiyat alarmı",
                 title + " hedef fiyatına ulaştı. Son alınan fiyat: " + value +
                     (if (key.startsWith("gold:")) " TL." else " (sembolün işlem para biriminde).") +
                     " Kaynak güncelliğini ve veri saatini kontrol et."

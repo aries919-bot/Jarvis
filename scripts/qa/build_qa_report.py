@@ -522,7 +522,7 @@ def main() -> int:
         "pipeline": pipeline,
         "runtimeMetrics": runtime_metrics,
         "findings": findings,
-        "coverage": "MainActivity home, settings, assistant/tasks, file manager, Film & TV, plus all six CareerActivity tabs where reachable. Voice/microphone, external Bluetooth devices, OEM battery policies and destructive flows are intentionally not exercised.",
+        "coverage": "MainActivity home, settings, assistant/tasks, file manager, Film & TV, Piyasa Merkezi and all six CareerActivity tabs where reachable. Voice/microphone, external Bluetooth devices, OEM battery policies and destructive flows are intentionally not exercised.",
     }
 
     (out_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

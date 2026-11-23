@@ -1,7 +1,10 @@
 package com.cem.jarvis
 
+import android.content.ContentValues
 import android.content.Intent
+import android.os.Environment
 import android.os.SystemClock
+import android.provider.MediaStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -15,6 +18,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 @RunWith(AndroidJUnit4::class)
 class AriesFullAppAuditTest {
@@ -170,18 +175,22 @@ class AriesFullAppAuditTest {
         // Audit the finance market center added to the main sidebar.
         val financeMenuOpened = clickDescription("Menü")
         val financeOpened = financeMenuOpened && clickTextContains("Piyasa Merkezi")
-        if (financeOpened) {
-            val financeVisible = device.wait(Until.hasObject(By.textContains("Piyasa Merkezi")), 8_000)
-            if (!financeVisible) {
-                recordFinding("error", "navigation-destination", "finance", "FinanceActivity opened, but its Piyasa Merkezi heading was not visible.")
-            }
+        val financeVisible = financeOpened &&
+            device.wait(Until.hasObject(By.textContains("Piyasa Merkezi")), 8_000)
+        if (financeVisible) {
+            recordFinding("info", "navigation-destination", "finance", "Piyasa Merkezi opened and its heading was visible in the emulator.")
             SystemClock.sleep(700)
             captureAndAudit("10-finance-market-center")
             device.pressBack()
             device.wait(Until.hasObject(By.desc("Menü")), 8_000)
             SystemClock.sleep(500)
         } else {
-            recordFinding("error", "navigation", "sidebar", "The Piyasa Merkezi entry could not be opened from the main menu.")
+            recordFinding(
+                "error",
+                if (financeOpened) "navigation-destination" else "navigation",
+                "finance",
+                "Piyasa Merkezi could not be opened from the main menu or its heading was not visible."
+            )
         }
 
         val settingsOpened = clickDescription("Ayarlar")
@@ -253,7 +262,64 @@ class AriesFullAppAuditTest {
             "Voice screen and audio actions require a separate controlled microphone test; this smoke test does not send speech or trigger real calls."
         )
         writeAuditBundle()
+        publishAuditBundleToDownloads()
         assertTrue("No screenshots were produced by the UI audit", screenRecords.length() >= 1)
+        assertTrue(
+            "Piyasa Merkezi could not be reached from the main menu or its heading was not visible.",
+            financeVisible
+        )
+    }
+
+    /**
+     * Publishes the screenshot/XML bundle through MediaStore so the host can pull it
+     * after Gradle has finished instrumentation and uninstalled the app package.
+     * The QA matrix starts at API 29, where the Downloads collection is available.
+     */
+    private fun publishAuditBundleToDownloads() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val zipFile = File(outputDir.parentFile, "aries-ui-audit-api-${android.os.Build.VERSION.SDK_INT}.zip")
+        ZipOutputStream(zipFile.outputStream().buffered()).use { zip ->
+            outputDir.listFiles()
+                ?.filter { it.isFile }
+                ?.sortedBy { it.name }
+                ?.forEach { file ->
+                    zip.putNextEntry(ZipEntry(file.name))
+                    file.inputStream().use { it.copyTo(zip) }
+                    zip.closeEntry()
+                }
+        }
+
+        val displayName = "aries-ui-audit-api-${android.os.Build.VERSION.SDK_INT}.zip"
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+            put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
+            put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOWNLOADS + "/AriesQA"
+            )
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: throw IllegalStateException("Could not create the QA evidence item in Downloads.")
+        try {
+            val output = resolver.openOutputStream(uri)
+                ?: throw IllegalStateException("Could not open the QA evidence output stream.")
+            output.use { stream ->
+                zipFile.inputStream().use { input -> input.copyTo(stream) }
+            }
+            val ready = ContentValues().apply {
+                put(MediaStore.MediaColumns.IS_PENDING, 0)
+            }
+            check(resolver.update(uri, ready, null, null) == 1) {
+                "Could not publish the QA evidence ZIP."
+            }
+        } catch (error: Throwable) {
+            resolver.delete(uri, null, null)
+            throw error
+        } finally {
+            zipFile.delete()
+        }
     }
 
     private fun handleRuntimePermissionDialogs() {
