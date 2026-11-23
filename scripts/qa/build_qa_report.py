@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import html
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -34,9 +35,9 @@ def parse_junit(root: Path) -> dict[str, Any]:
             tree = ET.parse(file)
         except (ET.ParseError, OSError):
             continue
-        for suite in tree.iter():
-            if suite.tag not in {"testsuite", "testsuites"}:
-                continue
+        # Count leaf test suites only. A <testsuites> root repeats the aggregate totals
+        # of its child <testsuite> nodes, so counting both would double the result.
+        for suite in tree.iter("testsuite"):
             for key in totals:
                 try:
                     totals[key] += int(suite.attrib.get(key, "0"))
@@ -72,6 +73,17 @@ def parse_ui_bundle(qa_dir: Path) -> dict[str, Any]:
     data["bundle_found"] = True
     data["bundle_dir"] = str(candidates[0].parent)
     return data
+
+
+def ui_screen_dimension(qa_dir: Path, key: str, default: int = 0) -> int:
+    bundles = list(qa_dir.rglob("ui-audit.json"))
+    if not bundles:
+        return default
+    try:
+        data = json.loads(bundles[0].read_text(encoding="utf-8"))
+        return int(data.get("device", {}).get(key, default))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return default
 
 
 def inspect_hierarchies(qa_dir: Path, density: float) -> list[dict[str, Any]]:
@@ -113,7 +125,9 @@ def inspect_hierarchies(qa_dir: Path, density: float) -> list[dict[str, Any]]:
                     "message": "Clickable element has no text or content description.",
                     "label": "",
                 })
-            if x1 < 0 or y1 < 0:
+            screen_width = int(ui_screen_dimension(qa_dir, "screenWidthPx", 0))
+            screen_height = int(ui_screen_dimension(qa_dir, "screenHeightPx", 0))
+            if x1 < 0 or y1 < 0 or (screen_width and x2 > screen_width) or (screen_height and y2 > screen_height):
                 findings.append({
                     "severity": "warning",
                     "category": "screen-clipping",
@@ -251,8 +265,8 @@ def render_html(report: dict[str, Any], out_dir: Path) -> None:
         for screen in screens:
             name = screen.get("screenshot")
             if name and (bundle_dir / name).exists():
-                rel = (bundle_dir / name).relative_to(out_dir) if (bundle_dir / name).is_relative_to(out_dir) else bundle_dir / name
-                screenshots.append((screen.get("name", ""), str(rel).replace("\\", "/")))
+                rel = os.path.relpath(bundle_dir / name, out_dir)
+                screenshots.append((screen.get("name", ""), rel.replace("\\", "/")))
 
     def esc(value: Any) -> str:
         return html.escape(str(value if value is not None else ""))
