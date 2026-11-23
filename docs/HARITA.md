@@ -7,9 +7,9 @@
 ## Repo gerçeği
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a`.
 - Notlar `durum` dalında; repo erişimi ve yazma izni doğrulandı.
-- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `8d6c2c3873a81001c59096f7fe657f8e7b613e7d`, mergeable.
+- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `c0a542cace109020d271ca38d2cff2099802fec2`, mergeable.
 - Diğer açık PR'lar: #22/#23/#18/#17/#9/#4/#3/#2/#1; farklı tabanlı eski PR'lar main'e alınmış sayılmaz.
-- Son QA kayıtları #24 için 45160335723 ve 45160326703; ikisi de SUCCESS (iş ayrıntısı/artefakt incelemesi sürüyor).
+- Son tamamlanmış HEAD baseline: c9a5ce6; PR CI 45164079348 ve push CI 45164072719 SUCCESS. Yeni güvenli-yönlendirme testli HEAD c0a542a için PR CI 45164530319 çalışıyor; test adımı SUCCESS, canlı probe aşaması sürüyor.
 
 ## İş listesi
 | İş | Durum | Not |
@@ -28,7 +28,7 @@
 | Z1 Gerçek telefon testleri | TELEFONDA DENENECEK | Mikrofon, Xiaomi pil, alarm/bildirim, canlı API, gerçek video |
 
 ## K1 kanıt özeti
-- Envanter: 20 kaynak; son raporda 14 otomatik probe, 5 çalışan HTML okuyucu (3 detay + 2 indeks), 3 aktif detay ilanı.
+- Güncel c9a5ce6 artifact: 20 kaynak, 12 probe, 6 çalışan okuyucu (3 detay + 3 indeks), 3 açık ilan detay kaynağı, 2 program okuyucu (3 program bağlantısı).
 - Açık detay örnekleri: Sayıştay, Anadolu Üniversitesi, TGA; Zafer Kalkınma Ajansı süreç duyurusu, güvenlik/CAPTCHA işareti nedeniyle otomasyondan hariç.
 - PR kapsamı yalnız envanter + sağlık denetimi; sunucu JSON toplayıcı, dinamik Kariyer Kapısı/İŞKUR ve uygulama feed bağlantısı kapsam dışı.
 - PR #24 yazarı bu oturumdaki hakemle aynı çalışma hattı; bu hakem kendi yamayı ONAYLAYAMAZ veya merge edemez. Bağımsız insan incelemesi gereklidir.
@@ -39,10 +39,10 @@
 3. QA Türkçe ay adı tarih penceresi hatasını buldu; düzeltildi ve regresyon testi eklendi.
 4. TGA detay okuyucu eklendi.
 5. Rapor 5 okuyucu / 3 aktif detay kaynak olarak ayrıştırıldı.
-6. K1 PR #24 açıldı; son görülen CI SUCCESS.
+6. K1 PR #24; HEAD c9a5ce6 CI SUCCESS (20 kaynak, 12 probed, 6 okuyucu); son commit c0a542a'da aynı-host HTTPS yönlendirme kuralı ve ek regresyon testleri, CI sürüyor.
 7. Bu turda kod PR'ı merge edilmedi.
 8. Mevcut Android kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback kullanıyor; C1 bunu kaldıracak.
 9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
-10. Sonraki: PR #24 bağımsız hakem kararı; sonra C1 (A1 bu haritada ayrı ve ilk tamamlanmamış tasarım işi olarak bekliyor).
+10. K1'de eklenen düzeltme: indeks sayfasının kendisini ilan saymama, kura/sonuç kelime gruplarını ayırma, TUSAŞ/ROKETSAN programlarını ilanlardan ayırma, TEI HTTP 403 kaynağını manual_only tutma ve probe yönlendirmelerini aynı HTTPS host ile sınırlandırma. Yeni QA tamamlanınca K1 hakem kararı; C1 sonraki teknik iş.
 
 **SONRAKİ ADIM:** K1'in tam kod ve canlı QA artefaktını bağımsız gözle incele; kendi yamanı ONAYLAMA.
