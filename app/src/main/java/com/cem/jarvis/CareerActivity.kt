@@ -2206,44 +2206,79 @@ class CareerActivity : Activity() {
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("'", "&#39;")
-        fun inline(value: String): String =
-            Regex("""\*\*(.+?)\*\*""").replace(escape(value), "<b>$1</b>")
-        val output = StringBuilder("<html><body>")
-        var listOpen = false
+
+        fun inline(value: String): String {
+            var rendered = escape(value)
+            rendered = Regex("`([^`]+)`").replace(rendered, "<tt>$1</tt>")
+            rendered = Regex("""\*\*(.+?)\*\*""").replace(rendered, "<b>$1</b>")
+            rendered = Regex("""__(.+?)__""").replace(rendered, "<b>$1</b>")
+            rendered = Regex("""(?<!\*)\*([^*]+)\*(?!\*)""").replace(rendered, "<i>$1</i>")
+            rendered = Regex("""(?<!_)_([^_]+)_(?!_)""").replace(rendered, "<i>$1</i>")
+            return rendered
+        }
+
+        val output = StringBuilder(
+            "<html><head><style>body{line-height:1.35} h2{margin-top:18px;margin-bottom:8px} " +
+                "h3{margin-top:14px;margin-bottom:6px} li{margin-bottom:5px} p{margin-top:5px;margin-bottom:8px}</style></head><body>"
+        )
+        var openList = ""
+        fun closeList() {
+            when (openList) {
+                "ul" -> output.append("</ul>")
+                "ol" -> output.append("</ol>")
+            }
+            openList = ""
+        }
+        fun openList(type: String) {
+            if (openList == type) return
+            closeList()
+            output.append(if (type == "ol") "<ol>" else "<ul>")
+            openList = type
+        }
+
         markdown.lines().forEach { raw ->
             val line = raw.trim()
             when {
                 line.isBlank() -> {
-                    if (listOpen) { output.append("</ul>"); listOpen = false }
+                    closeList()
                     output.append("<br/>")
                 }
-                line == "---" || line == "***" -> {
-                    if (listOpen) { output.append("</ul>"); listOpen = false }
+                line == "---" || line == "***" || line == "___" -> {
+                    closeList()
                     output.append("<hr/>")
                 }
                 line.startsWith("### ") -> {
-                    if (listOpen) { output.append("</ul>"); listOpen = false }
+                    closeList()
                     output.append("<h3>").append(inline(line.removePrefix("### "))).append("</h3>")
                 }
                 line.startsWith("## ") -> {
-                    if (listOpen) { output.append("</ul>"); listOpen = false }
+                    closeList()
                     output.append("<h2>").append(inline(line.removePrefix("## "))).append("</h2>")
                 }
                 line.startsWith("# ") -> {
-                    if (listOpen) { output.append("</ul>"); listOpen = false }
+                    closeList()
                     output.append("<h2>").append(inline(line.removePrefix("# "))).append("</h2>")
                 }
+                line.startsWith("> ") -> {
+                    closeList()
+                    output.append("<blockquote>").append(inline(line.removePrefix("> "))).append("</blockquote>")
+                }
+                Regex("""^\d+[.)]\s+.+""").matches(line) -> {
+                    openList("ol")
+                    val item = Regex("""^\d+[.)]\s+(.+)$""").find(line)?.groupValues?.get(1).orEmpty()
+                    output.append("<li>").append(inline(item)).append("</li>")
+                }
                 line.startsWith("- ") || line.startsWith("• ") || line.startsWith("* ") -> {
-                    if (!listOpen) { output.append("<ul>"); listOpen = true }
+                    openList("ul")
                     output.append("<li>").append(inline(line.drop(2))).append("</li>")
                 }
                 else -> {
-                    if (listOpen) { output.append("</ul>"); listOpen = false }
+                    closeList()
                     output.append("<p>").append(inline(line)).append("</p>")
                 }
             }
         }
-        if (listOpen) output.append("</ul>")
+        closeList()
         output.append("</body></html>")
         return output.toString()
     }
