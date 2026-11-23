@@ -246,6 +246,32 @@ def static_source_audit(root: Path) -> dict[str, Any]:
     }
 
 
+def parse_runtime_metrics(qa_dir: Path, ui: dict[str, Any]) -> dict[str, Any]:
+    metrics = dict(ui.get("metrics", {}))
+    meminfo_files = list(qa_dir.rglob("meminfo.txt"))
+    gfxinfo_files = list(qa_dir.rglob("gfxinfo.txt"))
+    if meminfo_files:
+        meminfo = read_text(meminfo_files[0])
+        total_pss = re.search(r"(?im)^\s*TOTAL\s+PSS:\s*([\d,]+)\s*kB", meminfo)
+        java_heap = re.search(r"(?im)^\s*Java Heap:\s*([\d,]+)\s*kB", meminfo)
+        native_heap = re.search(r"(?im)^\s*Native Heap:\s*([\d,]+)\s*kB", meminfo)
+        if total_pss:
+            metrics["totalPssKb"] = int(total_pss.group(1).replace(",", ""))
+        if java_heap:
+            metrics["javaHeapKb"] = int(java_heap.group(1).replace(",", ""))
+        if native_heap:
+            metrics["nativeHeapKb"] = int(native_heap.group(1).replace(",", ""))
+    if gfxinfo_files:
+        gfxinfo = read_text(gfxinfo_files[0])
+        total_frames = re.search(r"(?im)^\s*Total frames rendered:\s*(\d+)", gfxinfo)
+        janky_frames = re.search(r"(?im)^\s*Janky frames:\s*(\d+)", gfxinfo)
+        if total_frames:
+            metrics["totalFramesRendered"] = int(total_frames.group(1))
+        if janky_frames:
+            metrics["jankyFrames"] = int(janky_frames.group(1))
+    return metrics
+
+
 def scan_logcat(qa_dir: Path) -> list[dict[str, str]]:
     logs = list(qa_dir.rglob("logcat.txt"))
     if not logs:
@@ -345,6 +371,7 @@ def render_html(report: dict[str, Any], out_dir: Path) -> None:
     visual_note = (
         "Screenshots are supplied as visual evidence. Contrast, visual hierarchy, task clarity and perceived clutter still require human review; this report does not assign an automatic design score."
     )
+    runtime = report.get("runtimeMetrics", {})
 
     doc = f"""<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -380,8 +407,15 @@ code{{overflow-wrap:anywhere}}.note{{border-left:3px solid var(--warn);padding:1
 <h2>JUnit sonuçları</h2>
 <table><thead><tr><th>Sınıf</th><th>Test</th><th>Sonuç</th><th>Süre (s)</th></tr></thead><tbody>{test_rows}</tbody></table>
 <h2>Ekran görüntüleri</h2><div class="screenshots">{shot_cards}</div>
+<h2>Açılış ve performans göstergeleri</h2>
+<table><tbody>
+<tr><th>Ana ekranın görünür olması</th><td>{esc(runtime.get('launchToVisibleMs', 'n/a'))} ms</td></tr>
+<tr><th>Toplam bellek (PSS)</th><td>{esc(runtime.get('totalPssKb', 'n/a'))} KB</td></tr>
+<tr><th>Java / Native heap</th><td>{esc(runtime.get('javaHeapKb', 'n/a'))} / {esc(runtime.get('nativeHeapKb', 'n/a'))} KB</td></tr>
+<tr><th>Toplam / takılan kareler</th><td>{esc(runtime.get('totalFramesRendered', 'n/a'))} / {esc(runtime.get('jankyFrames', 'n/a'))}</td></tr>
+</tbody></table>
 <h2>Görsel tasarım ve kullanım kolaylığı değerlendirmesi</h2>
-<p>Rapor; küçük dokunma alanları, metinsiz etkileşimli öğeler, ekran dışına taşma, navigasyona erişim, metin boyutu beyanları, çökmeler ve test sonuçları gibi ölçülebilir sinyalleri toplar. Renk kontrastı, yoğunluk/karışıklık, görev akışının anlaşılır oluşu ve görsel denge için ekran görüntülerinin insan tarafından incelenmesi gerekir.</p>
+<p>Rapor; küçük dokunma alanları, metinsiz etkileşimli öğeler, ekran dışına taşma, navigasyona erişim, metin boyutu beyanları, görünür metin yoğunluğu, çökmeler ve test sonuçları gibi ölçülebilir sinyalleri toplar. Renk kontrastı, görsel hiyerarşi, görev akışının anlaşılır oluşu ve algılanan karışıklık için ekran görüntülerinin insan tarafından incelenmesi gerekir.</p>
 <h2>Dosyalar</h2><p>Bu HTML raporunun yanında <code>report.json</code>, <code>ui-audit.json</code>, ekran görüntüleri, XML erişilebilirlik ağaçları ve Logcat kaydı saklanır.</p>
 <p class="muted">Not: Test kapsamı emülatör ve test verileriyle sınırlıdır; gerçek SIM, Bluetooth aksesuarı, OEM pil kısıtlamaları, canlı kullanıcı hesapları ve gerçek işveren/ilan geçerliliği cihaz/haricî doğrulama gerektirir.</p>
 </main></body></html>"""
@@ -409,6 +443,7 @@ def main() -> int:
     screen_density, density_findings = measure_screen_density(qa_dir)
     lint = lint_summary(root)
     pipeline = parse_pipeline_status(qa_dir)
+    runtime_metrics = parse_runtime_metrics(qa_dir, ui)
 
     # XML hierarchy analysis is authoritative for dimensions and labels. Remove the
     # equivalent instrumentation-side heuristics to avoid duplicate warnings.
@@ -458,6 +493,7 @@ def main() -> int:
         "ui": {**ui, "screenStats": screen_density},
         "lint": lint,
         "pipeline": pipeline,
+        "runtimeMetrics": runtime_metrics,
         "findings": findings,
         "coverage": "MainActivity home, settings, assistant/tasks, file manager, Film & TV, plus all six CareerActivity tabs where reachable. Voice/microphone, external Bluetooth devices, OEM battery policies and destructive flows are intentionally not exercised.",
     }
@@ -473,6 +509,7 @@ def main() -> int:
             f"- Findings: {summary['errorFindings']} errors, {summary['warningFindings']} warnings, {summary['reviewFindings']} manual review items",
             f"- Lint: {lint['errors']} errors, {lint['warnings']} warnings",
             f"- Pipeline exit statuses: {json.dumps(pipeline, ensure_ascii=False)}",
+            f"- Runtime metrics: {json.dumps(runtime_metrics, ensure_ascii=False)}",
             "- Screenshots and XML hierarchy dumps are stored next to the UI audit bundle.",
             "- Visual clarity, contrast and task simplicity still require human review.",
         ]),
