@@ -234,7 +234,7 @@ class CareerSearchParsingTest {
                 Ai.Source("Resmî kurum personel duyurusu", "https://personel.example.gov.tr/ilan/7?utm_source=search"),
                 Ai.Source("Aynı duyuru", "https://personel.example.gov.tr/ilan/7?utm_source=other"),
                 Ai.Source("Güvensiz bağlantı", "http://example.gov.tr/ilan/8"),
-                Ai.Source("Başlıksız bağlantı", "https://example.gov.tr/ilan/9")
+                Ai.Source("", "https://example.gov.tr/ilan/9")
             )
         )
 
