@@ -1617,6 +1617,19 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
+        val forget = Regex("^unut\\s*:?\\s*(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        if (forget != null) {
+            val all = forget.lowercase(tr) in listOf("hepsi", "tümünü", "tüm notlar", "bütün notlar", "hafızayı")
+            val existing = store.facts().split("; ").map { it.trim() }.filter { it.isNotEmpty() }
+            val remaining = if (all) emptyList() else existing.filterNot { it.equals(forget, ignoreCase = true) }
+            if (!all && remaining.size == existing.size) say("Bu notu bulamadım.")
+            else confirm(if (all) "Bütün hafıza notları silinsin mi?" else "Bu hafıza notu silinsin mi?", {
+                store.put("facts", remaining.joinToString("; "))
+                say(if (all) "Bütün yerel hafıza notlarını sildim." else "Yerel hafıza notunu sildim.")
+            }, {})
+            return true
+        }
+
         if (!store.flag("memOn", true)) {
             say("Hafıza kapalı. Kullanmak için Ayarlar > Hafıza bölümünden açabilirsin.")
             return true
@@ -1652,19 +1665,6 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                 store.addFact("Profil: $profile")
                 say("Profil notunu yalnızca telefona kaydettim.")
             }
-            return true
-        }
-
-        val forget = Regex("^unut\\s*:?\\s*(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
-        if (forget != null) {
-            val all = forget.lowercase(tr) in listOf("hepsi", "tümünü", "tüm notlar", "bütün notlar", "hafızayı")
-            val existing = store.facts().split("; ").map { it.trim() }.filter { it.isNotEmpty() }
-            val remaining = if (all) emptyList() else existing.filterNot { it.equals(forget, ignoreCase = true) }
-            if (!all && remaining.size == existing.size) say("Bu notu bulamadım.")
-            else confirm(if (all) "Bütün hafıza notları silinsin mi?" else "Bu hafıza notu silinsin mi?", {
-                store.put("facts", remaining.joinToString("; "))
-                say(if (all) "Bütün yerel hafıza notlarını sildim." else "Yerel hafıza notunu sildim.")
-            }, {})
             return true
         }
 
