@@ -1,47 +1,60 @@
 package com.cem.jarvis
 
-import org.json.JSONObject
-
 /**
- * Small, deterministic parsers for provider SSE payloads and partial JSON chat replies.
- * Parsing stays separate from networking so malformed/empty events can be regression-tested.
+ * Dependency-free parsers for the small JSON envelopes used by OpenAI-compatible
+ * and Gemini SSE events. Avoids Android org.json so ordinary JVM tests exercise
+ * the same parsing behavior as the application.
  */
 internal object AiStreamParser {
     fun openAiDelta(payload: String): String {
         if (payload == "[DONE]") return ""
-        val choices = JSONObject(payload).optJSONArray("choices") ?: return ""
-        val delta = choices.optJSONObject(0)?.optJSONObject("delta") ?: return ""
-        return delta.optString("content", "")
+        val choice = firstObject(arrayField(payload, "choices")) ?: return ""
+        val delta = objectField(choice, "delta") ?: return ""
+        return stringField(delta, "content") ?: ""
     }
 
     fun geminiDelta(payload: String): String {
-        val candidate = JSONObject(payload).optJSONArray("candidates")?.optJSONObject(0) ?: return ""
-        val parts = candidate.optJSONObject("content")?.optJSONArray("parts") ?: return ""
-        return buildString {
-            for (i in 0 until parts.length()) {
-                val part = parts.optJSONObject(i) ?: continue
-                append(part.optString("text", ""))
-            }
-        }
+        val candidate = firstObject(arrayField(payload, "candidates")) ?: return ""
+        val content = objectField(candidate, "content") ?: return ""
+        return arrayObjects(arrayField(content, "parts"))
+            .mapNotNull { stringField(it, "text") }
+            .joinToString("")
     }
 
-    /**
-     * Returns the visible reply JSON string while it is still being generated.
-     * Incomplete escape sequences are held until the next chunk arrives.
-     */
     fun partialReply(raw: String): String? {
-        val match = Regex("\"reply\"\\s*:\\s*\"").find(raw) ?: return null
-        var index = match.range.last + 1
+        val start = stringValueStart(raw, "reply") ?: return null
+        return decodeStringAt(raw, start, allowIncomplete = true)?.first
+    }
+
+    private fun valueStart(source: String, field: String): Int? {
+        val key = Regex("\"" + Regex.escape(field) + "\"\\s*:\\s*").find(source) ?: return null
+        return key.range.last + 1
+    }
+
+    private fun stringValueStart(source: String, field: String): Int? {
+        val start = valueStart(source, field) ?: return null
+        var i = start
+        while (i < source.length && source[i].isWhitespace()) i++
+        return if (i < source.length && source[i] == '"') i + 1 else null
+    }
+
+    private fun stringField(source: String, field: String): String? {
+        val start = stringValueStart(source, field) ?: return null
+        return decodeStringAt(source, start, allowIncomplete = false)?.first
+    }
+
+    private fun decodeStringAt(source: String, start: Int, allowIncomplete: Boolean): Pair<String, Int>? {
+        var i = start
         val out = StringBuilder()
-        while (index < raw.length) {
-            val ch = raw[index++]
-            if (ch == '"') break
+        while (i < source.length) {
+            val ch = source[i++]
+            if (ch == '"') return out.toString() to i
             if (ch != '\\') {
                 out.append(ch)
                 continue
             }
-            if (index >= raw.length) break
-            when (val escaped = raw[index++]) {
+            if (i >= source.length) return if (allowIncomplete) out.toString() to i else null
+            when (val escaped = source[i++]) {
                 '"' -> out.append('"')
                 '\\' -> out.append('\\')
                 '/' -> out.append('/')
@@ -51,14 +64,76 @@ internal object AiStreamParser {
                 'r' -> out.append('\r')
                 't' -> out.append('\t')
                 'u' -> {
-                    if (index + 4 > raw.length) break
-                    val code = raw.substring(index, index + 4).toIntOrNull(16) ?: break
+                    if (i + 4 > source.length) return if (allowIncomplete) out.toString() to i else null
+                    val code = source.substring(i, i + 4).toIntOrNull(16)
+                        ?: return if (allowIncomplete) out.toString() to i else null
                     out.append(code.toChar())
-                    index += 4
+                    i += 4
                 }
                 else -> out.append(escaped)
             }
         }
-        return out.toString()
+        return if (allowIncomplete) out.toString() to i else null
+    }
+
+    private fun arrayField(source: String, field: String): String {
+        val start = valueStart(source, field) ?: return ""
+        var i = start
+        while (i < source.length && source[i].isWhitespace()) i++
+        if (i >= source.length || source[i] != '[') return ""
+        return balancedContainer(source, i, '[', ']') ?: ""
+    }
+
+    private fun objectField(source: String, field: String): String? {
+        val start = valueStart(source, field) ?: return null
+        var i = start
+        while (i < source.length && source[i].isWhitespace()) i++
+        if (i >= source.length || source[i] != '{') return null
+        return balancedContainer(source, i, '{', '}')
+    }
+
+    private fun balancedContainer(source: String, start: Int, open: Char, close: Char): String? {
+        var depth = 0
+        var inString = false
+        var escaped = false
+        for (i in start until source.length) {
+            val ch = source[i]
+            if (inString) {
+                if (escaped) escaped = false
+                else when (ch) {
+                    '\\' -> escaped = true
+                    '"' -> inString = false
+                }
+                continue
+            }
+            when (ch) {
+                '"' -> inString = true
+                open -> depth++
+                close -> {
+                    depth--
+                    if (depth == 0) return source.substring(start, i + 1)
+                }
+            }
+        }
+        return null
+    }
+
+    private fun firstObject(array: String): String? = arrayObjects(array).firstOrNull()
+
+    private fun arrayObjects(array: String): List<String> {
+        if (array.isBlank()) return emptyList()
+        val open = array.indexOf('[')
+        if (open < 0) return emptyList()
+        val out = ArrayList<String>()
+        var i = open + 1
+        while (i < array.length) {
+            while (i < array.length && (array[i].isWhitespace() || array[i] == ',')) i++
+            if (i >= array.length || array[i] == ']') break
+            if (array[i] != '{') return out
+            val item = balancedContainer(array, i, '{', '}') ?: return out
+            out.add(item)
+            i += item.length
+        }
+        return out
     }
 }
