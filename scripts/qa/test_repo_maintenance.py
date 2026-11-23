@@ -71,6 +71,8 @@ class ClientSecretBuildTests(unittest.TestCase):
         self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', qa_workflow)
 
     def test_cloud_api_key_is_keystore_encrypted_and_legacy_is_migrated(self) -> None:
+        store_file = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "Store.kt").read_text(encoding="utf-8")
+        main_activity = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "MainActivity.kt").read_text(encoding="utf-8")
         self.assertIn("object CloudKeyStore", store_file)
         self.assertIn('Cipher.getInstance("AES/GCM/NoPadding")', store_file)
         self.assertIn('.remove(LEGACY_PREF)', store_file)
