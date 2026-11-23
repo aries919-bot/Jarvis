@@ -1440,12 +1440,34 @@ object CareerRecruitmentTracker {
         return resultContext && publishedWording
     }
 
+    private fun isResultStage(stage: String): Boolean =
+        stage.startsWith("NOTER KURASI SONUCU") ||
+            stage.startsWith("SINAV SONUCU") ||
+            stage.startsWith("NİHAİ SONUÇ")
+
+    private fun hasExplicitFutureResultWording(title: String, snippet: String): Boolean {
+        val text = normalize(title + " " + snippet)
+        return listOf(
+            "aciklanacak", "aciklanacaktir", "duyurulacak", "duyurulacaktir",
+            "yayinlanacak", "yayinlanacaktir", "yayimlanacak", "yayimlanacaktir",
+            "belli olacak"
+        ).any(text::contains)
+    }
+
     fun isHistoricalEvent(
         event: CareerProcessEvent,
         nowMillis: Long = System.currentTimeMillis()
     ): Boolean {
         val eventDateHasPassed = event.eventAt?.let { it < nowMillis } == true
-        return eventDateHasPassed || isCompletedResultNotice(event.title, event.snippet)
+        if (eventDateHasPassed || isCompletedResultNotice(event.title, event.snippet)) return true
+
+        // An undated result headline is not an upcoming event. Keep it in the archive
+        // as "date not verified" unless the source explicitly says it will be announced.
+        val undatedResultWithoutFuturePromise =
+            event.eventAt == null &&
+                isResultStage(event.stage) &&
+                !hasExplicitFutureResultWording(event.title, event.snippet)
+        return undatedResultWithoutFuturePromise
     }
 
     /** Historical records are stored for reference but must never trigger a "new process" alert. */
