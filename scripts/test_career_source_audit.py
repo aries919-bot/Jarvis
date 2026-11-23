@@ -27,6 +27,16 @@ class Tests(unittest.TestCase):
         self.assertEqual("open",result["status"])
     def test_process_notice_wins_over_job_words(self):
         self.assertEqual("process_notice",mod.kind("2026 Personel Alım Başvuru Değerlendirme Sonuçları","https://example.gov.tr/sonuc"))
+        self.assertEqual("process_notice",mod.kind("4/B Sözleşmeli Personel Alım İlanı Nihai Değerlendirme Sonuçları","https://example.gov.tr/sonuc"))
+        self.assertEqual("process_notice",mod.kind("4/B Sözleşmeli Personelin Kadroya Geçiş İşlemlerine İlişkin Duyuru","https://example.gov.tr/kadro"))
+    def test_index_self_link_is_not_counted_as_a_vacancy(self):
+        from unittest.mock import patch
+        source={"id":"self","name":"Self link","url":"https://example.gov.tr/jobs","probeUrl":"https://example.gov.tr/jobs","readerMode":"html_index","expectedMarkers":["açık pozisyon"]}
+        html='<html><body><h1>Açık Pozisyonlar</h1><p>Bu sayfa tüm açık pozisyonları ve başvuru bilgilerini içerir.</p><a href="/jobs">Açık Pozisyonlar</a></body></html>'
+        with patch.object(mod,"fetch",return_value=(200,"https://example.gov.tr/jobs","text/html",html)):
+            result=mod.probe(source)
+        self.assertFalse(result["readerOk"])
+        self.assertEqual(0,result["candidateCount"])
     def test_missing_deadline_is_unknown_not_guessed(self):
         self.assertEqual("unknown",mod.application_window("Sözleşmeli personel alımı",dt.date(2026,11,23))["status"])
     def test_job_and_process_are_separate(self):
