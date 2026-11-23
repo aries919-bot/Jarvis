@@ -1,0 +1,157 @@
+{
+ "checked_at": "2026-11-23T20:40:36+00:00",
+ "calisan": [
+  {
+   "url": "https://www.iskur.gov.tr/duyurular",
+   "yontem": "sitemap",
+   "ilan": 159,
+   "ornekler": [
+    {
+     "title": "personel dairesi baskani ufuk serefli",
+     "url": "https://iskur.gov.tr/kurumsal/teskilat-yapisi/personel-dairesi-baskani-ufuk-serefli"
+    },
+    {
+     "title": "kurum disi kamu isci alim ilanlari",
+     "url": "https://iskur.gov.tr/ilanlar/kurum-disi-kamu-isci-alim-ilanlari"
+    },
+    {
+     "title": "kamu memur alim ilanlari",
+     "url": "https://iskur.gov.tr/ilanlar/kamu-memur-alim-ilanlari"
+    },
+    {
+     "title": "iskur a bin 750 personel alinacak",
+     "url": "https://iskur.gov.tr/haberler/iskur-a-bin-750-personel-alinacak"
+    },
+    {
+     "title": "iskur ve basin ilan kurumundan medya sektorunu guclendirecek isbirligi",
+     "url": "https://iskur.gov.tr/haberler/iskur-ve-basin-ilan-kurumundan-medya-sektorunu-guclendirecek-isbirligi"
+    }
+   ],
+   "denemeler": {
+    "jsonld": 0,
+    "rss": 0,
+    "sitemap": 159
+   },
+   "neden": ""
+  },
+  {
+   "url": "https://www.csb.gov.tr/duyurular",
+   "yontem": "sitemap",
+   "ilan": 14,
+   "ornekler": [
+    {
+     "title": "turkiye nin dunyaya acilan yuzu cop31 yesil bolge 307165",
+     "url": "https://csb.gov.tr/haberler/turkiye-nin-dunyaya-acilan-yuzu-cop31-yesil-bolge-307165"
+    },
+    {
+     "title": "savunmaya ayrilan her kurus bu gezegenin can suyuna da ayrilmali 306722",
+     "url": "https://csb.gov.tr/haberler/savunmaya-ayrilan-her-kurus-bu-gezegenin-can-suyuna-da-ayrilmali-306722"
+    },
+    {
+     "title": "hatay da acilan kepenkler yeniden baslayan hayatin sesi oluyor 306456",
+     "url": "https://csb.gov.tr/haberler/hatay-da-acilan-kepenkler-yeniden-baslayan-hayatin-sesi-oluyor-306456"
+    },
+    {
+     "title": "sukurler olsun ki bugun yaralar sarilmis yikilan binalar yapilmis sonen ocaklar yeniden tutmustur 306249",
+     "url": "https://csb.gov.tr/haberler/sukurler-olsun-ki-bugun-yaralar-sarilmis-yikilan-binalar-yapilmis-sonen-ocaklar-yeniden-tutmustur-306249"
+    },
+    {
+     "title": "unvan degisikligi sinavi basvuru sonuclari duyuru 469479",
+     "url": "https://csb.gov.tr/unvan-degisikligi-sinavi-basvuru-sonuclari-duyuru-469479"
+    }
+   ],
+   "denemeler": {
+    "jsonld": 0,
+    "rss": 0,
+    "sitemap": 14
+   },
+   "neden": ""
+  },
+  {
+   "url": "https://euraxess.ec.europa.eu/jobs/search",
+   "yontem": "html",
+   "ilan": 7,
+   "ornekler": [
+    {
+     "title": "University teacher in the functional position of Professor",
+     "url": "https://euraxess.ec.europa.eu/jobs/482356"
+    },
+    {
+     "title": "One (1) Laboratory Animal (mouse) Caretaker Position [Ref # ORZ-0950]",
+     "url": "https://euraxess.ec.europa.eu/jobs/482355"
+    },
+    {
+     "title": "Call for a public offer for the recruitment of Researching staff linked to Universitat Politècnica de València (UPV)",
+     "url": "https://euraxess.ec.europa.eu/jobs/482353"
+    },
+    {
+     "title": "Call for a public offer for the recruitment of Researching staff linked to Universitat Politècnica de València (UPV)",
+     "url": "https://euraxess.ec.europa.eu/jobs/482349"
+    },
+    {
+     "title": "Call for a public offer for the recruitment of Researching staff linked to Universitat Politècnica de València (UPV)",
+     "url": "https://euraxess.ec.europa.eu/jobs/482348"
+    }
+   ],
+   "denemeler": {
+    "jsonld": 0,
+    "rss": 0,
+    "sitemap": 0,
+    "html": 7
+   },
+   "neden": ""
+  }
+ ],
+ "calismayan": [
+  {
+   "url": "https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx",
+   "yontem": null,
+   "ilan": 0,
+   "ornekler": [],
+   "denemeler": {
+    "jsonld": 0,
+    "rss": 0,
+    "sitemap": 0,
+    "html": 1
+   },
+   "neden": "hicbir yontem 3 gercek ilan bulamadi"
+  },
+  {
+   "url": "https://www.resmigazete.gov.tr/",
+   "yontem": null,
+   "ilan": 0,
+   "ornekler": [],
+   "denemeler": {
+    "jsonld": 0,
+    "rss": 0,
+    "sitemap": 0,
+    "html": 2
+   },
+   "neden": "hicbir yontem 3 gercek ilan bulamadi"
+  },
+  {
+   "url": "https://www.osym.gov.tr/Duyurular",
+   "yontem": null,
+   "ilan": 0,
+   "ornekler": [],
+   "denemeler": {},
+   "neden": "robots-belirsiz"
+  },
+  {
+   "url": "https://www.eures.europa.eu/find-a-job_en",
+   "yontem": null,
+   "ilan": 0,
+   "ornekler": [],
+   "denemeler": {},
+   "neden": "robots-belirsiz"
+  },
+  {
+   "url": "https://unjobs.org/",
+   "yontem": null,
+   "ilan": 0,
+   "ornekler": [],
+   "denemeler": {},
+   "neden": "robots-engel"
+  }
+ ]
+}
