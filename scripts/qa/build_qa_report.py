@@ -228,6 +228,19 @@ def scan_logcat(qa_dir: Path) -> list[dict[str, str]]:
     return results
 
 
+def parse_pipeline_status(qa_dir: Path) -> dict[str, Any]:
+    status: dict[str, Any] = {}
+    for name in ("build-status.json", "emulator-status.json"):
+        matches = list(qa_dir.rglob(name))
+        if not matches:
+            continue
+        try:
+            status[name.removesuffix(".json")] = json.loads(matches[0].read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            status[name.removesuffix(".json")] = {"parseError": True}
+    return status
+
+
 def lint_summary(root: Path) -> dict[str, Any]:
     files = list(root.glob("app/build/reports/lint-results*.xml"))
     result = {"found": False, "errors": 0, "warnings": 0, "issues": []}
@@ -352,6 +365,7 @@ def main() -> int:
     device_density = float(ui.get("device", {}).get("density", 1.0) or 1.0)
     ui_hierarchy_findings = inspect_hierarchies(qa_dir, device_density)
     lint = lint_summary(root)
+    pipeline = parse_pipeline_status(qa_dir)
 
     # XML hierarchy analysis is authoritative for dimensions and labels. Remove the
     # equivalent instrumentation-side heuristics to avoid duplicate warnings.
@@ -399,6 +413,7 @@ def main() -> int:
         "tests": tests,
         "ui": ui,
         "lint": lint,
+        "pipeline": pipeline,
         "findings": findings,
         "coverage": "MainActivity home, settings, assistant/tasks, file manager, Film & TV, plus all six CareerActivity tabs where reachable. Voice/microphone, external Bluetooth devices, OEM battery policies and destructive flows are intentionally not exercised.",
     }
@@ -413,6 +428,7 @@ def main() -> int:
             f"- JUnit tests: {summary['tests']}; failures: {summary['testFailures']}; skipped: {summary['testSkipped']}",
             f"- Findings: {summary['errorFindings']} errors, {summary['warningFindings']} warnings, {summary['reviewFindings']} manual review items",
             f"- Lint: {lint['errors']} errors, {lint['warnings']} warnings",
+            f"- Pipeline exit statuses: {json.dumps(pipeline, ensure_ascii=False)}",
             "- Screenshots and XML hierarchy dumps are stored next to the UI audit bundle.",
             "- Visual clarity, contrast and task simplicity still require human review.",
         ]),
