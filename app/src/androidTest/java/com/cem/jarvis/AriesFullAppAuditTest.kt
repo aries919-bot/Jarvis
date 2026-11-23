@@ -168,7 +168,15 @@ class AriesFullAppAuditTest {
                 runCatching { allow.click() }
                 SystemClock.sleep(350)
             } else {
-                if (!device.hasObject(By.pkg("com.android.permissioncontroller"))) return
+                val permissionPackages = listOf(
+                    "com.android.permissioncontroller",
+                    "com.google.android.permissioncontroller",
+                    "com.android.packageinstaller"
+                )
+                val permissionUiVisible = permissionPackages.any { device.hasObject(By.pkg(it)) }
+                if (!permissionUiVisible) return
+                // On this disposable emulator, dismiss an unrecognised prompt rather than
+                // leaving a system dialog blocking the app-navigation audit.
                 device.pressBack()
                 SystemClock.sleep(250)
             }
