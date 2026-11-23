@@ -71,6 +71,26 @@ class AriesFullAppAuditTest {
         )
         if (menuOpened) {
             captureAndAudit("02-sidebar")
+
+            // Voice assistant page was previously constructed but had no visible route.
+            val voiceOpened = clickTextContains("Sesli Asistan")
+            if (voiceOpened) {
+                val voiceVisible = device.wait(Until.hasObject(By.textContains("Son söylenen")), 5_000)
+                if (!voiceVisible) {
+                    recordFinding("error", "navigation-destination", "voice", "Voice menu entry opened, but the voice screen's 'Son söylenen' section did not appear.")
+                }
+                SystemClock.sleep(400)
+                captureAndAudit("02a-voice-assistant")
+                device.pressBack()
+                device.wait(Until.hasObject(By.desc("Menü")), 5_000)
+            } else {
+                recordFinding("error", "navigation", "sidebar", "The new 'Sesli Asistan' menu entry was not reachable.")
+            }
+
+            // Re-open the drawer after returning from the voice page.
+            if (!device.hasObject(By.desc("Menü"))) {
+                recordFinding("error", "navigation", "home", "The home menu control was not available after returning from voice screen.")
+            }
             val careerOpened = clickTextContains("İş ve Kariyer")
             if (!careerOpened) {
                 recordFinding("error", "navigation", "sidebar", "The İş ve Kariyer entry was not reachable from the main menu.")
@@ -153,6 +173,20 @@ class AriesFullAppAuditTest {
         if (clickDescription("Film ve Dizi")) {
             SystemClock.sleep(1_000)
             captureAndAudit("13-film-series")
+            val mediaTabs = listOf(
+                "Trendler" to "13a-film-trends",
+                "Filmler" to "13b-film-list",
+                "Dizileri" to "13c-series-list",
+                "Anime" to "13d-anime-list"
+            )
+            for ((label, fileName) in mediaTabs) {
+                if (clickText(label)) {
+                    SystemClock.sleep(350)
+                    captureAndAudit(fileName)
+                } else {
+                    recordFinding("error", "navigation", "film-series", "The Film & TV category '$label' was not visible or could not be selected.")
+                }
+            }
             device.pressBack()
             SystemClock.sleep(500)
         } else {
