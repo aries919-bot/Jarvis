@@ -17,7 +17,7 @@
 |---|---|---|
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
-| A2 Material 3 Expressive tüm uygulama | DEVAM | PR #25; HEAD 2f0fbd8. PR CI 45169541324 FAILED; gerçek logda `testDebugUnitTest` içindeki `:app:checkDebugAarMetadata` NPE (`path` null), APK adımı skip. Önceki nottaki yalnız `checkDebugAarMetadata` hatası doğrulandı; stacktrace ile kök neden araştırılıyor. |
+| A2 Material 3 Expressive tüm uygulama | DEVAM | PR #25; HEAD 2f0fbd8. PR CI 45169541324 FAILED; `testDebugUnitTest` içindeki `:app:checkDebugAarMetadata` NPE (`path` null), APK adımı skip. Tanılama PR #27 (`fix/a2-gradle-metadata-stacktrace` → A2) açıldı; workflow'a `--stacktrace` ve A2 hedefli PR tetikleyicisi eklendi. CI henüz görünmüyor; kök neden ve gerçek düzeltme bekliyor. |
 | B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | PR AÇIK | PR #26 `is/b1-ai-memory-foundation` → `is/a2-expressive-theme`, son değişiklik HEAD `dbab9d9`. Önceki HEAD `79b30b6` PR/push CI yeşildi. Ek düzeltme: yarım kalan OpenAI SSE `[DONE]` yoksa hata, Gemini `finishReason` yoksa hata; kesik akış sessizce tamamlanmış sayılmıyor. Kısmi yanıt uyarısının satır sonu düzeltildi. Güncel HEAD `dbab9d9d275cd8058a1d94900806fb04d82da9cf`: PR CI 45175633112 ve push CI 45175625717 SUCCESS; her ikisinde birim test + debug APK başarılı. Ara commit `ad0fb76` sıralı dosya commitlerinden önce tetiklendiği için `geminiFinished` referansı eksik kaldı ve başarısız oldu; güncel HEAD'de parser ve test mevcut. Bağımsız insan incelemesi, canlı sağlayıcı anahtarı ve telefon testi bekliyor. B1 workflow yalnız JVM unit + debug APK çalıştırır; main'de tam uygulama QA raporu workflow/script'i bulunmuyor (PR #17 ayrı dalda). |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
@@ -45,5 +45,5 @@
 8. B1 PR #26 A2 üzerine taşındı; hafıza kontrolleri Ayarlar'da, notlar yerel, bulut paylaşımı varsayılan kapalı, silme onaylı. HEAD 3a832bb CI yeşil.
 9. B1 streaming: Groq/Mistral/Gemini SSE, kademeli JSON reply, saf Kotlin parser, SSE metadata ayrıştırma ve hata sınıflandırması eklendi. HEAD 024681a CI test+APK yeşil.
 10. B1 HEAD `dbab9d9`: yarım SSE akışı tespiti ve regresyon testi eklendi; PR CI 45175633112 + push CI 45175625717 SUCCESS (unit + APK). PR #26 açık/taslak; bağımsız review, canlı API ve telefon doğrulaması bekliyor.
-11. A2 PR #25 logu tekrar incelendi: workflow unit test komutunda `:app:checkDebugAarMetadata` `path` null NPE veriyor; eski `webSearch` imza hatası değil. Teşhis için stacktrace eklenecek.
-**SONRAKİ ADIM:** A2 PR #25'te `checkDebugAarMetadata` NPE stacktrace'ini al, kök nedeni düzelt ve PR/push CI'ı yeniden doğrula.
+11. A2 PR #25 logu tekrar incelendi: `:app:checkDebugAarMetadata` `path` null NPE. Tanılama PR #27 açıldı; stacktrace'li Gradle komutları ve A2 tabanlı PR CI tetikleyicisi eklendi; CI bekleniyor.
+**SONRAKİ ADIM:** PR #27 CI'ından stacktrace'i al; kök nedeni belirleyip A2 derleme hatasını gerçek düzeltmeyle gider.
