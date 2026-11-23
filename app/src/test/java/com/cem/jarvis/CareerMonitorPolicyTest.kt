@@ -258,4 +258,38 @@ class CareerMonitorPolicyTest {
         assertNull(CareerListingParser.deadlineTime(notice))
     }
 
+
+    @Test
+    fun detectsExplicitClosureAndSeparatesOldPublicationDatesFromDeadlines() {
+        val closed = CareerListingParser.deadlineStatus(
+            "Personel alımı duyurusu: Başvurular sona erdi."
+        )
+        assertTrue(closed!!.startsWith("SÜRESİ GEÇMİŞ"))
+        assertTrue(CareerListingParser.isInactiveStatus(closed))
+
+        val now = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale("tr", "TR"))
+            .parse("23.11.2026")!!.time
+        val oldNotice = CareerListingParser.deadlineStatus(
+            "İlan tarihi: 01.01.2026",
+            now
+        )
+        assertTrue(oldNotice!!.startsWith("ESKİ KAYIT"))
+        assertTrue(CareerListingParser.isInactiveStatus(oldNotice))
+
+        val recentNotice = CareerListingParser.deadlineStatus(
+            "Duyuru tarihi: 20.11.2026",
+            now
+        )
+        assertEquals(null, recentNotice)
+        assertEquals("20.11.2026", CareerListingParser.publicationDate("Duyuru tarihi: 20.11.2026"))
+        assertNull(CareerListingParser.publicationDate("Teknisyen alımı için sınav tarihi: 20.11.2026"))
+
+        val future = CareerListingParser.deadlineStatus(
+            "Son başvuru tarihi: 30.11.2026",
+            now
+        )
+        assertTrue(CareerListingParser.hasFutureDeadline(future))
+        assertFalse(CareerListingParser.isInactiveStatus(future))
+    }
+
 }
