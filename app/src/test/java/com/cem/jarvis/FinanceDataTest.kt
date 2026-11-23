@@ -8,18 +8,21 @@ import org.junit.Test
 class FinanceDataTest {
     @Test
     fun parsesTurkishGoldAndCurrencyWithSourceAndFreshness() {
+        val now = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
         val json = """
             {
-              "date":"2026-11-21",
-              "updated_at":"2026-11-21T12:20:55.545Z",
+              "date":"2026-11-23",
+              "updated_at":"__NOW__",
               "is_stale":false,
               "sources":["tcmb","truncgil"],
               "try":{
-                "usd":{"bid":50.40,"ask":50.49,"source":"tcmb","updated_at":"2026-11-21T12:20:51.883Z","stale":false},
-                "xau_gram":{"bid":5730.97,"ask":5731.95,"source":"truncgil","updated_at":"2026-11-21T12:20:51.883Z","stale":false}
+                "usd":{"bid":50.40,"ask":50.49,"source":"tcmb","updated_at":"__NOW__","stale":false},
+                "xau_gram":{"bid":5730.97,"ask":5731.95,"source":"truncgil","updated_at":"__NOW__","stale":false}
               }
             }
-        """.trimIndent()
+        """.trimIndent().replace("__NOW__", now)
 
         val snapshot = FinanceData.parseTurkishMarket(json)
 
@@ -55,6 +58,15 @@ class FinanceDataTest {
         assertEquals(312.5, quote.current, 0.001)
         assertEquals(1.36, quote.changePercent!!, 0.001)
         assertEquals(1795262400L, quote.timestampSeconds)
+    }
+
+    @Test
+    fun currentTimestampIsFreshAndOldTimestampIsStale() {
+        val now = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
+        assertFalse(FinanceData.timestampIsStale(now))
+        assertTrue(FinanceData.timestampIsStale("2020-01-01T00:00:00.000Z"))
     }
 
     @Test

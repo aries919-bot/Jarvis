@@ -71,6 +71,8 @@ object FinanceData {
         val tryRates = root.optJSONObject("try")
             ?: throw IOException("Piyasa verisi beklenen biçimde değil.")
 
+        val rootUpdatedAt = root.optString("updated_at")
+        val rootStale = root.optBoolean("is_stale", false) || timestampIsStale(rootUpdatedAt)
         val prices = (goldAssets + currencyAssets).mapNotNull { (id, title, _) ->
             val item = tryRates.optJSONObject(id) ?: return@mapNotNull null
             val bid = item.optDouble("bid", Double.NaN)
@@ -78,22 +80,23 @@ object FinanceData {
             if (!bid.isFinite() || !ask.isFinite() || bid <= 0.0 || ask <= 0.0) {
                 return@mapNotNull null
             }
+            val updatedAt = item.optString("updated_at", rootUpdatedAt)
             FinancePricePoint(
                 id = id,
                 title = title,
                 bid = bid,
                 ask = ask,
                 source = item.optString("source", "belirtilmedi"),
-                updatedAt = item.optString("updated_at", root.optString("updated_at")),
-                stale = item.optBoolean("stale", root.optBoolean("is_stale", true))
+                updatedAt = updatedAt,
+                stale = item.optBoolean("stale", false) || rootStale || timestampIsStale(updatedAt)
             )
         }
 
         if (prices.isEmpty()) throw IOException("Altın ve döviz fiyatı bulunamadı.")
         return TurkishMarketSnapshot(
             date = root.optString("date"),
-            updatedAt = root.optString("updated_at"),
-            stale = root.optBoolean("is_stale", false) || prices.any { it.stale },
+            updatedAt = rootUpdatedAt,
+            stale = rootStale || prices.any { it.stale },
             sources = (0 until root.optJSONArray("sources").let { it?.length() ?: 0 })
                 .mapNotNull { root.optJSONArray("sources")?.optString(it) }
                 .filter { it.isNotBlank() },
@@ -156,6 +159,25 @@ object FinanceData {
             previousClose = previousClose,
             timestampSeconds = root.optLong("t", 0L)
         )
+    }
+
+    internal fun timestampIsStale(value: String, maxAgeHours: Long = 36L): Boolean {
+        if (value.isBlank()) return true
+        val patterns = listOf("yyyy-MM-dd'T'HH:mm:ss.SSSX", "yyyy-MM-dd'T'HH:mm:ssX")
+        val date = patterns.firstNotNullOfOrNull { pattern ->
+            runCatching {
+                SimpleDateFormat(pattern, Locale.US).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    isLenient = false
+                }.parse(value)
+            }.getOrNull()
+        } ?: return true
+        val age = System.currentTimeMillis() - date.time
+        return age > TimeUnitHours.toMillis(maxAgeHours) || age < -TimeUnitHours.toMillis(1)
+    }
+
+    private object TimeUnitHours {
+        fun toMillis(hours: Long): Long = hours * 60L * 60L * 1000L
     }
 
     fun isValidSymbol(symbol: String): Boolean =
