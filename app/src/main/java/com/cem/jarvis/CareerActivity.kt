@@ -1774,6 +1774,14 @@ class CareerActivity : Activity() {
         prefs.edit().putString("career_news_items", output.toString()).apply()
     }
 
+    private fun copyPublishedDate(item: JSONObject): String? {
+        return item.optString("sourcePublishedDate").takeIf { it.isNotBlank() }
+            ?: item.optString("publishedDate").takeIf { it.isNotBlank() }
+            ?: CareerListingParser.publicationDate(
+                CareerListingParser.noticeText(item.optString("title"), item.optString("snippet"))
+            )
+    }
+
     private fun newsCandidates(): List<JSONObject> {
         val combined = ArrayList<JSONObject>()
         // Items already present in the process timeline stay there instead of being repeated in the archive.
@@ -1814,8 +1822,27 @@ class CareerActivity : Activity() {
                         .put("firstSeenAt", item.optLong("firstSeenAt", item.optLong("createdAt", 0L)))
                     if (publishedDate != null) copy.put("sourcePublishedDate", publishedDate)
                     combined.add(copy)
-                } else if (item.optString("snippet").length > combined[duplicate].optString("snippet").length) {
-                    combined[duplicate] = JSONObject(item.toString())
+                } else {
+                    val existing = combined[duplicate]
+                    val replacement = if (item.optString("snippet").length > existing.optString("snippet").length) {
+                        JSONObject(item.toString())
+                    } else {
+                        JSONObject(existing.toString())
+                    }
+                    val sourceDate = existing.optString("sourcePublishedDate").takeIf { it.isNotBlank() }
+                        ?: copyPublishedDate(item)
+                    val sourceTimestamp = maxOf(
+                        existing.optLong("publishedAt", 0L),
+                        item.optLong("publishedAt", 0L)
+                    )
+                    val firstSeenValues = listOf(
+                        existing.optLong("firstSeenAt", 0L),
+                        item.optLong("firstSeenAt", 0L)
+                    ).filter { it > 0L }
+                    replacement.put("publishedAt", sourceTimestamp)
+                        .put("firstSeenAt", firstSeenValues.minOrNull() ?: 0L)
+                    if (sourceDate != null) replacement.put("sourcePublishedDate", sourceDate)
+                    combined[duplicate] = replacement
                 }
             }
         }
