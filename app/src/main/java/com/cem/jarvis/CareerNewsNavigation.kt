@@ -9,6 +9,14 @@ internal object CareerNewsNavigation {
         1 -> 9  // Staj / öğrenci programları
         else -> 10 // Güncel kamu personel alım haberleri
     }
+
+    fun matchesArchiveFilter(filter: Int, type: CareerContentType): Boolean = when (filter) {
+        1 -> type == CareerContentType.STUDENT_PROGRAM
+        2 -> type == CareerContentType.INSTITUTION_NOTICE
+        3 -> type == CareerContentType.NEWS
+        4 -> type == CareerContentType.REVIEW_REQUIRED
+        else -> type != CareerContentType.PROCESS_NOTICE
+    }
 }
 
 /** The listings picker contains only real vacancy categories. Kura/news/program searches stay in Haber. */
