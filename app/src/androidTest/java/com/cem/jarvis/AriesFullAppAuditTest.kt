@@ -64,7 +64,7 @@ class AriesFullAppAuditTest {
 
         val menuOpened = clickDescription("Menü") || clickText("Menü")
         recordFinding(
-            if (menuOpened) "info" else "warning",
+            if (menuOpened) "info" else "error",
             "navigation",
             "home",
             if (menuOpened) "Main menu opened through its accessible label." else "Main menu control was not found by text/content-description."
@@ -72,37 +72,43 @@ class AriesFullAppAuditTest {
         if (menuOpened) {
             captureAndAudit("02-sidebar")
             val careerOpened = clickTextContains("İş ve Kariyer")
-            assertTrue("The İş ve Kariyer entry was not reachable from the main menu", careerOpened)
-            assertTrue(
-                "CareerActivity did not become visible",
-                device.wait(Until.hasObject(By.textContains("İş & Kariyer")), 10_000)
-            )
-            SystemClock.sleep(700)
-            captureAndAudit("03-career-listings")
-
-            val careerTabs = listOf(
-                Triple("CV'im", "04-career-cv", "CV profilin"),
-                Triple("Takip", "05-career-tracking", "Takip merkezim"),
-                Triple("Başvuru", "06-career-applications", "Başvurularım"),
-                Triple("Sonuç", "07-career-results", "Başvuru sonuçlarım"),
-                Triple("Haber", "08-career-news", "ARIES  /  HABER & DUYURULAR")
-            )
-            for ((label, fileName, expectedHeading) in careerTabs) {
-                if (clickText(label)) {
-                    val destinationVisible = device.wait(Until.hasObject(By.textContains(expectedHeading)), 5_000)
-                    if (!destinationVisible) {
-                        recordFinding("error", "navigation-destination", fileName, "The '$label' tab responded to a tap but its expected destination heading '$expectedHeading' did not appear.")
-                    }
-                    SystemClock.sleep(450)
-                    captureAndAudit(fileName)
+            if (!careerOpened) {
+                recordFinding("error", "navigation", "sidebar", "The İş ve Kariyer entry was not reachable from the main menu.")
+                device.pressBack()
+            } else {
+                val careerVisible = device.wait(Until.hasObject(By.textContains("İş & Kariyer")), 10_000)
+                if (!careerVisible) {
+                    recordFinding("error", "navigation-destination", "career", "CareerActivity did not show its expected heading.")
+                    device.pressBack()
                 } else {
-                    recordFinding("error", "navigation", "career", "Career tab '$label' was not found or could not be tapped.")
+                    SystemClock.sleep(700)
+                    captureAndAudit("03-career-listings")
+
+                    val careerTabs = listOf(
+                        Triple("CV'im", "04-career-cv", "CV profilin"),
+                        Triple("Takip", "05-career-tracking", "Takip merkezim"),
+                        Triple("Başvuru", "06-career-applications", "Başvurularım"),
+                        Triple("Sonuç", "07-career-results", "Başvuru sonuçlarım"),
+                        Triple("Haber", "08-career-news", "ARIES  /  HABER & DUYURULAR")
+                    )
+                    for ((label, fileName, expectedHeading) in careerTabs) {
+                        if (clickText(label)) {
+                            val destinationVisible = device.wait(Until.hasObject(By.textContains(expectedHeading)), 5_000)
+                            if (!destinationVisible) {
+                                recordFinding("error", "navigation-destination", fileName, "The '$label' tab responded to a tap but its expected destination heading '$expectedHeading' did not appear.")
+                            }
+                            SystemClock.sleep(450)
+                            captureAndAudit(fileName)
+                        } else {
+                            recordFinding("error", "navigation", "career", "Career tab '$label' was not found or could not be tapped.")
+                        }
+                    }
+                    if (!clickDescription("Önceki ekrana dön")) device.pressBack()
+                    device.wait(Until.hasObject(By.desc("Menü")), 8_000)
+                    SystemClock.sleep(500)
+                    captureAndAudit("09-home-returned")
                 }
             }
-            if (!clickDescription("Önceki ekrana dön")) device.pressBack()
-            device.wait(Until.hasObject(By.desc("Menü")), 8_000)
-            SystemClock.sleep(500)
-            captureAndAudit("09-home-returned")
         }
 
         val settingsOpened = clickDescription("Ayarlar")
@@ -112,7 +118,7 @@ class AriesFullAppAuditTest {
             device.pressBack()
             SystemClock.sleep(400)
         } else {
-            recordFinding("warning", "navigation", "home", "Main settings shortcut was not found by its content description.")
+            recordFinding("error", "navigation", "home", "Main settings shortcut was not found by its content description.")
         }
 
         if (clickDescription("Ekle")) {
@@ -124,11 +130,11 @@ class AriesFullAppAuditTest {
                 device.pressBack()
                 SystemClock.sleep(400)
             } else {
-                recordFinding("warning", "navigation", "home", "Quick action 'Hatırlatmalar ve görevler' was not found.")
+                recordFinding("error", "navigation", "home", "Quick action 'Hatırlatmalar ve görevler' was not found.")
                 device.pressBack()
             }
         } else {
-            recordFinding("warning", "navigation", "home", "Home quick-action control 'Ekle' was not found.")
+            recordFinding("error", "navigation", "home", "Home quick-action control 'Ekle' was not found.")
         }
 
         if (clickDescription("Ekle")) {
@@ -139,7 +145,7 @@ class AriesFullAppAuditTest {
                 device.pressBack()
                 SystemClock.sleep(400)
             } else {
-                recordFinding("warning", "navigation", "home", "Quick action 'Dosya ekle' was not found.")
+                recordFinding("error", "navigation", "home", "Quick action 'Dosya ekle' was not found.")
                 device.pressBack()
             }
         }
@@ -150,7 +156,7 @@ class AriesFullAppAuditTest {
             device.pressBack()
             SystemClock.sleep(500)
         } else {
-            recordFinding("warning", "navigation", "home", "Film ve Dizi shortcut was not found.")
+            recordFinding("error", "navigation", "home", "Film ve Dizi shortcut was not found.")
         }
 
         recordFinding(
@@ -214,48 +220,11 @@ class AriesFullAppAuditTest {
             hierarchy.exists() && hierarchy.length() > 0
         }.getOrDefault(false)
 
-        val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
-        val clickableObjects = runCatching { device.findObjects(By.clickable(true)) }.getOrDefault(emptyList())
-        var smallTargets = 0
-        var unlabeledTargets = 0
-        for (node in clickableObjects) {
-            val bounds = runCatching { node.visibleBounds }.getOrNull() ?: continue
-            if (bounds.isEmpty) continue
-            val widthDp = bounds.width() / density
-            val heightDp = bounds.height() / density
-            val label = (runCatching { node.text }.getOrNull().orEmpty()).trim()
-            val description = (runCatching { node.contentDescription }.getOrNull()?.toString().orEmpty()).trim()
-            if (widthDp < 48f || heightDp < 48f) {
-                smallTargets++
-                findings.put(
-                    JSONObject()
-                        .put("severity", "warning")
-                        .put("category", "touch-target")
-                        .put("screen", screenName)
-                        .put("message", "Clickable target is smaller than 48dp (" + widthDp.toInt() + "x" + heightDp.toInt() + "dp).")
-                        .put("label", label.ifBlank { description })
-                )
-            }
-            if (label.isBlank() && description.isBlank()) {
-                unlabeledTargets++
-                findings.put(
-                    JSONObject()
-                        .put("severity", "warning")
-                        .put("category", "accessibility-label")
-                        .put("screen", screenName)
-                        .put("message", "Clickable element has no text or content description.")
-                )
-            }
-        }
-
         screenRecords.put(
             JSONObject()
                 .put("name", screenName)
                 .put("screenshot", if (screenshotSaved) screenshot.name else "")
                 .put("hierarchy", if (hierarchySaved) hierarchy.name else "")
-                .put("clickableCount", clickableObjects.size)
-                .put("smallTouchTargets", smallTargets)
-                .put("unlabeledTargets", unlabeledTargets)
         )
     }
 

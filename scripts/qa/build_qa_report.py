@@ -138,6 +138,17 @@ def inspect_hierarchies(qa_dir: Path, density: float) -> list[dict[str, Any]]:
     return findings
 
 
+def ui_density_from_bundle(qa_dir: Path) -> float:
+    bundles = list(qa_dir.rglob("ui-audit.json"))
+    if not bundles:
+        return 1.0
+    try:
+        data = json.loads(bundles[0].read_text(encoding="utf-8"))
+        return float(data.get("device", {}).get("density", 1.0) or 1.0)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return 1.0
+
+
 def measure_screen_density(qa_dir: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     metrics: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
@@ -149,10 +160,23 @@ def measure_screen_density(qa_dir: Path) -> tuple[list[dict[str, Any]], list[dic
         except (ET.ParseError, OSError):
             continue
         texts = []
+        clickable_count = 0
+        small_targets = 0
+        unlabeled_targets = 0
         for node in root.iter("node"):
             value = (node.attrib.get("text") or "").strip()
             if value:
                 texts.append(value)
+            if node.attrib.get("clickable") == "true":
+                clickable_count += 1
+                bounds_match = re.fullmatch(r"\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]", node.attrib.get("bounds", ""))
+                if bounds_match:
+                    x1, y1, x2, y2 = map(int, bounds_match.groups())
+                    density = max(float(ui_density_from_bundle(qa_dir)), 0.1)
+                    if (x2 - x1) / density < 48 or (y2 - y1) / density < 48:
+                        small_targets += 1
+                if not value and not (node.attrib.get("content-desc") or "").strip():
+                    unlabeled_targets += 1
         if not texts:
             continue
         total_chars = sum(len(value) for value in texts)
@@ -163,6 +187,9 @@ def measure_screen_density(qa_dir: Path) -> tuple[list[dict[str, Any]], list[dic
             "totalTextCharacters": total_chars,
             "longTextBlocks": len(long_blocks),
             "longTextSamples": [value[:180] for value in long_blocks[:4]],
+            "clickableCount": clickable_count,
+            "smallTouchTargets": small_targets,
+            "unlabeledTargets": unlabeled_targets,
         }
         metrics.append(stat)
         if len(texts) > 36 or len(long_blocks) > 5:
@@ -357,7 +384,7 @@ def render_html(report: dict[str, Any], out_dir: Path) -> None:
     ) or '<tr><td colspan="4">No automated findings recorded.</td></tr>'
     stats_by_name = {s.get("screen"): s for s in report["ui"].get("screenStats", [])}
     screen_rows = "".join(
-        f"<tr><td>{esc(s.get('name'))}</td><td>{esc(s.get('clickableCount'))}</td><td>{esc(s.get('smallTouchTargets'))}</td><td>{esc(s.get('unlabeledTargets'))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('visibleTextNodes', 0))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('longTextBlocks', 0))}</td></tr>"
+        f"<tr><td>{esc(s.get('name'))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('clickableCount', s.get('clickableCount', 0)))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('smallTouchTargets', s.get('smallTouchTargets', 0)))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('unlabeledTargets', s.get('unlabeledTargets', 0)))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('visibleTextNodes', 0))}</td><td>{esc(stats_by_name.get(s.get('name'), {}).get('longTextBlocks', 0))}</td></tr>"
         for s in screens
     ) or '<tr><td colspan="6">No UI screens captured.</td></tr>'
     test_rows = "".join(
@@ -517,7 +544,7 @@ def main() -> int:
     )
     render_html(report, out_dir)
     print(json.dumps({"output": str(out_dir), "summary": summary}, ensure_ascii=False))
-    return 0
+    return 1 if summary["errorFindings"] > 0 or summary["testFailures"] > 0 else 0
 
 
 if __name__ == "__main__":
