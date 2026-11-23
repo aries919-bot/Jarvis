@@ -198,6 +198,26 @@ private fun MediaRootContent(onExit: () -> Unit, vm: MediaVM, lib: LibraryVM) {
 }
 
 @Composable
+private fun MediaSkeletonList() {
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        repeat(4) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Ap.Card).padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.width(68.dp).height(88.dp).clip(RoundedCornerShape(12.dp)).background(Ap.Card2))
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Box(Modifier.fillMaxWidth(0.72f).height(13.dp).clip(RoundedCornerShape(8.dp)).background(Ap.Card2))
+                    Box(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(8.dp)).background(Ap.Card2))
+                    Box(Modifier.fillMaxWidth(0.42f).height(10.dp).clip(RoundedCornerShape(8.dp)).background(Ap.Card2))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit) {
     var q by remember { mutableStateOf("") }
     var web2 by remember { mutableStateOf(false) }
@@ -254,12 +274,13 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                 if (!vm.searching) LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(vm.tabs.size) { i ->
                         Text(vm.tabs[i], fontSize = 16.sp, fontWeight = if (i == vm.tab) FontWeight.Bold else FontWeight.Normal,
-                            color = if (i == vm.tab) Color.White else Ap.Muted,
+                            color = if (i == vm.tab) Ap.Text else Ap.Muted,
                             modifier = Modifier.clickable { vm.load(i) }.padding(vertical = 8.dp))
                     }
                 }
             }
-            if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
+            if (vm.loading && vm.list.isEmpty()) item { MediaSkeletonList() }
+            else if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
             vm.error?.let { e -> item { Text(e, color = Ap.Red, modifier = Modifier.padding(16.dp)) } }
             if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Ap.Muted, modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
@@ -274,7 +295,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { vm.search(q) }),
                 colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
-                    focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                    focusedTextColor = Ap.Text, unfocusedTextColor = Ap.Text))
             Button(onClick = { vm.search(q) }) { Text("Ara") }
         }
     }
