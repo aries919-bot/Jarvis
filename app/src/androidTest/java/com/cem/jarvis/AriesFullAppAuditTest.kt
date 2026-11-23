@@ -37,6 +37,22 @@ class AriesFullAppAuditTest {
             .putBoolean("career_monitor_enabled", false)
             .putBoolean("career_monitor_initial_scan_queued", true)
             .apply()
+
+        // Grant only ordinary runtime permissions requested by the installed app in this
+        // disposable emulator. This avoids an OS permission dialog stealing foreground
+        // focus from UiAutomator before the first screen can be audited.
+        listOf(
+            "android.permission.RECORD_AUDIO",
+            "android.permission.CALL_PHONE",
+            "android.permission.READ_CONTACTS",
+            "android.permission.POST_NOTIFICATIONS"
+        ).forEach { permission ->
+            runCatching {
+                instrumentation.uiAutomation
+                    .executeShellCommand("pm grant $packageName $permission")
+                    .close()
+            }
+        }
         device = UiDevice.getInstance(instrumentation)
         outputDir = File(context.getExternalFilesDir(null), "AriesQA").apply {
             deleteRecursively()
