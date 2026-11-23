@@ -150,7 +150,7 @@ class AriesFullAppAuditTest {
                         Triple("Takip", "05-career-tracking", "Takip merkezim"),
                         Triple("Başv.", "06-career-applications", "Başvurularım"),
                         Triple("Sonuç", "07-career-results", "Başvuru sonuçlarım"),
-                        Triple("Haber", "08-career-news", "ARIES  /  HABER & DUYURULAR")
+                        Triple("Haber", "08-career-news", "ARIES  /  HABERLER VE KURUM DUYURULARI")
                     )
                     for ((label, fileName, expectedHeading) in careerTabs) {
                         if (clickText(label)) {
