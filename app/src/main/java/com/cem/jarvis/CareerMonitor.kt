@@ -1954,9 +1954,13 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             // Only verified job-listing candidates trigger the "new job" notification.
             // Lottery, exam, student-program and general notice updates use their own process/news area.
             val freshJobForAlerts = fresh.filter { hit ->
+                val status = CareerListingParser.deadlineStatus(
+                    CareerListingParser.noticeText(hit.title, hit.snippet)
+                )
                 CareerContentClassifier.classify(hit.title, hit.snippet, hit.url).isJobListing &&
-                    CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
-                        ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
+                    CareerListingParser.hasFutureDeadline(status) &&
+                    CareerSourceCatalog.isTrustedUrl(hit.url) &&
+                    !CareerSourceCatalog.isSecondary(hit.url)
             }
             val processEvents = CareerRecruitmentTracker.recordNew(prefs, hits)
             processEvents.forEach { event ->
@@ -1964,8 +1968,11 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
             }
             val actionableProcessEvents = processEvents.filter { event ->
                 event.stage != "BAŞVURU / YENİ ALIM" &&
-                    CareerListingParser.deadlineStatus(CareerListingParser.noticeText(event.title, event.snippet))
-                        ?.startsWith("SÜRESİ GEÇMİŞ", true) != true
+                    !CareerListingParser.isInactiveStatus(
+                        CareerListingParser.deadlineStatus(
+                            CareerListingParser.noticeText(event.title, event.snippet)
+                        )
+                    )
             }
             val now = System.currentTimeMillis()
 
