@@ -18,7 +18,7 @@
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
 | A2 Material 3 Expressive tüm uygulama | PR AÇIK | PR #25; push CI 45169532073 SUCCESS, PR CI 45169541324 FAILED (:app:checkDebugAarMetadata, path null); PR merge-test hatası araştırılmalı, bağımsız hakem gerekli. |
-| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26, base is/a2-expressive-theme; dal A2 üzerine merge edildi, fark 5 B1 dosyası. Hafıza paylaşımı ayarları Ayarlar'a eklendi; hatırla/notlar/profil işlemleri yerel, silme onaylı, memOn kapalıysa notlar kullanılmaz. 6 JVM testi. Önceki HEAD 96ff PR CI 45171844774 SUCCESS (test + APK); güncel HEAD 3a832 CI 45172217759/45172210304 sürüyor. Streaming sonraki alt adım. |
+| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26, base is/a2-expressive-theme; HEAD 3a832bb için PR CI 45172217759 + push CI 45172210304 SUCCESS (6 JVM test + debug APK). Hafıza paylaşımı ayrı ve varsayılan kapalı, hatırla/notlar/profil yerel, silme onaylı. Şimdi Groq/Mistral/Gemini SSE akışı ve UI token gösterimi geliştirilecek; Bulut Worker streaming desteği kanıtlanmadı. | |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
@@ -46,6 +46,6 @@
 9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
 10. K1'de indeks öz-bağlantısı/sonuç yanlış pozitifleri düzeltildi, TUSAŞ/ROKETSAN programları ayrıldı, TEI HTTP 403 manual_only, yönlendirme aynı HTTPS hostla sınırlandı, 20 kaynağın browserCheck durumu test edildi. Sonraki: K1 için bağımsız insan hakem onayı.
 11. A1 iki ekran tasarımı Cem tarafından onaylandı. A2 PR #25 açıldı; push CI SUCCESS, PR merge-test FAILED (:app:checkDebugAarMetadata, path null). Sonraki: PR CI farkını araştır.
-12. B1 PR #26 A2 üzerine merge commit ile taşındı; karşılaştırma artık yalnız 5 B1 dosyasını gösteriyor. Ayarlara AI/sohbet/hafıza/paylaşım anahtarları eklendi; hatırla/notlar/profil komutları yerelde, hafıza silme onaylı ve hafıza kapalıyken notlara erişim engelli. Paylaşım varsayılan kapalı, PII/anahtar filtreli; 6 JVM testi. HEAD 96ff test + APK CI yeşil; HEAD 3a832 için yeni PR/push CI sürüyor. Streaming sonraki alt adım.
+12. B1 PR #26 A2 üzerine merge edildi; yalnız B1 değişiklikleri PR farkında. Hafıza kontrolleri Ayarlar'da, notlar yerel/ paylaşım varsayılan kapalı, silme onaylı. HEAD 3a832bb için PR CI 45172217759 ve push CI 45172210304 SUCCESS; 6 JVM testi + debug APK. Streaming sonraki alt adım.
 
 **SONRAKİ ADIM:** B1 mevcut sohbet çağrı zinciri, bellek saklama ve test altyapısını çıkar; küçük bir streaming/bellek dilimi tasarla.
