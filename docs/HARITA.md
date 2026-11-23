@@ -15,7 +15,8 @@
 - PR #28: ortak açık/koyu palet, yerel tercih saklama, gerçek görev/hatırlatma sayacı, Film/Dizi skeleton ve kontrast regresyonları. Gerçek telefon doğrulaması ve bağımsız inceleme bekliyor.
 - B1 PR #26 açık/taslak, `is/b1-ai-memory-foundation` → A2, HEAD `dbab9d9d275cd8058a1d94900806fb04d82da9cf`; PR CI #45175633112 ve push #45175625717 SUCCESS. Bağımsız inceleme, canlı API ve telefon doğrulaması bekliyor.
 - E1 ikiye ayrıldı: E1-Veri Cline; E1-UI/Xiaomi ChatGPT. Aynı dosyada paralel değişiklik yapılmayacak.
-- Başka açık PR'lar: #23/#22/#18/#17/#9/#4/#3/#2/#1; eski/farklı tabanlı PR'lar main'e alınmış sayılmaz.
+- Kariyer zinciri: PR #3 `kariyer-modulu` → `film-dizi-v2` açık/taslak; PR #22 `is/kariyer-1-21-verified-search` → `kariyer-modulu` açık/taslak. PR #22'de C2 kategorileri ve Haber/Süreç/Program ayrımı var; Full App QA (Android 29/33/34/35) + APK CI SUCCESS (#45141772884, #45141772982). Henüz main'e birleşmedi.
+- Diğer açık PR'lar: #23/#18/#17/#9/#4/#2/#1; eski/farklı tabanlı PR'lar main'e alınmış sayılmaz.
 
 ## İş listesi ve sahiplik
 | İş | Durum | Sahip / Not |
@@ -25,8 +26,8 @@
 | A2 Tüm uygulama tema sistemi | PR AÇIK | sahip: chatgpt. #25/#27/#28 taslak ve CI yeşil; telefon testleri ve bağımsız inceleme bekliyor. |
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt. PR #26 CI yeşil; bağımsız inceleme, canlı API ve telefon testi bekliyor. |
 | C1 Sunucu ilan toplayıcı + tekilleştirme JSON | CLINE BEKLİYOR | sahip: cline. K1 onayından sonra başla; yalnız doğrulanmış açık kaynakları kullan. |
-| C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | sahip: chatgpt. |
-| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | sahip: chatgpt. |
+| C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt. PR #22'de kategori grupları ve Haber/Süreç/Öğrenci ayrımı var; bağımsız inceleme ve telefon testi bekliyor. |
+| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt. `is/c3-ilan-semasi-ai-kaynak-kaniti` → `is/kariyer-1-21-verified-search`; alan şeması/provenans, kaynak kanıtı ve yalnız kullanıcı eylemiyle WebView yenileme. |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt. Kişisel profil telefonda kalır. |
 | C5 Gelecek alım takvimi ve bildirim | YAPILMADI | sahip: chatgpt. Resmî tarih ile tahmin ayrı. |
 | D1 Film & Dizi | YAPILMADI | sahip: chatgpt. Yalnız yasal/izinli akış. |
@@ -62,14 +63,14 @@
 - Bu değerler yalnız geçmiş artifact'teki ölçümdür; Cline K1'in yeni denetimiyle tekrar doğrulanmadan güncel sayılmaz.
 
 ## Son 10 kayıt
-1. QA Türkçe T.C. normalizasyon hash hatası bulundu ve düzeltildi.
-2. Türkçe ay adı tarih penceresi regresyonu eklendi.
-3. TGA detay okuyucusu eklendi; okuyucu/indeks sayıları ayrıştırıldı.
-4. K1 legacy PR #24: 20 kaynak matrisi; artık Cline K1 denetimine devredildi, PR'a müdahale yok.
-5. A1 iki ekran tasarımı Cem tarafından onaylandı.
-6. A2 PR #25 ilk CI NPE; ikinci deneme test+APK SUCCESS, kök neden belirsiz.
-7. B1 PR #26 bellek/streaming değişiklikleri; CI yeşil, bağımsız inceleme bekliyor.
-8. A2 tanılama PR #27 workflow-only; PR/push CI SUCCESS.
-9. A2 PR #28 açık/koyu mod, yerel tercih, dashboard özeti ve skeleton; PR/push CI SUCCESS.
-10. Cline sahiplik kuralı eklendi: K1/C1/E1-Veri Cline; A1/A2/B1 ve kalan uygulama işleri ChatGPT.
+1. TGA detay okuyucusu eklendi; okuyucu/indeks sayıları ayrıştırıldı.
+2. K1 legacy PR #24: 20 kaynak matrisi; artık Cline K1 denetimine devredildi, PR'a müdahale yok.
+3. A1 iki ekran tasarımı Cem tarafından onaylandı.
+4. A2 PR #25 ilk CI NPE; ikinci deneme test+APK SUCCESS, kök neden belirsiz.
+5. B1 PR #26 bellek/streaming değişiklikleri; CI yeşil, bağımsız inceleme bekliyor.
+6. A2 tanılama PR #27 workflow-only; PR/push CI SUCCESS.
+7. A2 PR #28 açık/koyu mod, yerel tercih, dashboard özeti ve skeleton; PR/push CI SUCCESS.
+8. Cline sahiplik kuralı eklendi: K1/C1/E1-Veri Cline; A1/A2/B1 ve kalan uygulama işleri ChatGPT.
+9. C2 PR #22 kategori filtreleri + Haber/Süreç/Program ayrımı; Full App QA/API29-35 ve APK CI SUCCESS, PR açık.
+10. C3 DEVAM: kaynak metninden yapılandırılmış alan çıkarımı ve her alan için kanıt/provenans; Cline işlerine dokunulmayacak.
 **SONRAKİ ADIM:** Cline `DEVAM: K1` diyerek `cline/K1` dalında kaynak denetimini yürütür; ChatGPT bu sırada A2 PR #28'i bağımsız inceleme ve telefon testi bekleyen durumda tutar.
