@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main, is/a2-expressive-theme ]
   push:
-    branches: [ main, master, film-dizi-v2, is/a2-expressive-theme ]
+    branches: [ main, master, film-dizi-v2, is/a2-expressive-theme, fix/a2-gradle-metadata-stacktrace ]
 
 concurrency:
   group: android-${{ github.ref }}
