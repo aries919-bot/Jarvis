@@ -247,7 +247,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
             Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
             Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            Text("🌐", fontSize = 24.sp, modifier = Modifier.clickable { web2 = true }.padding(8.dp))
+            Text("🌐", fontSize = 24.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { web2 = true }.padding(8.dp))
         }
         LazyColumn(Modifier.weight(1f)) {
             if (!vm.searching) item {
@@ -306,7 +306,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
 
 @Composable
 fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)) {
+    Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).clickable(onClick = onClick).padding(vertical = 10.dp)) {
         Box {
             AsyncImage(webImg(media.poster_path), media.label, Modifier.size(58.dp, 82.dp).clip(RoundedCornerShape(10.dp)))
             Text("$rank", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp,
@@ -367,7 +367,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         return
     }
     LazyColumn(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
-        item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
+        item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable(onClick = onBack)) }
         item {
             Row(Modifier.padding(vertical = 16.dp)) {
                 AsyncImage(webImg(media.poster_path), media.label, Modifier.size(120.dp, 175.dp).clip(RoundedCornerShape(14.dp)))
