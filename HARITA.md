@@ -61,6 +61,7 @@
 ## Otomatik kalite kontrol
 
 - `.github/workflows/android.yml`
+- `scripts/qa/test_repo_maintenance.py`
 
 ## Proje yönergeleri ve güvenlik belgeleri
 
