@@ -185,14 +185,14 @@ class MediaVM : ViewModel() {
 fun FilmDiziCard(onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF1B2440)).clickable(onClick = onClick).padding(16.dp),
+            .background(Ap.AccentSoft).clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF8FB4FF)), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
+        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Ap.Accent), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
         Spacer(Modifier.width(12.dp))
         Column {
             Text("Film ve Dizi", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("Ara, keşfet, izle", color = Color(0xFF9AA1B2), fontSize = 12.sp)
+            Text("Ara, keşfet, izle", color = Ap.Muted, fontSize = 12.sp)
         }
     }
 }
@@ -242,9 +242,9 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
         }
         return
     }
-    Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
+            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
             Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             Text("🌐", fontSize = 24.sp, modifier = Modifier.clickable { web2 = true }.padding(8.dp))
@@ -257,9 +257,9 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
             if (vm.history.isNotEmpty() && !vm.searching) {
                 item { Text("Geçmiş", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)) }
                 items(vm.history) { h ->
-                    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(h, color = Color.White, modifier = Modifier.clickable { q = h; vm.search(h) })
-                        Text("✕", color = Color(0xFF9AA1B2), modifier = Modifier.clickable { vm.removeHistory(h) })
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(h, color = Color.White, modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp).clickable { q = h; vm.search(h) }.padding(vertical = 14.dp))
+                        Text("✕", color = Ap.Muted, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { vm.removeHistory(h) }.padding(14.dp))
                     }
                 }
             }
@@ -273,26 +273,26 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                 )
                 if (!vm.searching && BuildConfig.TMDB_TOKEN.isBlank() && (vm.tab == 1 || vm.tab == 3)) {
                     Text("TMDB anahtarı ayarlı değil. Açık web katalog sonuçları kullanılıyor; içerik ve poster bilgileri sınırlı olabilir.",
-                        color = Color(0xFFFFD18B), fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        color = Ap.Amber, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
                 }
                 if (!vm.searching) LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(vm.tabs.size) { i ->
                         Text(vm.tabs[i], fontSize = 16.sp, fontWeight = if (i == vm.tab) FontWeight.Bold else FontWeight.Normal,
-                            color = if (i == vm.tab) Color.White else Color(0xFF9AA1B2),
-                            modifier = Modifier.clickable { vm.load(i) }.padding(vertical = 8.dp))
+                            color = if (i == vm.tab) Color.White else Ap.Muted,
+                            modifier = Modifier.defaultMinSize(minHeight = 48.dp).clickable { vm.load(i) }.padding(vertical = 12.dp))
                     }
                 }
             }
             if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
-            vm.error?.let { e -> item { Text(e, color = Color(0xFFFF8A7A), modifier = Modifier.padding(16.dp)) } }
-            if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Color(0xFF9AA1B2), modifier = Modifier.padding(16.dp)) }
+            vm.error?.let { e -> item { Text(e, color = Ap.Red, modifier = Modifier.padding(16.dp)) } }
+            if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Ap.Muted, modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
             else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
             if (!vm.searching && vm.list.size >= 20 && (vm.tab == 0 || vm.tab == 2 || BuildConfig.TMDB_TOKEN.isNotBlank())) item {
                 Button(onClick = { vm.more() }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Daha fazla göster") }
             }
         }
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF202433)).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Raised).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             TextField(q, { q = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Film veya dizi ara") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -316,8 +316,8 @@ fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Text(media.label, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${media.year} · ${if (media.media_type == "movie" || media.title != null) "Film" else "TV Dizisi"} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}",
-                color = Color(0xFF9AA1B2), fontSize = 13.sp)
-            Text(media.overview.orEmpty(), color = Color(0xFF9AA1B2), fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = Ap.Muted, fontSize = 13.sp)
+            Text(media.overview.orEmpty(), color = Ap.Muted, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -366,7 +366,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         }
         return
     }
-    LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
         item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
         item {
             Row(Modifier.padding(vertical = 16.dp)) {
@@ -374,10 +374,10 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(media.label, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    Text("${media.year} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}", color = Color(0xFF9AA1B2))
+                    Text("${media.year} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}", color = Ap.Muted)
                 }
             }
-            Text(media.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Color(0xFFD5D9E4), fontSize = 14.sp)
+            Text(media.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Ap.Text, fontSize = 14.sp)
             Spacer(Modifier.height(16.dp))
             Button(onClick = { trailerKey?.let(onTrailer) }, enabled = trailerKey != null, modifier = Modifier.fillMaxWidth()) {
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
@@ -392,7 +392,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 modifier = Modifier.fillMaxWidth()
             ) { Text("▶ İzleme yeri · ${if (type == "tv") "1. bölümü aç" else "Kaynakları ara"}") }
             Text("Aries önce doğrudan video kaynaklarını arar. Web sitesi yalnızca kaynak adına dokununca açılır.",
-                color = Color(0xFF9AA1B2), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+                color = Ap.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
             if (type == "tv" && media.source != "wikipedia") {

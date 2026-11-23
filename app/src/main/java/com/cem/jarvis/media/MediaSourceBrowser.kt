@@ -109,19 +109,19 @@ private data class AriesTitleInfo(
     val source: String = "tmdb"
 )
 
-// Arama ekranı: Seekee gri teması
-private val AriesBg = Color(0xFF1E1E1E)
-private val AriesCard = Color(0xFF2B2B2B)
-private val AriesChip = Color(0xFF3C3C3C)
-private val AriesText = Color.White
-private val AriesBody = Color(0xFFE0E0E0)
-private val AriesMuted = Color(0xFFB0B0B0)
+// Arama ekranı: ortak koyu tema (Theme.kt)
+private val AriesBg = Ap.Bg
+private val AriesCard = Ap.Card2
+private val AriesChip = Ap.Raised
+private val AriesText = Ap.Text
+private val AriesBody = Ap.Text
+private val AriesMuted = Ap.Muted
 
 // İzleme sayfası: koyu tema
-private val AriesWatchBg = Color(0xFF0B0B0B)
-private val AriesWatchCard = Color(0xFF1C1C1E)
-private val AriesWatchChip = Color(0xFF262626)
-private val AriesWatchSel = Color(0xFF6E6E6E)
+private val AriesWatchBg = Ap.Bg
+private val AriesWatchCard = Ap.Card
+private val AriesWatchChip = Ap.Card2
+private val AriesWatchSel = Ap.AccentSel
 
 // TMDB anahtarı projede zaten varsa otomatik bulunur (BuildConfig).
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
@@ -873,7 +873,7 @@ private fun AriesWatchScreen(
             Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(Color(0xFF151515))
+                .background(Ap.Card)
                 .padding(horizontal = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -901,16 +901,16 @@ private fun AriesWatchScreen(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFDCE5FF))
+                        .background(Ap.Accent)
                         .clickable { onPlayTrailer() }
                         .padding(horizontal = 28.dp, vertical = 16.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("▶", color = Color(0xFF10131D), fontSize = 18.sp)
+                        Text("▶", color = Ap.OnAccent, fontSize = 18.sp)
                         Spacer(Modifier.width(10.dp))
                         Text(
                             "Fragman sayfasını aç",
-                            color = Color(0xFF10131D),
+                            color = Ap.OnAccent,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
