@@ -78,13 +78,14 @@ class MainActivity : Activity() {
     private val PICK_FILE_REQUEST = 1001
     private lateinit var fileListView: LinearLayout
 
-    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true)
+    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true, "memShareOn" to false)
     private var pendingFact: String? = null
     private val flagTitles = mapOf(
         "heyJarvis" to "Hey Jarvis",
         "aiOn" to "Yapay zekâ",
         "histOn" to "Sohbet kaydı",
-        "memOn" to "Hafıza"
+        "memOn" to "Hafıza",
+        "memShareOn" to "Hafızayı yapay zekâ ile paylaş"
     )
 
     private val SYS = """
@@ -823,6 +824,13 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val col = Ui.column(this)
         add(col, Ui.text(this, "Ayarlar", 20f, Pal.WHITE))
 
+        add(col, Ui.text(this, "Yapay zekâ ve gizlilik", 14f, Pal.MUTED))
+        add(col, flagButton("aiOn"))
+        add(col, flagButton("histOn"))
+        add(col, flagButton("memOn"))
+        add(col, flagButton("memShareOn"))
+        add(col, Ui.card(this, "Hafıza notları varsayılan olarak yalnızca telefonda saklanır. Yapay zekâ ile paylaşım ayrı bir izindir ve varsayılan olarak kapalıdır."))
+
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
         add(col, Ui.button(this, "Kaydet") { saveSettings() })
@@ -1438,20 +1446,43 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val c = store.current()
         val hist = c.msgs.filter { it.first == "user" || it.first == "assistant" }.takeLast(20)
         showThinking()
+        val (streamBubble, streamText) = Ui.streamLine(this, "Yanıt hazırlanıyor…")
+        chatBox.addView(streamBubble)
+        chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
         thread {
+            val raw = StringBuilder()
             try {
                 uiHandler.post { orbThink(4) }
-                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), SYS, hist)
-                val (cmd, reply) = Ai.parseReply(raw)
+                val memoryPrompt = AiMemory.appendContext(SYS, store.facts(), store.flag("memOn", true), store.flag("memShareOn", false))
+                // Direct providers support SSE; Aries Bulut is retained as a compatible fallback.
+                Ai.chatStream(providerOrder() + listOf("bulut"), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), memoryPrompt, hist) { token ->
+                    raw.append(token)
+                    val partial = AiStreamParser.partialReply(raw.toString())
+                    if (!partial.isNullOrEmpty()) {
+                        runOnUiThread {
+                            hideThinking()
+                            streamText.text = partial
+                            chatScroll.post { chatScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+                        }
+                    }
+                }
+                val (cmd, reply) = Ai.parseReply(raw.toString())
                 runOnUiThread {
                     hideThinking()
+                    chatBox.removeView(streamBubble)
                     if (cmd.isNotBlank()) handle(cmd, true)
-                    else say(reply.ifEmpty { "Anlaşılamadı." })
+                    else say(reply.ifEmpty { raw.toString().ifBlank { "Anlaşılamadı." } })
                 }
             } catch (e: Exception) {
+                val partial = AiStreamParser.partialReply(raw.toString()).orEmpty()
                 runOnUiThread {
                     hideThinking()
-                    say(Ai.friendly(e))
+                    chatBox.removeView(streamBubble)
+                    if (partial.isNotBlank()) {
+                        say("$partial\n\nYanıt akışı tamamlanamadı: ${Ai.friendly(e)}")
+                    } else {
+                        say(Ai.friendly(e))
+                    }
                 }
             }
         }
@@ -1608,35 +1639,63 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
-        val tk = store.str("bulut")
-        val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
-        if (tk.isBlank() || !isOnline()) {
-            if (fact != null) {
-                if (Regex("\\d{11,}|şifre|parola|cvv", RegexOption.IGNORE_CASE).containsMatchIn(fact)) say("Kart, şifre ya da kimlik gibi görünüyor, kaydetmedim.")
-                else { store.addFact(fact); say("Not ettim (yalnızca telefonda): " + fact) }
-            } else if (Regex("^notlarım", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
-                say(store.facts().ifBlank { "Kayıtlı notun yok." })
-            } else say("Bu komut için internet ve Aries Bulut anahtarı gerekir.")
+        val forget = Regex("^unut\\s*:?\\s*(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        if (forget != null) {
+            val all = forget.lowercase(tr) in listOf("hepsi", "tümünü", "tüm notlar", "bütün notlar", "hafızayı")
+            val existing = store.facts().split("; ").map { it.trim() }.filter { it.isNotEmpty() }
+            val remaining = if (all) emptyList() else existing.filterNot { it.equals(forget, ignoreCase = true) }
+            if (!all && remaining.size == existing.size) say("Bu notu bulamadım.")
+            else confirm(if (all) "Bütün hafıza notları silinsin mi?" else "Bu hafıza notu silinsin mi?", {
+                store.put("facts", remaining.joinToString("; "))
+                say(if (all) "Bütün yerel hafıza notlarını sildim." else "Yerel hafıza notunu sildim.")
+            }, {})
             return true
         }
-        showThinking()
-        thread {
-            try {
-                val ans = Ai.chat(listOf("bulut"), mapOf("bulut" to tk), emptyMap(), "", listOf(Pair("user", t)))
-                runOnUiThread {
-                    hideThinking()
-                    if (fact != null && ans.startsWith("Not ettim")) store.addFact(fact)
-                    if (ans.startsWith("Bütün notları sildim")) store.clearFacts()
-                    say(ans)
-                }
-            } catch (e: Exception) {
-                runOnUiThread { hideThinking(); say(Ai.friendly(e)) }
-            }
+
+        if (!store.flag("memOn", true)) {
+            say("Hafıza kapalı. Kullanmak için Ayarlar > Hafıza bölümünden açabilirsin.")
+            return true
         }
+
+        val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        if (fact != null) {
+            val sensitive = Regex("\\d{11,}|şifre|parola|password|api.?key|access.?token|bearer|cvv|cvc|secret|(?:sk-|gsk_|AIza)[A-Za-z0-9_-]{12,}", RegexOption.IGNORE_CASE)
+            if (sensitive.containsMatchIn(fact)) say("Bu not hassas bilgi veya anahtar içeriyor; güvenlik için kaydetmedim.")
+            else {
+                store.addFact(fact)
+                say("Not ettim. Yalnızca bu telefonda saklandı.")
+            }
+            return true
+        }
+
+        if (Regex("^notlarım[.!?]*$", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
+            say(store.facts().ifBlank { "Kayıtlı notun yok." })
+            return true
+        }
+
+        val search = Regex("^notlarda ara\\s*:?\\s*(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        if (search != null) {
+            val hits = searchFacts(search)
+            say(if (hits.isEmpty()) "Eşleşen not bulamadım." else hits.joinToString(". "))
+            return true
+        }
+
+        val profile = Regex("^profilim\\s*:\\s*(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        if (profile != null) {
+            if (profile.isBlank()) say("Profil bilgisi boş.")
+            else {
+                store.addFact("Profil: $profile")
+                say("Profil notunu yalnızca telefona kaydettim.")
+            }
+            return true
+        }
+
+        say(store.facts().ifBlank { "Kayıtlı profil notun yok." })
         return true
     }
 
     private fun searchFacts(query: String): List<String> {
+        if (!store.flag("memOn", true)) return emptyList()
         val words = query.lowercase(tr).split(Regex("[^a-zçğıöşü0-9]+")).filter { it.length >= 3 }
         if (words.isEmpty()) return emptyList()
         return store.facts().split(Regex("[;.\\n]"))

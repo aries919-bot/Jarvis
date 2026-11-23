@@ -345,6 +345,22 @@ object Ui {
         return t
     }
 
+    fun streamLine(ctx: Context, initialText: String): Pair<LinearLayout, TextView> {
+        val outer = LinearLayout(ctx)
+        outer.orientation = LinearLayout.VERTICAL
+        outer.setPadding(dp(ctx, 4), dp(ctx, 6), dp(ctx, 4), dp(ctx, 6))
+        val bubble = TextView(ctx)
+        bubble.text = initialText
+        bubble.textSize = 18f
+        bubble.setTextColor(Color.parseColor(Pal.TEXT))
+        bubble.background = rounded(Pal.CARD, Pal.LINE, dp(ctx, 18).toFloat())
+        bubble.setPadding(dp(ctx, 14), dp(ctx, 10), dp(ctx, 14), dp(ctx, 10))
+        bubble.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
+        bubble.setTextIsSelectable(true)
+        outer.addView(bubble, LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.START })
+        return outer to bubble
+    }
+
     fun button(ctx: Context, s: String, onClick: () -> Unit): Button {
         val b = Button(ctx)
         b.text = s

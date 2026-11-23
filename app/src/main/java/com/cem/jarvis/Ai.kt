@@ -6,12 +6,13 @@ import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.URLEncoder
 
 class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
     val temporary: Boolean
-        get() = code == 429 || code == 500 || code == 502 || code == 503 || code == 504
+        get() = code == 408 || code == 429 || code == 500 || code == 502 || code == 503 || code == 504
     val badKey: Boolean
         get() = code == 401 || code == 403
 }
@@ -40,6 +41,50 @@ object Net {
         val stream = if (c.responseCode in 200..299) c.inputStream else c.errorStream
         val text = stream?.bufferedReader()?.use { it.readText() } ?: ""
         return Pair(c.responseCode, text)
+    }
+
+    /**
+     * Reads server-sent events one data record at a time. The connection is
+     * always closed, including on timeout, cancellation or parser failure.
+     */
+    fun streamPost(url: String, headers: Map<String, String>, body: JSONObject, onData: (String) -> Unit): Boolean {
+        val c = URL(url).openConnection() as HttpURLConnection
+        var receivedDoneMarker = false
+        try {
+            c.requestMethod = "POST"
+            c.connectTimeout = 8000
+            c.readTimeout = 45000
+            c.doOutput = true
+            c.setRequestProperty("Content-Type", "application/json")
+            c.setRequestProperty("Accept", "text/event-stream")
+            c.setRequestProperty("Cache-Control", "no-cache")
+            for ((k, v) in headers) c.setRequestProperty(k, v)
+            c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+
+            val code = c.responseCode
+            if (code !in 200..299) {
+                val detail = c.errorStream?.bufferedReader()?.use { it.readText() }?.take(400).orEmpty()
+                throw ApiError(code, detail.ifBlank { "HTTP $code" })
+            }
+
+            c.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
+                while (true) {
+                    if (Thread.currentThread().isInterrupted) throw IOException("Akış iptal edildi.")
+                    val line = reader.readLine() ?: break
+                    val data = SseLineParser.dataFromLine(line) ?: continue
+                    if (data == "[DONE]") {
+                        receivedDoneMarker = true
+                        break
+                    }
+                    onData(data)
+                }
+            }
+        } catch (e: SocketTimeoutException) {
+            throw IOException("Yapay zekâ yanıtı zaman aşımına uğradı.", e)
+        } finally {
+            c.disconnect()
+        }
+        return receivedDoneMarker
     }
 
     fun newsTitles(topic: String): List<String> {
@@ -152,6 +197,7 @@ object Ai {
 
     private fun errText(name: String, code: Int): String = when (code) {
         400 -> "$name isteği reddetti (model adı veya istek biçimi)."
+        408 -> "$name yanıtı zaman aşımına uğradı."
         401, 403 -> "$name anahtarı geçersiz veya yetkisiz."
         404 -> "$name modeli bulunamadı."
         429 -> "$name kullanım sınırına ulaştı."
@@ -191,6 +237,56 @@ object Ai {
                 return callProvider(who, key, model, sys, hist)
             } catch (e: Exception) {
                 last = e
+            }
+        }
+        throw last
+    }
+
+    /**
+     * Prefer native streaming providers; Aries Bulut remains a compatible
+     * non-streaming fallback until its Worker endpoint exposes SSE.
+     * Never switch providers after a partial answer has already been emitted.
+     */
+    fun chatStream(
+        order: List<String>,
+        keys: Map<String, String>,
+        models: Map<String, String>,
+        sys: String,
+        hist: List<Pair<String, String>>,
+        onToken: (String) -> Unit
+    ) {
+        var last: Exception = RuntimeException("Yapay zekâya ulaşılamadı.")
+        for (who in order) {
+            val key = keys[who].orEmpty()
+            if (key.isBlank()) continue
+            val model = models[who].orEmpty().ifBlank { defaultModel(who) }
+            var emitted = false
+            val emit: (String) -> Unit = { token ->
+                if (token.isNotEmpty()) {
+                    emitted = true
+                    onToken(token)
+                }
+            }
+            try {
+                when (who) {
+                    "bulut" -> emit(bulut(key, sys, hist))
+                    "gemini" -> {
+                        try {
+                            geminiStream(key, model, sys, hist, emit)
+                        } catch (e: ApiError) {
+                            if (emitted || !e.temporary) throw e
+                            geminiStream(key, GEMINI_FALLBACK, sys, hist, emit)
+                        }
+                    }
+                    "groq" -> openAiStream(displayName(who), GROQ_URL, key, model, sys, hist, emit)
+                    "mistral" -> openAiStream(displayName(who), MISTRAL_URL, key, model, sys, hist, emit)
+                    else -> continue
+                }
+                if (!emitted) throw IOException(displayName(who) + " boş yanıt verdi.")
+                return
+            } catch (e: Exception) {
+                last = e
+                if (emitted) throw e
             }
         }
         throw last
@@ -262,6 +358,63 @@ object Ai {
         if (code != 200) throw ApiError(code, errText(name, code))
         return JSONObject(txt).getJSONArray("choices").getJSONObject(0)
             .getJSONObject("message").getString("content")
+    }
+
+    private fun openAiStream(
+        name: String,
+        url: String,
+        key: String,
+        model: String,
+        sys: String,
+        hist: List<Pair<String, String>>,
+        onToken: (String) -> Unit
+    ) {
+        val msgs = JSONArray().put(JSONObject().put("role", "system").put("content", sys))
+        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", t))
+        val body = JSONObject()
+            .put("model", model)
+            .put("messages", msgs)
+            .put("temperature", 0.3)
+            .put("max_tokens", 600)
+            .put("stream", true)
+        try {
+            val completed = Net.streamPost(url, mapOf("Authorization" to "Bearer $key"), body) { data ->
+                val token = try {
+                    AiStreamParser.openAiDelta(data)
+                } catch (e: Exception) {
+                    throw IOException("$name akış yanıtı çözümlenemedi.", e)
+                }
+                if (token.isNotEmpty()) onToken(token)
+            }
+            if (!completed) throw IOException("$name akışı tamamlanmadan kesildi.")
+        } catch (e: ApiError) {
+            throw ApiError(e.code, errText(name, e.code))
+        }
+    }
+
+    private fun geminiStream(
+        key: String,
+        model: String,
+        sys: String,
+        hist: List<Pair<String, String>>,
+        onToken: (String) -> Unit
+    ) {
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:streamGenerateContent?alt=sse"
+        try {
+            var finished = false
+            Net.streamPost(url, mapOf("x-goog-api-key" to key), geminiBody(sys, hist, true, false)) { data ->
+                if (AiStreamParser.geminiFinished(data)) finished = true
+                val token = try {
+                    AiStreamParser.geminiDelta(data)
+                } catch (e: Exception) {
+                    throw IOException("Gemini akış yanıtı çözümlenemedi.", e)
+                }
+                if (token.isNotEmpty()) onToken(token)
+            }
+            if (!finished) throw IOException("Gemini akışı tamamlanmadan kesildi.")
+        } catch (e: ApiError) {
+            throw ApiError(e.code, errText("Gemini", e.code))
+        }
     }
 
     private fun geminiBody(sys: String, hist: List<Pair<String, String>>, json: Boolean, search: Boolean): JSONObject {
@@ -405,6 +558,10 @@ object Ai {
     fun friendly(e: Exception): String = when {
         e is ApiError && e.badKey -> e.message ?: "Anahtar geçersiz."
         e is ApiError -> e.message ?: "Yapay zekâ hatası."
+        e is IOException && e.message?.contains("zaman aşımına uğradı", ignoreCase = true) == true ->
+            e.message ?: "Yapay zekâ yanıtı zaman aşımına uğradı."
+        e is IOException && e.message?.contains("akış", ignoreCase = true) == true ->
+            e.message ?: "Yapay zekâ akışı kesildi."
         e is IOException -> "İnternete ulaşamadım."
         else -> e.message ?: "Bir hata oldu."
     }
