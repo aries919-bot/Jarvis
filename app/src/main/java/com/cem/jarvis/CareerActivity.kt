@@ -1789,14 +1789,18 @@ class CareerActivity : Activity() {
     }
 
     private fun searchNewsCategory(categoryId: Int) {
-        if (categoryId != 6 && categoryId != 9) return
-        newsFilter = if (categoryId == 6) 1 else 2
+        if (categoryId != 6 && categoryId != 9 && categoryId != 10) return
+        when (categoryId) {
+            6 -> newsFilter = 1
+            9 -> newsFilter = 2
+            // General public-hiring news keeps the user-selected archive filter.
+        }
         if (currentPage != 5) renderPage(5)
         if (::newsSearchStatus.isInitialized) {
-            newsSearchStatus.text = if (categoryId == 6) {
-                "Kura, noter çekimi, asıl-yedek ve sınav/sonuç duyuruları taranıyor…"
-            } else {
-                "Ulusal Staj, İŞKUR Gençlik ve öğrenci programları taranıyor…"
+            newsSearchStatus.text = when (categoryId) {
+                6 -> "Kura, noter çekimi, asıl-yedek ve sınav/sonuç duyuruları taranıyor…"
+                9 -> "Ulusal Staj, İŞKUR Gençlik ve öğrenci programları taranıyor…"
+                else -> "Güncel kamu personel alım haberleri ve kurum duyuruları taranıyor…"
             }
         }
         if (::newsResultsContainer.isInitialized) {
@@ -1826,7 +1830,11 @@ class CareerActivity : Activity() {
                     newsSearchStatus.text = buildString {
                         append(batch.hits.size).append(" kaynak sonucu incelendi · ")
                         append(batch.successfulQueries).append("/").append(batch.totalQueries).append(" sorgu tamamlandı.")
-                        append(if (categoryId == 6) " Kura/sonuç kayıtları listeleniyor." else " Öğrenci/program kayıtları listeleniyor.")
+                        append(when (categoryId) {
+                            6 -> " Kura/sonuç kayıtları listeleniyor."
+                            9 -> " Öğrenci/program kayıtları listeleniyor."
+                            else -> " Güncel kamu alım haberleri listeleniyor."
+                        })
                         if (batch.failedQueries > 0) append(" Bazı kaynaklar geçici olarak yanıt vermedi.")
                     }
                 } else {
@@ -1862,6 +1870,9 @@ class CareerActivity : Activity() {
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
         scanCard.addView(button("Staj / İŞKUR Gençlik / öğrenci programlarını tara") {
             searchNewsCategory(9)
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
+        scanCard.addView(button("Güncel kamu alım haberlerini tara") {
+            searchNewsCategory(10)
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 0))
         pageContent.addView(scanCard, params(-1, -2, 0, 2, 0, 12))
 
@@ -1885,7 +1896,9 @@ class CareerActivity : Activity() {
         pageContent.addView(metrics, params(-1, -2, 0, 0, 0, 12))
 
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        actions.addView(primaryButton("Kaynakları tara") { renderPage(2) },
+        actions.addView(primaryButton("Kaynakları tara") {
+            searchNewsCategory(CareerNewsNavigation.queryForFilter(newsFilter))
+        },
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(0, 0, dp(4), 0) })
         actions.addView(button("Kaynak listesi") { showSources() },
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(4), 0, 0, 0) })
@@ -1953,7 +1966,9 @@ class CareerActivity : Activity() {
                 "Otomatik takip veya manuel tarama sırasında ilan olmayan kayıtlar burada birikir. İş ilanı olduğu kanıtlanamayan içerikler de yanlış yönlendirmemek için bu alanda tutulur.",
                 12f, false, muted
             ))
-            empty.addView(primaryButton("Kaynakları şimdi tara") { renderPage(2) },
+            empty.addView(primaryButton("Kaynakları şimdi tara") {
+                searchNewsCategory(CareerNewsNavigation.queryForFilter(newsFilter))
+            },
                 params(-1, dp(48), 0, 8, 0, 0))
             parent.addView(empty, params(-1, -2, 0, 2, 0, 8))
             return
