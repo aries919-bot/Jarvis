@@ -280,4 +280,30 @@ class CareerListingIntelligenceTest {
         assertTrue(otherIskurPortal.applicationChannel.startsWith("İŞKUR alt portalı"))
     }
 
+
+    @Test
+    fun labelsOldUndatedRecruitmentPostsAsStaleRatherThanOpen() {
+        val facts = CareerListingIntelligence.analyze(
+            "Elektrik teknisyeni personel alımı",
+            "İlan tarihi: 01.01.2026",
+            "https://www.dsi.gov.tr/duyurular",
+            date("23.11.2026")
+        )
+        assertTrue(facts.applicationStatus.startsWith("ESKİ KAYIT"))
+        assertFalse(facts.applicationStatus.contains("BAŞVURU AÇIK"))
+    }
+
+    @Test
+    fun pointsJandarmaApplicantsToItsPersonnelRecruitmentPortal() {
+        val facts = CareerListingIntelligence.analyze(
+            "Uzman erbaş alımı",
+            "Başvurular başladı. Son başvuru tarihi: 07.12.2026",
+            "https://personeltemin.jandarma.gov.tr/"
+        )
+        assertEquals(
+            "Jandarma Personel Temin Sistemi · kurumun kendi personel başvuru portalı",
+            facts.applicationChannel
+        )
+    }
+
 }

@@ -213,4 +213,17 @@ class CareerSearchParsingTest {
         assertTrue(message.contains("Brave"))
         assertFalse(message.contains("HTTP 429"))
     }
+
+    @Test
+    fun acceptsMemur365AsNewsDiscoveryButNotAnOfficialJobAlertSource() {
+        val hit = Net.Hit(
+            "Jandarmaya 10 Bin Personel Alımı Geliyor",
+            "https://memur365.com/kamu-personel-alimi/jandarma-10-bin-personel",
+            "Başvuru tarihi bekleniyor; henüz resmî başvuru ilanı yayımlanmadı."
+        )
+        assertTrue(CareerSearchEngine.isEligibleSearchResult(hit))
+        assertTrue(CareerSourceCatalog.isNewsDiscoverySource(hit.url))
+        assertFalse(CareerSourceCatalog.isTrustedUrl(hit.url))
+    }
+
 }

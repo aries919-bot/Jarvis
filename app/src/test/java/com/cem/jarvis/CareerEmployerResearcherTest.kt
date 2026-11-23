@@ -56,4 +56,36 @@ class CareerEmployerResearcherTest {
         assertTrue(prompt.contains("doğrulanmadı", ignoreCase = true))
         assertTrue(prompt.contains("sicil kaydı", ignoreCase = true))
     }
+
+    @Test
+    fun doesNotTreatNewsPublishersOrJobBoardsAsEmployers() {
+        val newsHost = "memur365.com"
+        assertNull(
+            CareerEmployerResearcher.resolveMappedEmployer(
+                "https://memur365.com/kamu-personel-alimi",
+                newsHost,
+                CareerSourceCatalog.sourceName("https://memur365.com/kamu-personel-alimi")
+            )
+        )
+
+        val boardHost = "kariyer.net"
+        assertNull(
+            CareerEmployerResearcher.resolveMappedEmployer(
+                "https://www.kariyer.net/is-ilani",
+                boardHost,
+                CareerSourceCatalog.sourceName("https://www.kariyer.net/is-ilanlari")
+            )
+        )
+
+        val officialUrl = "https://personel.ozal.edu.tr/announcements-all"
+        assertEquals(
+            CareerSourceCatalog.sourceName(officialUrl),
+            CareerEmployerResearcher.resolveMappedEmployer(
+                officialUrl,
+                "personel.ozal.edu.tr",
+                CareerSourceCatalog.sourceName(officialUrl)
+            )
+        )
+    }
+
 }
