@@ -36,7 +36,6 @@ class CareerActivity : Activity() {
     private var processFilter = 0 // 0: upcoming/check; 1: historical result archive
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val listingCategoryIds = listOf(0, 1, 2, 3, 4, 5, 7, 8)
     private val filters = listOf(
         "Tüm iş ilanları",
         "Kamu · KPSS P94",
