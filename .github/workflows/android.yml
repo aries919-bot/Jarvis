@@ -1,6 +1,8 @@
 name: Android APK
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ main ]
   push:
     branches: [ main, master, film-dizi-v2 ]
 
@@ -26,6 +28,8 @@ jobs:
           else
             echo "Debug APK imzası kullanılacak."
           fi
+      - name: Birim testleri
+        run: gradle testDebugUnitTest --no-daemon
       - name: APK derle
         run: gradle assembleDebug --no-daemon
         env:
