@@ -20,4 +20,9 @@ class CareerNewsNavigationTest {
             assertEquals(10, CareerNewsNavigation.queryForFilter(filter))
         }
     }
+
+    @Test
+    fun unknownFilterNeverRoutesToAnotherAppSection() {
+        assertEquals(10, CareerNewsNavigation.queryForFilter(Int.MIN_VALUE))
+    }
 }
