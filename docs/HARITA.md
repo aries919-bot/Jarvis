@@ -7,15 +7,15 @@
 ## Repo gerçeği
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a`.
 - Notlar `durum` dalında; repo erişimi ve yazma izni doğrulandı.
-- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `be740a3d24049fb1145faf14207202c1edc405f2`, mergeable.
+- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `be740a3d24049fb1145faf14207202c1edc405f2`, mergeable; PR/push CI 45165045934/45165041955 SUCCESS.
 - Diğer açık PR'lar: #22/#23/#18/#17/#9/#4/#3/#2/#1; farklı tabanlı eski PR'lar main'e alınmış sayılmaz.
-- Son tamamlanmış HEAD baseline: c9a5ce6; PR CI 45164079348 ve push CI 45164072719 SUCCESS. HEAD c0a542a için PR/push CI 45164530319 ve 45164525918 SUCCESS. Yeni tarayıcı-durum envanteri HEAD be740a3 için push CI 45165041955 ve PR CI 45165045934 çalışıyor; offline regresyon test adımı SUCCESS, canlı probe aşaması henüz tamamlanmadı.
+- Son tamamlanmış HEAD baseline: c9a5ce6; PR CI 45164079348 ve push CI 45164072719 SUCCESS. HEAD c0a542a için PR/push CI 45164530319 ve 45164525918 SUCCESS. HEAD be740a3 için PR CI 45165045934 ve push CI 45165041955 SUCCESS; offline regresyon + 20 kaynak canlı probe tamamlandı.
 
 ## İş listesi
 | İş | Durum | Not |
 |---|---|---|
-| K1 Kaynak tablosu ve okuyucu sağlığı | DEVAM | PR #24 bağımsız hakem incelemesi; kaynak raporu + tam diff/CI kanıtı doğrulanıyor. Yama yazarı hakem onayı veremez. |
-| A1 Tema: 2 ekran taslağı | YAPILMADI | Koda geçmeden önce İş & Kariyer + Ana ekran taslağını Cem'e sun; seçim bekle |
+| K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
+| A1 Tema: 2 ekran taslağı | DEVAM | Kod yok; Ana ekran + İş & Kariyer taslakları hazırlandı. Cem'in tasarım seçimi bekleniyor. |
 | A2 Material 3 Expressive tüm uygulama | YAPILMADI | A1 seçimi sonrası; eski PR #18 ayrı incelenecek |
 | B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | YAPILMADI | Ücretsiz; güvenli onaylı eylemler |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
@@ -28,9 +28,9 @@
 | Z1 Gerçek telefon testleri | TELEFONDA DENENECEK | Mikrofon, Xiaomi pil, alarm/bildirim, canlı API, gerçek video |
 
 ## K1 kanıt özeti
-- Güncel c9a5ce6 artifact: 20 kaynak, 12 probe, 6 çalışan okuyucu (3 detay + 3 indeks), 3 açık ilan detay kaynağı, 2 program okuyucu (3 program bağlantısı).
+- Güncel be740a3 artifact: 20 kaynak, 12 probe, 6 çalışan okuyucu (3 detay + 3 indeks), 3 açık ilan detay kaynağı, 2 program okuyucu (3 program bağlantısı).
 - Açık detay örnekleri: Sayıştay, Anadolu Üniversitesi, TGA; Zafer Kalkınma Ajansı süreç duyurusu, güvenlik/CAPTCHA işareti nedeniyle otomasyondan hariç.
-- PR kapsamı yalnız envanter + sağlık denetimi; sunucu JSON toplayıcı, dinamik Kariyer Kapısı/İŞKUR ve uygulama feed bağlantısı kapsam dışı.
+- PR kapsamı yalnız envanter + sağlık denetimi + tarayıcı/giriş matrisi; sunucu JSON toplayıcı, dinamik Kariyer Kapısı/İŞKUR ve uygulama feed bağlantısı kapsam dışı.
 - PR #24 yazarı bu oturumdaki hakemle aynı çalışma hattı; bu hakem kendi yamayı ONAYLAYAMAZ veya merge edemez. Bağımsız insan incelemesi gereklidir.
 
 ## Son 10 kayıt
@@ -39,10 +39,10 @@
 3. QA Türkçe ay adı tarih penceresi hatasını buldu; düzeltildi ve regresyon testi eklendi.
 4. TGA detay okuyucu eklendi.
 5. Rapor 5 okuyucu / 3 aktif detay kaynak olarak ayrıştırıldı.
-6. K1 PR #24; HEAD c0a542a CI SUCCESS (20 kaynak, 12 probed, 6 okuyucu). HEAD be740a3 tüm 20 kaynak için tarayıcı/giriş durumunu envantere ekledi ve zorunlu regresyon testi koydu; offline test SUCCESS, live probe sürüyor.
+6. K1 PR #24 HEAD be740a3; 20 kaynağın browserCheck/login durumu kayıtlı, PR/push CI SUCCESS, artifact 20/12/6 (3 detay + 3 indeks). K1 bağımsız hakem bekliyor.
 7. Bu turda kod PR'ı merge edilmedi.
 8. Mevcut Android kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback kullanıyor; C1 bunu kaldıracak.
 9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
-10. K1'de eklenen düzeltme: indeks sayfasının kendisini ilan saymama, kura/sonuç kelime gruplarını ayırma, TUSAŞ/ROKETSAN programlarını ilanlardan ayırma, TEI HTTP 403 kaynağını manual_only tutma ve probe yönlendirmelerini aynı HTTPS host ile sınırlandırma. Son ek iş: 20 kaynağın browserCheck kayıtları ve e-Devlet loginRequired=true / bilinmeyen erişim=null ayrımı; QA bekleniyor. K1 için bağımsız hakem kararı şart; C1 sonraki teknik iş.
+10. K1'de indeks öz-bağlantısı/sonuç yanlış pozitifleri düzeltildi, TUSAŞ/ROKETSAN programları ayrıldı, TEI HTTP 403 manual_only, yönlendirme aynı HTTPS hostla sınırlandı, 20 kaynağın browserCheck durumu test edildi. Sonraki: A1 taslak seçimi; K1 için bağımsız insan hakem onayı.
 
 **SONRAKİ ADIM:** K1'in tam kod ve canlı QA artefaktını bağımsız gözle incele; kendi yamanı ONAYLAMA.
