@@ -27,7 +27,7 @@ def norm(s):
     return re.sub(r"\s+"," ",re.sub(r"[^a-z0-9]+"," ",s)).strip()
 
 def listing_fingerprint(employer,position,city):
-    noise={"tc","turkiye","cumhuriyeti","anonim","sirketi","as","ltd","sti"}
+    noise={"t","c","tc","turkiye","cumhuriyeti","anonim","sirketi","as","ltd","sti"}
     parts=[" ".join(t for t in norm(v).split() if t not in noise) for v in (employer,position,city)]
     return hashlib.sha256("|".join(parts).encode()).hexdigest()
 
