@@ -38,5 +38,9 @@ internal object CareerListingCategoryMap {
         else -> 0
     }
 
+    fun initialPositionForStoredFilter(oldPosition: Int, migrationAlreadyApplied: Boolean): Int =
+        if (migrationAlreadyApplied) oldPosition.coerceIn(0, queryCategoryIds.lastIndex)
+        else restoreStoredPosition(oldPosition)
+
     fun queryCategories(): List<Int> = queryCategoryIds.toList()
 }
