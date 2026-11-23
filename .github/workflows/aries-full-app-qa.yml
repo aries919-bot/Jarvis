@@ -87,7 +87,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run Android emulator, navigate the app and collect evidence
-        uses: reactivecircus/android-emulator-runner@v2.38.0
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis
