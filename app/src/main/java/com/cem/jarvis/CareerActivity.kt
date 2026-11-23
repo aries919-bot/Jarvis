@@ -97,7 +97,7 @@ class CareerActivity : Activity() {
             textSize = 25f
             contentDescription = "Önceki ekrana dön"
         }
-        header.addView(backButton, LinearLayout.LayoutParams(dp(48), dp(46)).apply {
+        header.addView(backButton, LinearLayout.LayoutParams(dp(48), dp(Tok.MIN_TOUCH_DP)).apply {
             setMargins(0, 0, dp(10), 0)
         })
         val titleBlock = LinearLayout(this).apply {
@@ -111,7 +111,7 @@ class CareerActivity : Activity() {
             gravity = Gravity.CENTER
             background = rounded(surfaceRaised, borderColor)
         }
-        header.addView(brandBadge, LinearLayout.LayoutParams(dp(42), dp(42)))
+        header.addView(brandBadge, LinearLayout.LayoutParams(dp(Tok.MIN_TOUCH_DP), dp(Tok.MIN_TOUCH_DP)))
         root.addView(header)
 
         pageScroll = ScrollView(this).apply {
@@ -218,7 +218,7 @@ class CareerActivity : Activity() {
             12f, false, muted
         ))
         separationCard.addView(button("Haber & duyurulara git  →") { renderPage(5) },
-            params(-1, dp(44), 0, 8, 0, 0))
+            params(-1, dp(Tok.MIN_TOUCH_DP), 0, 8, 0, 0))
         pageContent.addView(separationCard, params(-1, -2, 0, 0, 0, 12))
 
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -251,7 +251,7 @@ class CareerActivity : Activity() {
         cadreRadarCard.addView(button("ÖSYM tercih takvimini aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
                 .onFailure { toast("ÖSYM sayfası açılamadı.") }
-        }, params(-1, dp(44), 0, 0, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 0, 0, 0))
         pageContent.addView(cadreRadarCard, params(-1, -2, 0, 0, 0, 14))
 
         pageContent.addView(label("İlanlarını filtrele", 18f, true, primaryText))
@@ -289,7 +289,7 @@ class CareerActivity : Activity() {
                 role.setText((current + selected).joinToString(", "))
                 role.setSelection(role.text.length)
             }
-        }, params(-1, dp(46), 0, 2, 0, 10))
+        }, params(-1, dp(50), 0, 2, 0, 10))
         filtersCard.addView(label("Şehir / bölge", 12f, true, muted))
         val oldPlaceDefault = "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
         val savedPlace = prefs.getString("career_place", null)
@@ -313,7 +313,7 @@ class CareerActivity : Activity() {
         filtersCard.addView(label("HIZLI KONUM", 10f, true, muted))
         filtersCard.addView(quickChipRow(listOf("Malatya", "Elazığ", "Adıyaman", "Türkiye geneli")) { selected ->
             place.setText(selected)
-        }, params(-1, dp(46), 0, 2, 0, 10))
+        }, params(-1, dp(50), 0, 2, 0, 10))
         filtersCard.addView(label("İlan türü / özel içerik", 12f, true, muted))
         category = Spinner(this)
         category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filters).apply {
@@ -340,7 +340,7 @@ class CareerActivity : Activity() {
             }
             category.setSelection(target)
             searchJobs()
-        }, params(-1, dp(46), 0, 2, 0, 8))
+        }, params(-1, dp(50), 0, 2, 0, 8))
         search = primaryButton("⌕  İlanları şimdi ara") { searchJobs() }
         filtersCard.addView(search, params(-1, dp(52), 0, 6, 0, 0))
         pageContent.addView(filtersCard, params(-1, -2, 0, 10, 0, 12))
@@ -400,7 +400,7 @@ class CareerActivity : Activity() {
         cvActions.addView(primaryButton("Kaydet") { saveCv() }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(0, 0, dp(4), 0) })
         cvActions.addView(button("Kopyala") { copyCvText() }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(4), 0, 0, 0) })
         cvCard.addView(cvActions, params(-1, dp(48), 0, 8, 0, 4))
-        cvCard.addView(button("Eksik alanları kontrol et") { showCvMissingFields() }, params(-1, dp(44), 0, 4, 0, 4))
+        cvCard.addView(button("Eksik alanları kontrol et") { showCvMissingFields() }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 4, 0, 4))
         cvCard.addView(button("Başlangıç CV taslağını yeniden yükle") {
             AlertDialog.Builder(this)
                 .setTitle("CV taslağını yenile")
@@ -408,7 +408,7 @@ class CareerActivity : Activity() {
                 .setNegativeButton("Vazgeç", null)
                 .setPositiveButton("Taslağı yükle") { _, _ -> cv.setText(starter) }
                 .show()
-        }, params(-1, dp(44), 0, 4, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 4, 0, 0))
         pageContent.addView(cvCard, params(-1, -2, 0, 10, 0, 12))
 
         val note = panel()
@@ -475,7 +475,7 @@ class CareerActivity : Activity() {
                     Uri.parse("package:" + packageName)
                 ))
             }.onFailure { toast("Uygulama ayarları açılamadı.") }
-        }, params(-1, dp(44), 0, 0, 0, 12))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 0, 0, 12))
 
         pageContent.addView(label("Son tarama sonuçları", 18f, true, primaryText))
         pageContent.addView(label(
@@ -631,7 +631,7 @@ class CareerActivity : Activity() {
             }
             values.forEach { value ->
                 row.addView(chipButton(value, false) { action(value) },
-                    LinearLayout.LayoutParams(-2, dp(44)).apply { setMargins(0, 0, dp(7), 0) })
+                    LinearLayout.LayoutParams(-2, dp(Tok.MIN_TOUCH_DP)).apply { setMargins(0, 0, dp(7), 0) })
             }
             addView(row)
         }
@@ -857,7 +857,7 @@ class CareerActivity : Activity() {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         sectorFilterLabels.forEachIndexed { index, title ->
             row.addView(chipButton(title, selected == index) { onSelected(index) },
-                LinearLayout.LayoutParams(-2, dp(42)).apply {
+                LinearLayout.LayoutParams(-2, dp(Tok.MIN_TOUCH_DP)).apply {
                     setMargins(dp(3), dp(2), dp(3), dp(2))
                 })
         }
@@ -955,11 +955,11 @@ class CareerActivity : Activity() {
                 searchPage = 0
                 renderSearchResults()
             }
-            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
                 setMargins(dp(2), 0, dp(2), 0)
             })
         }
-        results.addView(filterRow, params(-1, dp(46), 0, 2, 0, 6))
+        results.addView(filterRow, params(-1, dp(50), 0, 2, 0, 6))
         results.addView(label(
             jobHits.size.toString() + " iş ilanı adayı · " + divertedCount + " kayıt Haber & Duyurular'a ayrıldı · " +
                 futureDeadlineCount + " son tarihi gelecekte görünen · " + expiredCount +
@@ -1012,7 +1012,7 @@ class CareerActivity : Activity() {
                     searchFilter = 1
                     searchPage = 0
                     renderSearchResults()
-                }, params(-1, dp(44), 0, 6, 0, 0))
+                }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 6, 0, 0))
             }
             return
         }
@@ -1167,10 +1167,10 @@ class CareerActivity : Activity() {
                 .onFailure { toast("Bağlantı açılamadı.") }
         }, params(-1, dp(48), 0, 10, 0, 5))
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        actions.addView(button("＋  Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+        actions.addView(button("＋  Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
             setMargins(0, 0, dp(4), 0)
         })
-        actions.addView(button("AI ile incele") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+        actions.addView(button("AI ile incele") { confirmReview(hit) }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
             setMargins(dp(4), 0, 0, 0)
         })
         card.addView(actions)
@@ -1263,11 +1263,11 @@ class CareerActivity : Activity() {
                 dailyPage = 0
                 showDailyResults(parent)
             }
-            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+            filterRow.addView(chip, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
                 setMargins(dp(2), 0, dp(2), 0)
             })
         }
-        parent.addView(filterRow, params(-1, dp(46), 0, 4, 0, 7))
+        parent.addView(filterRow, params(-1, dp(50), 0, 4, 0, 7))
         parent.addView(label(
             jobItems.size.toString() + " iş ilanı adayı · " + divertedCount + " ilan olmayan kayıt Haber & Duyurular'a ayrıldı · " +
                 futureDeadlineCount + " son tarihi gelecekte görünen · " + expiredCount +
@@ -1522,10 +1522,10 @@ class CareerActivity : Activity() {
         scanCard.addView(newsSearchStatus, params(-1, -2, 0, 5, 0, 6))
         scanCard.addView(primaryButton("Kura / noter / sınav / sonuçları tara") {
             searchNewsCategory(6)
-        }, params(-1, dp(46), 0, 2, 0, 5))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
         scanCard.addView(button("Staj / İŞKUR Gençlik / öğrenci programlarını tara") {
             searchNewsCategory(9)
-        }, params(-1, dp(44), 0, 2, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 0))
         pageContent.addView(scanCard, params(-1, -2, 0, 2, 0, 12))
 
         val items = newsCandidates()
@@ -1574,7 +1574,7 @@ class CareerActivity : Activity() {
             filterRow.addView(chipButton(title, newsFilter == index) {
                 newsFilter = index
                 if (::newsResultsContainer.isInitialized) renderNewsResults(newsResultsContainer)
-            }, LinearLayout.LayoutParams(-2, dp(42)).apply {
+            }, LinearLayout.LayoutParams(-2, dp(Tok.MIN_TOUCH_DP)).apply {
                 setMargins(dp(3), dp(3), dp(3), dp(3))
             })
         }
@@ -1657,7 +1657,7 @@ class CareerActivity : Activity() {
             card.addView(primaryButton("Kaynağın asıl sayfasını aç  ↗") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     .onFailure { toast("Kaynak açılamadı.") }
-            }, params(-1, dp(46), 0, 8, 0, 0))
+            }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 8, 0, 0))
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
     }
@@ -1909,18 +1909,18 @@ class CareerActivity : Activity() {
             status.addView(button("Bulunan resmî P94 · TABLO-1 belgesini aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP94Url))) }
                     .onFailure { toast("P94 kılavuzu açılamadı.") }
-            }, params(-1, dp(44), 0, 6, 0, 0))
+            }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 6, 0, 0))
         }
         if (hasP93Guide) {
             status.addView(button("Bulunan resmî P93 · TABLO-2 belgesini aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP93Url))) }
                     .onFailure { toast("P93 kılavuzu açılamadı.") }
-            }, params(-1, dp(44), 0, 6, 0, 0))
+            }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 6, 0, 0))
         }
         status.addView(button("ÖSYM takvimini aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
                 .onFailure { toast("ÖSYM sayfası açılamadı.") }
-        }, params(-1, dp(44), 0, 6, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 6, 0, 0))
         content.addView(status, params(-1, -2, 0, 0, 0, 12))
 
         fun addCadreSection(title: String, subtitle: String, entries: List<CareerCadreEntry>) {
@@ -1999,11 +1999,11 @@ class CareerActivity : Activity() {
         routes.addView(button("Adalet Bakanlığı duyurusunu aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.ADALET_2026_NOTICE_URL))) }
                 .onFailure { toast("Adalet Bakanlığı duyurusu açılamadı.") }
-        }, params(-1, dp(44), 0, 6, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 6, 0, 0))
         routes.addView(button("İŞKUR açık iş sistemini aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.ISKUR_URL))) }
                 .onFailure { toast("İŞKUR sayfası açılamadı.") }
-        }, params(-1, dp(44), 0, 5, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 5, 0, 0))
         content.addView(routes, params(-1, -2, 0, 10, 0, 12))
 
         val historicScore = panel()
@@ -2012,19 +2012,19 @@ class CareerActivity : Activity() {
         historicScore.addView(button("2026/1 ortaöğretim kadro tablosunu aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_TABLE_URL))) }
                 .onFailure { toast("ÖSYM tablosu açılamadı.") }
-        }, params(-1, dp(44), 0, 6, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 6, 0, 0))
         historicScore.addView(button("2026/1 ön lisans kadro tablosunu aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_TABLE_URL))) }
                 .onFailure { toast("ÖSYM tablosu açılamadı.") }
-        }, params(-1, dp(44), 0, 5, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 5, 0, 0))
         historicScore.addView(button("P94 ortaöğretim nitelik kodlarını aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL))) }
                 .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
-        }, params(-1, dp(44), 0, 5, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 5, 0, 0))
         historicScore.addView(button("P93 ön lisans program kodlarını aç") {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL))) }
                 .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
-        }, params(-1, dp(44), 0, 5, 0, 0))
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 5, 0, 0))
         content.addView(historicScore, params(-1, -2, 0, 0, 0, 12))
 
         val dialog = AlertDialog.Builder(this)
@@ -2636,7 +2636,7 @@ class CareerActivity : Activity() {
                 savedFilter = index
                 savedPage = 0
                 showSaved(parent)
-            }, LinearLayout.LayoutParams(-2, dp(42)).apply {
+            }, LinearLayout.LayoutParams(-2, dp(Tok.MIN_TOUCH_DP)).apply {
                 setMargins(dp(3), dp(2), dp(3), dp(2))
             })
         }
@@ -2661,7 +2661,7 @@ class CareerActivity : Activity() {
             emptyCard.addView(label("Bu bölüm şu an boş", 15f, true, primaryText))
             emptyCard.addView(label(message, 12f, false, muted))
             if (savedFilter == 0 || savedFilter == 2) {
-                emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(46), 0, 8, 0, 0))
+                emptyCard.addView(button("İlanları keşfet") { renderPage(0) }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 8, 0, 0))
             }
             parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
@@ -2721,21 +2721,21 @@ class CareerActivity : Activity() {
             val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
-            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(3), 0) })
+            }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply { setMargins(0, 0, dp(3), 0) })
             actions.addView(button("İlanı aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     .onFailure { toast("İlan bağlantısı açılamadı.") }
-            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(3), 0, dp(3), 0) })
+            }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply { setMargins(dp(3), 0, dp(3), 0) })
             actions.addView(button("Sil") { confirmDeleteJob(url, title) },
-                LinearLayout.LayoutParams(0, dp(46), 0.6f).apply { setMargins(dp(3), 0, 0, 0) })
+                LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 0.6f).apply { setMargins(dp(3), 0, 0, 0) })
             card.addView(actions)
             val followActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             followActions.addView(button(if (followUpAt > 0L) "Hatırlatmayı düzenle" else "Takip hatırlatması") {
                 chooseFollowUpReminder(url, title, status)
-            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(0, dp(4), dp(3), 0) })
+            }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply { setMargins(0, dp(4), dp(3), 0) })
             followActions.addView(button(if (note.isBlank()) "Not ekle" else "Notu düzenle") {
                 editJobNote(url, title, note)
-            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), dp(4), 0, 0) })
+            }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply { setMargins(dp(3), dp(4), 0, 0) })
             card.addView(followActions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 7))
         }
@@ -2784,10 +2784,10 @@ class CareerActivity : Activity() {
             actions.addView(button("İlanı aç") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     .onFailure { toast("İlan bağlantısı açılamadı.") }
-            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(4), 0) })
+            }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply { setMargins(0, 0, dp(4), 0) })
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
-            }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(4), 0, 0, 0) })
+            }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply { setMargins(dp(4), 0, 0, 0) })
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
