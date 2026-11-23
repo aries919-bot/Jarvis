@@ -335,9 +335,19 @@ class CareerActivity : Activity() {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
         val savedListingFilter = prefs.getInt("career_filter", 0)
-        category.setSelection(
-            CareerListingCategoryMap.restoreStoredPosition(savedListingFilter).coerceIn(0, filters.lastIndex)
-        )
+        val listingFilterMigrationApplied = prefs.getBoolean("career_filter_v2_migrated", false)
+        val initialListingFilter = CareerListingCategoryMap.initialPositionForStoredFilter(
+            savedListingFilter,
+            listingFilterMigrationApplied
+        ).coerceIn(0, filters.lastIndex)
+        category.setSelection(initialListingFilter)
+        if (!listingFilterMigrationApplied) {
+            // Persist the migrated index exactly once; do not reinterpret new index 6/7 next launch.
+            prefs.edit()
+                .putInt("career_filter", initialListingFilter)
+                .putBoolean("career_filter_v2_migrated", true)
+                .apply()
+        }
         category.background = rounded(surfaceRaised, borderColor)
         category.setPadding(dp(10), dp(2), dp(10), dp(2))
         category.contentDescription = "İlan kategorisini seç"
