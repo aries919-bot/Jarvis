@@ -335,16 +335,9 @@ class CareerActivity : Activity() {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
         val savedListingFilter = prefs.getInt("career_filter", 0)
-        // Older builds stored Haber-only kura/staj filters in the listings picker.
-        // Drop those legacy selections instead of silently routing the user to another tab.
-        val restoredListingFilter = when (savedListingFilter) {
-            in 0..5 -> savedListingFilter
-            6, 9 -> 0
-            7 -> 6
-            8 -> 7
-            else -> 0
-        }
-        category.setSelection(restoredListingFilter.coerceIn(0, filters.lastIndex))
+        category.setSelection(
+            CareerListingCategoryMap.restoreStoredPosition(savedListingFilter).coerceIn(0, filters.lastIndex)
+        )
         category.background = rounded(surfaceRaised, borderColor)
         category.setPadding(dp(10), dp(2), dp(10), dp(2))
         category.contentDescription = "İlan kategorisini seç"
@@ -510,8 +503,8 @@ class CareerActivity : Activity() {
         pageContent.addView(dailyResultsContainer, params(-1, -2, 0, 6, 0, 14))
         showDailyResults(dailyResultsContainer)
 
-        pageContent.addView(button("Kura, sınav ve sonuç duyurularını gör") {
-            renderPage(4)
+        pageContent.addView(button("Haber sekmesindeki kura ve sonuç arşivini aç") {
+            renderPage(5)
         }, params(-1, dp(48), 0, 0, 0, 12))
         queueFirstAutomaticScanIfNeeded()
     }
