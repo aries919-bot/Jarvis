@@ -245,7 +245,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         root.setBackgroundColor(Color.parseColor(Pal.BG))
 
         val main = Ui.column(this)
-        main.setPadding(dp(18), dp(40), dp(18), dp(10))
+        main.setPadding(dp(Tok.SCREEN_GUTTER_DP), dp(24), dp(Tok.SCREEN_GUTTER_DP), dp(12))
         val frame = FrameLayout(this)
         pages.add(buildHome())
         pages.add(buildVoice())
@@ -319,7 +319,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val top = Ui.row(this)
         top.addView(Ui.iconBtn(this, "jmenu", "Menü", 44, 24, Pal.TEXT) { openSide() })
         val titleCol = Ui.column(this)
-        val title = Ui.text(this, "A.R.I.E.S", 22f, Pal.WHITE, true)
+        val title = Ui.text(this, "A.R.I.E.S", 22f, Pal.ACCENT, true)
         title.setTypeface(title.typeface, android.graphics.Typeface.BOLD)
         title.letterSpacing = 0.12f
         title.gravity = Gravity.CENTER_HORIZONTAL
@@ -394,6 +394,25 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         panel.post(upd)
         col.addView(homeMid, LinearLayout.LayoutParams(-1, 0, 1f))
 
+        // Hızlı erişim: yalnızca main dalında gerçekten mevcut ekranlara yönlendir.
+        val quickScroll = HorizontalScrollView(this)
+        quickScroll.isHorizontalScrollBarEnabled = false
+        quickScroll.overScrollMode = View.OVER_SCROLL_NEVER
+        val quickRow = Ui.row(this)
+        listOf(
+            "Sesli asistan" to 1,
+            "Görevler" to 2,
+            "Dosyalar" to 3,
+            "Ayarlar" to 4
+        ).forEach { (label, page) ->
+            quickRow.addView(Ui.chip(this, label, false) { showPage(page) })
+        }
+        quickScroll.addView(quickRow)
+        val quickLp = LinearLayout.LayoutParams(-1, -2)
+        quickLp.topMargin = dp(4)
+        quickLp.bottomMargin = dp(4)
+        col.addView(quickScroll, quickLp)
+
         // Alt sıra: artı, yazı kutusu, hoparlör, mikrofon / gönder
         val bar = Ui.row(this)
         bar.setPadding(0, dp(8), 0, 0)
@@ -419,8 +438,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         bar.addView(composer, clp)
         speakBtn = Ui.iconBtn(this, "jspeaker", "Ses", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { speakerTap() }
         bar.addView(speakBtn)
-        homeMic = Ui.iconBtn(this, "jmic", "Mikrofon", 44, 22, "#000000", Pal.WHITE, null) { micOrSend() }
-        val mlp = LinearLayout.LayoutParams(dp(44), dp(44))
+        homeMic = Ui.iconBtn(this, "jmic", "Mikrofon", 48, 22, Pal.ON_ACCENT, Pal.ACCENT, null) { micOrSend() }
+        val mlp = LinearLayout.LayoutParams(dp(Tok.MIN_TOUCH_DP), dp(Tok.MIN_TOUCH_DP))
         mlp.leftMargin = dp(8)
         homeMic.layoutParams = mlp
         bar.addView(homeMic)
