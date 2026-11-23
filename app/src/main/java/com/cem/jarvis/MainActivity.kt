@@ -108,13 +108,6 @@ Yanıtı yalnızca şu JSON olarak ver: {"command":"...","reply":"..."}
 Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. Aksi halde command boş olsun, reply kısa ve doğal Türkçe bir cevap olsun (en fazla 3 cümle). Yıldız, başlık gibi biçimlendirme kullanma; cevap sesli okunacak. Sıcak ve samimi ol.
 """.trimIndent()
 
-    private val ABOUT = """
-Aries telefonda çalışır. Sohbetler telefonda, hafıza hem telefonda hem Aries Bulut'ta saklanır. Hafıza komutları: hatırla: x (sormadan kaydeder), notlarım, notlarda ara: x, unut: x, unut hepsi, profilim: x. Kart, şifre, kimlik kaydedilmez. gizli: ile başlayan mesaj buluta kaydedilmez.
-İnternetsiz: saat, tarih, batarya, depolama, alarm, zamanlayıcı, hatırlatmalar, takvim etkinliği, arama (onaylı), WhatsApp ve SMS taslağı, müzik ve ses, uygulama açma, ayar sayfaları, fener, kamera, hesap makinesi, yol tarifi, görevler, hafıza, dosya yönetimi.
-İnternetle: yapay zekâ sohbeti, internet araştırması (kaynaklı), çeviri, haber, borsa.
-Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uykudan uyandırması işletim sistemi tarafından kısıtlanmıştır.
-""".trimIndent()
-
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
 
@@ -325,7 +318,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         // Üst çubuk: menü, başlık + durum, bluetooth, ayarlar
         val top = Ui.row(this)
-        top.addView(Ui.iconBtn(this, "jmenu", "Menü", 44, 24, Pal.TEXT) { openSide() })
+        top.addView(Ui.iconBtn(this, "jmenu", "Menü", 48, 24, Pal.TEXT) { openSide() })
         val titleCol = Ui.column(this)
         val title = Ui.text(this, "A.R.I.E.S", 22f, Pal.WHITE, true)
         title.setTypeface(title.typeface, android.graphics.Typeface.BOLD)
@@ -336,20 +329,20 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         orbStatus.gravity = Gravity.CENTER_HORIZONTAL
         titleCol.addView(orbStatus, LinearLayout.LayoutParams(-1, -2))
         top.addView(titleCol, LinearLayout.LayoutParams(0, -2, 1f))
-        top.addView(Ui.iconBtn(this, "jbt", "Bluetooth", 44, 22, Pal.TEXT) {
+        top.addView(Ui.iconBtn(this, "jbt", "Bluetooth", 48, 22, Pal.TEXT) {
             showOutputPicker()
         })
         val filmBtn = Ui.text(this, "▶", 20f, Pal.TEXT)
         filmBtn.gravity = Gravity.CENTER
         filmBtn.contentDescription = "Film ve Dizi"
         filmBtn.setOnClickListener { startActivity(android.content.Intent(this, com.cem.jarvis.media.FilmDiziActivity::class.java)) }
-        top.addView(filmBtn, LinearLayout.LayoutParams(dp(44), dp(44)))
-        top.addView(Ui.iconBtn(this, "jgear", "Ayarlar", 44, 22, Pal.TEXT) { showPage(4) })
+        top.addView(filmBtn, LinearLayout.LayoutParams(dp(48), dp(48)))
+        top.addView(Ui.iconBtn(this, "jgear", "Ayarlar", 48, 22, Pal.TEXT) { showPage(4) })
         col.addView(top, LinearLayout.LayoutParams(-1, -2))
 
         // Ekranda gösterilmeyen ama kodun başka yerlerinin kullandığı görünümler
         clockTv = Ui.text(this, "", 18f)
-        dateTv = Ui.text(this, "", 11f, Pal.MUTED)
+        dateTv = Ui.text(this, "", Tok.T_CAPTION, Pal.MUTED)
         wave = WaveView(this)
 
         // Orta alan: sohbet (gizli) + küre
@@ -361,7 +354,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatScroll.visibility = View.GONE
         chatScroll.alpha = 0f
         homeMid.addView(chatScroll, FrameLayout.LayoutParams(-1, -1))
-        holo = HoloView(this)
+        holo = HoloView(this).apply {
+            contentDescription = "Aries asistan küresi; aşağı çekerek sohbeti aç"
+        }
         homeMid.addView(holo, FrameLayout.LayoutParams(dp(ORB_DP), dp(ORB_DP), Gravity.CENTER))
         homeMid.addOnLayoutChangeListener { _, _, tp, _, bt, _, otp, _, obt ->
             if (chatOpen && (bt - tp) != (obt - otp)) holo.post {
@@ -400,6 +395,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         panel.gravity = Gravity.CENTER_HORIZONTAL
         val pc = android.graphics.Color.parseColor(Pal.CARD2); val pd = android.graphics.Color.rgb((android.graphics.Color.red(pc) * 0.6f).toInt(), (android.graphics.Color.green(pc) * 0.6f).toInt(), (android.graphics.Color.blue(pc) * 0.6f).toInt()); val pbg = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(pc, pd)); pbg.cornerRadius = dp(20).toFloat(); pbg.setStroke(dp(1), android.graphics.Color.parseColor(Pal.LINE))
         panel.background = pbg
+        panel.contentDescription = "Yaklaşan hatırlatmalar ve saat bilgisi"
         panel.setPadding(dp(24), dp(14), dp(24), dp(14)); panel.elevation = dp(10).toFloat()
         val pt1 = android.widget.TextView(this); pt1.textSize = 20f; pt1.setTextColor(android.graphics.Color.parseColor(Pal.WHITE)); pt1.gravity = Gravity.CENTER_HORIZONTAL; pt1.maxLines = 2
         val pt2 = android.widget.TextView(this); pt2.textSize = 12f; pt2.setTextColor(android.graphics.Color.parseColor(Pal.MUTED)); pt2.gravity = Gravity.CENTER_HORIZONTAL
@@ -435,7 +431,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         // Alt sıra: artı, yazı kutusu, hoparlör, mikrofon / gönder
         val bar = Ui.row(this)
         bar.setPadding(0, dp(8), 0, 0)
-        bar.addView(Ui.iconBtn(this, "jplus", "Ekle", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { plusMenu() })
+        bar.addView(Ui.iconBtn(this, "jplus", "Ekle", 48, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { plusMenu() })
         composer = Ui.input(this, "Aries'e yaz...")
         composer.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         composer.setHorizontallyScrolling(false)
@@ -455,10 +451,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val clp = LinearLayout.LayoutParams(0, -2, 1f)
         clp.setMargins(dp(8), 0, dp(8), 0)
         bar.addView(composer, clp)
-        speakBtn = Ui.iconBtn(this, "jspeaker", "Ses", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { speakerTap() }
+        speakBtn = Ui.iconBtn(this, "jspeaker", "Ses", 48, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { speakerTap() }
         bar.addView(speakBtn)
-        homeMic = Ui.iconBtn(this, "jmic", "Mikrofon", 44, 22, "#000000", Pal.WHITE, null) { micOrSend() }
-        val mlp = LinearLayout.LayoutParams(dp(44), dp(44))
+        homeMic = Ui.iconBtn(this, "jmic", "Mikrofon", 48, 22, "#000000", Pal.WHITE, null) { micOrSend() }
+        val mlp = LinearLayout.LayoutParams(dp(48), dp(48))
         mlp.leftMargin = dp(8)
         homeMic.layoutParams = mlp
         bar.addView(homeMic)
@@ -569,6 +565,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         }
     }
 
+    @android.annotation.TargetApi(31)
     private fun showOutputPicker() {
         val am = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
         val sdk = android.os.Build.VERSION.SDK_INT
@@ -598,10 +595,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         if (sdk >= 31) { names.add("Varsayılana dön (Bluetooth)"); acts.add { am.clearCommunicationDevice(); say("Ses varsayılan çıkışa döndü.") } }
         names.add("Bluetooth ayarlarını aç")
         acts.add { safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS), "Bluetooth ayarları açılamadı.") }
-        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; val gd = android.graphics.drawable.GradientDrawable(); gd.setColor(android.graphics.Color.parseColor("#12151F")); gd.cornerRadius = 48f; box.background = gd; box.setPadding(56, 40, 56, 24)
+        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; box.background = Ui.rounded(Pal.CARD, Pal.LINE, dp(Tok.R_CARD + 6).toFloat()); box.setPadding(dp(22), dp(18), dp(22), dp(10))
         val dlg = android.app.AlertDialog.Builder(this).setView(box).create()
-        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.WHITE); ttl.textSize = 18f; box.addView(ttl)
-        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor("#C9CEDB")); tv.textSize = 16f; tv.setPadding(0, 32, 0, 32); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
+        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.parseColor(Pal.WHITE)); ttl.textSize = Tok.T_TITLE; ttl.setPadding(0, 0, 0, dp(6)); box.addView(ttl)
+        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor(Pal.TEXT)); tv.textSize = 16f; tv.minHeight = dp(Tok.MIN_TOUCH_DP); tv.gravity = Gravity.CENTER_VERTICAL; tv.setPadding(0, dp(10), 0, dp(10)); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
         dlg.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT)); dlg.show()
     }
 
@@ -866,18 +863,45 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun buildSettings(): View {
         val col = Ui.column(this)
-        add(col, Ui.text(this, "Ayarlar", 20f, Pal.WHITE))
+        add(col, Ui.text(this, "Ayarlar", 22f, Pal.WHITE))
 
-        add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
+        add(col, Ui.section(this, "Aries Bulut bağlantısı"))
+        add(col, Ui.card(this, "Bulut anahtarı cihazında Android Keystore ile şifrelenir. Anahtarını kimseyle paylaşma."))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
-        add(col, Ui.button(this, "Kaydet") { saveSettings() })
+        val keyStatus = when {
+            CloudKeyStore.isEncrypted(this) -> "Anahtar Android Keystore ile şifrelenmiş olarak saklanıyor."
+            CloudKeyStore.hasLegacyKey(this) -> "Eski anahtar okunabiliyor ancak henüz şifrelenemedi. Kaydet düğmesiyle yeniden dene."
+            else -> "Henüz bir Bulut anahtarı kaydedilmedi."
+        }
+        add(col, Ui.text(this, keyStatus, 12f, if (CloudKeyStore.hasLegacyKey(this) && !CloudKeyStore.isEncrypted(this)) Pal.AMBER else Pal.MUTED))
+        add(col, Ui.button(this, "Güvenli kaydet") { saveSettings() })
 
-        add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
-        add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
+        add(col, Ui.section(this, "Bildirim erişimi"))
+        add(col, Ui.card(this, "Aries'in desteklenen bildirimleri okuyabilmesi için Android'in bildirim erişimi izni gerekir. İzin vermek istemiyorsan bu adımı atlayabilirsin."))
+        add(col, Ui.button(this, "Bildirim erişimi ayarlarını aç") {
+            safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.")
+        })
 
-        add(col, Ui.text(this, "Hakkında", 14f, Pal.MUTED))
-        add(col, Ui.card(this, ABOUT))
+        addSettingsInfoSection(col, "Gizlilik ve veriler",
+            "Sohbet geçmişi telefonunda saklanır. Hafıza, cihazında ve etkinse Aries Bulut'ta tutulabilir. Kart, parola veya kimlik bilgisi kaydetme. 'gizli:' ile başlayan mesajlar Bulut'a gönderilmez.")
+        addSettingsInfoSection(col, "Hafıza komutları",
+            "• hatırla: not — yeni not ekler\n• notlarım — kayıtlı notları gösterir\n• notlarda ara: kelime — notlarda arar\n• unut: not — seçilen notu siler\n• unut hepsi — tüm notları siler\n• profilim: bilgi — profil bilgisi ekler")
+        addSettingsInfoSection(col, "İnternetsiz kullanılabilenler",
+            "Saat ve tarih • batarya ve depolama • alarm, zamanlayıcı ve hatırlatmalar • takvim etkinliği • onaylı arama • WhatsApp ve SMS taslağı • müzik ve ses • uygulama açma • fener ve kamera • hesap makinesi • yol tarifi • görevler • hafıza ve dosya yönetimi")
+        addSettingsInfoSection(col, "İnternet gerektirenler",
+            "Yapay zekâ sohbeti • kaynaklı internet araştırması • çeviri • haberler • altın, döviz ve hisse takibi")
+        addSettingsInfoSection(col, "Arka plan ve pil",
+            "MIUI pil optimizasyonu, uygulama tamamen kapalıyken 'Hey Jarvis' özelliğinin arka planda uyanmasını kısıtlayabilir. Daha kararlı çalışma için Android pil ayarlarında Aries'i kısıtlamasız kullanıma al.")
         return scrollOf(col)
+    }
+
+    private fun addSettingsInfoSection(parent: LinearLayout, title: String, body: String) {
+        add(parent, Ui.section(this, title))
+        val card = Ui.card(this, body).apply {
+            textSize = 13f
+            setLineSpacing(dp(3).toFloat(), 1.05f)
+        }
+        add(parent, card)
     }
 
     private fun renderFacts(box: LinearLayout) {
@@ -900,7 +924,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun keyField(col: LinearLayout, hintText: String, prefKey: String) {
         val e = Ui.input(this, hintText)
         e.setSingleLine()
-        e.setText(store.str(prefKey))
+        e.setText(if (prefKey == "bulut") CloudKeyStore.read(this) else store.str(prefKey))
         e.transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
         keyFields[prefKey] = e
         val row = Ui.row(this)
@@ -918,8 +942,18 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun saveSettings() {
-        for ((k, v) in keyFields) store.put(k, v.text.toString().trim())
-        say("Ayarlar kaydedildi.")
+        for ((key, field) in keyFields) {
+            val value = field.text.toString().trim()
+            val saved = if (key == "bulut") CloudKeyStore.save(this, value) else {
+                store.put(key, value)
+                true
+            }
+            if (!saved) {
+                say("Bulut anahtarı Android Keystore ile güvenli biçimde saklanamadı. Cihaz güvenliğini kontrol edip tekrar dene.")
+                return
+            }
+        }
+        say("Ayarlar güvenli biçimde kaydedildi.")
     }
 
     private fun flagLabel(flag: String): String =
@@ -964,9 +998,17 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             }
             p.addView(r, LinearLayout.LayoutParams(-1, -2))
         }
+        add(p, Ui.button(this, "🎙  Sesli Asistan") {
+            closeSide()
+            showPage(1)
+        })
         add(p, Ui.button(this, "💼  İş ve Kariyer") {
             closeSide()
             startActivity(Intent(this, CareerActivity::class.java))
+        })
+        add(p, Ui.button(this, "📈  Piyasa Merkezi") {
+            closeSide()
+            startActivity(Intent(this, FinanceActivity::class.java))
         })
         val ttl = Ui.text(this, "Sohbetler", 20f, Pal.WHITE)
         ttl.setPadding(0, dp(14), 0, 0)
@@ -1048,7 +1090,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun oyGonder(v: Int, t: String) {
-        val tk = store.str("bulut")
+        val tk = CloudKeyStore.read(applicationContext)
         if (tk.isBlank()) return
         Thread { Ai.oyVer(tk, v, t) }.start()
     }
@@ -1478,7 +1520,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
-        val flm = Regex("^(film|dizi) (ara|bul)[:,]? +(.+)$").find(s); if (flm != null) { val tk = store.str("bulut"); if (tk.isBlank()) { say("Aries Bulut anahtarı yok."); return true }; showThinking(); thread { try { val r = Ai.film(tk, flm.groupValues[3]); runOnUiThread { hideThinking(); say(r) } } catch (e: Exception) { runOnUiThread { hideThinking(); say(Ai.friendly(e)) } } }; return true }
+        val flm = Regex("^(film|dizi) (ara|bul)[:,]? +(.+)$").find(s); if (flm != null) { val tk = CloudKeyStore.read(applicationContext); if (tk.isBlank()) { say("Aries Bulut anahtarı yok."); return true }; showThinking(); thread { try { val r = Ai.film(tk, flm.groupValues[3]); runOnUiThread { hideThinking(); say(r) } } catch (e: Exception) { runOnUiThread { hideThinking(); say(Ai.friendly(e)) } } }; return true }
         val res = Regex("^araştır[:,]?\\s+(.+)$").find(s)
         if (res != null) {
             doResearch(res.groupValues[1])
@@ -1511,7 +1553,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         return false
     }
 
-    private fun hasAiKey(): Boolean = store.str("bulut").isNotBlank() || Ai.ALL.any { store.str(keyName(it)).isNotBlank() }
+    private fun hasAiKey(): Boolean = CloudKeyStore.read(applicationContext).isNotBlank() || Ai.ALL.any { store.str(keyName(it)).isNotBlank() }
     private fun keyName(who: String): String = if (who == "gemini") "key" else who
     private fun providerKeys(): Map<String, String> = Ai.ALL.associateWith { store.str(keyName(it)) }
     private fun providerModels(): Map<String, String> = mapOf(
@@ -1534,7 +1576,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         thread {
             try {
                 uiHandler.post { orbThink(4) }
-                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), SYS, hist)
+                val raw = Ai.chat(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to CloudKeyStore.read(applicationContext)), providerModels(), SYS, hist)
                 val (cmd, reply) = Ai.parseReply(raw)
                 runOnUiThread {
                     hideThinking()
@@ -1557,7 +1599,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         thread {
             try {
                 uiHandler.post { orbThink(5) }
-                var hz = "ok"; val tk = store.str("bulut"); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to store.str("bulut")), providerModels(), q)
+                var hz = "ok"; val tk = CloudKeyStore.read(applicationContext); val a = (if (tk.isNotBlank()) try { Ai.hizli(tk, q) } catch (e: Exception) { hz = e.message ?: "hata"; null } else { hz = "anahtar yok"; null }) ?: Ai.research(listOf("bulut") + providerOrder(), providerKeys() + ("bulut" to CloudKeyStore.read(applicationContext)), providerModels(), q)
                 runOnUiThread {
                     hideThinking()
                     say(a.text.ifEmpty { "Sonuç bulamadım." }, a.text, a.sources.take(5).map { it.title to it.url }, ai = true)
@@ -1625,8 +1667,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun fetchWatchlist(speak: Boolean) {
         val list = store.watch()
-        val token = store.str("finnhub")
-        if (token.isBlank() || list.isEmpty()) return
+        val token = FinanceKeyStore.read(this)
+        if (list.isEmpty()) {
+            setStockText("İzlenen hisse yok. Piyasa Merkezi'nden hisse ekleyebilirsin.")
+            return
+        }
+        if (token.isBlank()) {
+            setStockText("Hisse listesi kayıtlı. Fiyatları görmek için Piyasa Merkezi'nden Finnhub anahtarını güvenli biçimde kaydet.")
+            return
+        }
         thread {
             val lines = list.map { sym -> try { Net.quote(sym, token) } catch (e: Exception) { "$sym: hata" } }
             runOnUiThread { setStockText(lines.joinToString("\n")) }
@@ -1701,7 +1750,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
-        val tk = store.str("bulut")
+        val tk = CloudKeyStore.read(applicationContext)
         val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
         val unutN = Regex("^unut\\s*(?::\\s*|\\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
         if (unutN != null) {

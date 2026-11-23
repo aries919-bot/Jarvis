@@ -202,13 +202,29 @@ object CareerEmployerResearcher {
         }
     }
 
-    private fun runSearch(query: String): List<CareerResearchLink> {
+    private fun runSearch(query: String, googleApiKey: String): List<CareerResearchLink> {
         if (query.isBlank()) return emptyList()
-        val hits = runCatching { Net.webSearch(query, 4) }.getOrElse {
-            runCatching { Net.webSearchBing(query, 4) }.getOrDefault(emptyList())
+        val webHits = runCatching { Net.webSearch(query, 4) }.getOrDefault(emptyList())
+            .ifEmpty { runCatching { Net.webSearchBing(query, 4) }.getOrDefault(emptyList()) }
+        val hits = if (webHits.isNotEmpty() || googleApiKey.isBlank()) {
+            webHits
+        } else {
+            // Google Search grounding is a final fallback. Only cited HTTPS source links
+            // are kept; generated prose without a source URL is never a company record.
+            runCatching {
+                Ai.googleSearch(googleApiKey, query).sources.mapNotNull { source ->
+                    val url = source.url.trim()
+                    if (!url.startsWith("https://", true) || source.title.isBlank()) null
+                    else Net.Hit(
+                        source.title.take(220),
+                        url,
+                        "Google Arama kaynaklı şirket araştırma izi. Ayrıntılar doğrudan kaynakta doğrulanmalı."
+                    )
+                }
+            }.getOrDefault(emptyList())
         }
         return hits.asSequence()
-            .filter { it.url.startsWith("https://") }
+            .filter { it.url.startsWith("https://", true) }
             .distinctBy { it.url.substringBefore("#").lowercase(Locale.ROOT) }
             .take(4)
             .map { CareerResearchLink(it.title.take(220), it.url, it.snippet.take(700)) }
@@ -228,7 +244,7 @@ object CareerEmployerResearcher {
         }
     }
 
-    fun research(hit: Net.Hit): CareerEmployerResearch {
+    fun research(hit: Net.Hit, googleApiKey: String = ""): CareerEmployerResearch {
         val uri = runCatching { URI(hit.url) }.getOrNull()
         val host = uri?.host?.lowercase(Locale.ROOT)?.removePrefix("www.").orEmpty()
         val page = readPage(hit.url)
@@ -273,11 +289,11 @@ object CareerEmployerResearcher {
         } else {
             "\"" + hit.title.take(140) + "\" \"" + host + "\" ilan işveren şirket resmi kaynak"
         }
-        val companyResults = runSearch(companyQuery)
+        val companyResults = runSearch(companyQuery, googleApiKey)
         val registryQuery = employer?.let {
             "\"" + it + "\" site:ticaretsicil.gov.tr OR site:ticaretsicilgazetesi.gov.tr MERSİS şirket kaydı"
         }
-        val registryResults = registryQuery?.let(::runSearch).orEmpty()
+        val registryResults = registryQuery?.let { runSearch(it, googleApiKey) }.orEmpty()
         val limitations = if (page.status == null) {
             "İlan sayfası otomatik olarak okunamadı; oturum, bot koruması veya bağlantı engeli olabilir. Sayfaya kullanıcı tarafından manuel bakılmalı."
         } else if (page.status !in 200..299) {

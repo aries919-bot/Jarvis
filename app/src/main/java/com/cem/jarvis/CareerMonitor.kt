@@ -952,6 +952,7 @@ object CareerSearchEngine {
         if (value.contains("bing") && (value.contains("okunamad") || value.contains("parse") || value.contains("sonuç bağlantıları"))) {
             issues += "Bing sonuç sayfası okunamadı"
         } else if (value.contains("bing")) issues += "Bing geçici erişim sorunu"
+        if (value.contains("gemini")) issues += "Gemini Google Arama bağlantısı/kotası"
         if (issues.isEmpty()) issues += "bazı arama servisleri yanıt vermedi"
         return "Bazı arama servislerinde geçici sorun: " + issues.take(3).joinToString(", ") +
             ". Sonuçlar eksik olabilir; daha sonra yeniden tarama yap."
@@ -1095,12 +1096,95 @@ object CareerSearchEngine {
         }
     }
 
-    /** Manuel aramada önce yetkili Aries Bulut araması denenir; HTML araması yedek olarak kalır. */
+    /**
+     * Converts only source links returned in Gemini Google Search grounding metadata.
+     * Plain model prose is never treated as a job result without a cited HTTPS page.
+     */
+    internal fun googleGroundedHits(answer: Ai.Answer): List<Net.Hit> {
+        val groundedSummary = answer.text.trim().take(900)
+        return answer.sources.asSequence()
+            .mapNotNull { source ->
+                val title = source.title.trim()
+                val url = source.url.trim()
+                val host = runCatching { java.net.URI(url).host }.getOrNull()
+                if (title.isBlank() || !url.startsWith("https://", true) || host.isNullOrBlank()) {
+                    null
+                } else {
+                    Net.Hit(
+                        title.take(220),
+                        url,
+                        groundedSummary.ifBlank {
+                            "Google Arama kaynaklı keşif bağlantısı. İçerik ve başvuru durumu orijinal sayfada doğrulanmalı."
+                        }
+                    )
+                }
+            }
+            .distinctBy { normalizedUrl(it.url) }
+            .take(12)
+            .toList()
+    }
+
+    private fun googleFallbackQuery(category: Int, role: String, city: String): String {
+        val year = Calendar.getInstance().get(Calendar.YEAR)
+        val focus = when (category) {
+            1 -> "kamu personel alımı KPSS ortaöğretim P94 lise tercih kadro"
+            2 -> "KPSS şartı aranmayan kamu sürekli işçi belediye İŞKUR alımı"
+            3, 4 -> "özel sektör ve büyük işveren açık pozisyon kariyer ilanı"
+            5 -> "ön lisans mezuniyeti sonrası elektrik teknikeri KPSS P93 kadro"
+            6 -> "noter kurası başvuru kuraya katılacak adaylar kura sonucu asıl yedek"
+            7 -> "günlük üretim depo vardiyalı işçi ve teknisyen ilanı"
+            8 -> "belediye ve yerel yönetim personel işçi alımı"
+            9 -> "üniversite öğrencisi staj ve gençlik programı"
+            else -> "kamu ve özel sektör açık iş ilanı personel alımı"
+        }
+        return "$role $city Türkiye $focus $year resmî kurum işveren başvuru şartları son başvuru tarihi"
+    }
+
+    private fun withGoogleGroundingFallback(
+        batch: CareerScanBatch,
+        query: String,
+        googleSearchKey: String,
+        city: String
+    ): CareerScanBatch {
+        // Avoid consuming a second search quota when cloud/HTML providers already found
+        // a useful list. One grounded query is the final fallback, not a per-query loop.
+        if (googleSearchKey.isBlank() || batch.hits.size >= 5) return batch
+        return try {
+            val answer = Ai.googleSearch(googleSearchKey, query)
+            val grounded = googleGroundedHits(answer).filter(::isEligibleSearchResult)
+            if (grounded.isEmpty()) {
+                batch.copy(
+                    failedQueries = batch.failedQueries + 1,
+                    totalQueries = batch.totalQueries + 1,
+                    errorMessages = (batch.errorMessages + "Gemini Google Arama: doğrulanabilir HTTPS kaynak bağlantısı dönmedi.").distinct().take(12)
+                )
+            } else {
+                val merged = deduplicateHits(batch.hits + grounded).sortedByDescending {
+                    CareerEligibility.relevance(it.title, it.snippet, city)
+                }
+                batch.copy(
+                    hits = merged,
+                    successfulQueries = batch.successfulQueries + 1,
+                    totalQueries = batch.totalQueries + 1
+                )
+            }
+        } catch (error: Exception) {
+            val detail = error.message?.take(150).orEmpty().ifBlank { error.javaClass.simpleName }
+            batch.copy(
+                failedQueries = batch.failedQueries + 1,
+                totalQueries = batch.totalQueries + 1,
+                errorMessages = (batch.errorMessages + "Gemini Google Arama: $detail").distinct().take(12)
+            )
+        }
+    }
+
+    /** Manuel aramada önce Aries Bulut ve HTML kaynakları; son aşamada kaynak gösterimli Google araması denenir. */
     fun searchBatch(
         category: Int,
         role: String,
         city: String,
-        cloudToken: String = ""
+        cloudToken: String = "",
+        googleSearchKey: String = ""
     ): CareerScanBatch {
         var cloud: CareerScanBatch? = null
         var cloudErrors = emptyList<String>()
@@ -1117,7 +1201,7 @@ object CareerSearchEngine {
             return cloud!!.copy(hits = deduplicateHits(cloudHits).take(60))
         }
         val extraErrors = cloudErrors + (cloud?.errorMessages.orEmpty())
-        return collect(
+        val collected = collect(
             queryList(category, role, city).take(12),
             90,
             city,
@@ -1126,6 +1210,12 @@ object CareerSearchEngine {
             cloud?.successfulQueries ?: 0,
             cloud?.failedQueries ?: 0,
             cloud?.totalQueries ?: 0
+        )
+        return withGoogleGroundingFallback(
+            collected,
+            googleFallbackQuery(category, role, city),
+            googleSearchKey,
+            city
         )
     }
 
@@ -1138,7 +1228,12 @@ object CareerSearchEngine {
         return batch.hits
     }
 
-    fun dailySearchBatch(role: String, city: String, cloudToken: String = ""): CareerScanBatch {
+    fun dailySearchBatch(
+        role: String,
+        city: String,
+        cloudToken: String = "",
+        googleSearchKey: String = ""
+    ): CareerScanBatch {
         var cloud: CareerScanBatch? = null
         var cloudErrors = emptyList<String>()
         if (cloudToken.isNotBlank()) {
@@ -1238,7 +1333,7 @@ object CareerSearchEngine {
             "site:manpower.com.tr $role $primaryCity",
             "site:tr.jooble.org $role $primaryCity"
         )
-        return collect(
+        val collected = collect(
             (profileQueries + kpssQueries + iskUrAndLocal + kuraQueries + employerQueries + platformQueries).distinct(),
             240,
             city,
@@ -1247,6 +1342,12 @@ object CareerSearchEngine {
             cloud?.successfulQueries ?: 0,
             cloud?.failedQueries ?: 0,
             cloud?.totalQueries ?: 0
+        )
+        return withGoogleGroundingFallback(
+            collected,
+            googleFallbackQuery(0, role, city),
+            googleSearchKey,
+            city
         )
     }
 
@@ -1899,7 +2000,7 @@ class CareerDailyWorker(context: Context, params: androidx.work.WorkerParameters
                 "career_place",
                 "Malatya, Battalgazi, Yeşilyurt, Elazığ, Adıyaman; servis/konaklama varsa Türkiye geneli"
             ).orEmpty()
-            val batch = CareerSearchEngine.dailySearchBatch(role, city, prefs.getString("bulut", "").orEmpty())
+            val batch = CareerSearchEngine.dailySearchBatch(role, city, prefs.getString("bulut", "").orEmpty(), prefs.getString("key", "").orEmpty())
             if (!batch.hasAnySuccessfulQuery) {
                 prefs.edit()
                     .putBoolean("career_monitor_is_running", false)

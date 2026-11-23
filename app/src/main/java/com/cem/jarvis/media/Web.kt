@@ -15,6 +15,8 @@ import android.widget.FrameLayout
 import android.net.Uri
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.RenderProcessGoneDetail
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -115,6 +117,7 @@ suspend fun webSearch(q: String, mediaType: String? = null): List<Item> = withCo
 fun WebDialog(query: String, onClose: () -> Unit) {
     var text by remember { mutableStateOf(query) }
     var wv by remember { mutableStateOf<WebView?>(null) }
+    var webViewGeneration by remember { mutableStateOf(0) }
     var custom by remember { mutableStateOf<View?>(null) }
     var cbk by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     fun go(t: String) {
@@ -136,13 +139,33 @@ fun WebDialog(query: String, onClose: () -> Unit) {
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = { go(text) }))
                 }
-                AndroidView(modifier = Modifier.weight(1f).fillMaxWidth(), factory = { c ->
+                key(webViewGeneration) {
+                    AndroidView(modifier = Modifier.weight(1f).fillMaxWidth(), factory = { c ->
                     WebView(c).apply {
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = false
                         webViewClient = object : WebViewClient() {
-                            override fun onPageFinished(v: WebView?, url: String?) { if (url != null) text = url }
+                            override fun onPageFinished(v: WebView?, url: String?) {
+                                if (url != null) text = url
+                            }
+
+                            @RequiresApi(26)
+                            override fun onRenderProcessGone(
+                                view: WebView,
+                                detail: RenderProcessGoneDetail
+                            ): Boolean {
+                                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                                view.stopLoading()
+                                view.destroy()
+                                wv = null
+                                cbk?.onCustomViewHidden()
+                                custom = null
+                                cbk = null
+                                text = "Web sayfası kapandı. Aramayı yeniden açabilirsin."
+                                webViewGeneration++
+                                return true
+                            }
                         }
                         webChromeClient = object : WebChromeClient() {
                             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) { custom = view; cbk = callback }
@@ -151,7 +174,8 @@ fun WebDialog(query: String, onClose: () -> Unit) {
                         wv = this
                         loadUrl("https://www.google.com/search?q=" + Uri.encode(query))
                     }
-                })
+                    })
+                }
             }
             custom?.let { v ->
                 AndroidView(modifier = Modifier.fillMaxSize(), factory = { c ->

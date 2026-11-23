@@ -1,0 +1,79 @@
+workflows:
+  aries-121-android:
+    name: Aries 1.21 — Android build, lint and unit tests
+    max_build_duration: 60
+    instance_type: linux_x2
+
+    environment:
+      vars:
+        JAVA_HOME: /usr/lib/jvm/java-1.17.0-openjdk-amd64
+        ANDROID_SDK_ROOT: /usr/local/share/android-sdk
+
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: is/kariyer-1-21-verified-search
+          include: true
+          source: true
+      cancel_previous_builds: true
+
+    scripts:
+      - name: Verify the Android toolchain
+        script: |
+          set -euo pipefail
+          test -x "$JAVA_HOME/bin/java"
+          test -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$ANDROID_SDK_ROOT/platform-tools/adb"
+          "$JAVA_HOME/bin/java" -version
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --list_installed | grep -F "platforms;android-34"
+
+      - name: Install and verify the same Gradle version as GitHub CI
+        script: |
+          set -euo pipefail
+          GRADLE_VERSION=8.9
+          GRADLE_SHA256=d725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab
+          GRADLE_DIR="$CM_BUILD_DIR/.ci/gradle"
+          GRADLE_ZIP="$CM_BUILD_DIR/.ci/gradle-${GRADLE_VERSION}-bin.zip"
+          mkdir -p "$GRADLE_DIR"
+          if [ ! -x "$GRADLE_DIR/gradle-${GRADLE_VERSION}/bin/gradle" ]; then
+            curl --fail --location --retry 3 \
+              "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
+              --output "$GRADLE_ZIP"
+            echo "$GRADLE_SHA256  $GRADLE_ZIP" | sha256sum --check
+            unzip -q "$GRADLE_ZIP" -d "$GRADLE_DIR"
+            rm -f "$GRADLE_ZIP"
+          fi
+          "$GRADLE_DIR/gradle-${GRADLE_VERSION}/bin/gradle" --version
+
+      - name: Configure Android SDK
+        script: |
+          set -euo pipefail
+          printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Run Android unit tests
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          "$CM_BUILD_DIR/.ci/gradle/gradle-8.9/bin/gradle" testDebugUnitTest --no-daemon
+
+      - name: Run Android Lint
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          "$CM_BUILD_DIR/.ci/gradle/gradle-8.9/bin/gradle" lintDebug --no-daemon
+
+      - name: Build installable debug APK
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          "$CM_BUILD_DIR/.ci/gradle/gradle-8.9/bin/gradle" assembleDebug --no-daemon
+          test -s app/build/outputs/apk/debug/app-debug.apk
+
+    artifacts:
+      - app/build/outputs/apk/debug/app-debug.apk
+      - app/build/reports/tests/testDebugUnitTest/**/*
+      - app/build/test-results/testDebugUnitTest/**/*
+      - app/build/reports/lint-results-debug.html
+      - app/build/outputs/mapping/debug/**/*

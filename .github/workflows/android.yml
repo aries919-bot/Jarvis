@@ -6,6 +6,9 @@ on:
   push:
     branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor, career-ui-dedup-separation, is/kamu-kariyer-arama-ayristirma, is/kadro-radari-ve-kpss-2026-2, is/kariyer-platform-derinlestirme, is/1-18-kariyer-guvenilirlik-ve-akilli-tarih, is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi, is/1-20-kariyer-ilan-dogrulama, is/1-20-tarih-ayristirma-duzeltmesi ]
 
+permissions:
+  contents: read
+
 concurrency:
   # Keep only the newest verification for a branch; obsolete commits should not occupy runners.
   group: android-apk-${{ github.ref }}
@@ -16,12 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Repository maintenance tool tests
+        run: python3 scripts/qa/test_repo_maintenance.py
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.9'
       - name: Imza dosyasi (opsiyonel)
@@ -40,10 +48,9 @@ jobs:
         run: gradle assembleDebug --no-daemon
         env:
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASS: ${{ secrets.KEY_PASS }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: aries-apk
           path: app/build/outputs/apk/debug/app-debug.apk

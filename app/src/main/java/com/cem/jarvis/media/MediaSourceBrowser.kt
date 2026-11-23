@@ -17,6 +17,8 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.RenderProcessGoneDetail
+import androidx.annotation.RequiresApi
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -109,19 +111,19 @@ private data class AriesTitleInfo(
     val source: String = "tmdb"
 )
 
-// Arama ekranı: Seekee gri teması
-private val AriesBg = Color(0xFF1E1E1E)
-private val AriesCard = Color(0xFF2B2B2B)
-private val AriesChip = Color(0xFF3C3C3C)
-private val AriesText = Color.White
-private val AriesBody = Color(0xFFE0E0E0)
-private val AriesMuted = Color(0xFFB0B0B0)
+// Arama ekranı: ortak koyu tema (Theme.kt)
+private val AriesBg = Ap.Bg
+private val AriesCard = Ap.Card2
+private val AriesChip = Ap.Raised
+private val AriesText = Ap.Text
+private val AriesBody = Ap.Text
+private val AriesMuted = Ap.Muted
 
 // İzleme sayfası: koyu tema
-private val AriesWatchBg = Color(0xFF0B0B0B)
-private val AriesWatchCard = Color(0xFF1C1C1E)
-private val AriesWatchChip = Color(0xFF262626)
-private val AriesWatchSel = Color(0xFF6E6E6E)
+private val AriesWatchBg = Ap.Bg
+private val AriesWatchCard = Ap.Card
+private val AriesWatchChip = Ap.Card2
+private val AriesWatchSel = Ap.AccentSel
 
 // TMDB anahtarı projede zaten varsa otomatik bulunur (BuildConfig).
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
@@ -612,6 +614,7 @@ fun MediaSourceBrowser(
                         color = AriesText,
                         fontSize = 32.sp,
                         modifier = Modifier
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                             .clickable {
                                 if (activeSite != null) {
                                     siteView?.stopLoading()
@@ -639,7 +642,7 @@ fun MediaSourceBrowser(
                             "Ara",
                             color = AriesText,
                             fontSize = 16.sp,
-                            modifier = Modifier.clickable { startSearch(searchText) }.padding(8.dp)
+                            modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { startSearch(searchText) }.padding(8.dp)
                         )
                     } else {
                         Column(Modifier.weight(1f)) {
@@ -662,7 +665,7 @@ fun MediaSourceBrowser(
                         Text(
                             "Yenile",
                             color = AriesText,
-                            modifier = Modifier.clickable { siteView?.reload() }.padding(6.dp)
+                            modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { siteView?.reload() }.padding(6.dp)
                         )
                     }
                 }
@@ -873,7 +876,7 @@ private fun AriesWatchScreen(
             Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(Color(0xFF151515))
+                .background(Ap.Card)
                 .padding(horizontal = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -881,7 +884,7 @@ private fun AriesWatchScreen(
                 "×",
                 color = AriesText,
                 fontSize = 34.sp,
-                modifier = Modifier.clickable { onBack() }.padding(end = 22.dp)
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { onBack() }.padding(end = 22.dp)
             )
             Text(
                 "Aries – Film ve Dizi",
@@ -901,16 +904,16 @@ private fun AriesWatchScreen(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFDCE5FF))
+                        .background(Ap.Accent)
                         .clickable { onPlayTrailer() }
                         .padding(horizontal = 28.dp, vertical = 16.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("▶", color = Color(0xFF10131D), fontSize = 18.sp)
+                        Text("▶", color = Ap.OnAccent, fontSize = 18.sp)
                         Spacer(Modifier.width(10.dp))
                         Text(
                             "Fragman sayfasını aç",
-                            color = Color(0xFF10131D),
+                            color = Ap.OnAccent,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -952,6 +955,7 @@ private fun AriesWatchScreen(
                                     Modifier
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(if (selected) AriesWatchSel else AriesWatchChip)
+                                        .defaultMinSize(minHeight = 48.dp)
                                         .clickable { onSelectSource(source) }
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
                                 ) {
@@ -1161,7 +1165,7 @@ private fun AriesFallbackCard(title: String, note: String, onWatch: () -> Unit) 
             Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp)
-                .height(46.dp)
+                .height(48.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(AriesChip)
                 .clickable { onWatch() },
@@ -1225,7 +1229,7 @@ private fun AriesSourceRow(name: String) {
             fontSize = 13.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).clickable(enabled = isTvMaze) {
+            modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp).clickable(enabled = isTvMaze) {
                 uriHandler.openUri("https://www.tvmaze.com")
             }
         )
@@ -1540,6 +1544,19 @@ private fun createAriesSearchWebView(
                     })();
                 """.trimIndent()
                 view.evaluateJavascript(js, null)
+            }
+
+            @RequiresApi(26)
+            override fun onRenderProcessGone(
+                view: WebView,
+                detail: RenderProcessGoneDetail
+            ): Boolean {
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                view.stopLoading()
+                view.destroy()
+                onLoading(false)
+                onStatus("Arama motoru sekmesi kapandı. Geri dönüp yeniden ara.")
+                return true
             }
         }
     }
@@ -1888,6 +1905,19 @@ private fun createAriesSiteWebView(
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val scheme = request?.url?.scheme ?: return false
                 return scheme != "http" && scheme != "https"
+            }
+
+            @RequiresApi(26)
+            override fun onRenderProcessGone(
+                view: WebView,
+                detail: RenderProcessGoneDetail
+            ): Boolean {
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                view.stopLoading()
+                view.destroy()
+                onLoading(false)
+                onStatus("Video kaynağının web sayfası kapandı. Kaynak listesinden tekrar aç.")
+                return true
             }
         }
     }

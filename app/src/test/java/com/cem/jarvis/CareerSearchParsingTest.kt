@@ -226,4 +226,34 @@ class CareerSearchParsingTest {
         assertFalse(CareerSourceCatalog.isTrustedUrl(hit.url))
     }
 
+    @Test
+    fun googleGroundingKeepsOnlyDistinctHttpsSourceLinks() {
+        val answer = Ai.Answer(
+            "Elektrik teknisyeni ve personel alımı için kaynak özeti.",
+            listOf(
+                Ai.Source("Resmî kurum personel duyurusu", "https://personel.example.gov.tr/ilan/7?utm_source=search"),
+                Ai.Source("Aynı duyuru", "https://personel.example.gov.tr/ilan/7?utm_source=other"),
+                Ai.Source("Güvensiz bağlantı", "http://example.gov.tr/ilan/8"),
+                Ai.Source("", "https://example.gov.tr/ilan/9")
+            )
+        )
+
+        val hits = CareerSearchEngine.googleGroundedHits(answer)
+
+        assertEquals(1, hits.size)
+        assertEquals("Resmî kurum personel duyurusu", hits.single().title)
+        assertTrue(hits.single().url.startsWith("https://"))
+        assertTrue(hits.single().snippet.contains("kaynak özeti"))
+    }
+
+    @Test
+    fun googleGroundingNeverTurnsUncitedModelTextIntoAResult() {
+        val answer = Ai.Answer(
+            "Şu kurum bugün teknisyen alımı yapıyor ve başvurular başladı.",
+            emptyList()
+        )
+
+        assertTrue(CareerSearchEngine.googleGroundedHits(answer).isEmpty())
+    }
+
 }

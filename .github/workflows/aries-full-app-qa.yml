@@ -1,0 +1,134 @@
+name: Aries Full Application QA
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ kariyer-modulu ]
+  push:
+    branches: [ kariyer-modulu ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aries-full-app-qa-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  static-unit-build:
+    name: Static audit, Android Lint, unit tests and APK build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.9'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Repository and QA reporter tests
+        run: python3 scripts/qa/test_repo_maintenance.py
+      - name: Run independent build checks
+        shell: bash
+        run: |
+          set +e
+          mkdir -p qa-output/static
+          gradle lintDebug --no-daemon
+          LINT_EXIT=$?
+          gradle testDebugUnitTest --no-daemon
+          UNIT_EXIT=$?
+          gradle assembleDebug --no-daemon
+          APK_EXIT=$?
+          printf '{"lintExit":%s,"unitExit":%s,"apkExit":%s}\n' "$LINT_EXIT" "$UNIT_EXIT" "$APK_EXIT" > qa-output/static/build-status.json
+          python3 scripts/qa/build_qa_report.py --repo-root . --qa-dir qa-output/static --out-dir qa-output/static/report --api-level "static"
+          REPORT_EXIT=$?
+          if [ "$LINT_EXIT" -ne 0 ] || [ "$UNIT_EXIT" -ne 0 ] || [ "$APK_EXIT" -ne 0 ] || [ "$REPORT_EXIT" -ne 0 ]; then
+            exit 1
+          fi
+      - name: Upload static and unit-test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aries-static-unit-qa
+          path: |
+            qa-output/static
+            app/build/reports
+            app/build/test-results
+            app/build/outputs/apk/debug
+          if-no-files-found: warn
+          retention-days: 30
+
+  emulator-ui-audit:
+    name: Full app UI audit · Android ${{ matrix.api-level }} · font ${{ matrix.font-scale }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api-level: 29
+            font-scale: "1.0"
+          - api-level: 33
+            font-scale: "1.0"
+          - api-level: 34
+            font-scale: "1.0"
+          - api-level: 35
+            font-scale: "1.3"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.9'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Enable Android emulator hardware acceleration
+        shell: bash
+        run: |
+          if [ -e /dev/kvm ]; then
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+            sudo udevadm control --reload-rules
+            sudo udevadm trigger --name-match=kvm
+            sudo chmod 666 /dev/kvm
+          fi
+          if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+            echo "KVM hardware acceleration is available."
+          else
+            echo "::warning::KVM is unavailable. Enabling the Android Emulator TCG software fallback."
+            echo "ANDROID_I_WANT_MY_TCG=yes" >> "$GITHUB_ENV"
+          fi
+      - name: Run Android emulator, navigate the app and collect evidence
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-boot-timeout: 900
+          disable-linux-hw-accel: auto
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            sh -c 'set +e; mkdir -p qa-output/ui; adb shell settings put system font_scale "${{ matrix.font-scale }}"; adb shell settings put global window_animation_scale 0; adb shell settings put global transition_animation_scale 0; adb shell settings put global animator_duration_scale 0; gradle connectedDebugAndroidTest --no-daemon; TEST_EXIT=$?; adb pull "/sdcard/Download/AriesQA/aries-ui-audit-api-${{ matrix.api-level }}.zip" qa-output/ui/; PULL_EXIT=$?; unzip -q "qa-output/ui/aries-ui-audit-api-${{ matrix.api-level }}.zip" -d qa-output/ui/bundle; UNZIP_EXIT=$?; adb logcat -d -v threadtime > qa-output/logcat.txt; adb shell dumpsys activity activities > qa-output/activities.txt; adb shell dumpsys meminfo com.cem.jarvis > qa-output/meminfo.txt; adb shell dumpsys gfxinfo com.cem.jarvis > qa-output/gfxinfo.txt; printf "{\"instrumentationExit\":%s,\"evidencePullExit\":%s,\"evidenceUnzipExit\":%s,\"apiLevel\":%s}\\n" "$TEST_EXIT" "$PULL_EXIT" "$UNZIP_EXIT" "${{ matrix.api-level }}" > qa-output/emulator-status.json; python3 scripts/qa/build_qa_report.py --repo-root . --qa-dir qa-output --out-dir qa-output/report --api-level "${{ matrix.api-level }}"; REPORT_EXIT=$?; test "$TEST_EXIT" -eq 0 && test "$PULL_EXIT" -eq 0 && test "$UNZIP_EXIT" -eq 0 && test "$REPORT_EXIT" -eq 0'
+      - name: Upload emulator evidence and full report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aries-full-app-qa-android-${{ matrix.api-level }}-font-${{ matrix.font-scale }}
+          path: |
+            qa-output
+            app/build/reports/androidTests
+            app/build/outputs/androidTest-results
+            app/build/outputs/apk
+            app/build/outputs/connected_android_test_additional_output
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,5 +1,6 @@
 package com.cem.jarvis
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -19,7 +20,7 @@ import java.util.Locale
 
 // ============================================================
 // Zamanlı hatırlatmalar. Tamamen telefonda çalışır, internet gerektirmez.
-// setAlarmClock: Doze modunda da tetiklenir, ek "tam alarm" izni gerektirmez.
+// Kesin alarm izni varsa setAlarmClock, yoksa pil dostu gecikmeli alarm kullanılır.
 // ============================================================
 object Reminders {
 
@@ -80,12 +81,24 @@ object Reminders {
         )
     }
 
+    @SuppressLint("MissingPermission")
     private fun schedule(ctx: Context, item: Item) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        am.setAlarmClock(
-            AlarmManager.AlarmClockInfo(item.time, openAppPending(ctx)),
-            firePending(ctx, item.id, item.text)
-        )
+        val operation = firePending(ctx, item.id, item.text)
+        val exactAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
+        if (exactAllowed) {
+            try {
+                am.setAlarmClock(AlarmManager.AlarmClockInfo(item.time, openAppPending(ctx)), operation)
+                return
+            } catch (_: SecurityException) {
+                // Fall back when exact-alarm access changes after the permission check.
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, item.time, operation)
+        } else {
+            am.set(AlarmManager.RTC_WAKEUP, item.time, operation)
+        }
     }
 
     fun add(ctx: Context, time: Long, text: String): Item {
@@ -201,9 +214,19 @@ object Reminders {
     }
 
     // Bildirim izni kapalıysa açıkça söyler; sessizce yutmaz.
-    fun warnIfDisabled(ctx: Context): String =
-        if (notificationsEnabled(ctx)) "" else
-            " Dikkat: Jarvis için bildirimler kapalı, hatırlatma görünmez. Ayarlardan bildirimleri aç."
+    fun warnIfDisabled(ctx: Context): String {
+        val warnings = ArrayList<String>()
+        if (!notificationsEnabled(ctx)) {
+            warnings += "Jarvis için bildirimler kapalı; hatırlatma bildirimi görünmeyebilir. Ayarlardan bildirimleri aç."
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!am.canScheduleExactAlarms()) {
+                warnings += "Kesin alarm izni kapalı; Android hatırlatmayı geciktirebilir. Ayarlardan kesin alarm iznini aç."
+            }
+        }
+        return if (warnings.isEmpty()) "" else " Dikkat: " + warnings.joinToString(" ")
+    }
 
     fun describe(time: Long): String {
         val now = Calendar.getInstance()
@@ -437,6 +460,11 @@ class ReminderReceiver : BroadcastReceiver() {
 // ============================================================
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        Reminders.restoreAll(ctx)
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            "android.intent.action.QUICKBOOT_POWERON" -> Reminders.restoreAll(ctx)
+            else -> return
+        }
     }
 }

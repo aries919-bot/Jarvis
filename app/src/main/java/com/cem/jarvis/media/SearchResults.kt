@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -45,7 +47,12 @@ fun SearchResultCard(item: Item, onOpen: () -> Unit) {
 
     Column(
         Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF1B1E2B)).clickable(onClick = onOpen).padding(16.dp)
+            .background(Color(0xFF1B1E2B))
+            .clickable(onClick = onOpen)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "${item.label}, ${meta.ifBlank { if (isMovie) "Film" else "TV dizisi" }}. Ayrıntıları aç"
+            }
+            .padding(16.dp)
     ) {
         Row {
             Column(Modifier.weight(1f).padding(end = 12.dp)) {

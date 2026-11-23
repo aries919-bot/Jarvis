@@ -10,6 +10,45 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class CareerListingIntelligenceTest {
+    @Test
+    fun ranksFirstPartyCurrentCandidatesBeforeUnknownOrSecondarySources() {
+        assertEquals(
+            0,
+            CareerListingIntelligence.evidenceRank(
+                hasFutureDeadline = true, hasDirectSource = true,
+                isInactive = false, isSecondary = false
+            )
+        )
+        assertEquals(
+            1,
+            CareerListingIntelligence.evidenceRank(
+                hasFutureDeadline = false, hasDirectSource = true,
+                isInactive = false, isSecondary = false
+            )
+        )
+        assertEquals(
+            2,
+            CareerListingIntelligence.evidenceRank(
+                hasFutureDeadline = false, hasDirectSource = false,
+                isInactive = false, isSecondary = false
+            )
+        )
+        assertEquals(
+            3,
+            CareerListingIntelligence.evidenceRank(
+                hasFutureDeadline = false, hasDirectSource = false,
+                isInactive = false, isSecondary = true
+            )
+        )
+        assertEquals(
+            4,
+            CareerListingIntelligence.evidenceRank(
+                hasFutureDeadline = true, hasDirectSource = true,
+                isInactive = true, isSecondary = false
+            )
+        )
+    }
+
     private fun date(value: String): Long =
         SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR")).parse(value)!!.time
 

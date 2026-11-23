@@ -2,12 +2,21 @@ package com.cem.jarvis
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
 class Conv(val id: String, var title: String, var updated: Long, val msgs: MutableList<Pair<String, String>>)
 
 class Store(ctx: Context) {
+    private val appContext = ctx.applicationContext
     val prefs: SharedPreferences = ctx.getSharedPreferences("j", Context.MODE_PRIVATE)
     private val cache = ArrayList<Conv>()
 
@@ -158,9 +167,106 @@ class Store(ctx: Context) {
         val e = prefs.edit()
         for (k in listOf("convs", "cur", "facts", "tasks", "watch", "hist", "app_files")) e.remove(k)
         if (!keepKeys) {
-            for (k in listOf("key", "bulut", "groq", "groqModel", "mistral", "mistralModel", "finnhub", "news")) e.remove(k)
+            for (k in listOf("key", "groq", "groqModel", "mistral", "mistralModel", "finnhub", "finnhub_enc", "news")) e.remove(k)
+            CloudKeyStore.clear(appContext)
         }
         e.apply()
         cache.clear()
+    }
+}
+
+/**
+ * Keeps the Aries Cloud API key encrypted with a non-exportable Android Keystore AES key.
+ * Existing plaintext preferences are migrated on first read and removed after encryption succeeds.
+ */
+object CloudKeyStore {
+    private const val PREFS = "j"
+    private const val ENCRYPTED_PREF = "bulut_enc"
+    private const val LEGACY_PREF = "bulut"
+    private const val KEY_ALIAS = "aries_cloud_aes_v1"
+    private const val GCM_IV_BYTES = 12
+
+    fun save(context: Context, rawKey: String): Boolean {
+        if (rawKey.isBlank()) {
+            clear(context)
+            return true
+        }
+        return try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+            val encrypted = cipher.doFinal(rawKey.trim().toByteArray(Charsets.UTF_8))
+            val payload = cipher.iv + encrypted
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putString(ENCRYPTED_PREF, Base64.encodeToString(payload, Base64.NO_WRAP))
+                .remove(LEGACY_PREF)
+                .apply()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun read(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val saved = prefs.getString(ENCRYPTED_PREF, "").orEmpty()
+        if (saved.isNotBlank()) {
+            return try {
+                val payload = Base64.decode(saved, Base64.NO_WRAP)
+                if (payload.size <= GCM_IV_BYTES) throw IllegalStateException("Şifreli anahtar verisi eksik")
+                val iv = payload.copyOfRange(0, GCM_IV_BYTES)
+                val encrypted = payload.copyOfRange(GCM_IV_BYTES, payload.size)
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(), GCMParameterSpec(128, iv))
+                String(cipher.doFinal(encrypted), Charsets.UTF_8)
+            } catch (_: Exception) {
+                // A restored backup may contain ciphertext without its device-bound Keystore key.
+                prefs.edit().remove(ENCRYPTED_PREF).apply()
+                ""
+            }
+        }
+
+        val legacy = prefs.getString(LEGACY_PREF, "").orEmpty()
+        if (legacy.isNotBlank() && save(context, legacy)) return legacy
+        return legacy
+    }
+
+    fun isEncrypted(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(ENCRYPTED_PREF, "").orEmpty().isNotBlank()
+
+    fun hasLegacyKey(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(LEGACY_PREF, "").orEmpty().isNotBlank()
+
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .remove(ENCRYPTED_PREF)
+            .remove(LEGACY_PREF)
+            .apply()
+        runCatching {
+            KeyStore.getInstance("AndroidKeyStore").apply {
+                load(null)
+                deleteEntry(KEY_ALIAS)
+            }
+        }
+    }
+
+    private fun getOrCreateKey(): SecretKey {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val existing = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
+        if (existing != null) return existing
+
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        generator.init(
+            KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(true)
+                .build()
+        )
+        return generator.generateKey()
     }
 }
