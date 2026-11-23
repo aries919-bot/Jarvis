@@ -845,6 +845,16 @@ object CareerSearchEngine {
             7 -> dailyPrivate + listOf(extra)
             8 -> municipal + kuraQueries.take(3) + listOf(extra)
             9 -> studentPrograms
+            10 -> listOf(
+                "site:memur365.com/kamu-personel-alimi 2026 kamu personel alımı ilan başvuru şartları son başvuru tarihi",
+                "site:memurlar.net 2026 kamu personel alımı başvuru başladı son başvuru tarihi",
+                "site:kamupersoneli.net 2026 kamu personel alımı ilanı KPSS başvuru",
+                "site:iskamu.com 2026 kamu personel alımı ilanı başvuru şartları",
+                "site:kamuilan.sbb.gov.tr 2026 kamu personel alımı yeni ilan KPSS",
+                "site:resmigazete.gov.tr/ilanlar/ 2026 sözleşmeli personel sürekli işçi alımı başvuru",
+                "site:gov.tr 2026 personel alım ilanı başvuru son tarihi kamu",
+                "$c $year kamu personel alımı işçi memur güncel ilan başvuru tarihi"
+            )
             else -> generalQuick
         }.distinct()
     }
@@ -1135,6 +1145,7 @@ object CareerSearchEngine {
             7 -> "günlük üretim depo vardiyalı işçi ve teknisyen ilanı"
             8 -> "belediye ve yerel yönetim personel işçi alımı"
             9 -> "üniversite öğrencisi staj ve gençlik programı"
+            10 -> "güncel kamu personel alım haberleri kurum duyuruları başvuru takvimi"
             else -> "kamu ve özel sektör açık iş ilanı personel alımı"
         }
         return "$role $city Türkiye $focus $year resmî kurum işveren başvuru şartları son başvuru tarihi"
