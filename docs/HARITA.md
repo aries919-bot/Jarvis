@@ -9,7 +9,7 @@
 - Notlar `durum` dalında; repo erişimi ve yazma izni doğrulandı.
 - K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `be740a3d24049fb1145faf14207202c1edc405f2`, mergeable.
 - Diğer açık PR'lar: #22/#23/#18/#17/#9/#4/#3/#2/#1; farklı tabanlı eski PR'lar main'e alınmış sayılmaz.
-- Son tamamlanmış HEAD baseline: c9a5ce6; PR CI 45164079348 ve push CI 45164072719 SUCCESS. HEAD c0a542a için PR/push CI 45164530319 ve 45164525918 SUCCESS. Yeni tarayıcı-durum envanteri HEAD be740a3 için push CI 45165041955 çalışıyor; PR CI sonucu bekleniyor.
+- Son tamamlanmış HEAD baseline: c9a5ce6; PR CI 45164079348 ve push CI 45164072719 SUCCESS. HEAD c0a542a için PR/push CI 45164530319 ve 45164525918 SUCCESS. Yeni tarayıcı-durum envanteri HEAD be740a3 için push CI 45165041955 ve PR CI 45165045934 çalışıyor; offline regresyon test adımı SUCCESS, canlı probe aşaması henüz tamamlanmadı.
 
 ## İş listesi
 | İş | Durum | Not |
@@ -39,7 +39,7 @@
 3. QA Türkçe ay adı tarih penceresi hatasını buldu; düzeltildi ve regresyon testi eklendi.
 4. TGA detay okuyucu eklendi.
 5. Rapor 5 okuyucu / 3 aktif detay kaynak olarak ayrıştırıldı.
-6. K1 PR #24; HEAD c0a542a CI SUCCESS (20 kaynak, 12 probed, 6 okuyucu). HEAD be740a3 tüm 20 kaynak için tarayıcı/giriş durumunu envantere ekledi ve zorunlu regresyon testi koydu; CI sürüyor.
+6. K1 PR #24; HEAD c0a542a CI SUCCESS (20 kaynak, 12 probed, 6 okuyucu). HEAD be740a3 tüm 20 kaynak için tarayıcı/giriş durumunu envantere ekledi ve zorunlu regresyon testi koydu; offline test SUCCESS, live probe sürüyor.
 7. Bu turda kod PR'ı merge edilmedi.
 8. Mevcut Android kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback kullanıyor; C1 bunu kaldıracak.
 9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
