@@ -151,9 +151,9 @@ class CareerActivity : Activity() {
         navBar.removeAllViews()
         val tabs = listOf(
             Triple("⌕", "İlanlar", "Yalnızca iş ilanı adayları"),
-            Triple("▤", "CV'im", "CV düzenle"),
+            Triple("▤", "CV", "CV düzenle"),
             Triple("◷", "Takip", "Otomatik takip"),
-            Triple("✓", "Başvuru", "Kaydedilen ve devam eden başvurular"),
+            Triple("✓", "Başv.", "Kaydedilen ve devam eden başvurular"),
             Triple("◈", "Sonuç", "Kaydettiğin başvuruların sonuçları"),
             Triple("▤", "Haber", "İlan olmayan duyurular, haberler ve süreç güncellemeleri")
         )
@@ -172,9 +172,10 @@ class CareerActivity : Activity() {
             item.addView(label(tab.first, 19f, true, if (selected) accentColor else muted).apply {
                 gravity = Gravity.CENTER
             }, LinearLayout.LayoutParams(-1, dp(25)))
-            item.addView(label(tab.second, 9.5f, selected, if (selected) primaryText else muted).apply {
+            item.addView(label(tab.second, Tok.T_CAPTION, selected, if (selected) primaryText else muted).apply {
                 gravity = Gravity.CENTER
-                maxLines = 2
+                includeFontPadding = false
+                maxLines = 1
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }, LinearLayout.LayoutParams(-1, dp(28)))
             navBar.addView(item, LinearLayout.LayoutParams(0, -1, 1f).apply {

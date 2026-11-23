@@ -86,7 +86,8 @@ object FinanceData {
             ?: throw IOException("Piyasa verisi beklenen biçimde değil.")
 
         val rootUpdatedAt = root.optString("updated_at")
-        val rootStale = root.optBoolean("is_stale", false) || timestampIsStale(rootUpdatedAt)
+        // The provider-level is_stale flag documents cached gold data; do not apply it to FX rows.
+        val providerGoldStale = root.optBoolean("is_stale", false)
         val prices = (goldAssets + currencyAssets).mapNotNull { (id, title, _) ->
             val item = tryRates.optJSONObject(id) ?: return@mapNotNull null
             val bid = item.optDouble("bid", Double.NaN)
@@ -102,7 +103,8 @@ object FinanceData {
                 ask = ask,
                 source = item.optString("source", "belirtilmedi"),
                 updatedAt = updatedAt,
-                stale = item.optBoolean("stale", false) || rootStale || timestampIsStale(updatedAt)
+                stale = item.optBoolean("stale", false) ||
+                    (id.startsWith("xau_") && providerGoldStale) || timestampIsStale(updatedAt)
             )
         }
 
@@ -110,7 +112,7 @@ object FinanceData {
         return TurkishMarketSnapshot(
             date = root.optString("date"),
             updatedAt = rootUpdatedAt,
-            stale = rootStale || prices.any { it.stale },
+            stale = prices.any { it.stale },
             sources = (0 until root.optJSONArray("sources").let { it?.length() ?: 0 })
                 .mapNotNull { root.optJSONArray("sources")?.optString(it) }
                 .filter { it.isNotBlank() },

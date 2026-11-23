@@ -222,7 +222,7 @@ class FinanceActivity : Activity() {
         marketRows.removeAllViews()
         val stale = snapshot.stale
         val time = formatIso(snapshot.updatedAt).ifBlank { snapshot.date.ifBlank { "Tarih yok" } }
-        marketStatus.text = (if (stale) "ESKİ / GÜNCELLİĞİ DOĞRULANAMADI · Veri zamanı: " else "Veri zamanı: ") + time +
+        marketStatus.text = (if (stale) "BAZI FİYATLAR ESKİ / GÜNCELLİĞİ DOĞRULANAMADI · Veri zamanı: " else "Veri zamanı: ") + time +
             suffix + " · Kaynak: " + snapshot.sources.joinToString(", ")
         marketStatus.setTextColor(Color.parseColor(if (stale) Pal.AMBER else Pal.MUTED))
         val groups = listOf(
@@ -241,7 +241,7 @@ class FinanceActivity : Activity() {
                 labels.addView(Ui.text(this, price.title, 13f, Pal.TEXT, true))
                 labels.addView(Ui.text(
                     this,
-                    sourceLabel(price.source) + " · " + if (price.stale || stale) "eski veri" else "güncellik kaynağa bağlı",
+                    sourceLabel(price.source) + " · " + if (price.stale) "eski veri" else "güncel zaman damgası",
                     10f, if (price.stale || stale) Pal.AMBER else Pal.MUTED
                 ))
                 line.addView(labels, LinearLayout.LayoutParams(0, -2, 1f))
@@ -639,7 +639,7 @@ class FinanceAlertWorker(context: Context, params: WorkerParameters) : Worker(co
             if (key.startsWith("gold:")) {
                 val point = market?.prices?.firstOrNull { it.id == key.removePrefix("gold:") }
                 price = point?.bid
-                fresh = point != null && !point.stale && market?.stale == false
+                fresh = point != null && !point.stale
             } else {
                 if (token.isBlank()) continue
                 val quote = runCatching { FinanceData.fetchFinnhubQuote(key, token) }.getOrNull()

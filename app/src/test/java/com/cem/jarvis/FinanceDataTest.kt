@@ -98,6 +98,31 @@ class FinanceDataTest {
     }
 
     @Test
+    fun providerGoldStaleFlagDoesNotMarkFreshCurrencyStale() {
+        val now = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
+        val json = """
+            {
+              "date":"2026-11-23",
+              "updated_at":"__NOW__",
+              "is_stale":true,
+              "sources":["tcmb","truncgil"],
+              "try":{
+                "usd":{"bid":50.40,"ask":50.49,"source":"tcmb","updated_at":"__NOW__","stale":false},
+                "xau_gram":{"bid":5730.97,"ask":5731.95,"source":"truncgil","updated_at":"__NOW__","stale":false}
+              }
+            }
+        """.trimIndent().replace("__NOW__", now)
+
+        val snapshot = FinanceData.parseTurkishMarket(json)
+
+        assertTrue(snapshot.stale)
+        assertFalse(snapshot.prices.first { it.id == "usd" }.stale)
+        assertTrue(snapshot.prices.first { it.id == "xau_gram" }.stale)
+    }
+
+    @Test
     fun symbolValidationRejectsUrlOrWhitespaceInput() {
         assertTrue(FinanceData.isValidSymbol("THYAO.IS"))
         assertTrue(FinanceData.isValidSymbol("BIST:THYAO"))
