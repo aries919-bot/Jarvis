@@ -205,9 +205,18 @@ class AriesFullAppAuditTest {
 
     private fun handleRuntimePermissionDialogs() {
         repeat(8) {
-            val allow = device.findObject(
-                By.textMatches("(?i)^(allow|while using the app|only this time|izin ver|uygulamayı kullanırken)$")
+            val allowLabels = listOf(
+                "Allow",
+                "While using the app",
+                "Only this time",
+                "Allow only while using the app",
+                "İzin ver",
+                "Uygulamayı kullanırken",
+                "Yalnızca bu sefer"
             )
+            val allow = allowLabels.firstNotNullOfOrNull { label ->
+                runCatching { device.findObject(By.text(label)) }.getOrNull()
+            }
             if (allow != null) {
                 runCatching { allow.click() }
                 SystemClock.sleep(350)
