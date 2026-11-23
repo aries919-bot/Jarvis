@@ -18,6 +18,23 @@ data class CareerListingFacts(
 )
 
 object CareerListingIntelligence {
+    /**
+     * Orders candidate evidence without claiming that a future deadline proves an
+     * application is open. First-party evidence is preferred; unknown candidates remain visible.
+     */
+    fun evidenceRank(
+        hasFutureDeadline: Boolean,
+        hasDirectSource: Boolean,
+        isInactive: Boolean,
+        isSecondary: Boolean
+    ): Int = when {
+        !isInactive && hasDirectSource && hasFutureDeadline -> 0
+        !isInactive && hasDirectSource -> 1
+        !isInactive && !isSecondary -> 2
+        !isInactive -> 3
+        else -> 4
+    }
+
     private fun normalize(value: String): String = value.lowercase(Locale("tr", "TR"))
         .replace('ı', 'i').replace('ş', 's').replace('ğ', 'g')
         .replace('ü', 'u').replace('ö', 'o').replace('ç', 'c')
