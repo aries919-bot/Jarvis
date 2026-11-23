@@ -14,7 +14,7 @@ MAX_BYTES=1_000_000
 TIMEOUT=12
 UA="AriesCareerSourceAudit/1.0 (+https://github.com/aries919-bot/Jarvis)"
 JOB_TERMS=("personel alım","işçi alım","sözleşmeli personel","açık pozisyon","iş ilan","uzman personel","memur alım","personel recruitment")
-PROCESS_TERMS=("kura sonucu","asıl yedek","sınav sonucu","mülakat tarihi","başvuru değerlendirme","nihai sonuç")
+PROCESS_TERMS=("kura sonucu","asıl yedek","sınav sonucu","mülakat tarihi","başvuru değerlendirme","nihai sonuç","nihai değerlendirme sonucu","ön değerlendirme sonucu","değerlendirme sonuçları","yerleştirme sonucu","başvuru sonuçları","kadroya geçiş","aday listesi")
 MONTH_NAMES="Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik"
 DATE_ATOM=r"(?:\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+(?:"+MONTH_NAMES+r")\s+\d{4})"
 DATE_RE=re.compile(DATE_ATOM,re.I)
@@ -110,7 +110,10 @@ def probe(source):
         links=[]; seen=set()
         for a in p.links:
             href=urljoin(final,a["href"]); label=re.sub(r"\s+"," ",a["text"]).strip(); k=kind(label,href,source.get("candidateTerms",[]),source.get("programmeTerms",[]))
-            u=urlparse(href)
+            u=urlparse(href); base=urlparse(final)
+            # Ignore the index page linking to itself (often labelled "Open positions").
+            if u.hostname and base.hostname and u.hostname.lower()==base.hostname.lower() and u.path.rstrip("/")==base.path.rstrip("/"):
+                continue
             if k and label and href.startswith("https://") and not u.username and not u.password and href not in seen:
                 seen.add(href); links.append({"title":label[:240],"url":href,"kind":k})
         jobs=[x for x in links if x["kind"]=="job_candidate"]
