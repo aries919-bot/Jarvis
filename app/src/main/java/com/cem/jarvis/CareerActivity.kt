@@ -1808,6 +1808,7 @@ class CareerActivity : Activity() {
                         ?: CareerListingParser.publicationDate(publicationText)
                     val publishedAt = item.optLong("publishedAt", 0L).takeIf { it > 0L }
                         ?: CareerListingParser.publicationTimestamp(publicationText)
+                        ?: publishedDate?.let { CareerListingParser.publicationTimestamp("Yayın tarihi: " + it) }
                     copy.put("contentType", classification.type.name)
                         .put("contentLabel", classification.label)
                         .put("contentReason", classification.reason)
@@ -1827,7 +1828,8 @@ class CareerActivity : Activity() {
                         ?: copyPublishedDate(item)
                     val sourceTimestamp = maxOf(
                         existing.optLong("publishedAt", 0L),
-                        item.optLong("publishedAt", 0L)
+                        item.optLong("publishedAt", 0L),
+                        sourceDate?.let { CareerListingParser.publicationTimestamp("Yayın tarihi: " + it) } ?: 0L
                     )
                     val firstSeenValues = listOf(
                         existing.optLong("firstSeenAt", 0L),
