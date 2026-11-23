@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ kariyer-modulu, is/kariyer-1-21-verified-search, is/c3-ilan-semasi-ai-kaynak-kaniti ]
   push:
-    branches: [ kariyer-modulu, is/c3-ilan-semasi-ai-kaynak-kaniti, fix/c3-ai-consent-and-navigation-guard ]
+    branches: [ kariyer-modulu, is/c3-ilan-semasi-ai-kaynak-kaniti, fix/c3-ai-consent-and-navigation-guard, fix/c2-news-search-in-news ]
 
 permissions:
   contents: read
