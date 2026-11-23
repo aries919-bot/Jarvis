@@ -325,7 +325,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         // Üst çubuk: menü, başlık + durum, bluetooth, ayarlar
         val top = Ui.row(this)
-        top.addView(Ui.iconBtn(this, "jmenu", "Menü", 44, 24, Pal.TEXT) { openSide() })
+        top.addView(Ui.iconBtn(this, "jmenu", "Menü", 48, 24, Pal.TEXT) { openSide() })
         val titleCol = Ui.column(this)
         val title = Ui.text(this, "A.R.I.E.S", 22f, Pal.WHITE, true)
         title.setTypeface(title.typeface, android.graphics.Typeface.BOLD)
@@ -336,15 +336,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         orbStatus.gravity = Gravity.CENTER_HORIZONTAL
         titleCol.addView(orbStatus, LinearLayout.LayoutParams(-1, -2))
         top.addView(titleCol, LinearLayout.LayoutParams(0, -2, 1f))
-        top.addView(Ui.iconBtn(this, "jbt", "Bluetooth", 44, 22, Pal.TEXT) {
+        top.addView(Ui.iconBtn(this, "jbt", "Bluetooth", 48, 22, Pal.TEXT) {
             showOutputPicker()
         })
         val filmBtn = Ui.text(this, "▶", 20f, Pal.TEXT)
         filmBtn.gravity = Gravity.CENTER
         filmBtn.contentDescription = "Film ve Dizi"
         filmBtn.setOnClickListener { startActivity(android.content.Intent(this, com.cem.jarvis.media.FilmDiziActivity::class.java)) }
-        top.addView(filmBtn, LinearLayout.LayoutParams(dp(44), dp(44)))
-        top.addView(Ui.iconBtn(this, "jgear", "Ayarlar", 44, 22, Pal.TEXT) { showPage(4) })
+        top.addView(filmBtn, LinearLayout.LayoutParams(dp(48), dp(48)))
+        top.addView(Ui.iconBtn(this, "jgear", "Ayarlar", 48, 22, Pal.TEXT) { showPage(4) })
         col.addView(top, LinearLayout.LayoutParams(-1, -2))
 
         // Ekranda gösterilmeyen ama kodun başka yerlerinin kullandığı görünümler
@@ -435,7 +435,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         // Alt sıra: artı, yazı kutusu, hoparlör, mikrofon / gönder
         val bar = Ui.row(this)
         bar.setPadding(0, dp(8), 0, 0)
-        bar.addView(Ui.iconBtn(this, "jplus", "Ekle", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { plusMenu() })
+        bar.addView(Ui.iconBtn(this, "jplus", "Ekle", 48, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { plusMenu() })
         composer = Ui.input(this, "Aries'e yaz...")
         composer.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         composer.setHorizontallyScrolling(false)
@@ -455,10 +455,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         val clp = LinearLayout.LayoutParams(0, -2, 1f)
         clp.setMargins(dp(8), 0, dp(8), 0)
         bar.addView(composer, clp)
-        speakBtn = Ui.iconBtn(this, "jspeaker", "Ses", 44, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { speakerTap() }
+        speakBtn = Ui.iconBtn(this, "jspeaker", "Ses", 48, 22, Pal.TEXT, Pal.CARD2, Pal.LINE) { speakerTap() }
         bar.addView(speakBtn)
-        homeMic = Ui.iconBtn(this, "jmic", "Mikrofon", 44, 22, "#000000", Pal.WHITE, null) { micOrSend() }
-        val mlp = LinearLayout.LayoutParams(dp(44), dp(44))
+        homeMic = Ui.iconBtn(this, "jmic", "Mikrofon", 48, 22, "#000000", Pal.WHITE, null) { micOrSend() }
+        val mlp = LinearLayout.LayoutParams(dp(48), dp(48))
         mlp.leftMargin = dp(8)
         homeMic.layoutParams = mlp
         bar.addView(homeMic)
