@@ -282,6 +282,7 @@ class CareerMonitorPolicyTest {
         )
         assertEquals(null, recentNotice)
         assertEquals("20.11.2026", CareerListingParser.publicationDate("Duyuru tarihi: 20.11.2026"))
+        assertNull(CareerListingParser.publicationDate("Teknisyen alımı için sınav tarihi: 20.11.2026"))
 
         val future = CareerListingParser.deadlineStatus(
             "Son başvuru tarihi: 30.11.2026",
