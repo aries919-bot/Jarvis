@@ -112,7 +112,7 @@ fun PlayerControls(
                 }
             }
     ) {
-        hud?.let { Text(it, color = Color.White, fontSize = 16.sp, modifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp).background(Color(0xAA000000), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 8.dp)) }
+        hud?.let { Text(it, color = Ap.Text, fontSize = 16.sp, modifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp).background(Color(0xAA000000), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 8.dp)) }
 
         if (show && locked) Text("🔒", fontSize = 28.sp, modifier = Modifier.align(Alignment.CenterEnd).padding(24.dp).clickable { locked = false })
 
@@ -122,27 +122,27 @@ fun PlayerControls(
         ) {
             // Üst: geri, başlık, kilit
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("‹", color = Color.White, fontSize = 34.sp, modifier = Modifier.clickable(onClick = onClose).padding(end = 12.dp))
-                Text(title, color = Color.White, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1)
+                Text("‹", color = Ap.Text, fontSize = 34.sp, modifier = Modifier.clickable(onClick = onClose).padding(end = 12.dp))
+                Text(title, color = Ap.Text, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1)
                 Text("🔓", fontSize = 24.sp, modifier = Modifier.clickable { locked = true; show = false })
             }
             // Orta: -10 / oynat / +10
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Text("⟲10", color = Color.White, fontSize = 22.sp, modifier = Modifier.clickable { seekBy(-10_000) }.padding(24.dp))
-                Text(if (playing) "❚❚" else "▶", color = Color.White, fontSize = 40.sp,
+                Text("⟲10", color = Ap.Text, fontSize = 22.sp, modifier = Modifier.clickable { seekBy(-10_000) }.padding(24.dp))
+                Text(if (playing) "❚❚" else "▶", color = Ap.Text, fontSize = 40.sp,
                     modifier = Modifier.clickable { if (player.isPlaying) player.pause() else player.play(); playing = player.isPlaying }.padding(24.dp))
-                Text("10⟳", color = Color.White, fontSize = 22.sp, modifier = Modifier.clickable { seekBy(10_000) }.padding(24.dp))
+                Text("10⟳", color = Ap.Text, fontSize = 22.sp, modifier = Modifier.clickable { seekBy(10_000) }.padding(24.dp))
             }
             // Alt: süre çubuğu + seçenekler
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(fmtTime(pos), color = Color.White, fontSize = 12.sp)
+                    Text(fmtTime(pos), color = Ap.Text, fontSize = 12.sp)
                     Slider(
                         value = if (dur > 0) pos.toFloat() / dur else 0f,
                         onValueChange = { player.seekTo((it * dur).toLong()); pos = player.currentPosition },
                         modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                     )
-                    Text(fmtTime(dur), color = Color.White, fontSize = 12.sp)
+                    Text(fmtTime(dur), color = Ap.Text, fontSize = 12.sp)
                 }
                 val hasText = player.currentTracks.groups.any { it.type == C.TRACK_TYPE_TEXT }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
@@ -160,7 +160,7 @@ fun PlayerControls(
 
         // Açılır menüler
         if (menu != null && !locked) Column(
-            Modifier.align(Alignment.BottomCenter).padding(bottom = 84.dp).background(Color(0xFF181B26), RoundedCornerShape(16.dp)).padding(8.dp)
+            Modifier.align(Alignment.BottomCenter).padding(bottom = 84.dp).background(Ap.Card2, RoundedCornerShape(16.dp)).padding(8.dp)
         ) {
             when (menu) {
                 "q" -> listOf("Otomatik" to 0, "360P" to 360, "540P" to 540, "720P" to 720, "1080P" to 1080).forEach { (l, h) ->
@@ -200,6 +200,6 @@ fun PlayerControls(
         modifier = Modifier.clickable(enabled = enabled, onClick = onClick).padding(8.dp))
 
 @Composable private fun MenuItem(text: String, selected: Boolean, onClick: () -> Unit) =
-    Text(text, color = Color.White, fontSize = 14.sp,
-        modifier = Modifier.fillMaxWidth().background(if (selected) Color(0xFF202433) else Color.Transparent, RoundedCornerShape(10.dp))
+    Text(text, color = Ap.Text, fontSize = 14.sp,
+        modifier = Modifier.fillMaxWidth().background(if (selected) Ap.Raised else Color.Transparent, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick).padding(horizontal = 18.dp, vertical = 10.dp))

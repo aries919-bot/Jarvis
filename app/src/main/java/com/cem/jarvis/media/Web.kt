@@ -112,13 +112,13 @@ fun WebDialog(query: String, onClose: () -> Unit) {
         wv?.loadUrl(url)
     }
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
+        Box(Modifier.fillMaxSize().background(Ap.Bg)) {
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("✕", color = Color.White, fontSize = 22.sp, modifier = Modifier.clickable(onClick = onClose).padding(8.dp))
-                    Text("‹", color = Color.White, fontSize = 26.sp, modifier = Modifier.clickable { wv?.goBack() }.padding(8.dp))
-                    Text("›", color = Color.White, fontSize = 26.sp, modifier = Modifier.clickable { wv?.goForward() }.padding(8.dp))
-                    Text("⟳", color = Color.White, fontSize = 22.sp, modifier = Modifier.clickable { wv?.reload() }.padding(8.dp))
+                    Text("✕", color = Ap.Text, fontSize = 22.sp, modifier = Modifier.clickable(onClick = onClose).padding(8.dp))
+                    Text("‹", color = Ap.Text, fontSize = 26.sp, modifier = Modifier.clickable { wv?.goBack() }.padding(8.dp))
+                    Text("›", color = Ap.Text, fontSize = 26.sp, modifier = Modifier.clickable { wv?.goForward() }.padding(8.dp))
+                    Text("⟳", color = Ap.Text, fontSize = 22.sp, modifier = Modifier.clickable { wv?.reload() }.padding(8.dp))
                     TextField(text, { text = it }, Modifier.weight(1f), singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = { go(text) }))
@@ -144,7 +144,7 @@ fun WebDialog(query: String, onClose: () -> Unit) {
                 AndroidView(modifier = Modifier.fillMaxSize(), factory = { c ->
                     FrameLayout(c).apply { setBackgroundColor(0xFF000000.toInt()); addView(v) }
                 })
-                Text("Küçült", color = Color.White, modifier = Modifier.padding(16.dp).clickable {
+                Text("Küçült", color = Ap.Text, modifier = Modifier.padding(16.dp).clickable {
                     cbk?.onCustomViewHidden(); custom = null; cbk = null
                 })
             }

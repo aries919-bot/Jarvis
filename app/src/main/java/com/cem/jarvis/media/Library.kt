@@ -164,22 +164,22 @@ fun ContinueRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
     val list = lib.continueWatching
     if (list.isEmpty()) return
     Column(Modifier.padding(top = 16.dp)) {
-        Text("Devam et", color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+        Text("Devam et", color = Ap.Text, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(list) { e ->
                 Column(Modifier.width(120.dp).clickable { onOpen(e) }) {
                     Box {
                         AsyncImage(webImg(e.poster), e.title, Modifier.size(120.dp, 170.dp).clip(RoundedCornerShape(12.dp)))
-                        Text("✕", color = Color.White, fontSize = 14.sp,
+                        Text("✕", color = Ap.Text, fontSize = 14.sp,
                             modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
                                 .background(Color(0x99000000), RoundedCornerShape(50)).clickable { lib.dismiss(e.id) }
                                 .padding(horizontal = 7.dp, vertical = 2.dp))
                     }
                     if (!e.upNext) LinearProgressIndicator(progress = { e.progress }, Modifier.fillMaxWidth().padding(top = 6.dp))
-                    Text(e.title, color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(e.title, color = Ap.Text, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val ep = if (e.type == "tv") "Sezon ${e.season} · Bölüm ${e.episode}" else ""
                     Text(if (e.upNext) "Sıradaki: $ep" else listOf(ep, fmtRemaining(e.durationMs - e.positionMs)).filter { it.isNotEmpty() }.joinToString(" · "),
-                        color = Color(0xFF9AA1B2), fontSize = 11.sp, maxLines = 2)
+                        color = Ap.Muted, fontSize = 11.sp, maxLines = 2)
                 }
             }
         }
@@ -192,12 +192,12 @@ fun FavoritesRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
     val list = lib.favorites
     if (list.isEmpty()) return
     Column(Modifier.padding(top = 16.dp)) {
-        Text("Favorilerim", color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+        Text("Favorilerim", color = Ap.Text, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(list) { e ->
                 Column(Modifier.width(100.dp).clickable { onOpen(e) }) {
                     AsyncImage(webImg(e.poster), e.title, Modifier.size(100.dp, 145.dp).clip(RoundedCornerShape(12.dp)))
-                    Text(e.title, color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(e.title, color = Ap.Text, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -215,7 +215,7 @@ fun EpisodeList(item: Item, lib: LibraryVM) {
     val watched = lib.get(item.id)?.watched.orEmpty()
 
     Column {
-        Text("Bölümler", color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+        Text("Bölümler", color = Ap.Text, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items((1..seasons).toList()) { s ->
                 FilterChip(selected = s == season, onClick = { season = s }, label = { Text("Sezon $s") })
@@ -225,15 +225,15 @@ fun EpisodeList(item: Item, lib: LibraryVM) {
             val done = "s${season}e${ep.episode_number}" in watched
             Row(Modifier.fillMaxWidth().clickable { lib.toggleWatched(item, season, ep.episode_number) }.padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(if (done) Color(0xFF3A7D5C) else Color(0xFF202433)), Alignment.Center) {
-                    Text(if (done) "✓" else "${ep.episode_number}", color = Color.White)
+                Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(if (done) Ap.Green else Ap.Raised), Alignment.Center) {
+                    Text(if (done) "✓" else "${ep.episode_number}", color = Ap.Text)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(ep.name ?: "Bölüm ${ep.episode_number}", color = if (done) Color(0xFF9AA1B2) else Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    ep.runtime?.let { Text("$it dk", color = Color(0xFF9AA1B2), fontSize = 12.sp) }
+                    Text(ep.name ?: "Bölüm ${ep.episode_number}", color = if (done) Ap.Muted else Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    ep.runtime?.let { Text("$it dk", color = Ap.Muted, fontSize = 12.sp) }
                 }
-                Text(if (done) "İzlendi" else "İzledim", color = Color(0xFF8FB4FF), fontSize = 12.sp)
+                Text(if (done) "İzlendi" else "İzledim", color = Ap.Blue, fontSize = 12.sp)
             }
         }
     }
@@ -339,7 +339,7 @@ fun ResumePlayer(
             Modifier.align(Alignment.TopCenter).padding(top = 60.dp).background(Color(0xCC000000), RoundedCornerShape(14.dp)).padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Kaldığın yerden devam: ${fmtTime(saved.positionMs)}", color = Color.White, fontSize = 13.sp)
+            Text("Kaldığın yerden devam: ${fmtTime(saved.positionMs)}", color = Ap.Text, fontSize = 13.sp)
             Spacer(Modifier.width(12.dp))
             TextButton(onClick = { player.seekTo(0); banner = false }) { Text("Baştan başla") }
         }
@@ -360,23 +360,23 @@ fun ResumePlayer(
 fun HomeContinueCard(lib: LibraryVM, onResume: (Entry) -> Unit) {
     val e = lib.continueWatching.firstOrNull() ?: return
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF171A24))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Card2)
             .clickable { onResume(e) }.padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(webImg(e.poster), e.title, Modifier.size(56.dp, 80.dp).clip(RoundedCornerShape(10.dp)))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Kaldığın yerden devam et", color = Color(0xFF9AA1B2), fontSize = 11.sp)
-            Text(e.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Kaldığın yerden devam et", color = Ap.Muted, fontSize = 11.sp)
+            Text(e.title, color = Ap.Text, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val ep = if (e.type == "tv") "Sezon ${e.season} · Bölüm ${e.episode}" else ""
             Text(
                 if (e.upNext) "Sıradaki: $ep"
                 else listOf(ep, fmtRemaining(e.durationMs - e.positionMs)).filter { it.isNotEmpty() }.joinToString(" · "),
-                color = Color(0xFF9AA1B2), fontSize = 12.sp
+                color = Ap.Muted, fontSize = 12.sp
             )
             if (!e.upNext) LinearProgressIndicator(progress = { e.progress }, Modifier.fillMaxWidth().padding(top = 6.dp))
         }
-        Text("▶", color = Color(0xFF8FB4FF), fontSize = 24.sp, modifier = Modifier.padding(start = 10.dp))
+        Text("▶", color = Ap.Blue, fontSize = 24.sp, modifier = Modifier.padding(start = 10.dp))
     }
 }

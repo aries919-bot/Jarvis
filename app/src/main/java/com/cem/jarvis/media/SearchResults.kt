@@ -45,13 +45,13 @@ fun SearchResultCard(item: Item, onOpen: () -> Unit) {
 
     Column(
         Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF1B1E2B)).clickable(onClick = onOpen).padding(16.dp)
+            .background(Ap.Card).clickable(onClick = onOpen).padding(16.dp)
     ) {
         Row {
             Column(Modifier.weight(1f).padding(end = 12.dp)) {
-                Text(item.label, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(meta, color = Color(0xFF9AA1B2), fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp))
-                Text(item.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Color(0xFFD5D9E4), fontSize = 14.sp, maxLines = 5, overflow = TextOverflow.Ellipsis)
+                Text(item.label, color = Ap.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(meta, color = Ap.Muted, fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp))
+                Text(item.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Ap.Text, fontSize = 14.sp, maxLines = 5, overflow = TextOverflow.Ellipsis)
             }
             AsyncImage(webImg(item.poster_path), item.label, Modifier.size(88.dp, 128.dp).clip(RoundedCornerShape(12.dp)))
         }
@@ -61,12 +61,12 @@ fun SearchResultCard(item: Item, onOpen: () -> Unit) {
                 else listOf("1", "2", "…", "${seasons - 1}", "$seasons")
             Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 shown.forEach { t ->
-                    Text(t, color = Color.White, fontSize = 14.sp, textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF2A2E40)).padding(vertical = 10.dp))
+                    Text(t, color = Ap.Text, fontSize = 14.sp, textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Ap.AccentSoft).padding(vertical = 10.dp))
                 }
             }
         }
-        Text("İzle  ›", color = Color.White, fontSize = 16.sp, textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF2A2E40)).padding(vertical = 12.dp))
+        Text("İzle  ›", color = Ap.Text, fontSize = 16.sp, textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(12.dp)).background(Ap.AccentSoft).padding(vertical = 12.dp))
     }
 }

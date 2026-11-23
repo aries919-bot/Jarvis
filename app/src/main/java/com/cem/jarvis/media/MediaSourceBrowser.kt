@@ -826,7 +826,7 @@ private fun AriesWatchScreen(
             Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(Color(0xFF151515))
+                .background(Ap.Card2)
                 .padding(horizontal = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -854,16 +854,16 @@ private fun AriesWatchScreen(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFDCE5FF))
+                        .background(Ap.Accent)
                         .clickable { onPlayTrailer() }
                         .padding(horizontal = 28.dp, vertical = 16.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("▶", color = Color(0xFF10131D), fontSize = 18.sp)
+                        Text("▶", color = Ap.OnAccent, fontSize = 18.sp)
                         Spacer(Modifier.width(10.dp))
                         Text(
                             "Fragman sayfasını aç",
-                            color = Color(0xFF10131D),
+                            color = Ap.OnAccent,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )

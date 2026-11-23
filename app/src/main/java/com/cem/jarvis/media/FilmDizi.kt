@@ -170,7 +170,7 @@ fun FilmDiziCard(onClick: () -> Unit) {
             .background(Ap.Card2).clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Ap.Accent), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
+        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Ap.Accent), Alignment.Center) { Text("▶", color = Ap.OnAccent, fontSize = 20.sp) }
         Spacer(Modifier.width(12.dp))
         Column {
             Text("Film ve Dizi", color = Ap.Text, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -229,8 +229,8 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     }
     Column(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
-            Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("‹", color = Ap.Text, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
+            Text("Ara", color = Ap.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             Text("🌐", fontSize = 24.sp, modifier = Modifier.clickable { web2 = true }.padding(8.dp))
         }
@@ -240,35 +240,35 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                 FavoritesRow(lib) { onOpen(it.toItem()) }
             }
             if (vm.history.isNotEmpty() && !vm.searching) {
-                item { Text("Geçmiş", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)) }
+                item { Text("Geçmiş", color = Ap.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)) }
                 items(vm.history) { h ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(h, color = Color.White, modifier = Modifier.clickable { q = h; vm.search(h) })
-                        Text("✕", color = Color(0xFF9AA1B2), modifier = Modifier.clickable { vm.removeHistory(h) })
+                        Text(h, color = Ap.Text, modifier = Modifier.clickable { q = h; vm.search(h) })
+                        Text("✕", color = Ap.Muted, modifier = Modifier.clickable { vm.removeHistory(h) })
                     }
                 }
             }
             item {
-                Text(if (vm.searching) "Sonuçlar" else "Popülerlik Sıralaması", color = Color.White, fontSize = 18.sp,
+                Text(if (vm.searching) "Sonuçlar" else "Popülerlik Sıralaması", color = Ap.Text, fontSize = 18.sp,
                     fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 if (!vm.searching) LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(vm.tabs.size) { i ->
                         Text(vm.tabs[i], fontSize = 16.sp, fontWeight = if (i == vm.tab) FontWeight.Bold else FontWeight.Normal,
-                            color = if (i == vm.tab) Color.White else Color(0xFF9AA1B2),
+                            color = if (i == vm.tab) Color.White else Ap.Muted,
                             modifier = Modifier.clickable { vm.load(i) }.padding(vertical = 8.dp))
                     }
                 }
             }
             if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
-            vm.error?.let { e -> item { Text(e, color = Color(0xFFFF8A7A), modifier = Modifier.padding(16.dp)) } }
-            if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Color(0xFF9AA1B2), modifier = Modifier.padding(16.dp)) }
+            vm.error?.let { e -> item { Text(e, color = Ap.Red, modifier = Modifier.padding(16.dp)) } }
+            if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Ap.Muted, modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
             else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
             if (!vm.searching && vm.list.size >= 20) item {
                 Button(onClick = { vm.more() }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Daha fazla göster") }
             }
         }
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF202433)).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Card2).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             TextField(q, { q = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Film veya dizi ara") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -285,15 +285,15 @@ fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)) {
         Box {
             AsyncImage(webImg(media.poster_path), media.label, Modifier.size(58.dp, 82.dp).clip(RoundedCornerShape(10.dp)))
-            Text("$rank", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp,
+            Text("$rank", color = Ap.OnAccent, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                 modifier = Modifier.background(if (rank == 1) Color(0xFFFF5A3C) else Color(0xFFD8A21A), RoundedCornerShape(bottomEnd = 8.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(media.label, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(media.label, color = Ap.Text, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${media.year} · ${if (media.media_type == "movie" || media.title != null) "Film" else "TV Dizisi"} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}",
-                color = Color(0xFF9AA1B2), fontSize = 13.sp)
-            Text(media.overview.orEmpty(), color = Color(0xFF9AA1B2), fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = Ap.Muted, fontSize = 13.sp)
+            Text(media.overview.orEmpty(), color = Ap.Muted, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -334,18 +334,18 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         }
         return
     }
-    LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
-        item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
+    LazyColumn(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
+        item { Text("‹", color = Ap.Text, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
         item {
             Row(Modifier.padding(vertical = 16.dp)) {
                 AsyncImage(webImg(media.poster_path), media.label, Modifier.size(120.dp, 175.dp).clip(RoundedCornerShape(14.dp)))
                 Spacer(Modifier.width(14.dp))
                 Column {
-                    Text(media.label, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    Text("${media.year} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}", color = Color(0xFF9AA1B2))
+                    Text(media.label, color = Ap.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Text("${media.year} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}", color = Ap.Muted)
                 }
             }
-            Text(media.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Color(0xFFD5D9E4), fontSize = 14.sp)
+            Text(media.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Ap.Text, fontSize = 14.sp)
             Spacer(Modifier.height(16.dp))
             Button(onClick = { trailerKey?.let(onTrailer) }, enabled = trailerKey != null, modifier = Modifier.fillMaxWidth()) {
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
@@ -356,20 +356,20 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
                 enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
             ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
-            Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+            Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Ap.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
             if (type == "tv" && media.poster_path?.startsWith("http") != true) EpisodeList(media, lib)
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
-            Text("Benzerler", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
+            Text("Benzerler", color = Ap.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
         }
         item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(vm.list.filter { it.id != media.id }.take(8)) { s ->
                     Column(Modifier.width(110.dp).clickable { onOpen(s) }) {
                         AsyncImage(webImg(s.poster_path), s.label, Modifier.size(110.dp, 160.dp).clip(RoundedCornerShape(12.dp)))
-                        Text(s.label, color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(s.label, color = Ap.Text, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -389,7 +389,7 @@ fun TrailerPlayer(key: String, onClose: () -> Unit) {
                 })
             }
         })
-        Text("‹", color = Color.White, fontSize = 34.sp, modifier = Modifier.padding(16.dp).clickable(onClick = onClose))
+        Text("‹", color = Ap.Text, fontSize = 34.sp, modifier = Modifier.padding(16.dp).clickable(onClick = onClose))
     }
 }
 
