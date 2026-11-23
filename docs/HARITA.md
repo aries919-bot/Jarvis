@@ -13,6 +13,8 @@
 - A2 tanılama PR #27 açık/taslak, `fix/a2-gradle-metadata-stacktrace` → A2; HEAD `ce88f0c7985cbf94cbe2fdba64b113ad5dc37455`; workflow-only. PR #45177070960 ve push #45177061495 SUCCESS.
 - A2 devam PR #28 açık/taslak, `is/a2-theme-completion` → A2, HEAD `8db45d9c5ce503b96ca415949c4645b769155300`; 7 dosya. PR CI #45180833170 ve push CI #45180819864 SUCCESS; test, APK ve artefakt başarılı. PR artefakt #14821841078 (13,436,611 bayt).
 - PR #28: ortak açık/koyu palet, yerel tercih saklama, gerçek görev/hatırlatma sayacı, Film/Dizi skeleton ve kontrast regresyonları. Gerçek telefon doğrulaması ve bağımsız inceleme bekliyor.
+- C3 PR #29: APK run #632 SUCCESS; Full App QA #79 FAILURE. API 29/33/34 geçti; API 35'te UiAutomator uygulama paketini erişilebilir öğe olarak bulamadı. Logcat'te MainActivity RESUMED, FATAL EXCEPTION yok; C3 WebView testi açılmadı.
+- C3 düzeltme PR #30, `fix/c3-ai-consent-and-navigation-guard` → PR #29, güncel HEAD `5f6eebb816fadfa8e1c7c51b4ccce1234d1cee03`; AI gönderiminde açık onay, URL/alt kaynak güvenlik kontrolü, boş/yanlış AI yanıt testleri ve workflow kapsamı. Güncel APK #638 + Full App QA #84 çalışıyor. Üç Resmî Gazete ilanı elle doğrulandı; PR #29/#30 yorumlarında kanıt var.
 - B1 PR #26 açık/taslak, `is/b1-ai-memory-foundation` → A2, HEAD `dbab9d9d275cd8058a1d94900806fb04d82da9cf`; PR CI #45175633112 ve push #45175625717 SUCCESS. Bağımsız inceleme, canlı API ve telefon doğrulaması bekliyor.
 - E1 ikiye ayrıldı: E1-Veri Cline; E1-UI/Xiaomi ChatGPT. Aynı dosyada paralel değişiklik yapılmayacak.
 - Kariyer zinciri: PR #3 `kariyer-modulu` → `film-dizi-v2` açık/taslak; PR #22 `is/kariyer-1-21-verified-search` → `kariyer-modulu` açık/taslak. PR #22'de C2 kategorileri ve Haber/Süreç/Program ayrımı var; Full App QA (Android 29/33/34/35) + APK CI SUCCESS (#45141772884, #45141772982). Henüz main'e birleşmedi.
@@ -27,7 +29,7 @@
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt. PR #26 CI yeşil; bağımsız inceleme, canlı API ve telefon testi bekliyor. |
 | C1 Sunucu ilan toplayıcı + tekilleştirme JSON | CLINE BEKLİYOR | sahip: cline. K1 onayından sonra başla; yalnız doğrulanmış açık kaynakları kullan. |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt. PR #22'de kategori grupları ve Haber/Süreç/Öğrenci ayrımı var; bağımsız inceleme ve telefon testi bekliyor. |
-| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt. PR #29 taslak, güncel HEAD `350f38bc9bd1939a5481689c32889c9b326f1d63`; alan kanıtı/provenansı, manuel HTTPS WebView ve kişisel veri koruma inceleniyor. Android APK #45223612431 SUCCESS (birim test + debug APK); Full App QA #45223612544: statik/lint/build SUCCESS, API29/33/34/35 emulator işleri sürüyor. |
+| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt. PR #29 (şema/provenans) + düzeltme PR #30 (açık AI gönderim onayı, HTTPS/aynı-host/IP ve alt kaynak kontrolleri, boş/401 yanıt testleri). PR #29 APK #632 SUCCESS; Full App QA #79 Android 35 UiAutomator foreground assert FAILURE (MainActivity RESUMED, fatal crash yok). PR #30 güncel HEAD `5f6eebb`; APK #638 + Full App QA #84 çalışıyor. Üç Resmî Gazete örneği iki PR'da belgelendi. |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt. Kişisel profil telefonda kalır. |
 | C5 Gelecek alım takvimi ve bildirim | YAPILMADI | sahip: chatgpt. Resmî tarih ile tahmin ayrı. |
 | D1 Film & Dizi | YAPILMADI | sahip: chatgpt. Yalnız yasal/izinli akış. |
@@ -72,5 +74,5 @@
 7. A2 PR #28 açık/koyu mod, yerel tercih, dashboard özeti ve skeleton; PR/push CI SUCCESS.
 8. Cline sahiplik kuralı eklendi: K1/C1/E1-Veri Cline; A1/A2/B1 ve kalan uygulama işleri ChatGPT.
 9. C2 PR #22 kategori filtreleri + Haber/Süreç/Program ayrımı; Full App QA/API29-35 ve APK CI SUCCESS, PR açık.
-10. C3 PR #29 HEAD `350f38b`: Android APK/birim test ve Full QA statik-lint-build SUCCESS; API29/33/34/35 emülatör denetimi sürüyor.
-**SONRAKİ ADIM:** C3 PR #29'u bağımsız incele; AI'ya kaynak metni gönderilmeden önce açık onay, URL yönlendirme güvenliği ve eksik regresyon testlerini denetle; CI tamamlanınca sonucu kaydet. Cline `DEVAM: K1` diyene kadar Cline'ın sunucu/veri dosyalarına dokunulmaz.
+10. C3 PR #29 APK #632 PASS; Full App QA #79 Android 35 foreground assert FAIL; PR #30 güvenlik düzeltmesi HEAD `5f6eebb`, APK #638 + Full QA #84 PENDING.
+**SONRAKİ ADIM:** PR #30 CI sonuçlarını incele; özellikle API35 UI-audit foreground assert'ini ve AI consent/URL regression testlerini doğrula. PR #29/#30 bağımsız hakem incelemesi ve gerçek telefon testi bitmeden ONAY/merge yok. Cline `DEVAM: K1` diyene kadar Cline'ın sunucu/veri dosyalarına dokunulmaz.
