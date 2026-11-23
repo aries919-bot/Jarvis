@@ -746,7 +746,7 @@ class CareerActivity : Activity() {
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty())
+                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty(), prefs.getString("key", "").orEmpty())
             } catch (error: Exception) {
                 exceptionMessage = error.message
                 null
@@ -1000,7 +1000,7 @@ class CareerActivity : Activity() {
 
         if (visibleHits.isEmpty()) {
             val emptyMessage = when (searchFilter) {
-                0 -> "Doğrudan kurum/işveren kaynağında gelecekteki son başvuru tarihi bulunan ilan adayı yok. İkincil platformlar ve tarihi belirsiz kayıtlar için Tüm adaylar / kontrol filtresini aç."
+                0 -> "Bu kategoride geçmiş/kapanmış olarak işaretlenmemiş bir iş ilanı adayı yok. Geçmiş kayıtları ayrı filtreden kontrol edebilirsin."
                 2 -> "Geçmiş, kapanmış veya 180 günden eski olduğu için güncelliği doğrulanamayan kayıt yok."
                 else -> "Bu filtrede gösterilecek ilan adayı yok."
             }
@@ -1302,7 +1302,7 @@ class CareerActivity : Activity() {
                 allItems.isEmpty() -> prefs.getString("career_monitor_empty_reason", null)
                     ?: "Henüz tarama sonucu yok. Otomatik takip veya manuel taramayı kullan."
                 jobItems.isEmpty() -> "Tarama kayıtları yeni iş ilanı değil; kura, sonuç, staj, kurum duyurusu veya doğrulanması gereken içerikler Haber & Duyurular bölümüne taşındı."
-                else -> "Bu filtrede doğrudan kurum/işveren kaynağında gelecekteki son tarihi bulunan ilan yok."
+                else -> "Bu filtrede gösterilecek kapanmamış ilan adayı yok."
             }
             val emptyCard = panel()
             emptyCard.addView(label(
@@ -1476,7 +1476,7 @@ class CareerActivity : Activity() {
         Thread {
             var failure: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(categoryId, roleText, cityText, cloudToken)
+                CareerSearchEngine.searchBatch(categoryId, roleText, cityText, cloudToken, prefs.getString("key", "").orEmpty())
             } catch (error: Exception) {
                 failure = error.message ?: error.javaClass.simpleName
                 null
@@ -2096,7 +2096,7 @@ class CareerActivity : Activity() {
 
         Thread {
             val answer = try {
-                val research = CareerEmployerResearcher.research(hit)
+                val research = CareerEmployerResearcher.research(hit, prefs.getString("key", "").orEmpty())
                 val facts = CareerListingIntelligence.analyze(hit.title, hit.snippet, hit.url)
                 val classification = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url)
                 val prompt = buildString {
