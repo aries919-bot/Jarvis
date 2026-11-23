@@ -1788,12 +1788,12 @@ class CareerActivity : Activity() {
         }
     }
 
-    private fun searchNewsCategory(categoryId: Int) {
+    private fun searchNewsCategory(categoryId: Int, resetArchiveFilter: Boolean = false) {
         if (categoryId != 6 && categoryId != 9 && categoryId != 10) return
         when (categoryId) {
             6 -> newsFilter = 1
             9 -> newsFilter = 2
-            // General public-hiring news keeps the user-selected archive filter.
+            10 -> if (resetArchiveFilter) newsFilter = 0
         }
         if (currentPage != 5) renderPage(5)
         if (::newsSearchStatus.isInitialized) {
@@ -1872,7 +1872,7 @@ class CareerActivity : Activity() {
             searchNewsCategory(9)
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
         scanCard.addView(button("Güncel kamu alım haberlerini tara") {
-            searchNewsCategory(10)
+            searchNewsCategory(10, resetArchiveFilter = true)
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 0))
         pageContent.addView(scanCard, params(-1, -2, 0, 2, 0, 12))
 
