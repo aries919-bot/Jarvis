@@ -1227,7 +1227,7 @@ private fun AriesSourceRow(name: String) {
             fontSize = 13.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).clickable(enabled = isTvMaze) {
+            modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp).clickable(enabled = isTvMaze) {
                 uriHandler.openUri("https://www.tvmaze.com")
             }
         )
