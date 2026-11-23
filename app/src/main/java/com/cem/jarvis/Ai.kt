@@ -12,7 +12,7 @@ import java.net.URLEncoder
 
 class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
     val temporary: Boolean
-        get() = code == 429 || code == 500 || code == 502 || code == 503 || code == 504
+        get() = code == 408 || code == 429 || code == 500 || code == 502 || code == 503 || code == 504
     val badKey: Boolean
         get() = code == 401 || code == 403
 }
@@ -70,14 +70,7 @@ object Net {
                 while (true) {
                     if (Thread.currentThread().isInterrupted) throw IOException("Akış iptal edildi.")
                     val line = reader.readLine() ?: break
-                    val value = line.trim()
-                    if (value.isEmpty() || value.startsWith(":") || value.startsWith("event:")) continue
-                    val data = when {
-                        value.startsWith("data:") -> value.substring(5).trim()
-                        value.startsWith("{") -> value
-                        else -> continue
-                    }
-                    if (data.isEmpty()) continue
+                    val data = SseLineParser.dataFromLine(line) ?: continue
                     if (data == "[DONE]") break
                     onData(data)
                 }
