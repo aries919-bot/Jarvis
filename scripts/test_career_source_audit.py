@@ -20,6 +20,13 @@ class Tests(unittest.TestCase):
         self.assertEqual("open",mod.application_window("16.11.2026 - 30.11.2026",today)["status"])
         self.assertEqual("announced_not_open",mod.application_window("25.11.2026 - 14.12.2026",today)["status"])
         self.assertEqual("expired",mod.application_window("01.10.2026 - 10.10.2026",today)["status"])
+    def test_turkish_month_names_produce_date_window(self):
+        result=mod.application_window("Başvurular 03 Kasım 2026 tarihinde başlayıp 04 Aralık 2026 tarihinde sona erecektir.",dt.date(2026,11,23))
+        self.assertEqual("2026-11-03",result["startDate"])
+        self.assertEqual("2026-12-04",result["deadline"])
+        self.assertEqual("open",result["status"])
+    def test_process_notice_wins_over_job_words(self):
+        self.assertEqual("process_notice",mod.kind("2026 Personel Alım Başvuru Değerlendirme Sonuçları","https://example.gov.tr/sonuc"))
     def test_missing_deadline_is_unknown_not_guessed(self):
         self.assertEqual("unknown",mod.application_window("Sözleşmeli personel alımı",dt.date(2026,11,23))["status"])
     def test_job_and_process_are_separate(self):
