@@ -2091,7 +2091,7 @@ class CareerActivity : Activity() {
 
         Thread {
             val answer = try {
-                val research = CareerEmployerResearcher.research(hit)
+                val research = CareerEmployerResearcher.research(hit, prefs.getString("key", "").orEmpty())
                 val facts = CareerListingIntelligence.analyze(hit.title, hit.snippet, hit.url)
                 val classification = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url)
                 val prompt = buildString {
