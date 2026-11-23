@@ -31,6 +31,7 @@ Tarih: 23.11.2026. Kapsam: ilk 20 kaynaklık envanter ve otomatik okuyucu sağl�
 20 Yeşilyurt Belediyesi: Güncel/Duyuru alanı public.
 
 ## Kaynağında manuel doğrulanan 3 ilan
+TGA'nın doğrudan kariyer sayfasında 13 pozisyon ve 03.11.2026–04.12.2026 başvuru aralığı da görüntülenebiliyor.
 - Sayıştay: 3 çözümleyici, 9 lisans programcı, 4 ön lisans programcı; başvuru 11–25.11.2026, 23:59:59.
 - Anadolu Üniversitesi: 1 adet 4/B personel; başvuru 16–30.11.2026.
 - Zafer Kalkınma Ajansı: 2 uzman; TR33 bölgesinde görevlendirme; başvuru 25.11–14.12.2026. 23 Kasım itibarıyla duyurulmuş ama henüz açılmamış.
