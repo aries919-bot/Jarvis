@@ -21,6 +21,11 @@ internal object AiStreamParser {
             .joinToString("")
     }
 
+    fun geminiFinished(payload: String): Boolean {
+        val candidate = firstObject(arrayField(payload, "candidates")) ?: return false
+        return !stringField(candidate, "finishReason").isNullOrBlank()
+    }
+
     fun partialReply(raw: String): String? {
         val start = stringValueStart(raw, "reply") ?: return null
         return decodeStringAt(raw, start, allowIncomplete = true)?.first
