@@ -39,6 +39,20 @@ class AiMemoryTest {
     }
 
     @Test
+    fun personalIdentifiersPhoneNumbersAndCredentialsAreExcluded() {
+        val prompt = AiMemory.appendContext(
+            "system",
+            "Güvenli not; kimlik 12345678901; telefon +90 555 123 45 67; bearer gsk_abcdefghijklmnop",
+            true,
+            true
+        )
+        assertTrue(prompt.contains("Güvenli not"))
+        assertTrue(!prompt.contains("12345678901"))
+        assertTrue(!prompt.contains("+90 555"))
+        assertTrue(!prompt.contains("gsk_abcdefghijklmnop"))
+    }
+
+    @Test
     fun emptyMemoryLeavesPromptUnchanged() {
         assertEquals("system", AiMemory.appendContext("system", " ; \n ", true, true))
     }
