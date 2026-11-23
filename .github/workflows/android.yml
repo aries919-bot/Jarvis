@@ -2,9 +2,9 @@ name: Android APK
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ main ]
+    branches: [ main, is/a2-expressive-theme ]
   push:
-    branches: [ main, master, film-dizi-v2, is/a2-expressive-theme ]
+    branches: [ main, master, film-dizi-v2, is/a2-expressive-theme, fix/a2-gradle-metadata-stacktrace ]
 
 concurrency:
   group: android-${{ github.ref }}
@@ -33,9 +33,9 @@ jobs:
             echo "Debug APK imzası kullanılacak."
           fi
       - name: Birim testleri
-        run: gradle testDebugUnitTest --no-daemon
+        run: gradle testDebugUnitTest --stacktrace --no-daemon
       - name: APK derle
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleDebug --stacktrace --no-daemon
         env:
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
