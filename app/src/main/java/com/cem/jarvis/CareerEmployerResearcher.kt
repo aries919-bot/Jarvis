@@ -222,12 +222,14 @@ object CareerEmployerResearcher {
         val mappedSource = CareerSourceCatalog.sourceName(hit.url)
         val genericSourceNames = setOf(
             host, "Bilinmeyen kaynak", "İlan platformu", "İlan platformu / ikincil keşif",
-            "Özel sektör / büyük şirket", "Kamu / resmî kurum"
+            "Özel sektör / büyük şirket", "Kamu / resmî kurum",
+            "Haber / kamu personel gündemi · resmî ilan değil"
         )
         val structured = page.structuredEmployer?.takeIf { it.isNotBlank() }
         val mappedEmployer = mappedSource.takeIf {
             it.isNotBlank() && it !in genericSourceNames &&
-                !CareerSourceCatalog.isSecondary(hit.url)
+                !CareerSourceCatalog.isSecondary(hit.url) &&
+                !CareerSourceCatalog.isNewsDiscoverySource(hit.url)
         }
         val employer = structured ?: mappedEmployer
         val finalHost = runCatching {
@@ -242,6 +244,8 @@ object CareerEmployerResearcher {
             " DİKKAT: Son adres HTTPS değil; hassas bilgi girmeden önce manuel kontrol et."
         } else ""
         val sourceAssessment = when {
+            CareerSourceCatalog.isNewsDiscoverySource(hit.url) ->
+                "Haber yayıncısı alan adı. Bu sayfa personel alımı yapan işverenin veya resmî başvuru kurumunun kaynağı değildir; haberde adı geçen kurumun birincil ilan sayfası ayrıca bulunmalı."
             CareerSourceCatalog.isSecondary(hit.url) ->
                 "İkincil iş/ilan platformu alan adı. Bu sayfa işverenin kendi sitesi sayılmaz."
             CareerSourceCatalog.isTrustedUrl(hit.url) ->
@@ -250,6 +254,8 @@ object CareerEmployerResearcher {
                 "Alan adı Aries'in tanımlı kaynak listesinde bulunamadı; bağımsız doğrulama gerekiyor."
         } + redirectWarning
         val employerAssessment = when {
+            CareerSourceCatalog.isNewsDiscoverySource(hit.url) && structured == null ->
+                "Bu sayfa haber yayıncısıdır, işe alım yapan işveren olarak kabul edilmedi. Haberde adı geçen kurum/işveren birincil kaynaktan doğrulanmalıdır."
             structured != null ->
                 "Sayfanın yapılandırılmış verisinde işveren adı '$structured' olarak bulundu. Tüzel kişilik/sicil kaydı ayrıca doğrulanmış değildir."
             mappedEmployer != null ->
