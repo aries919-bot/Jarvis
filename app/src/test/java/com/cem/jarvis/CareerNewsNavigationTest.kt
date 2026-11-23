@@ -2,6 +2,7 @@ package com.cem.jarvis
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CareerNewsNavigationTest {
@@ -20,6 +21,23 @@ class CareerNewsNavigationTest {
         listOf(0, 2, 3, 4, 5).forEach { filter ->
             assertEquals(10, CareerNewsNavigation.queryForFilter(filter))
         }
+    }
+
+    @Test
+    fun kuraAndExamProcessRecordsNeverEnterTheNewsArchive() {
+        assertFalse(CareerNewsNavigation.matchesArchiveFilter(0, CareerContentType.PROCESS_NOTICE))
+        assertFalse(CareerNewsNavigation.matchesArchiveFilter(1, CareerContentType.PROCESS_NOTICE))
+        assertFalse(CareerNewsNavigation.matchesArchiveFilter(2, CareerContentType.PROCESS_NOTICE))
+        assertFalse(CareerNewsNavigation.matchesArchiveFilter(3, CareerContentType.PROCESS_NOTICE))
+        assertFalse(CareerNewsNavigation.matchesArchiveFilter(4, CareerContentType.PROCESS_NOTICE))
+    }
+
+    @Test
+    fun archiveFiltersKeepNewsAndStudentProgramsInTheirOwnSections() {
+        assertTrue(CareerNewsNavigation.matchesArchiveFilter(1, CareerContentType.STUDENT_PROGRAM))
+        assertTrue(CareerNewsNavigation.matchesArchiveFilter(2, CareerContentType.INSTITUTION_NOTICE))
+        assertTrue(CareerNewsNavigation.matchesArchiveFilter(3, CareerContentType.NEWS))
+        assertTrue(CareerNewsNavigation.matchesArchiveFilter(4, CareerContentType.REVIEW_REQUIRED))
     }
 
     @Test
