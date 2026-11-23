@@ -962,7 +962,7 @@ class CareerActivity : Activity() {
             jobHits.size.toString() + " iş ilanı adayı · " + divertedCount + " kayıt Haber & Duyurular'a ayrıldı · " +
                 futureDeadlineCount + " son tarihi gelecekte görünen · " + expiredCount +
                 " geçmiş/kapanmış/eski · " + unknownCount +
-                " kaynak veya son tarih kontrolü gereken. Yalnızca doğrudan kurum/işveren kaynağı ana akışa girer; gelecek tarih tek başına başvurunun açık olduğunu kanıtlamaz.",
+                " kaynak veya son tarih kontrolü gereken. Doğrudan kurum/işveren kaynağı ve gelecekteki son tarih kanıtı olanlar üstte sıralanır; diğer kapanmamış ilan adayları eksik kanıt uyarısıyla gösterilir. Gelecek tarih tek başına başvurunun açık olduğunu kanıtlamaz.",
             11f, false, muted
         ))
 
@@ -1270,7 +1270,7 @@ class CareerActivity : Activity() {
             jobItems.size.toString() + " iş ilanı adayı · " + divertedCount + " ilan olmayan kayıt Haber & Duyurular'a ayrıldı · " +
                 futureDeadlineCount + " son tarihi gelecekte görünen · " + expiredCount +
                 " geçmiş/kapanmış/eski · " + unknownCount +
-                " kaynak veya son tarih kontrolü gereken. Yalnızca doğrudan kurum/işveren kaynağı ana akışa girer; ilan açık varsayılmaz.",
+                " kaynak veya son tarih kontrolü gereken. Doğrudan kurum/işveren kaynağı ve son tarih kanıtı olanlar üstte; diğer kapanmamış adaylar kanıt uyarısıyla görünür. İlanın açık olduğu varsayılmaz.",
             11f, false, muted
         ))
 
@@ -1309,7 +1309,7 @@ class CareerActivity : Activity() {
                 when {
                     allItems.isEmpty() -> "İlk tarama bekleniyor"
                     jobItems.isEmpty() -> "İlan olmayan kayıtlar ayrıldı"
-                    else -> "Doğrudan kaynakta doğrulanmış ilan yok"
+                    else -> "Kapanmamış ilan adayı yok"
                 }, 14f, true, primaryText
             ))
             emptyCard.addView(label(message, 12f, false, muted))
