@@ -1,6 +1,13 @@
 name: Aries Career Source Audit
 
 on:
+  push:
+    branches: [ is/kariyer-kaynak-denetimi-1 ]
+    paths:
+      - 'career/sources.json'
+      - 'scripts/career_source_audit.py'
+      - 'scripts/test_career_source_audit.py'
+      - '.github/workflows/career-source-audit.yml'
   pull_request:
     branches: [ main ]
     paths:
