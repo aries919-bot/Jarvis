@@ -21,6 +21,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Repository maintenance tool tests
+        run: python3 scripts/qa/test_repo_maintenance.py
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'

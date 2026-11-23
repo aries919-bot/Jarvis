@@ -973,6 +973,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             closeSide()
             startActivity(Intent(this, CareerActivity::class.java))
         })
+        add(p, Ui.button(this, "📈  Piyasa Merkezi") {
+            closeSide()
+            startActivity(Intent(this, FinanceActivity::class.java))
+        })
         val ttl = Ui.text(this, "Sohbetler", 20f, Pal.WHITE)
         ttl.setPadding(0, dp(14), 0, 0)
         p.addView(ttl)

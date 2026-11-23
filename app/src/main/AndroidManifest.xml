@@ -65,6 +65,7 @@
 
         <activity android:name=".media.FilmDiziActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"/>
         <activity android:name=".CareerActivity" android:exported="false" />
+        <activity android:name=".FinanceActivity" android:exported="false" />
     </application>
 
 </manifest>
