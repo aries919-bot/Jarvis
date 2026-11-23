@@ -73,4 +73,4 @@
 8. Cline sahiplik kuralı eklendi: K1/C1/E1-Veri Cline; A1/A2/B1 ve kalan uygulama işleri ChatGPT.
 9. C2 PR #22 kategori filtreleri + Haber/Süreç/Program ayrımı; Full App QA/API29-35 ve APK CI SUCCESS, PR açık.
 10. C3 DEVAM: kaynak metninden yapılandırılmış alan çıkarımı ve her alan için kanıt/provenans; Cline işlerine dokunulmayacak.
-**SONRAKİ ADIM:** Cline `DEVAM: K1` diyerek `cline/K1` dalında kaynak denetimini yürütür; ChatGPT bu sırada A2 PR #28'i bağımsız inceleme ve telefon testi bekleyen durumda tutar.
+**SONRAKİ ADIM:** ChatGPT `is/c3-ilan-semasi-ai-kaynak-kaniti` dalında C3 kaynak metni → şema/provenans/AI doğrulaması ve kullanıcı tetikli yenilemeyi uygular; Cline `DEVAM: K1` diyene kadar Cline'ın sunucu/veri dosyalarına dokunulmaz.
