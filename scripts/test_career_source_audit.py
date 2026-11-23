@@ -73,6 +73,29 @@ class Tests(unittest.TestCase):
         with patch.object(mod,"fetch",side_effect=URLError("offline")):
             result=mod.probe(source)
         self.assertEqual("network_error",result["status"]); self.assertFalse(result["readerOk"])
+    def test_login_sensitive_page_is_reported_as_login_required(self):
+        from unittest.mock import patch
+        source={"id":"login","name":"Login","url":"https://example.gov.tr/","probeUrl":"https://example.gov.tr/","readerMode":"html_index","loginSensitive":True}
+        with patch.object(mod,"fetch",return_value=(200,"https://example.gov.tr/","text/html","Lütfen giriş yapınız. e-Devlet ile giriş.")):
+            result=mod.probe(source)
+        self.assertEqual("login_required",result["status"])
+        self.assertFalse(result["readerOk"])
+
+    def test_probe_url_must_match_registered_source_host(self):
+        rows=json.loads(mod.REGISTRY.read_text(encoding="utf-8"))["sources"]
+        rows[3]["probeUrl"]="https://different.example/collect"
+        with self.assertRaisesRegex(ValueError,"registered source host"):
+            mod.validate(rows)
+
+    def test_redirect_policy_blocks_cross_host_and_https_downgrade(self):
+        from urllib.request import Request
+        handler=mod.SameHostHttpsRedirect("example.gov.tr")
+        request=Request("https://example.gov.tr/start")
+        with self.assertRaisesRegex(ValueError,"redirect blocked"):
+            handler.redirect_request(request,None,302,"Found",{},"https://attacker.example/collect")
+        with self.assertRaisesRegex(ValueError,"redirect blocked"):
+            handler.redirect_request(request,None,302,"Found",{},"http://example.gov.tr/collect")
+
     def test_login_captcha_detection(self):
         self.assertIn("captcha",mod.BLOCK); self.assertIn("giriş yap",mod.LOGIN)
 
