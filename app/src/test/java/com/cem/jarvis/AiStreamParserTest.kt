@@ -52,4 +52,17 @@ class AiStreamParserTest {
         assertEquals("", AiStreamParser.openAiDelta("""{"other":[]}"""))
         assertEquals("", AiStreamParser.geminiDelta("""{"other":[]}"""))
     }
+
+    @Test
+    fun readsOnlySseDataAndIgnoresCommentsMetadataAndEmptyLines() {
+        assertEquals("""{"x":1}""", SseLineParser.dataFromLine("""data: {"x":1}"""))
+        assertEquals("""{"x":1}""", SseLineParser.dataFromLine("""{"x":1}"""))
+        assertEquals("[DONE]", SseLineParser.dataFromLine("data: [DONE]"))
+        assertNull(SseLineParser.dataFromLine(": keep-alive"))
+        assertNull(SseLineParser.dataFromLine("event: message"))
+        assertNull(SseLineParser.dataFromLine("id: 12"))
+        assertNull(SseLineParser.dataFromLine("retry: 1000"))
+        assertNull(SseLineParser.dataFromLine("data: "))
+        assertNull(SseLineParser.dataFromLine(""))
+    }
 }
