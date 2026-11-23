@@ -5,23 +5,25 @@
 > Bu dal yalnızca proje notları içindir; Android kodu burada geliştirilmez.
 
 ## Repo gerçeği
-- Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a` (2026-11-21).
+- Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a` (2026-11-21); bu SHA için PR tetiklemeli workflow run listesi boş.
 - Notlar `durum` dalında; GitHub okuma/yazma erişimi doğrulandı.
 - `main` üzerinde docs/HARITA.md ve docs/TALIMAT.md yok; doğru kopyalar `durum` dalında.
-- Cline sahiplik kuralı geçerli. Henüz `cline/*` PR'ı yok; Cline `DEVAM: K1` demedi.
+- Branch araması sayfalandırılarak tamamlandı; `cline/*` dalı/PR'ı görünmüyor. Cline `DEVAM: K1` demedi. K1 sahipliği Cline'da.
 - K1 eski PR #24 ChatGPT koludur; Cline K1 tamamlayana kadar #24'e dokunma.
 - A2 PR #25 açık/taslak, `is/a2-expressive-theme` → `main`; ikinci CI denemesi test+APK SUCCESS, ilk Gradle metadata NPE'nin kök nedeni bilinmiyor.
 - A2 tanılama PR #27 açık/taslak, `fix/a2-gradle-metadata-stacktrace` → A2; workflow-only, PR/push CI SUCCESS.
 - A2 devam PR #28 açık/taslak, `is/a2-theme-completion` → A2; PR #45180833170 ve push #45180819864 SUCCESS. Açık/koyu tercih, dashboard sayacı ve Film/Dizi skeleton eklendi; telefon testi/bağımsız inceleme bekliyor.
 - B1 PR #26 açık/taslak, `is/b1-ai-memory-foundation` → A2; PR #45175633112 ve push #45175625717 SUCCESS. Canlı sağlayıcı ve telefon testi/bağımsız inceleme bekliyor.
 - C2 PR #22 açık/taslak, `is/kariyer-1-21-verified-search` → `kariyer-modulu`; APK + Full App QA API29/33/34/35 SUCCESS. Main'e birleşmedi; telefon testi/bağımsız inceleme bekliyor.
-- C3 ana PR #29: `is/c3-ilan-semasi-ai-kaynak-kaniti` → `kariyer-modulu`. Güvenlik düzeltmesi PR #30: `fix/c3-ai-consent-and-navigation-guard` → PR #29 dalı.
+- C3 ana PR #29 açık/taslak: `is/c3-ilan-semasi-ai-kaynak-kaniti` → `kariyer-modulu`; #29 için GitHub review kaydı yok. PR #30 açık/taslak ve mergeable: `fix/c3-ai-consent-and-navigation-guard` → PR #29 dalı.
 - C3 PR #30 HEAD `5f6eebb816fadfa8e1c7c51b4ccce1234d1cee03`; APK #638 (run 45226233478) SUCCESS; Full App QA #84 (run 45226233411) SUCCESS.
-- Full QA #84: statik denetim/Lint/birim test/APK ve Android 29, 33, 34, 35 UI audit işlerinin tümü SUCCESS. API35 raporu: 20 ekran, 0 hata, 26 uyarı, 1 manuel görsel inceleme notu; bu uyarılar C3 regresyonu olarak kanıtlanmadı.
+- Full QA #84: statik denetim/Lint/birim test/APK ve Android 29, 33, 34, 35 genel UI audit işlerinin tümü SUCCESS. API35 summary: 20 ekran, 0 hata, 26 uyarı, 1 manuel okunabilirlik incelemesi.
+- QA kapsam sınırı: Full App QA #84 C3 WebView kaynağını açmadı, ilan metni okumadı ve AI gönderme/iptal/fallback/CAPTCHA etkileşimini UI üzerinden test etmedi. Yeşil koşu genel uygulama smoke/UI denetimidir.
 - C3 #30 diff bağımsız statik incelendi: AI gönderiminden önce ayrı açık onay; olası sağlayıcı sırası/fallback açıklaması; kaynak URL prompt dışında; CV/profil gönderilmiyor; HTTPS, aynı-host üst seviye gezinme ve subresource URL kontrolleri; CAPTCHA/login/403'te durma; boş/401 ve unsafe URL testleri.
 - Sınır: DNS çözümlemesi özel IP'ye yönlendirilen public hostname riskini tamamen engellediği kanıtlanmadı; PR da tam ağ-seviyesi SSRF koruması iddia etmiyor. Kişisel veri maskesi eksiksiz değil; kullanıcıya açıklanıyor.
 - C3 üç Resmî Gazete örneği bağımsız kontrol edildi: AFAD 13 kadro/P8-P9-P16-P21-P32-P43 ve P4/23–30 Kasım; TÜRKAK 3 ön lisans pozisyonu/P93≥70/23 Kasım–7 Aralık; TGA 13 pozisyon/3 Kasım–4 Aralık ve 4857 iş kanunu statüsü. Bunlar uygulamanın otomatik okuyucusunu/telefon WebView'ini kanıtlamaz.
-- C3 PR #29/#30 için gerçek cihaz WebView, gönderme iptali, onaylı sağlayıcı akışı, yönlendirme ve giriş/CAPTCHA davranışı henüz denenmedi. Bu nedenle ONAY/merge yok.
+- C3 #30 PR açıklaması güncel CI kanıtıyla düzeltildi. GitHub'a COMMENTED hakem notu bırakıldı (review id `6026649200`); APPROVE değil. Kayıt PR yazarıyla aynı `aries919-bot` hesabından geldiği için bağımsız insan incelemesi sayılmaz.
+- C3 PR #29/#30 için gerçek cihaz WebView, gönderme iptali, onaylı sağlayıcı akışı, yönlendirme ve giriş/CAPTCHA davranışı henüz denenmedi. PR #29/#30 için ONAY/merge yok.
 - E1 ikiye ayrıldı: E1-Veri Cline; E1-UI/Xiaomi ChatGPT. Aynı dosyada paralel değişiklik yok.
 - Diğer açık/eskiden kalmış PR'lar: #23/#18/#17/#9/#4/#2/#1; farklı tabanlı eski PR'lar main'e birleşmiş sayılmaz.
 
@@ -34,7 +36,7 @@
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt; #26 CI yeşil; canlı API, bağımsız inceleme ve telefon testi |
 | C1 Sunucu ilan toplayıcı + tekilleştirme JSON | CLINE BEKLİYOR | sahip: cline; K1 onayından sonra |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt; #22 CI yeşil; bağımsız inceleme ve telefon testi |
-| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29 + #30; #30 APK #638 ve Full QA #84 yeşil; gerçek telefon doğrulaması bekliyor |
+| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29/#30 açık taslak; #30 APK #638 + Full QA #84 yeşil; gerçek cihaz ve bağımsız insan incelemesi bekliyor |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt; kişisel profil telefonda kalır |
 | C5 Gelecek alım takvimi ve bildirim | YAPILMADI | sahip: chatgpt; resmî tarih ile tahmin ayrı |
 | D1 Film & Dizi | YAPILMADI | sahip: chatgpt; yalnız yasal/izinli akış |
@@ -74,5 +76,5 @@
 7. A2 #28 açık/koyu mod, dashboard sayacı ve skeleton; PR/push CI SUCCESS.
 8. Cline sahiplik ayrımı: K1/C1/E1-Veri Cline; diğer uygulama işleri ChatGPT.
 9. C2 #22 kategoriler ve Haber/Süreç/Program ayrımı; APK + API29/33/34/35 Full QA SUCCESS.
-10. C3 #30 HEAD `5f6eebb`: APK #638 ve Full App QA #84 tüm işler SUCCESS; statik hakem incelemesi tamamlandı, gerçek cihaz WebView/onay/engel testleri bekliyor.
-**SONRAKİ ADIM:** C3'ü telefonda dene: kaynak açma; AI gönderiminde “Gönderme” ile iptal; onay verince doğru sağlayıcıların/fallback açıklamasının uygulanması; yanlış anahtar/boş yanıt; 403/CAPTCHA/login; farklı host yönlendirmesi ve alt kaynak engeli; dialog kapatma ve uygulamayı yeniden başlatma. Sonuçları bu dosyaya kaydet. Cline `DEVAM: K1` demeden K1/C1/E1-Veri dosyalarına dokunma.
+10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
+**SONRAKİ ADIM:** Cem gerçek telefonda C3 kontrol listesini çalıştırıp sonucu bildirsin: kaynak açma/metin okuma, AI gönderme iptali ve onayı, yanlış anahtar/boş yanıt, 403/CAPTCHA/login, farklı host/alt kaynak, pencere kapatma ve yeniden başlatma. Bunlar denenmeden ONAY/merge yok. Cline `DEVAM: K1` demeden K1/C1/E1-Veri dosyalarına dokunma.
