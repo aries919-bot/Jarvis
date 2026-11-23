@@ -88,6 +88,8 @@ def ui_screen_dimension(qa_dir: Path, key: str, default: int = 0) -> int:
 
 def inspect_hierarchies(qa_dir: Path, density: float) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
+    screen_width = ui_screen_dimension(qa_dir, "screenWidthPx", 0)
+    screen_height = ui_screen_dimension(qa_dir, "screenHeightPx", 0)
     for file in qa_dir.rglob("*.xml"):
         if file.name.startswith("TEST-"):
             continue
@@ -125,8 +127,6 @@ def inspect_hierarchies(qa_dir: Path, density: float) -> list[dict[str, Any]]:
                     "message": "Clickable element has no text or content description.",
                     "label": "",
                 })
-            screen_width = int(ui_screen_dimension(qa_dir, "screenWidthPx", 0))
-            screen_height = int(ui_screen_dimension(qa_dir, "screenHeightPx", 0))
             if x1 < 0 or y1 < 0 or (screen_width and x2 > screen_width) or (screen_height and y2 > screen_height):
                 findings.append({
                     "severity": "warning",
@@ -353,7 +353,12 @@ def main() -> int:
     ui_hierarchy_findings = inspect_hierarchies(qa_dir, device_density)
     lint = lint_summary(root)
 
-    findings = list(ui.get("findings", []))
+    # XML hierarchy analysis is authoritative for dimensions and labels. Remove the
+    # equivalent instrumentation-side heuristics to avoid duplicate warnings.
+    findings = [
+        item for item in ui.get("findings", [])
+        if item.get("category") not in {"touch-target", "accessibility-label"}
+    ]
     findings.extend(ui_hierarchy_findings)
     findings.extend(source.get("warnings", []))
     findings.extend(scan_logcat(qa_dir))
