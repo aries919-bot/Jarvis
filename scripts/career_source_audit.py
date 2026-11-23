@@ -86,14 +86,16 @@ def fetch(url):
         if len(raw)>MAX_BYTES: body+=" [TRUNCATED]"
         return r.status,r.geturl(),ctype,body
 
-def kind(label,href):
+def kind(label,href,candidate_terms=(),programme_terms=()):
     value=norm(label+" "+href)
     if any(norm(x) in value for x in PROCESS_TERMS): return "process_notice"
-    if any(norm(x) in value for x in JOB_TERMS): return "job_candidate"
+    if any(norm(x) in value for x in programme_terms): return "programme_candidate"
+    if any(norm(x) in value for x in JOB_TERMS) or any(norm(x) in value for x in candidate_terms):
+        return "job_candidate"
     return None
 
 def probe(source):
-    out={"id":source["id"],"name":source["name"],"url":source["url"],"readerMode":source["readerMode"],"readerOk":False,"candidateCount":0,"processNoticeCount":0,"candidateLinks":[],"applicationWindow":{"startDate":None,"deadline":None,"status":"unknown"},"httpStatus":None,"finalUrl":None,"error":None,"checkedAt":dt.datetime.now(dt.timezone.utc).isoformat()}
+    out={"id":source["id"],"name":source["name"],"url":source["url"],"readerMode":source["readerMode"],"readerOk":False,"candidateCount":0,"programmeCount":0,"processNoticeCount":0,"candidateLinks":[],"applicationWindow":{"startDate":None,"deadline":None,"status":"unknown"},"httpStatus":None,"finalUrl":None,"error":None,"checkedAt":dt.datetime.now(dt.timezone.utc).isoformat()}
     if source["readerMode"] not in ("html_index","html_detail"):
         out.update(status="not_probed_by_design",error="Dynamic/PDF/manual boundary; no automated login or CAPTCHA bypass.")
         return out
@@ -107,11 +109,12 @@ def probe(source):
         markers=all(norm(x) in ntext for x in source.get("expectedMarkers",[]))
         links=[]; seen=set()
         for a in p.links:
-            href=urljoin(final,a["href"]); label=re.sub(r"\s+"," ",a["text"]).strip(); k=kind(label,href)
+            href=urljoin(final,a["href"]); label=re.sub(r"\s+"," ",a["text"]).strip(); k=kind(label,href,source.get("candidateTerms",[]),source.get("programmeTerms",[]))
             u=urlparse(href)
             if k and label and href.startswith("https://") and not u.username and not u.password and href not in seen:
                 seen.add(href); links.append({"title":label[:240],"url":href,"kind":k})
         jobs=[x for x in links if x["kind"]=="job_candidate"]
+        programmes=[x for x in links if x["kind"]=="programme_candidate"]
         process=[x for x in links if x["kind"]=="process_notice"]
         if source["readerMode"]=="html_detail":
             ok=len(text)>=100 and any(norm(x) in ntext for x in JOB_TERMS) and bool(DATE_RE.search(text)) and markers
@@ -119,10 +122,11 @@ def probe(source):
             out["candidateLinks"]=[{"title":source["name"],"url":final,"kind":"job_detail"}] if ok else []
             out["applicationWindow"]=application_window(text)
         else:
-            # A generic 200 page is not a reader: it must expose a direct job link.
-            out["readerOk"]=len(text)>=100 and markers and bool(jobs)
-            out["candidateCount"]=len(jobs); out["processNoticeCount"]=len(process)
-            out["candidateLinks"]=(jobs+process)[:50]
+            # A generic 200 page is not a reader: it must expose a direct vacancy
+            # or a separately tagged early-career programme link.
+            out["readerOk"]=len(text)>=100 and markers and bool(jobs or programmes)
+            out["candidateCount"]=len(jobs); out["programmeCount"]=len(programmes); out["processNoticeCount"]=len(process)
+            out["candidateLinks"]=(jobs+programmes+process)[:50]
         out["status"]="reader_ok" if out["readerOk"] else "reader_not_confirmed"
         if not out["readerOk"]: out["error"]="Page opened, but no verified direct vacancy link/detail was extracted."
         return out
@@ -142,13 +146,14 @@ def validate(sources):
         if s["readerMode"] in ("html_index","html_detail") and not s.get("probeUrl"): raise ValueError("Missing probeUrl: "+s["id"])
 
 def report(sources,results):
-    working=[x for x in results if x["readerOk"] and x["candidateCount"]>0]
+    working=[x for x in results if x["readerOk"] and (x["candidateCount"]+x.get("programmeCount",0))>0]
     detail=[x for x in working if x["readerMode"]=="html_detail"]
     index=[x for x in working if x["readerMode"]=="html_index"]
     open_sources=[x for x in detail if x["applicationWindow"]["status"]=="open"]
     announced=[x for x in detail if x["applicationWindow"]["status"]=="announced_not_open"]
     expired=[x for x in detail if x["applicationWindow"]["status"]=="expired"]
-    return {"schemaVersion":1,"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceCount":len(sources),"probedCount":sum(x["status"]!="not_probed_by_design" for x in results),"workingReaderCount":len(working),"workingDetailReaderCount":len(detail),"workingIndexReaderCount":len(index),"activeVacancySourceCount":len(open_sources),"announcedNotOpenSourceCount":len(announced),"expiredDetailSourceCount":len(expired),"sourcesWithCandidates":len(working),"results":results}
+    programme_sources=[x for x in working if x.get("programmeCount",0)>0]
+    return {"schemaVersion":1,"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceCount":len(sources),"probedCount":sum(x["status"]!="not_probed_by_design" for x in results),"workingReaderCount":len(working),"workingDetailReaderCount":len(detail),"workingIndexReaderCount":len(index),"activeVacancySourceCount":len(open_sources),"announcedNotOpenSourceCount":len(announced),"expiredDetailSourceCount":len(expired),"programmeReaderCount":len(programme_sources),"vacancyLinkCount":sum(x["candidateCount"] for x in results),"programmeLinkCount":sum(x.get("programmeCount",0) for x in results),"sourcesWithCandidates":len(working),"results":results}
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--probe",action="store_true"); ap.add_argument("--min-working",type=int,default=0); ap.add_argument("--output",type=Path); args=ap.parse_args()
