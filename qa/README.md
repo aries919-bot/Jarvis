@@ -20,7 +20,7 @@ Open the GitHub Actions run for Aries Full Application QA. Download:
 - aries-full-app-qa-android-34
 - aries-full-app-qa-android-35
 
-Each emulator artifact includes qa-output/report/index.html, report.json, screenshots, XML hierarchies, the ui-audit.json bundle and Logcat.
+Each emulator artifact includes qa-output/report/index.html, report.json, screenshots, XML hierarchies, the ui-audit.json bundle and Logcat. UI evidence is written to the app-private `files/AriesQA` directory and retrieved from the disposable debug emulator with `adb run-as`; it does not depend on emulated external storage being mounted.
 
 ## Safety boundaries
 
