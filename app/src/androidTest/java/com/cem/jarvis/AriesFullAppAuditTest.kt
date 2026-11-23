@@ -258,6 +258,8 @@ class AriesFullAppAuditTest {
                         .put("release", android.os.Build.VERSION.RELEASE)
                         .put("model", android.os.Build.MODEL)
                         .put("density", InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density)
+                        .put("screenWidthPx", InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.widthPixels)
+                        .put("screenHeightPx", InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.heightPixels)
                 )
                 .put("screens", screenRecords)
                 .put("findings", findings)
