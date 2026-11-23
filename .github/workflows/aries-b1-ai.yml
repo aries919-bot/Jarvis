@@ -3,6 +3,8 @@ name: Aries B1 AI memory QA
 on:
   pull_request:
     branches: [ is/a2-expressive-theme ]
+  push:
+    branches: [ is/b1-ai-memory-foundation ]
   workflow_dispatch:
 
 permissions:
