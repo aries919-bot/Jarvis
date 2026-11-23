@@ -407,6 +407,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         ).forEach { (label, page) ->
             quickRow.addView(Ui.chip(this, label, false) { showPage(page) })
         }
+        quickRow.addView(Ui.chip(this, "Film & Dizi", false) {
+            startActivity(Intent(this, com.cem.jarvis.media.FilmDiziActivity::class.java))
+        })
         quickScroll.addView(quickRow)
         val quickLp = LinearLayout.LayoutParams(-1, -2)
         quickLp.topMargin = dp(4)
