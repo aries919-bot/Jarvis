@@ -342,7 +342,8 @@ object Ui {
     fun text(ctx: Context, s: String, size: Float = 15f, color: String = Pal.TEXT, bold: Boolean = false): TextView {
         val t = TextView(ctx)
         t.text = s
-        t.textSize = size
+        // Keep small labels readable across the home, voice and assistant screens.
+        t.textSize = size.coerceAtLeast(Tok.T_CAPTION)
         t.setTextColor(Color.parseColor(color))
         if (bold) t.setTypeface(t.typeface, android.graphics.Typeface.BOLD)
         return t
