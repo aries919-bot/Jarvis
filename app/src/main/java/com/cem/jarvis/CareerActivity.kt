@@ -705,7 +705,7 @@ class CareerActivity : Activity() {
                     }
                     androidx.work.WorkInfo.State.SUCCEEDED -> {
                         showDailyResults(dailyResultsContainer)
-                        if (currentPage == 4 && ::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                        if (currentPage == 5 && ::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
                         if (currentPage == 4 && ::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
