@@ -20,7 +20,7 @@ import java.util.Locale
 
 // ============================================================
 // Zamanlı hatırlatmalar. Tamamen telefonda çalışır, internet gerektirmez.
-// setAlarmClock: Doze modunda da tetiklenir, ek "tam alarm" izni gerektirmez.
+// Kesin alarm izni varsa setAlarmClock, yoksa pil dostu gecikmeli alarm kullanılır.
 // ============================================================
 object Reminders {
 

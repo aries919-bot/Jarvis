@@ -18,6 +18,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.RenderProcessGoneDetail
+import androidx.annotation.RequiresApi
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -1545,6 +1546,7 @@ private fun createAriesSearchWebView(
                 view.evaluateJavascript(js, null)
             }
 
+            @RequiresApi(26)
             override fun onRenderProcessGone(
                 view: WebView,
                 detail: RenderProcessGoneDetail
@@ -1905,6 +1907,7 @@ private fun createAriesSiteWebView(
                 return scheme != "http" && scheme != "https"
             }
 
+            @RequiresApi(26)
             override fun onRenderProcessGone(
                 view: WebView,
                 detail: RenderProcessGoneDetail

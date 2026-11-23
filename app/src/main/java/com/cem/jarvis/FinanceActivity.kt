@@ -357,7 +357,7 @@ class FinanceActivity : Activity() {
                     }.onFailure { error ->
                         val cached = readQuoteCache(symbol)
                         if (cached != null) {
-                            stockRows.addView(quoteRow(cached, " · ÖNBELLEK"), margins(bottom = 7))
+                            stockRows.addView(quoteRow(cached), margins(bottom = 7))
                         } else {
                             stockRows.addView(errorQuoteRow(symbol, safeError(error)), margins(bottom = 7))
                         }
