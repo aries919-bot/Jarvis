@@ -40,7 +40,7 @@ class Tests(unittest.TestCase):
     def test_public_programme_index_reader_is_separate_from_job_vacancies(self):
         from unittest.mock import patch
         source={"id":"tei","name":"TEI programmes","url":"https://example.gov.tr/jobs","probeUrl":"https://example.gov.tr/jobs","readerMode":"html_index","expectedMarkers":["jet talent"],"candidateTerms":["genel başvuru"],"programmeTerms":["jet talent","back to core"]}
-        html='<html><body><h1>Jet Talent</h1><a href="/jet-talent">Jet Talent (JT-2026)</a></body></html>'
+        html='<html><body><h1>Jet Talent</h1><p>Early career programme for university students with application and assessment activities, learning sessions and mentoring opportunities.</p><a href="/jet-talent">Jet Talent (JT-2026)</a></body></html>'
         with patch.object(mod,"fetch",return_value=(200,"https://example.gov.tr/jobs","text/html",html)):
             result=mod.probe(source)
         summary=mod.report([source],[result])
