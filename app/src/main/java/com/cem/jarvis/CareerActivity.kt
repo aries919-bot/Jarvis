@@ -1951,8 +1951,12 @@ class CareerActivity : Activity() {
                 ).type == type
             }
         }
+        val processCount = CareerRecruitmentTracker.read(prefs).count { event ->
+            !(event.stage == "BAŞVURU / YENİ ALIM" &&
+                CareerContentClassifier.classify(event.title, event.snippet, event.url).isJobListing)
+        }
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        metrics.addView(statCard("SÜREÇ / KURA", (counts[CareerContentType.PROCESS_NOTICE] ?: 0).toString(), "Sonuç ve aşamalar"),
+        metrics.addView(statCard("SÜREÇ / KURA", processCount.toString(), "Sonuç ve aşamalar"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, dp(4), 0) })
         metrics.addView(statCard("PROGRAM", (counts[CareerContentType.STUDENT_PROGRAM] ?: 0).toString(), "Staj / öğrenci"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
@@ -2010,13 +2014,7 @@ class CareerActivity : Activity() {
             val type = CareerContentClassifier.classify(
                 item.optString("title"), item.optString("snippet"), item.optString("url")
             ).type
-            when (newsFilter) {
-                1 -> type == CareerContentType.STUDENT_PROGRAM
-                2 -> type == CareerContentType.INSTITUTION_NOTICE
-                3 -> type == CareerContentType.NEWS
-                4 -> type == CareerContentType.REVIEW_REQUIRED
-                else -> type != CareerContentType.PROCESS_NOTICE
-            }
+            CareerNewsNavigation.matchesArchiveFilter(newsFilter, type)
         }
         parent.addView(label(
             filtered.size.toString() + " kayıt gösteriliyor · " + allItems.size + " toplam duyuru/haber/süreç kaydı",
