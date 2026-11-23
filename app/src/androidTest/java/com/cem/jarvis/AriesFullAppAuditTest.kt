@@ -146,9 +146,9 @@ class AriesFullAppAuditTest {
                     captureAndAudit("03-career-listings")
 
                     val careerTabs = listOf(
-                        Triple("CV'im", "04-career-cv", "CV profilin"),
+                        Triple("CV", "04-career-cv", "CV profilin"),
                         Triple("Takip", "05-career-tracking", "Takip merkezim"),
-                        Triple("Başvuru", "06-career-applications", "Başvurularım"),
+                        Triple("Başv.", "06-career-applications", "Başvurularım"),
                         Triple("Sonuç", "07-career-results", "Başvuru sonuçlarım"),
                         Triple("Haber", "08-career-news", "ARIES  /  HABER & DUYURULAR")
                     )

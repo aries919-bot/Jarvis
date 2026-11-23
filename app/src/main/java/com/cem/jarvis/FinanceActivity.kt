@@ -6,9 +6,13 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.net.Uri
+import android.provider.Settings
 import android.text.InputType
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -95,9 +99,17 @@ class FinanceActivity : Activity() {
         disclaimer.addView(Ui.text(this, "BİLGİLENDİRME", 11f, Pal.ACCENT, true))
         disclaimer.addView(Ui.text(
             this,
-            "Bu ekran yatırım tavsiyesi vermez. Altın/döviz verisi üçüncü taraf açık akıştan, hisse fiyatı Finnhub hesabından alınır. Veriler gecikmeli, eksik veya eski olabilir; işlem öncesinde banka, aracı kurum veya Borsa İstanbul ekranından doğrula.",
+            "Bu ekran yatırım tavsiyesi vermez. Altın/döviz verisi Türkiye geneli gösterge akışıdır; il/ilçe kuyumcu tezgâh fiyatı değildir. Hisse fiyatı Finnhub hesabından alınır. Veriler gecikmeli, eksik veya eski olabilir; işlem öncesinde yerel kuyumcu, banka, aracı kurum veya Borsa İstanbul ekranından doğrula.",
             12f, Pal.MUTED
         ))
+        disclaimer.addView(Ui.text(
+            this,
+            "İl fiyat rehberi bağımsız bir kaynaktır; her ilde resmi canlı oda verisi bulunmayabilir. Gösterilen fiyatın kaynak türünü ve güncelleme saatini kontrol et.",
+            11f, Pal.AMBER
+        ), margins(4, 8))
+        disclaimer.addView(Ui.button(this, "İl bazlı fiyat rehberini aç") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://kuyumcuodasi.com/il-fiyatlari"))) }
+        }, margins(8))
         content.addView(disclaimer, margins(4, 12))
 
         content.addView(Ui.section(this, "Altın ve döviz"))
@@ -160,6 +172,14 @@ class FinanceActivity : Activity() {
             "Kaydettiğin eşikler ağ bağlantısı olduğunda yaklaşık saatte bir kontrol edilir. Kaynak verisi eskiyse alarm üretilmez.",
             12f, Pal.MUTED
         ))
+        if (!notificationsEnabledForApp()) {
+            alertCard.addView(Ui.text(
+                this,
+                "Bildirim izni kapalı. Fiyat eşikleri arka planda kontrol edilse bile bu telefona bildirim gösterilemez.",
+                12f, Pal.AMBER
+            ), margins(6, 8))
+            alertCard.addView(Ui.button(this, "Aries bildirim ayarlarını aç") { openAppNotificationSettings() }, margins(6))
+        }
         alertRows = Ui.column(this).apply { setPadding(0, dp(8), 0, 0) }
         alertCard.addView(alertRows)
         content.addView(alertCard, margins(bottom = 12))
@@ -242,7 +262,7 @@ class FinanceActivity : Activity() {
                 labels.addView(Ui.text(
                     this,
                     sourceLabel(price.source) + " · " + if (price.stale) "eski veri" else "güncel zaman damgası",
-                    10f, if (price.stale || stale) Pal.AMBER else Pal.MUTED
+                    10f, if (price.stale) Pal.AMBER else Pal.MUTED
                 ))
                 line.addView(labels, LinearLayout.LayoutParams(0, -2, 1f))
                 val values = Ui.column(this).apply { gravity = android.view.Gravity.END }
@@ -515,6 +535,23 @@ class FinanceActivity : Activity() {
         "tcmb" -> "TCMB"
         "truncgil" -> "Truncgil"
         else -> source.uppercase(Locale("tr", "TR"))
+    }
+
+    private fun notificationsEnabledForApp(): Boolean {
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return manager.areNotificationsEnabled() &&
+            (Build.VERSION.SDK_INT < 33 ||
+                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+    }
+
+    private fun openAppNotificationSettings() {
+        val settings = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        runCatching { startActivity(settings) }.onFailure {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+            }
+        }
     }
 
     private fun quoteIsStale(seconds: Long, forcedStale: Boolean = false): Boolean {

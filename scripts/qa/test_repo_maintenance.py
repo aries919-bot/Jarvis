@@ -70,6 +70,12 @@ class ClientSecretBuildTests(unittest.TestCase):
         self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', android_workflow)
         self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', qa_workflow)
 
+
+    def test_finnhub_key_is_sent_in_header_not_url(self) -> None:
+        finance_data = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "FinanceData.kt").read_text(encoding="utf-8")
+        self.assertIn('setRequestProperty("X-Finnhub-Token", finnhubApiKey)', finance_data)
+        self.assertNotIn('&token=" + encode(apiKey)', finance_data)
+
     def test_cloud_api_key_is_keystore_encrypted_and_legacy_is_migrated(self) -> None:
         store_file = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "Store.kt").read_text(encoding="utf-8")
         main_activity = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "MainActivity.kt").read_text(encoding="utf-8")

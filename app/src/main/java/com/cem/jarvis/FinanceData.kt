@@ -124,8 +124,8 @@ object FinanceData {
         require(apiKey.isNotBlank()) { "Finnhub API anahtarı girilmedi." }
         val clean = query.trim()
         require(clean.length in 1..60) { "Hisse araması 1–60 karakter olmalı." }
-        val address = "$FINNHUB_BASE/search?q=" + encode(clean) + "&token=" + encode(apiKey)
-        val json = request(address)
+        val address = "$FINNHUB_BASE/search?q=" + encode(clean)
+        val json = request(address, apiKey)
         return parseFinnhubSymbols(json)
     }
 
@@ -154,7 +154,7 @@ object FinanceData {
         require(apiKey.isNotBlank()) { "Finnhub API anahtarı girilmedi." }
         val clean = symbol.trim().uppercase(Locale.ROOT)
         require(isValidSymbol(clean)) { "Hisse kodu geçersiz." }
-        val json = request("$FINNHUB_BASE/quote?symbol=" + encode(clean) + "&token=" + encode(apiKey))
+        val json = request("$FINNHUB_BASE/quote?symbol=" + encode(clean), apiKey)
         return parseFinnhubQuote(clean, json)
     }
 
@@ -201,7 +201,7 @@ object FinanceData {
             symbol == symbol.uppercase(Locale.ROOT) &&
             Regex("^[A-Z0-9][A-Z0-9._:-]{0,23}$").matches(symbol)
 
-    private fun request(address: String): String {
+    private fun request(address: String, finnhubApiKey: String? = null): String {
         val connection = (URL(address).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 8_000
@@ -209,6 +209,7 @@ object FinanceData {
             instanceFollowRedirects = true
             setRequestProperty("Accept", "application/json")
             setRequestProperty("User-Agent", "Aries-Android/1.22")
+            if (!finnhubApiKey.isNullOrBlank()) setRequestProperty("X-Finnhub-Token", finnhubApiKey)
         }
         try {
             val code = connection.responseCode
@@ -216,8 +217,8 @@ object FinanceData {
             val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             if (code !in 200..299) {
                 val reason = when (code) {
-                    401, 403 -> "Finnhub anahtarı geçersiz veya veri erişimi yok."
-                    429 -> "Finnhub istek sınırına ulaşıldı. Biraz sonra tekrar dene."
+                    401, 403 -> if (finnhubApiKey.isNullOrBlank()) "Piyasa veri sağlayıcısı isteği reddetti (HTTP $code)." else "Finnhub anahtarı geçersiz veya veri erişimi yok."
+                    429 -> if (finnhubApiKey.isNullOrBlank()) "Piyasa veri sağlayıcısının istek sınırına ulaşıldı." else "Finnhub istek sınırına ulaşıldı. Biraz sonra tekrar dene."
                     else -> "Veri sağlayıcısı HTTP $code yanıtı verdi."
                 }
                 throw IOException(reason)
