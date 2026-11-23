@@ -101,19 +101,19 @@ private data class AriesTitleInfo(
     val source: String = "tmdb"
 )
 
-// Arama ekranı: Seekee gri teması
-private val AriesBg = Color(0xFF1E1E1E)
-private val AriesCard = Color(0xFF2B2B2B)
-private val AriesChip = Color(0xFF3C3C3C)
-private val AriesText = Color.White
-private val AriesBody = Color(0xFFE0E0E0)
-private val AriesMuted = Color(0xFFB0B0B0)
+// Ana uygulamayla ortak Aries tasarım sistemi.
+private val AriesBg = Ap.Bg
+private val AriesCard = Ap.Card
+private val AriesChip = Ap.Card2
+private val AriesText = Ap.Text
+private val AriesBody = Ap.Text
+private val AriesMuted = Ap.Muted
 
-// İzleme sayfası: koyu tema
-private val AriesWatchBg = Color(0xFF0B0B0B)
-private val AriesWatchCard = Color(0xFF1C1C1E)
-private val AriesWatchChip = Color(0xFF262626)
-private val AriesWatchSel = Color(0xFF6E6E6E)
+// İzleme sayfası da aynı yüzey ve vurgu ölçeğini kullanır.
+private val AriesWatchBg = Ap.Bg
+private val AriesWatchCard = Ap.Card
+private val AriesWatchChip = Ap.Card2
+private val AriesWatchSel = Ap.AccentSel
 
 // TMDB anahtarı projede zaten varsa otomatik bulunur (BuildConfig).
 // Bulunamazsa buraya yapıştır (v3 anahtarı veya v4 token olabilir).
