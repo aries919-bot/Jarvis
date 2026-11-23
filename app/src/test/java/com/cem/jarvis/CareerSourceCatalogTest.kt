@@ -246,4 +246,12 @@ class CareerSourceCatalogTest {
         )
     }
 
+
+    @Test
+    fun includesJandarmaOfficialPersonnelRecruitmentPortal() {
+        val source = CareerSourceCatalog.sources.firstOrNull { it.name == "Jandarma Personel Temin Sistemi" }
+        assertEquals("https://personeltemin.jandarma.gov.tr/", source?.url)
+        assertTrue(CareerSourceCatalog.isTrustedUrl(source!!.url))
+    }
+
 }
