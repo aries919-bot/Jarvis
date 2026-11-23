@@ -137,11 +137,12 @@
       "group": "kamu_baglantili",
       "url": "https://tga.gov.tr/kariyer",
       "probeUrl": "https://tga.gov.tr/kariyer",
-      "readerMode": "html_index",
+      "readerMode": "html_detail",
       "expectedMarkers": [
-        "kariyer"
+        "2026 yılı Türkiye Turizm Tanıtım ve Geliştirme Ajansı Personel Alım İlanı",
+        "04 Aralık 2026"
       ],
-      "note": "Resmî Gazete ilanı var; kariyer indeksi okuyucusu henüz doğrulanmadı."
+      "note": "Official direct HTML vacancy detail: 13 positions; applications 03.11.2026–04.12.2026. This is a live, public detail reader."
     },
     {
       "id": "turkak_pdf",
