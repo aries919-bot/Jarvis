@@ -20,7 +20,7 @@ Tarih: 23.11.2026. Kapsam: ilk 20 kaynaklık envanter ve otomatik okuyucu sağl�
 9 Zafer Kalkınma Ajansı: doğrudan ilan detay HTML'i; başvuru henüz açılmadı.
 10 ÇSGB Duyurular: public HTML, tarihî sınav/sonuç kayıtları da içerir.
 11 Millî Saraylar Personel Alım: public HTML, eski kayıtlar da var.
-12 TGA Kariyer: kurum kaynağı; reader henüz ölçülmedi.
+12 TGA Kariyer: doğrudan HTML detay okuyucusu; CI 200 yanıtı, ilan metni ve 03.11–04.12.2026 tarih aralığını doğruladı.
 13 TÜRKAK Resmî Gazete PDF: PDF reader bekliyor.
 14 Sahil Güvenlik Resmî Gazete PDF: PDF reader bekliyor.
 15 Malatya Turgut Özal Üniversitesi PDB: public HTML.
@@ -37,7 +37,7 @@ TGA'nın doğrudan kariyer sayfasında 13 pozisyon ve 03.11.2026–04.12.2026 ba
 - Zafer Kalkınma Ajansı: 2 uzman; TR33 bölgesinde görevlendirme; başvuru 25.11–14.12.2026. 23 Kasım itibarıyla duyurulmuş ama henüz açılmamış.
 
 ## Sayım ilkesi
-HTTP 200 veya tarayıcıda açılması tek başına reader sayılmaz. HTML detail okuyucusu ilan metni + tarih bulmalı. HTML index okuyucusu doğrudan personel/iş bağlantısı çıkarmalı. Kura/sınav sonuçları ayrı process stream olarak sınıflandırılır. PDF, dinamik sayfa ve kimlik doğrulama gereken kaynaklar bu PR'da çalışan reader sayılmaz. Gerçek workingReaderCount sadece PR CI'sinin canlı probe artifact'inden alınır.
+HTTP 200 veya tarayıcıda açılması tek başına reader sayılmaz. HTML detail okuyucusu ilan metni + tarih bulmalı. HTML index okuyucusu doğrudan personel/iş bağlantısı çıkarmalı. Kura/sınav sonuçları ayrı process stream olarak sınıflandırılır. PDF, dinamik sayfa ve kimlik doğrulama gereken kaynaklar bu PR'da çalışan reader sayılmaz. Son CI canlı probu (23.11.2026, commit 10d1f31): 20 kayıt, 14 probed, 5 çalışan okuyucu (3 HTML detay + 2 HTML indeks), 3 açık ilan detay kaynağı. ÇSGB ve Özal indeks okuyucuları eski/tarihî kayıtlar da üretebildiği için açık ilan kaynağı sayısına eklenmez. Zafer ilanı tarayıcıda doğrulandı fakat CI güvenlik/CAPTCHA işareti nedeniyle okuyucusu durduruldu; bu nedenle otomatik kaynak sayısına dahil edilmez. Gerçek workingReaderCount her çalıştırmada CI artifact'inden alınır.
 
 ## Bu PR'ın kapsamı
 20 kaynaklık envanter, ücretsiz Python probe, kurum+pozisyon+il SHA-256 parmak izi, açık/henüz açılmamış/geçmiş tarih ayrımı ve çevrimdışı regresyon testleri. Server-side JSON collector, PDF reader, dinamik Kariyer Kapısı/İŞKUR API ve CV eşleştirmesi sonraki ayrı işlerdir; bu PR bunları tamamlamış gibi göstermez.
