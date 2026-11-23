@@ -569,6 +569,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         }
     }
 
+    @android.annotation.TargetApi(31)
     private fun showOutputPicker() {
         val am = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
         val sdk = android.os.Build.VERSION.SDK_INT
@@ -964,6 +965,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             }
             p.addView(r, LinearLayout.LayoutParams(-1, -2))
         }
+        add(p, Ui.button(this, "🎙  Sesli Asistan") {
+            closeSide()
+            showPage(1)
+        })
         add(p, Ui.button(this, "💼  İş ve Kariyer") {
             closeSide()
             startActivity(Intent(this, CareerActivity::class.java))
