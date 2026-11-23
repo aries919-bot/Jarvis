@@ -8,3 +8,6 @@ build.log
 yukle.zip
 aries.jks
 aries.b64
+__pycache__/
+*.pyc
+*.yedek
