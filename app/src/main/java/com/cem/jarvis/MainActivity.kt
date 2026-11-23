@@ -1479,7 +1479,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
                     hideThinking()
                     chatBox.removeView(streamBubble)
                     if (partial.isNotBlank()) {
-                        say("$partial\\n\\nYanıt akışı tamamlanamadı: ${Ai.friendly(e)}")
+                        say("$partial\n\nYanıt akışı tamamlanamadı: ${Ai.friendly(e)}")
                     } else {
                         say(Ai.friendly(e))
                     }
