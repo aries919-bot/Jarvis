@@ -47,8 +47,9 @@ object Net {
      * Reads server-sent events one data record at a time. The connection is
      * always closed, including on timeout, cancellation or parser failure.
      */
-    fun streamPost(url: String, headers: Map<String, String>, body: JSONObject, onData: (String) -> Unit) {
+    fun streamPost(url: String, headers: Map<String, String>, body: JSONObject, onData: (String) -> Unit): Boolean {
         val c = URL(url).openConnection() as HttpURLConnection
+        var receivedDoneMarker = false
         try {
             c.requestMethod = "POST"
             c.connectTimeout = 8000
@@ -71,7 +72,10 @@ object Net {
                     if (Thread.currentThread().isInterrupted) throw IOException("Akış iptal edildi.")
                     val line = reader.readLine() ?: break
                     val data = SseLineParser.dataFromLine(line) ?: continue
-                    if (data == "[DONE]") break
+                    if (data == "[DONE]") {
+                        receivedDoneMarker = true
+                        break
+                    }
                     onData(data)
                 }
             }
@@ -80,6 +84,7 @@ object Net {
         } finally {
             c.disconnect()
         }
+        return receivedDoneMarker
     }
 
     fun newsTitles(topic: String): List<String> {
@@ -373,7 +378,7 @@ object Ai {
             .put("max_tokens", 600)
             .put("stream", true)
         try {
-            Net.streamPost(url, mapOf("Authorization" to "Bearer $key"), body) { data ->
+            val completed = Net.streamPost(url, mapOf("Authorization" to "Bearer $key"), body) { data ->
                 val token = try {
                     AiStreamParser.openAiDelta(data)
                 } catch (e: Exception) {
@@ -381,6 +386,7 @@ object Ai {
                 }
                 if (token.isNotEmpty()) onToken(token)
             }
+            if (!completed) throw IOException("$name akışı tamamlanmadan kesildi.")
         } catch (e: ApiError) {
             throw ApiError(e.code, errText(name, e.code))
         }
@@ -395,7 +401,9 @@ object Ai {
     ) {
         val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:streamGenerateContent?alt=sse"
         try {
+            var finished = false
             Net.streamPost(url, mapOf("x-goog-api-key" to key), geminiBody(sys, hist, true, false)) { data ->
+                if (AiStreamParser.geminiFinished(data)) finished = true
                 val token = try {
                     AiStreamParser.geminiDelta(data)
                 } catch (e: Exception) {
@@ -403,6 +411,7 @@ object Ai {
                 }
                 if (token.isNotEmpty()) onToken(token)
             }
+            if (!finished) throw IOException("Gemini akışı tamamlanmadan kesildi.")
         } catch (e: ApiError) {
             throw ApiError(e.code, errText("Gemini", e.code))
         }
