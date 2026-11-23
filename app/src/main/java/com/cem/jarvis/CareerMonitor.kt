@@ -65,6 +65,9 @@ object CareerSourceCatalog {
         Source("Millî Savunma Bakanlığı – Personel Temin Sistemi", "https://personeltemin.msb.gov.tr/", "Kamu / personel temin"),
         Source("Jandarma Genel Komutanlığı – duyurular", "https://jandarma.gov.tr/duyurular", "Kamu / güvenlik personeli"),
         Source("Jandarma Personel Temin Sistemi", "https://personeltemin.jandarma.gov.tr/", "Kamu / personel temin ve güvenlik alımı"),
+        Source("Memur 365 – kamu personel haberleri", "https://memur365.com/kamu-personel-alimi", "Haber / kamu personel gündemi · resmî ilan değildir", false),
+        Source("Memur 365 – kamu haberleri", "https://memur365.com/kamu-haberleri", "Haber / kamu duyuruları · resmî ilan değildir", false),
+        Source("Memurlar.net – kamu personel haberleri", "https://www.memurlar.net/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
         Source("Sahil Güvenlik Komutanlığı", "https://www.sg.gov.tr/", "Kamu / güvenlik personeli"),
         Source("Çalışma ve Sosyal Güvenlik Bakanlığı – duyurular", "https://www.csgb.gov.tr/duyurular/", "Kamu / bakanlık"),
         Source("Kültür ve Turizm Bakanlığı – Personel Genel Müdürlüğü", "https://pgm.ktb.gov.tr/", "Kamu / personel genel müdürlüğü"),
@@ -193,6 +196,13 @@ object CareerSourceCatalog {
         return secondaryDomains.any { host == it || host.endsWith(".$it") }
     }
 
+    /** Press/news sites are searchable for context, never treated as official employers. */
+    fun isNewsDiscoverySource(url: String): Boolean {
+        val host = normalizedHost(url).orEmpty()
+        val newsDomains = listOf("memur365.com", "memurlar.net", "kamupersoneli.net", "iskamu.com")
+        return newsDomains.any { host == it || host.endsWith(".$it") }
+    }
+
     fun categoryFor(url: String): String {
         val host = runCatching { java.net.URI(url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.") }
             .getOrDefault("")
@@ -204,6 +214,7 @@ object CareerSourceCatalog {
         )
         fun inDomains(domains: List<String>) = domains.any { host == it || host.endsWith(".$it") }
         return when {
+            isNewsDiscoverySource(url) -> "Haber / kamu personel gündemi · resmî ilan değil"
             isSecondary(url) && (host.contains("malatyatso") || host.contains("malorsa")) -> "Malatya / İŞKUR keşif kaynağı"
             isSecondary(url) -> "İlan platformu / ikincil keşif"
             host == "turkiye.gov.tr" || host.endsWith(".turkiye.gov.tr") -> "Kamu / e-Devlet hizmetleri"
@@ -721,6 +732,8 @@ object CareerSearchEngine {
             "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B sözleşmeli personel alımı KPSS ortaöğretim $year",
             "site:icisleri.gov.tr OR site:personeltemin.msb.gov.tr OR site:jandarma.gov.tr OR site:sg.gov.tr personel temin memur işçi sınav kura sonuç $year",
             "site:personeltemin.jandarma.gov.tr uzman erbaş astsubay personel alımı başvuru son tarih $year",
+            "site:memur365.com/kamu-personel-alimi kamu personel alımı başvuru tarihi şartlar son tarih $year",
+            "site:memurlar.net kamu personel alımı başvuru başladı son başvuru tarihi $year",
             "site:csgb.gov.tr OR site:pgm.ktb.gov.tr OR site:ssb.gov.tr sözleşmeli personel alımı başvuru sınav yedek sonuç $year"
         )
         val publicNoKpss = listOf(
@@ -740,7 +753,10 @@ object CareerSearchEngine {
             "site:malorsa.org.tr personel alım ilanı Malatya OSB $year",
             "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr İŞKUR kura personel işçi alımı sonuçları $year",
             "site:icisleri.gov.tr OR site:jandarma.gov.tr OR site:sg.gov.tr sözleşmeli destek personeli işçi alımı başvuru kura sonuç $year",
-            "site:personeltemin.msb.gov.tr uzman erbaş teknik sınıf personel temin başvuru sonuç $year"
+            "site:personeltemin.msb.gov.tr uzman erbaş teknik sınıf personel temin başvuru sonuç $year",
+            "site:memur365.com/kamu-personel-alimi kamu personel alımı başvuru tarihi şartlar son tarih $year",
+            "site:memur365.com/kamu-haberleri KPSS personel alımı kura sonuç başvuru duyuru $year",
+            "site:memurlar.net kamu personel alımı başvuru başladı son başvuru tarihi $year"
         )
         val privateSector = listOf(
             "site:akariyer.aselsan.com teknisyen elektrik üretim açık pozisyon",
@@ -959,7 +975,9 @@ object CareerSearchEngine {
      * A trusted institution homepage alone must not suppress fallback providers.
      */
     internal fun isEligibleSearchResult(hit: Net.Hit): Boolean =
-        (CareerSourceCatalog.isTrustedUrl(hit.url) || CareerSourceCatalog.isSecondary(hit.url)) &&
+        (CareerSourceCatalog.isTrustedUrl(hit.url) ||
+            CareerSourceCatalog.isSecondary(hit.url) ||
+            CareerSourceCatalog.isNewsDiscoverySource(hit.url)) &&
             CareerSourceCatalog.isLikelyJobResult(hit.title, hit.snippet)
 
     internal fun containsUsableJobResult(hits: Collection<Net.Hit>): Boolean =
@@ -1161,6 +1179,9 @@ object CareerSearchEngine {
             "site:kariyerkapisi.gov.tr personel işe alım lise KPSS $year",
             "site:isealimkariyerkapisi.cbiko.gov.tr lise personel alımı ortaöğretim KPSS $year",
             "site:personeltemin.jandarma.gov.tr uzman erbaş astsubay personel temin başvuru son tarih $year",
+            "site:memur365.com/kamu-personel-alimi kamu personel alımı başvuru tarihi şartlar son tarih $year",
+            "site:memur365.com/kamu-haberleri KPSS personel alımı kura sonuç başvuru duyuru $year",
+            "site:memurlar.net kamu personel alımı başvuru başladı son başvuru tarihi $year",
             "site:ilan.gov.tr personel alımı lise KPSS $year",
             "site:resmigazete.gov.tr atama personel alımı $year",
             "site:personel.ozal.edu.tr OR site:inonu.edu.tr/personeldb OR site:personeldb.firat.edu.tr OR site:pdb.adiyaman.edu.tr 4/B personel alımı ön değerlendirme yedek sonuç kura $year"
