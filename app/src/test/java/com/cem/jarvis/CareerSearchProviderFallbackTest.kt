@@ -62,4 +62,35 @@ class CareerSearchProviderFallbackTest {
         )
         assertFalse(CareerSearchEngine.containsUsableJobResult(listOf(untrusted)))
     }
+
+    @Test
+    fun publicHiringNewsQueryTargetsNewsAndOfficialDiscoverySources() {
+        val queries = CareerSearchEngine.queryList(10, "elektrik teknisyeni", "Malatya")
+        assertTrue(queries.any { it.contains("memur365.com") })
+        assertTrue(queries.any { it.contains("memurlar.net") })
+        assertTrue(queries.any { it.contains("kamupersoneli.net") })
+        assertTrue(queries.any { it.contains("iskamu.com") })
+        assertTrue(queries.any { it.contains("kamuilan.sbb.gov.tr") })
+        assertTrue(queries.any { it.contains("resmigazete.gov.tr") })
+        assertTrue(queries.any { it.contains("Malatya") })
+    }
+
+    @Test
+    fun publicHiringNewsPublishersStayInNewsClassification() {
+        val sources = listOf(
+            "https://www.kamupersoneli.net/ilan/personel-alimi",
+            "https://www.iskamu.com/personel-alimi"
+        )
+        sources.forEach { url ->
+            assertTrue(CareerSourceCatalog.isNewsDiscoverySource(url))
+            assertEquals(
+                CareerContentType.NEWS,
+                CareerContentClassifier.classify(
+                    "Kamu personel alımı başvuru duyurusu",
+                    "Yeni personel alımı ve başvuru şartları",
+                    url
+                ).type
+            )
+        }
+    }
 }
