@@ -54,9 +54,11 @@ class AriesFullAppAuditTest {
             }
         }
         device = UiDevice.getInstance(instrumentation)
-        outputDir = File(context.getExternalFilesDir(null), "AriesQA").apply {
+        // External storage may be unavailable in headless Android emulators. Keep
+        // evidence in app-private filesDir so the host can retrieve it reliably via run-as.
+        outputDir = File(context.filesDir, "AriesQA").apply {
             deleteRecursively()
-            mkdirs()
+            check(mkdirs() || isDirectory) { "Could not create private QA evidence directory: $absolutePath" }
         }
     }
 
