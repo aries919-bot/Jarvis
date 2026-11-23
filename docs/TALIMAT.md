@@ -72,3 +72,18 @@ Kısa raporda şunları yaz:
 6. SONRAKİ ADIM.
 
 Bu talimatın devam tetikleyicisi sohbet belleği değil, `docs/HARITA.md` ve `docs/TALIMAT.md` dosyalarıdır.
+
+## CLINE KURALI (23.11.2026)
+İkinci bir ajan olan Cline, Cem'in telefonundan paralel çalışır. Modeli ücretsiz ve zayıf olduğu için ona küçük, net işler verilir.
+
+1. HARITA'da her işe `sahip: cline` ya da `sahip: chatgpt` yaz. Sunucu ve veri işleri (K1, C1, E1 veri tarafı) Cline'a; arayüz ve yapay zekâ işleri (A1, A2, B1) ChatGPT'ye verilir.
+2. `sahip: cline` olan işe ChatGPT kod değişikliği yapmaz, mevcut Cline dalını/çalışmasını değiştirmez. Cline işe başlarken `DEVAM: <iş-id>` yazar.
+3. Cline işi `cline/<iş-id>` dalında yapar ve PR açar. PR açıklamasında/yorumunda ne değişti, hangi testleri yaptığı, test sonucu ve telefonda denenecekler açıkça bulunur.
+4. Cline PR'larının hakemi ChatGPT'dir. Sıfırdan ve şüpheci inceleme yapılır; sayılar ve kaynak iddiaları ölçülerek doğrulanır. Rapor/test sonucu yoksa birleştirilmez; PR'a eksikler yazılır.
+5. Cline'a verilen her iş HARITA'da 2-3 satırla tanımlanır: dosyalar, iş tanımı ve tamamlanma ölçütü. Tek iş, tek amaç. Cline işleri sırayla alır; K1 ilk sıradadır.
+6. İnceleme ve QA başarılıysa birleştirme izni kontrol edilir. Birleştirme yetkisi yoksa PR'a `ONAYLANDI` yorumu bırakılır ve Cem'den birleştirme istenir.
+7. E1 işi bölünür: veri kaynağı/toplama/sağlık/JSON tarafı Cline'a; Aries ekranı, grafikler ve Xiaomi ayar yönlendirmesi ChatGPT'ye aittir. Kod dosyaları ayrılır; aynı dosyada eşzamanlı değişiklik yapılmaz.
+
+## Sahiplik tablosu
+- K1: cline. C1: cline. E1-Veri: cline.
+- A1, A2, B1, C2, C3, C4, C5, D1, E1-UI, Z1: chatgpt.
