@@ -68,6 +68,8 @@ object CareerSourceCatalog {
         Source("Memur 365 – kamu personel haberleri", "https://memur365.com/kamu-personel-alimi", "Haber / kamu personel gündemi · resmî ilan değildir", false),
         Source("Memur 365 – kamu haberleri", "https://memur365.com/kamu-haberleri", "Haber / kamu duyuruları · resmî ilan değildir", false),
         Source("Memurlar.net – kamu personel haberleri", "https://www.memurlar.net/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
+        Source("Kamu Personeli – kamu alım haberleri", "https://www.kamupersoneli.net/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
+        Source("İş Kamu – kamu personel haberleri", "https://www.iskamu.com/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
         Source("Sahil Güvenlik Komutanlığı", "https://www.sg.gov.tr/", "Kamu / güvenlik personeli"),
         Source("Çalışma ve Sosyal Güvenlik Bakanlığı – duyurular", "https://www.csgb.gov.tr/duyurular/", "Kamu / bakanlık"),
         Source("Kültür ve Turizm Bakanlığı – Personel Genel Müdürlüğü", "https://pgm.ktb.gov.tr/", "Kamu / personel genel müdürlüğü"),
@@ -846,13 +848,13 @@ object CareerSearchEngine {
             8 -> municipal + kuraQueries.take(3) + listOf(extra)
             9 -> studentPrograms
             10 -> listOf(
-                "site:memur365.com/kamu-personel-alimi 2026 kamu personel alımı ilan başvuru şartları son başvuru tarihi",
-                "site:memurlar.net 2026 kamu personel alımı başvuru başladı son başvuru tarihi",
-                "site:kamupersoneli.net 2026 kamu personel alımı ilanı KPSS başvuru",
-                "site:iskamu.com 2026 kamu personel alımı ilanı başvuru şartları",
-                "site:kamuilan.sbb.gov.tr 2026 kamu personel alımı yeni ilan KPSS",
-                "site:resmigazete.gov.tr/ilanlar/ 2026 sözleşmeli personel sürekli işçi alımı başvuru",
-                "site:gov.tr 2026 personel alım ilanı başvuru son tarihi kamu",
+                "site:memur365.com/kamu-personel-alimi $year kamu personel alımı ilan başvuru şartları son başvuru tarihi",
+                "site:memurlar.net $year kamu personel alımı başvuru başladı son başvuru tarihi",
+                "site:kamupersoneli.net $year kamu personel alımı ilanı KPSS başvuru",
+                "site:iskamu.com $year kamu personel alımı ilanı başvuru şartları",
+                "site:kamuilan.sbb.gov.tr $year kamu personel alımı yeni ilan KPSS",
+                "site:resmigazete.gov.tr/ilanlar/ $year sözleşmeli personel sürekli işçi alımı başvuru",
+                "site:gov.tr $year personel alım ilanı başvuru son tarihi kamu",
                 "$c $year kamu personel alımı işçi memur güncel ilan başvuru tarihi"
             )
             else -> generalQuick
