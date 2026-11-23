@@ -215,22 +215,26 @@ object CareerEmployerResearcher {
             .toList()
     }
 
-    fun research(hit: Net.Hit): CareerEmployerResearch {
-        val uri = runCatching { URI(hit.url) }.getOrNull()
-        val host = uri?.host?.lowercase(Locale.ROOT)?.removePrefix("www.").orEmpty()
-        val page = readPage(hit.url)
-        val mappedSource = CareerSourceCatalog.sourceName(hit.url)
+    internal fun resolveMappedEmployer(url: String, host: String, mappedSource: String): String? {
         val genericSourceNames = setOf(
             host, "Bilinmeyen kaynak", "İlan platformu", "İlan platformu / ikincil keşif",
             "Özel sektör / büyük şirket", "Kamu / resmî kurum",
             "Haber / kamu personel gündemi · resmî ilan değil"
         )
-        val structured = page.structuredEmployer?.takeIf { it.isNotBlank() }
-        val mappedEmployer = mappedSource.takeIf {
+        return mappedSource.takeIf {
             it.isNotBlank() && it !in genericSourceNames &&
-                !CareerSourceCatalog.isSecondary(hit.url) &&
-                !CareerSourceCatalog.isNewsDiscoverySource(hit.url)
+                !CareerSourceCatalog.isSecondary(url) &&
+                !CareerSourceCatalog.isNewsDiscoverySource(url)
         }
+    }
+
+    fun research(hit: Net.Hit): CareerEmployerResearch {
+        val uri = runCatching { URI(hit.url) }.getOrNull()
+        val host = uri?.host?.lowercase(Locale.ROOT)?.removePrefix("www.").orEmpty()
+        val page = readPage(hit.url)
+        val mappedSource = CareerSourceCatalog.sourceName(hit.url)
+        val structured = page.structuredEmployer?.takeIf { it.isNotBlank() }
+        val mappedEmployer = resolveMappedEmployer(hit.url, host, mappedSource)
         val employer = structured ?: mappedEmployer
         val finalHost = runCatching {
             URI(page.finalUrl ?: hit.url).host.orEmpty().lowercase(Locale.ROOT).removePrefix("www.")
