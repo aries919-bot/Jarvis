@@ -99,6 +99,7 @@ class CareerListingSchemaTest {
         assertFalse(CareerListingPagePolicy.inspect(200, "Checking your browser", "").ready)
         assertFalse(CareerListingPagePolicy.inspect(200, "Giriş yaparak devam edin", "").ready)
         assertFalse(CareerListingPagePolicy.inspect(200, "", "  ").ready)
+        assertFalse(CareerListingPagePolicy.inspect(200, "İlan başlığı", "").ready)
     }
 
     @Test
@@ -110,6 +111,12 @@ class CareerListingSchemaTest {
         )
         assertFalse(checked.ready)
         assertTrue(checked.message.contains("Başka adayların verisi"))
+        val resultTable = CareerListingPagePolicy.inspect(
+            200,
+            "Kura sonuçları",
+            "Adı Soyadı     Aday No     Puan"
+        )
+        assertFalse(resultTable.ready)
     }
 
     @Test
