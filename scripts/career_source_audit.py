@@ -63,8 +63,8 @@ VALID_CONTENT_TYPES = ("ilan", "duyuru", "detay")
 
 # --- işaretçi kalıpları -----------------------------------------------------
 LOGIN_MARKERS = (
-    r"üye girişi",
-    r"giriş\s*yap(ın|iniz)?",
+    r"[üu]ye\s*giri[sş]i?",
+    r"giri[sş]\s*yap(ın|iniz)?",
     r"oturum aç",
     r"sign\s*in",
     r"log\s*in",
@@ -111,6 +111,9 @@ _TR_LOWER = str.maketrans(
 )
 
 
+_TR_FOLD = str.maketrans("ğışçöüâîû", "gisco" + "uaiu")
+
+
 def normalize_title(text: str) -> str:
     """Türkçe uyumlu, karşılaştırmaya uygun başlık üretir.
 
@@ -122,9 +125,9 @@ def normalize_title(text: str) -> str:
     text = html.unescape(str(text))
     text = re.sub(r"<[^>]+>", " ", text)
     text = text.replace("\u00a0", " ").replace("\ufeff", " ")
-    for src, dst in _TR_LOWER.items():
-        text = text.replace(src, dst)
+    text = text.translate(_TR_LOWER)
     text = text.lower()
+    text = text.translate(_TR_FOLD)
     # noktalama: "T.C." -> "t c" -> sonra tek harf grupları birleşir
     text = re.sub(r"[^0-9a-zçğıöşüâîû]+", " ", text)
     text = " ".join(text.split())
@@ -136,6 +139,8 @@ def normalize_title(text: str) -> str:
 def normalize_url(url: str) -> str:
     """Aynı ilanın farklı yazımlarını tekilleştirmek için kanonik URL."""
     url = html.unescape((url or "").strip())
+    if not url:
+        return ""
     if url.startswith("//"):
         url = "https:" + url
     parts = urllib.parse.urlsplit(url)

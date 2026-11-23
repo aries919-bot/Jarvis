@@ -109,7 +109,8 @@ class ModulSozlesmesiTestleri(unittest.TestCase):
     """career_source_audit modülü import edilebilir ve sabitleri tutarlı olmalı."""
 
     def test_denetim_betigi_derlenir(self):
-        py_compile.compile(AUDIT_PATH, cfile=os.devnull, doraise=True)
+        with open(AUDIT_PATH, encoding="utf-8") as fh:
+            compile(fh.read(), AUDIT_PATH, "exec")
 
     def test_denetim_betigi_comut_satiri_cokmez(self):
         sonuc = subprocess.run(

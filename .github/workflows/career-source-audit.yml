@@ -2,7 +2,7 @@ name: K1 Kariyer Kaynak Denetimi
 
 # K1: kamu kariyer kaynak matrisi (career/sources.json) canlı okuyucu denetimi.
 # - Kaynaklar giriş/CAPTCHA olmadan erişilebilir olmalı, robots.txt sonucu kaydedilir.
-# - Anahtar/token kullanılmaz; gizli bilgi gerekmez, bu yüzden secrets.* hiç geçmez.
+# - Anahtar/token kullanılmaz; gizli bilgi gerekmez, bu yüzden gizli değer kullanılmaz.
 on:
   workflow_dispatch:
     inputs:
