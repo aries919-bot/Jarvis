@@ -755,7 +755,7 @@ class CareerActivity : Activity() {
         loadingCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             addView(label("Kaynaklar taranıyor", 14f, true, primaryText))
-            addView(label("Aynı ilanlar tekilleştiriliyor; kamu, kura, KPSS ve özel sektör ayrı gruplara ayrılıyor…", 11f, false, muted))
+            addView(label("Aynı iş ilanları tekilleştiriliyor; kamu, KPSS, KPSS'siz ve özel sektör ayrılıyor…", 11f, false, muted))
         }, LinearLayout.LayoutParams(0, -2, 1f))
         results.addView(loadingCard, params(-1, -2, 0, 2, 0, 8))
         Thread {
@@ -1740,10 +1740,11 @@ class CareerActivity : Activity() {
                 ?: previous?.optString("publishedDate")?.takeIf { it.isNotBlank() }
             val publishedAt = CareerListingParser.publicationTimestamp(notice)
                 ?: previous?.optLong("publishedAt", 0L)?.takeIf { it > 0L }
-            val firstSeenAt = previous?.optLong(
-                "firstSeenAt",
-                previous.optLong("createdAt", 0L)
-            )?.takeIf { it > 0L } ?: scannedAt
+            val firstSeenAt = if (previous == null) {
+                scannedAt
+            } else {
+                previous.optLong("firstSeenAt", previous.optLong("createdAt", 0L))
+            }
 
             val item = JSONObject()
                 .put("title", hit.title)
