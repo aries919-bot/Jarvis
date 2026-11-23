@@ -6,8 +6,8 @@ import org.junit.Test
 
 class CareerNewsNavigationTest {
     @Test
-    fun processFilterUsesProcessSearch() {
-        assertEquals(6, CareerNewsNavigation.queryForFilter(1))
+    fun kuraAndExamSearchUsesDedicatedProcessCategory() {
+        assertEquals(6, CareerNewsNavigation.processQueryCategory())
     }
 
     @Test
