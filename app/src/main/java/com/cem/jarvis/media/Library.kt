@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.annotation.OptIn
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -34,6 +35,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.PlaybackException
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -297,6 +299,7 @@ fun fmtRemaining(ms: Long): String {
 }
 
 // ---------- Kaldığın yerden oynatan oynatıcı (kendi bağlantın: mp4 / m3u8) ----------
+@OptIn(UnstableApi::class)
 @Composable
 fun ResumePlayer(
     url: String, item: Item, season: Int, episode: Int, lib: LibraryVM,
