@@ -1425,7 +1425,7 @@ object CareerRecruitmentTracker {
     /** A result that has already been published belongs to history, not the upcoming queue. */
     fun isCompletedResultNotice(title: String, snippet: String): Boolean {
         val text = normalize(title + " " + snippet)
-            .replace(Regex("""\\s+"""), " ")
+            .replace(Regex("""\s+"""), " ")
             .trim()
         val resultContext = listOf(
             "kura sonuc", "sinav sonuc", "mulakat sonuc",
