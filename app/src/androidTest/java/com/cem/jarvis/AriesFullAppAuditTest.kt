@@ -83,13 +83,13 @@ class AriesFullAppAuditTest {
                 captureAndAudit("02a-voice-assistant")
                 device.pressBack()
                 device.wait(Until.hasObject(By.desc("Menü")), 5_000)
+                if (!clickDescription("Menü")) {
+                    recordFinding("error", "navigation", "home", "The main menu could not be reopened after returning from the voice screen.")
+                } else {
+                    captureAndAudit("02b-sidebar-returned")
+                }
             } else {
                 recordFinding("error", "navigation", "sidebar", "The new 'Sesli Asistan' menu entry was not reachable.")
-            }
-
-            // Re-open the drawer after returning from the voice page.
-            if (!device.hasObject(By.desc("Menü"))) {
-                recordFinding("error", "navigation", "home", "The home menu control was not available after returning from voice screen.")
             }
             val careerOpened = clickTextContains("İş ve Kariyer")
             if (!careerOpened) {
