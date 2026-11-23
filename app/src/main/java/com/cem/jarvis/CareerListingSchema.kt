@@ -2,6 +2,8 @@ package com.cem.jarvis
 
 import org.json.JSONObject
 import java.net.URI
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 /**
@@ -45,7 +47,7 @@ data class CareerListingSchema(
     fun report(): String = buildString {
         appendLine("Kaynak sayfası alan raporu")
         appendLine("Kaynak: $sourceUrl")
-        appendLine("Alınma zamanı: $fetchedAtEpochMillis")
+        appendLine("Alınma zamanı: " + SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale("tr", "TR")).format(Date(fetchedAtEpochMillis)))
         appendLine(if (sourceTextTruncated) "Uyarı: Sayfa metni uzun olduğu için kısaltıldı; hiçbir alan kesin kabul edilmemeli." else "Not: Bu rapor kaynak sayfa metninden alıntı eşleştirmesidir; başvurunun hâlen açık olduğunu veya hukuki uygunluğu tek başına kanıtlamaz.")
         appendLine()
         fields().forEach { (label, field) ->
@@ -233,7 +235,17 @@ object CareerListingPagePolicy {
             "sinav sonuc listesi", "mulakat sonuc listesi",
             "kazanan aday listesi", "yerlesen aday listesi"
         )
-        if (candidateResultMarkers.any(normalized::contains)) {
+        val hasCandidateResultTitle = listOf(
+            "kura sonuclari", "sinav sonuclari", "mulakat sonuclari",
+            "basvuru sonuclari", "yerlestirme sonuclari", "sonuc listesi"
+        ).any(normalized::contains)
+        val hasCandidateIdentityColumns = listOf(
+            "ad soyad", "adi soyadi", "aday no", "aday numarasi",
+            "basvuru no", "tc kimlik", "kimlik numarasi"
+        ).any(normalized::contains)
+        if (candidateResultMarkers.any(normalized::contains) ||
+            (hasCandidateResultTitle && hasCandidateIdentityColumns)
+        ) {
             return CareerListingPageCheck(false, "Bu sayfa aday/kura/sınav sonuç listesi içeriyor olabilir. Başka adayların verisi işlenmeyecek.", "", false)
         }
         val loginMarkers = listOf(
@@ -242,6 +254,9 @@ object CareerListingPagePolicy {
         )
         if (loginMarkers.any(normalized::contains)) {
             return CareerListingPageCheck(false, "Kaynak giriş/oturum istiyor. Giriş otomasyonu yapılmayacak.", "", false)
+        }
+        if (body.isBlank()) {
+            return CareerListingPageCheck(false, "Sayfadan okunabilir ilan metni alınamadı.", "", false)
         }
         val truncated = combined.length > MAX_PAGE_TEXT_CHARS
         val text = combined.take(MAX_PAGE_TEXT_CHARS)
