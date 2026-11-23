@@ -32,6 +32,24 @@ class Tests(unittest.TestCase):
     def test_job_and_process_are_separate(self):
         self.assertEqual("job_candidate",mod.kind("Sözleşmeli Personel Alım İlanı","https://example.gov.tr/ilan"))
         self.assertEqual("process_notice",mod.kind("Kura Sonucu","https://example.gov.tr/sonuc"))
+    def test_company_vacancy_terms_are_recognized(self):
+        self.assertEqual("job_candidate",mod.kind("Mühendis Genel Başvuru - Mühendis Ankara", "https://kariyer.tusas.com/ilan-detay/genel-basvuru-muhendis", ["mühendis","teknisyen"]))
+        self.assertEqual("job_candidate",mod.kind("CNC Torna Teknisyeni Ankara", "https://kariyer.roketsan.com.tr/ilan.job", ["teknisyen","mühendis"]))
+    def test_early_career_programmes_are_not_mixed_with_jobs(self):
+        self.assertEqual("programme_candidate",mod.kind("Jet Talent (JT-2026)", "https://yetenek.tei.com.tr/jet.job", [], ["jet talent","back to core"]))
+    def test_blank_html_is_not_a_working_reader(self):
+        from unittest.mock import patch
+        source={"id":"blank","name":"Blank","url":"https://example.gov.tr/","probeUrl":"https://example.gov.tr/","readerMode":"html_index"}
+        with patch.object(mod,"fetch",return_value=(200,"https://example.gov.tr/","text/html","")):
+            result=mod.probe(source)
+        self.assertFalse(result["readerOk"]); self.assertEqual(0,result["candidateCount"])
+    def test_network_failure_is_reported_not_silently_ignored(self):
+        from unittest.mock import patch
+        from urllib.error import URLError
+        source={"id":"offline","name":"Offline","url":"https://example.gov.tr/","probeUrl":"https://example.gov.tr/","readerMode":"html_index"}
+        with patch.object(mod,"fetch",side_effect=URLError("offline")):
+            result=mod.probe(source)
+        self.assertEqual("network_error",result["status"]); self.assertFalse(result["readerOk"])
     def test_login_captcha_detection(self):
         self.assertIn("captcha",mod.BLOCK); self.assertIn("giriş yap",mod.LOGIN)
 
