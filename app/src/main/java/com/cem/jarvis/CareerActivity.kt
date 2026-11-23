@@ -925,9 +925,17 @@ class CareerActivity : Activity() {
         fun hasFutureDeadline(hit: Net.Hit): Boolean =
             CareerListingParser.hasFutureDeadline(statusOf(hit))
 
+        fun hasDirectSource(hit: Net.Hit): Boolean =
+            CareerSourceCatalog.isTrustedUrl(hit.url) &&
+                !CareerSourceCatalog.isSecondary(hit.url) &&
+                !CareerSourceCatalog.isNewsDiscoverySource(hit.url)
+
+        fun isMainFeedCandidate(hit: Net.Hit): Boolean =
+            hasFutureDeadline(hit) && hasDirectSource(hit)
+
         val expiredCount = jobHits.count(::isInactive)
-        val futureDeadlineCount = jobHits.count(::hasFutureDeadline)
-        val unknownCount = jobHits.count { !isInactive(it) && !hasFutureDeadline(it) }
+        val futureDeadlineCount = jobHits.count(::isMainFeedCandidate)
+        val unknownCount = jobHits.count { !isInactive(it) && !isMainFeedCandidate(it) }
         addSectorFilterRow(results, searchSectorFilter) { selected ->
             searchSectorFilter = selected
             searchPage = 0
@@ -939,7 +947,7 @@ class CareerActivity : Activity() {
             11f, true, accentBlue
         ))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        listOf("Son tarihi gelecekte", "Tüm adaylar", "Geçmiş / kapanmış").forEachIndexed { index, title ->
+        listOf("Son tarih + kurum/işveren", "Tüm adaylar / kontrol", "Geçmiş / kapanmış").forEachIndexed { index, title ->
             val chip = chipButton(title, searchFilter == index) {
                 searchFilter = index
                 searchPage = 0
@@ -954,14 +962,14 @@ class CareerActivity : Activity() {
             jobHits.size.toString() + " iş ilanı adayı · " + divertedCount + " kayıt Haber & Duyurular'a ayrıldı · " +
                 futureDeadlineCount + " son tarihi gelecekte görünen · " + expiredCount +
                 " geçmiş/kapanmış/eski · " + unknownCount +
-                " son tarihi bulunmayan. Gelecekteki tarih tek başına başvurunun açık olduğunu kanıtlamaz.",
+                " kaynak veya son tarih kontrolü gereken. Yalnızca doğrudan kurum/işveren kaynağı ana akışa girer; gelecek tarih tek başına başvurunun açık olduğunu kanıtlamaz.",
             11f, false, muted
         ))
 
         val eligibleHits = when (searchFilter) {
             2 -> sectorHits.filter(::isInactive)
             1 -> sectorHits
-            else -> sectorHits.filter(::hasFutureDeadline)
+            else -> sectorHits.filter(::isMainFeedCandidate)
         }
         // Keep all result groups stable for every filter, not only the unfiltered view.
         val visibleHits = eligibleHits.sortedBy {
@@ -970,7 +978,7 @@ class CareerActivity : Activity() {
 
         if (visibleHits.isEmpty()) {
             val emptyMessage = when (searchFilter) {
-                0 -> "Son başvuru tarihi kaynak özetinde gelecekte görünen ilan adayı yok. Son tarihi belirtilmeyen kayıtlar için Tüm adaylar filtresini aç."
+                0 -> "Doğrudan kurum/işveren kaynağında gelecekteki son başvuru tarihi bulunan ilan adayı yok. İkincil platformlar ve tarihi belirsiz kayıtlar için Tüm adaylar / kontrol filtresini aç."
                 2 -> "Geçmiş, kapanmış veya 180 günden eski olduğu için güncelliği doğrulanamayan kayıt yok."
                 else -> "Bu filtrede gösterilecek ilan adayı yok."
             }
@@ -1173,9 +1181,19 @@ class CareerActivity : Activity() {
         fun hasFutureDeadline(item: JSONObject): Boolean =
             CareerListingParser.hasFutureDeadline(statusOf(item))
 
+        fun hasDirectSource(item: JSONObject): Boolean {
+            val url = item.optString("url")
+            return CareerSourceCatalog.isTrustedUrl(url) &&
+                !CareerSourceCatalog.isSecondary(url) &&
+                !CareerSourceCatalog.isNewsDiscoverySource(url)
+        }
+
+        fun isMainFeedCandidate(item: JSONObject): Boolean =
+            hasFutureDeadline(item) && hasDirectSource(item)
+
         val expiredCount = jobItems.count(::isInactive)
-        val futureDeadlineCount = jobItems.count(::hasFutureDeadline)
-        val unknownCount = jobItems.count { !isInactive(it) && !hasFutureDeadline(it) }
+        val futureDeadlineCount = jobItems.count(::isMainFeedCandidate)
+        val unknownCount = jobItems.count { !isInactive(it) && !isMainFeedCandidate(it) }
 
         addSectorFilterRow(parent, dailySectorFilter) { selected ->
             dailySectorFilter = selected
@@ -1187,7 +1205,7 @@ class CareerActivity : Activity() {
         }
         parent.addView(label("Kategori: " + sectorFilterLabels[dailySectorFilter] + " · " + sectorItems.size + " kayıt", 11f, true, accentBlue))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        listOf("Son tarihi gelecekte", "Tüm adaylar", "Geçmiş / kapanmış").forEachIndexed { index, title ->
+        listOf("Son tarih + kurum/işveren", "Tüm adaylar / kontrol", "Geçmiş / kapanmış").forEachIndexed { index, title ->
             val chip = chipButton(title, dailyFilter == index) {
                 dailyFilter = index
                 dailyPage = 0
@@ -1202,14 +1220,14 @@ class CareerActivity : Activity() {
             jobItems.size.toString() + " iş ilanı adayı · " + divertedCount + " ilan olmayan kayıt Haber & Duyurular'a ayrıldı · " +
                 futureDeadlineCount + " son tarihi gelecekte görünen · " + expiredCount +
                 " geçmiş/kapanmış/eski · " + unknownCount +
-                " son tarihi bulunmayan. İlanın açık olduğu varsayılmaz.",
+                " kaynak veya son tarih kontrolü gereken. Yalnızca doğrudan kurum/işveren kaynağı ana akışa girer; ilan açık varsayılmaz.",
             11f, false, muted
         ))
 
         val filtered = when (dailyFilter) {
             2 -> sectorItems.filter(::isInactive)
             1 -> sectorItems
-            else -> sectorItems.filter(::hasFutureDeadline)
+            else -> sectorItems.filter(::isMainFeedCandidate)
         }.sortedWith(compareByDescending<JSONObject> { it.optInt("profileMatchScore", 0) }
             .thenByDescending { it.optLong("createdAt", 0L) })
         dailyItems = if (dailySectorFilter == 0) {
@@ -1225,14 +1243,14 @@ class CareerActivity : Activity() {
                 allItems.isEmpty() -> prefs.getString("career_monitor_empty_reason", null)
                     ?: "Henüz tarama sonucu yok. Otomatik takip veya manuel taramayı kullan."
                 jobItems.isEmpty() -> "Tarama kayıtları yeni iş ilanı değil; kura, sonuç, staj, kurum duyurusu veya doğrulanması gereken içerikler Haber & Duyurular bölümüne taşındı."
-                else -> "Bu filtrede gösterilecek iş ilanı yok."
+                else -> "Bu filtrede doğrudan kurum/işveren kaynağında gelecekteki son tarihi bulunan ilan yok."
             }
             val emptyCard = panel()
             emptyCard.addView(label(
                 when {
                     allItems.isEmpty() -> "İlk tarama bekleniyor"
                     jobItems.isEmpty() -> "İlan olmayan kayıtlar ayrıldı"
-                    else -> "Bu filtrede kayıt yok"
+                    else -> "Doğrudan kaynakta doğrulanmış ilan yok"
                 }, 14f, true, primaryText
             ))
             emptyCard.addView(label(message, 12f, false, muted))
