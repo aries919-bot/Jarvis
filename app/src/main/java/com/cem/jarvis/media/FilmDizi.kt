@@ -107,9 +107,9 @@ class MediaVM : ViewModel() {
                 0 -> Page(tvmazePage(0))
                 2 -> Page(tvmazePage(1))
                 1 -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.movies()
-                     else Page(webSearch("2026 2025 notable feature films movies", "movie"))
+                     else Page(webSearch("2026 2025 notable feature films movies"))
                 else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime()
-                       else Page(webSearch("popular Japanese anime television series", "tv"))
+                       else Page(webSearch("popular Japanese anime television series"))
             }
         }
     }
