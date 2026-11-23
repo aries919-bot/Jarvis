@@ -152,6 +152,7 @@ def ui_density_from_bundle(qa_dir: Path) -> float:
 def measure_screen_density(qa_dir: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     metrics: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
+    density = max(float(ui_density_from_bundle(qa_dir)), 0.1)
     for file in qa_dir.rglob("*.xml"):
         if file.name.startswith("TEST-"):
             continue
@@ -169,10 +170,9 @@ def measure_screen_density(qa_dir: Path) -> tuple[list[dict[str, Any]], list[dic
                 texts.append(value)
             if node.attrib.get("clickable") == "true":
                 clickable_count += 1
-                bounds_match = re.fullmatch(r"\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]", node.attrib.get("bounds", ""))
+                bounds_match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.attrib.get("bounds", ""))
                 if bounds_match:
                     x1, y1, x2, y2 = map(int, bounds_match.groups())
-                    density = max(float(ui_density_from_bundle(qa_dir)), 0.1)
                     if (x2 - x1) / density < 48 or (y2 - y1) / density < 48:
                         small_targets += 1
                 if not value and not (node.attrib.get("content-desc") or "").strip():

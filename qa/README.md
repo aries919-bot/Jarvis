@@ -5,7 +5,7 @@ This QA lane is designed to test the whole Android application, not only İş & 
 ## Automated coverage
 
 - Android Lint, existing JVM unit tests and debug APK build.
-- Emulator UI smoke test on Android API 29, 34 and 35.
+- Emulator UI smoke test on Android API 29, 33, 34 and 35.
 - Main home, sidebar, settings, assistant/tasks/reminders, files, Film & TV, and the six CareerActivity tabs when reachable.
 - Per-screen screenshot and UI hierarchy XML.
 - Heuristic checks for clickable targets smaller than 48dp and controls without text/content descriptions.
