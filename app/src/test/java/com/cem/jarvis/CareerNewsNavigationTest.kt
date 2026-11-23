@@ -36,10 +36,12 @@ class CareerNewsNavigationTest {
 
     @Test
     fun oldNewsOnlyPickerPositionsResetInsteadOfRedirecting() {
+        assertEquals(0, CareerListingCategoryMap.restoreStoredPosition(6))
+        assertEquals(0, CareerListingCategoryMap.restoreStoredPosition(9))
+        assertEquals(6, CareerListingCategoryMap.restoreStoredPosition(7))
+        assertEquals(7, CareerListingCategoryMap.restoreStoredPosition(8))
         assertEquals(0, CareerListingCategoryMap.positionForQueryCategory(6))
         assertEquals(0, CareerListingCategoryMap.positionForQueryCategory(9))
-        assertEquals(6, CareerListingCategoryMap.positionForQueryCategory(7))
-        assertEquals(7, CareerListingCategoryMap.positionForQueryCategory(8))
     }
 
     @Test
