@@ -285,8 +285,33 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                     }
                 }
             }
-            if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
-            vm.error?.let { e -> item { Text(e, color = Ap.Red, modifier = Modifier.padding(16.dp)) } }
+            if (vm.loading) item {
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 28.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.5.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        "Katalogdan içerikler yükleniyor…",
+                        color = Ap.Muted,
+                        fontSize = 13.sp,
+                        modifier = Modifier.semantics { contentDescription = "Film ve dizi içerikleri yükleniyor" }
+                    )
+                }
+            }
+            vm.error?.let { message ->
+                item {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text(message, color = Ap.Red, fontSize = 13.sp)
+                        Spacer(Modifier.height(10.dp))
+                        Button(onClick = {
+                            if (vm.searching && q.isNotBlank()) vm.search(q) else vm.load(vm.tab)
+                        }) { Text("Tekrar dene") }
+                    }
+                }
+            } }
             if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Ap.Muted, modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
             else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }

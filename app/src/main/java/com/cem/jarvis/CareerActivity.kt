@@ -134,7 +134,7 @@ class CareerActivity : Activity() {
             background = rounded(surfaceColor, borderColor)
             elevation = dp(8).toFloat()
         }
-        root.addView(navBar, LinearLayout.LayoutParams(-1, dp(70)).apply {
+        root.addView(navBar, LinearLayout.LayoutParams(-1, dp(82)).apply {
             setMargins(0, dp(8), 0, 0)
         })
 
@@ -172,9 +172,11 @@ class CareerActivity : Activity() {
             item.addView(label(tab.first, 19f, true, if (selected) accentColor else muted).apply {
                 gravity = Gravity.CENTER
             }, LinearLayout.LayoutParams(-1, dp(25)))
-            item.addView(label(tab.second, 8.5f, selected, if (selected) primaryText else muted).apply {
+            item.addView(label(tab.second, 9.5f, selected, if (selected) primaryText else muted).apply {
                 gravity = Gravity.CENTER
-            }, LinearLayout.LayoutParams(-1, dp(20)))
+                maxLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            }, LinearLayout.LayoutParams(-1, dp(28)))
             navBar.addView(item, LinearLayout.LayoutParams(0, -1, 1f).apply {
                 setMargins(dp(3), 0, dp(3), 0)
             })
@@ -578,8 +580,8 @@ class CareerActivity : Activity() {
 
     private fun statCard(title: String, value: String, subtitle: String): LinearLayout = panel().apply {
         setPadding(dp(10), dp(11), dp(10), dp(11))
-        addView(label(title, 11f, true, muted).apply {
-            maxLines = 1
+        addView(label(title, 8.5f, true, muted).apply {
+            maxLines = 2
             ellipsize = android.text.TextUtils.TruncateAt.END
         })
         addView(label(value, 14f, true, primaryText).apply {
@@ -587,8 +589,8 @@ class CareerActivity : Activity() {
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
         })
-        addView(label(subtitle, 9f, false, muted).apply {
-            maxLines = 1
+        addView(label(subtitle, 8f, false, muted).apply {
+            maxLines = 2
             ellipsize = android.text.TextUtils.TruncateAt.END
         })
     }
