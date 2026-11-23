@@ -2622,7 +2622,7 @@ class CareerActivity : Activity() {
                     10f, true, if (followUpAt > System.currentTimeMillis()) accentColor else warningColor
                 ))
             }
-            val actions = LinearLayout(this).apply { orientation = 0 }
+            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
             }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(3), 0) })

@@ -569,6 +569,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         }
     }
 
+    @android.annotation.TargetApi(31)
     private fun showOutputPicker() {
         val am = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
         val sdk = android.os.Build.VERSION.SDK_INT

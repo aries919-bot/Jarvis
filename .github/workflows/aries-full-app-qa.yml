@@ -71,6 +71,8 @@ jobs:
         include:
           - api-level: 29
             font-scale: "1.0"
+          - api-level: 33
+            font-scale: "1.0"
           - api-level: 34
             font-scale: "1.0"
           - api-level: 35

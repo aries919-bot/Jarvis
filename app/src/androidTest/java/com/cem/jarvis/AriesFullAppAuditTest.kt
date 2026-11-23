@@ -81,18 +81,22 @@ class AriesFullAppAuditTest {
             captureAndAudit("03-career-listings")
 
             val careerTabs = listOf(
-                "CV'im" to "04-career-cv",
-                "Takip" to "05-career-tracking",
-                "Başvuru" to "06-career-applications",
-                "Sonuç" to "07-career-results",
-                "Haber" to "08-career-news"
+                Triple("CV'im", "04-career-cv", "CV profilin"),
+                Triple("Takip", "05-career-tracking", "Takip merkezim"),
+                Triple("Başvuru", "06-career-applications", "Başvurularım"),
+                Triple("Sonuç", "07-career-results", "Başvuru sonuçlarım"),
+                Triple("Haber", "08-career-news", "ARIES  /  HABER & DUYURULAR")
             )
-            for ((label, fileName) in careerTabs) {
+            for ((label, fileName, expectedHeading) in careerTabs) {
                 if (clickText(label)) {
+                    val destinationVisible = device.wait(Until.hasObject(By.textContains(expectedHeading)), 5_000)
+                    if (!destinationVisible) {
+                        recordFinding("error", "navigation-destination", fileName, "The '$label' tab responded to a tap but its expected destination heading '$expectedHeading' did not appear.")
+                    }
                     SystemClock.sleep(450)
                     captureAndAudit(fileName)
                 } else {
-                    recordFinding("warning", "navigation", "career", "Career tab '$label' was not found or could not be tapped.")
+                    recordFinding("error", "navigation", "career", "Career tab '$label' was not found or could not be tapped.")
                 }
             }
             if (!clickDescription("Önceki ekrana dön")) device.pressBack()
