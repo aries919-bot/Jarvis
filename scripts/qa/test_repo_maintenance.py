@@ -63,10 +63,20 @@ class ClientSecretBuildTests(unittest.TestCase):
         build_file = (ROOT / "app" / "build.gradle.kts").read_text(encoding="utf-8")
         android_workflow = (ROOT / ".github" / "workflows" / "android.yml").read_text(encoding="utf-8")
         qa_workflow = (ROOT / ".github" / "workflows" / "aries-full-app-qa.yml").read_text(encoding="utf-8")
+        store_file = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "Store.kt").read_text(encoding="utf-8")
+        main_activity = (ROOT / "app" / "src" / "main" / "java" / "com" / "cem" / "jarvis" / "MainActivity.kt").read_text(encoding="utf-8")
         self.assertIn('val tmdbToken: String = ""', build_file)
         self.assertNotIn('System.getenv("TMDB_TOKEN")', build_file)
         self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', android_workflow)
         self.assertNotIn('TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}', qa_workflow)
+
+    def test_cloud_api_key_is_keystore_encrypted_and_legacy_is_migrated(self) -> None:
+        self.assertIn("object CloudKeyStore", store_file)
+        self.assertIn('Cipher.getInstance("AES/GCM/NoPadding")', store_file)
+        self.assertIn('.remove(LEGACY_PREF)', store_file)
+        self.assertIn('CloudKeyStore.read(this)', main_activity)
+        self.assertIn('CloudKeyStore.save(this, value)', main_activity)
+        self.assertIn("CloudKeyStore.clear(appContext)", store_file)
 
 
 class QaLogcatTests(unittest.TestCase):

@@ -108,13 +108,6 @@ Yanıtı yalnızca şu JSON olarak ver: {"command":"...","reply":"..."}
 Kalıpla yapılabilen bir istek varsa command'ı doldur, reply'ı boş bırak. Aksi halde command boş olsun, reply kısa ve doğal Türkçe bir cevap olsun (en fazla 3 cümle). Yıldız, başlık gibi biçimlendirme kullanma; cevap sesli okunacak. Sıcak ve samimi ol.
 """.trimIndent()
 
-    private val ABOUT = """
-Aries telefonda çalışır. Sohbetler telefonda, hafıza hem telefonda hem Aries Bulut'ta saklanır. Hafıza komutları: hatırla: x (sormadan kaydeder), notlarım, notlarda ara: x, unut: x, unut hepsi, profilim: x. Kart, şifre, kimlik kaydedilmez. gizli: ile başlayan mesaj buluta kaydedilmez.
-İnternetsiz: saat, tarih, batarya, depolama, alarm, zamanlayıcı, hatırlatmalar, takvim etkinliği, arama (onaylı), WhatsApp ve SMS taslağı, müzik ve ses, uygulama açma, ayar sayfaları, fener, kamera, hesap makinesi, yol tarifi, görevler, hafıza, dosya yönetimi.
-İnternetle: yapay zekâ sohbeti, internet araştırması (kaynaklı), çeviri, haber, borsa.
-Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uykudan uyandırması işletim sistemi tarafından kısıtlanmıştır.
-""".trimIndent()
-
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
 
@@ -870,18 +863,45 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun buildSettings(): View {
         val col = Ui.column(this)
-        add(col, Ui.text(this, "Ayarlar", 20f, Pal.WHITE))
+        add(col, Ui.text(this, "Ayarlar", 22f, Pal.WHITE))
 
-        add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
+        add(col, Ui.section(this, "Aries Bulut bağlantısı"))
+        add(col, Ui.card(this, "Bulut anahtarı cihazında Android Keystore ile şifrelenir. Anahtarını kimseyle paylaşma."))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
-        add(col, Ui.button(this, "Kaydet") { saveSettings() })
+        val keyStatus = when {
+            CloudKeyStore.isEncrypted(this) -> "Anahtar Android Keystore ile şifrelenmiş olarak saklanıyor."
+            CloudKeyStore.hasLegacyKey(this) -> "Eski anahtar okunabiliyor ancak henüz şifrelenemedi. Kaydet düğmesiyle yeniden dene."
+            else -> "Henüz bir Bulut anahtarı kaydedilmedi."
+        }
+        add(col, Ui.text(this, keyStatus, 12f, if (CloudKeyStore.hasLegacyKey(this) && !CloudKeyStore.isEncrypted(this)) Pal.AMBER else Pal.MUTED))
+        add(col, Ui.button(this, "Güvenli kaydet") { saveSettings() })
 
-        add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
-        add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
+        add(col, Ui.section(this, "Bildirim erişimi"))
+        add(col, Ui.card(this, "Aries'in desteklenen bildirimleri okuyabilmesi için Android'in bildirim erişimi izni gerekir. İzin vermek istemiyorsan bu adımı atlayabilirsin."))
+        add(col, Ui.button(this, "Bildirim erişimi ayarlarını aç") {
+            safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.")
+        })
 
-        add(col, Ui.text(this, "Hakkında", 14f, Pal.MUTED))
-        add(col, Ui.card(this, ABOUT))
+        addSettingsInfoSection(col, "Gizlilik ve veriler",
+            "Sohbet geçmişi telefonunda saklanır. Hafıza, cihazında ve etkinse Aries Bulut'ta tutulabilir. Kart, parola veya kimlik bilgisi kaydetme. 'gizli:' ile başlayan mesajlar Bulut'a gönderilmez.")
+        addSettingsInfoSection(col, "Hafıza komutları",
+            "• hatırla: not — yeni not ekler\n• notlarım — kayıtlı notları gösterir\n• notlarda ara: kelime — notlarda arar\n• unut: not — seçilen notu siler\n• unut hepsi — tüm notları siler\n• profilim: bilgi — profil bilgisi ekler")
+        addSettingsInfoSection(col, "İnternetsiz kullanılabilenler",
+            "Saat ve tarih • batarya ve depolama • alarm, zamanlayıcı ve hatırlatmalar • takvim etkinliği • onaylı arama • WhatsApp ve SMS taslağı • müzik ve ses • uygulama açma • fener ve kamera • hesap makinesi • yol tarifi • görevler • hafıza ve dosya yönetimi")
+        addSettingsInfoSection(col, "İnternet gerektirenler",
+            "Yapay zekâ sohbeti • kaynaklı internet araştırması • çeviri • haberler • altın, döviz ve hisse takibi")
+        addSettingsInfoSection(col, "Arka plan ve pil",
+            "MIUI pil optimizasyonu, uygulama tamamen kapalıyken 'Hey Jarvis' özelliğinin arka planda uyanmasını kısıtlayabilir. Daha kararlı çalışma için Android pil ayarlarında Aries'i kısıtlamasız kullanıma al.")
         return scrollOf(col)
+    }
+
+    private fun addSettingsInfoSection(parent: LinearLayout, title: String, body: String) {
+        add(parent, Ui.section(this, title))
+        val card = Ui.card(this, body).apply {
+            textSize = 13f
+            setLineSpacing(dp(3).toFloat(), 1.05f)
+        }
+        add(parent, card)
     }
 
     private fun renderFacts(box: LinearLayout) {
@@ -904,7 +924,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun keyField(col: LinearLayout, hintText: String, prefKey: String) {
         val e = Ui.input(this, hintText)
         e.setSingleLine()
-        e.setText(store.str(prefKey))
+        e.setText(if (prefKey == "bulut") CloudKeyStore.read(this) else store.str(prefKey))
         e.transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
         keyFields[prefKey] = e
         val row = Ui.row(this)
@@ -922,8 +942,18 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun saveSettings() {
-        for ((k, v) in keyFields) store.put(k, v.text.toString().trim())
-        say("Ayarlar kaydedildi.")
+        for ((key, field) in keyFields) {
+            val value = field.text.toString().trim()
+            val saved = if (key == "bulut") CloudKeyStore.save(this, value) else {
+                store.put(key, value)
+                true
+            }
+            if (!saved) {
+                say("Bulut anahtarı Android Keystore ile güvenli biçimde saklanamadı. Cihaz güvenliğini kontrol edip tekrar dene.")
+                return
+            }
+        }
+        say("Ayarlar güvenli biçimde kaydedildi.")
     }
 
     private fun flagLabel(flag: String): String =
