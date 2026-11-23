@@ -43,8 +43,8 @@ object CareerListingIntelligence {
             else -> "Kariyer veya kurum duyurusu"
         }
         val applicationStatus = when {
-            deadlineStatus?.startsWith("SÜRESİ GEÇMİŞ", true) == true ->
-                "SÜRESİ GEÇMİŞ · Kaynak özetindeki son tarih geçmiş; kurum sayfasında güncelleme kontrol edilmeli."
+            CareerListingParser.isInactiveStatus(deadlineStatus) ->
+                deadlineStatus.orEmpty()
             processOnly -> "SÜREÇ DUYURUSU · Bu kayıt yeni başvuru açıldığını göstermez."
             deadline != null ->
                 "SON TARİH BULUNDU · $deadline · Başvurunun hâlâ açık olduğu kaynak sayfasında teyit edilmeli."
@@ -70,6 +70,8 @@ object CareerListingIntelligence {
                 "İŞKUR Staj Platformu · staj başvuru portalı"
             host == "stajportali.iskur.gov.tr" ->
                 "İŞKUR Lise Staj Portalı · ilgili staj başvuru ekranı"
+            host == "personeltemin.jandarma.gov.tr" ->
+                "Jandarma Personel Temin Sistemi · kurumun kendi personel başvuru portalı"
             host == "esube.iskur.gov.tr" ->
                 "İŞKUR e-Şube · açık iş / program başvurusu"
             host == "iskur.gov.tr" ->
