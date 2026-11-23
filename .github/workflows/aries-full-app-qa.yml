@@ -44,7 +44,8 @@ jobs:
           APK_EXIT=$?
           printf '{"lintExit":%s,"unitExit":%s,"apkExit":%s}\n' "$LINT_EXIT" "$UNIT_EXIT" "$APK_EXIT" > qa-output/static/build-status.json
           python3 scripts/qa/build_qa_report.py --repo-root . --qa-dir qa-output/static --out-dir qa-output/static/report --api-level "static"
-          if [ "$LINT_EXIT" -ne 0 ] || [ "$UNIT_EXIT" -ne 0 ] || [ "$APK_EXIT" -ne 0 ]; then
+          REPORT_EXIT=$?
+          if [ "$LINT_EXIT" -ne 0 ] || [ "$UNIT_EXIT" -ne 0 ] || [ "$APK_EXIT" -ne 0 ] || [ "$REPORT_EXIT" -ne 0 ]; then
             exit 1
           fi
       - name: Upload static and unit-test report
@@ -110,7 +111,10 @@ jobs:
             adb shell dumpsys activity activities > qa-output/activities.txt
             printf '{"instrumentationExit":%s,"evidencePullExit":%s,"apiLevel":%s}\n' "$TEST_EXIT" "$PULL_EXIT" "${{ matrix.api-level }}" > qa-output/emulator-status.json
             python3 scripts/qa/build_qa_report.py --repo-root . --qa-dir qa-output --out-dir qa-output/report --api-level "${{ matrix.api-level }}"
+            REPORT_EXIT=$?
             if [ "$TEST_EXIT" -ne 0 ]; then exit "$TEST_EXIT"; fi
+            if [ "$PULL_EXIT" -ne 0 ]; then exit "$PULL_EXIT"; fi
+            if [ "$REPORT_EXIT" -ne 0 ]; then exit "$REPORT_EXIT"; fi
       - name: Upload emulator evidence and full report
         if: always()
         uses: actions/upload-artifact@v4
