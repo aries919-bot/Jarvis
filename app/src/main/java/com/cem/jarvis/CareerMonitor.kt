@@ -548,7 +548,7 @@ object CareerListingParser {
         RegexOption.IGNORE_CASE
     )
     private val publicationDatePattern = Regex(
-        """(?:ilan|duyuru|yayın|yayin|yayımlanma|yayinlanma|posted|published)\s*(?:tarihi|date)?[^0-9]{0,30}(\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+[\p{L}]+\s+\d{4})""",
+        """(?:ilan\s+tarihi|duyuru\s+tarihi|yayım\s+tarihi|yayim\s+tarihi|yayın\s+tarihi|yayin\s+tarihi|yayımlanma\s+tarihi|yayinlanma\s+tarihi|posted(?:\s+on)?|published(?:\s+on)?)\s*[:\-]?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+[\p{L}]+\s+\d{4})""",
         RegexOption.IGNORE_CASE
     )
     private val closedApplicationPhrases = listOf(
