@@ -17,8 +17,8 @@
 |---|---|---|
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
-| A2 Material 3 Expressive tüm uygulama | PR AÇIK | PR #25; Pal/Tok ortak tasarımı, 48dp kontroller, ana ekran hızlı erişim, Film & Dizi Compose teması, eksik medya destek dosyaları ve build bağımlılıkları. Son CI 45169541324/45169532073 sürüyor; bağımsız hakem gerekli. |
-| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | Bu tur seçildi. main/Ai.kt inceleniyor; mevcut senkron Net.post ve webSearch fallback bulguları. A2 PR #25 son CI 45169541324 FAILED: :app:checkDebugAarMetadata, path null. |
+| A2 Material 3 Expressive tüm uygulama | PR AÇIK | PR #25; push CI 45169532073 SUCCESS, PR CI 45169541324 FAILED (:app:checkDebugAarMetadata, path null); PR merge-test hatası araştırılmalı, bağımsız hakem gerekli. |
+| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26 (is/b1-ai-memory-foundation) açık/taslak: cihaz içi hafıza paylaşımı varsayılan kapalı, güvenli filtre ve JVM testleri; CI 45170464639/45170434646 sürüyor. Streaming sonraki alt adım. |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
@@ -45,6 +45,7 @@
 8. Mevcut Android kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback kullanıyor; C1 bunu kaldıracak.
 9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
 10. K1'de indeks öz-bağlantısı/sonuç yanlış pozitifleri düzeltildi, TUSAŞ/ROKETSAN programları ayrıldı, TEI HTTP 403 manual_only, yönlendirme aynı HTTPS hostla sınırlandı, 20 kaynağın browserCheck durumu test edildi. Sonraki: K1 için bağımsız insan hakem onayı.
-11. A1 iki ekran tasarımı Cem tarafından onaylandı. A2 PR #25 main tabanında açıldı; Material 3 tema, ortak Pal/Tok, ana ekran hızlı erişimleri, Compose medya teması, medya modülünün eksik destek dosyaları ve CI test aşaması eklendi. İlk testlerde eksik media support sınıfları ve iki webSearch imza uyuşmazlığı bulundu; destek dosyaları film-dizi-v2 dalından incelenerek eklendi, çağrı imzaları düzeltildi. Son CI bekleniyor. Sonraki: PR #25 CI sonucu + bağımsız hakem.
+11. A1 iki ekran tasarımı Cem tarafından onaylandı. A2 PR #25 açıldı; push CI SUCCESS, PR merge-test FAILED (:app:checkDebugAarMetadata, path null). Sonraki: PR CI farkını araştır.
+12. B1 PR #26 açıldı; hafıza notlarının bulut AI'ya gönderilmesi için ayrı ve varsayılan kapalı onay anahtarı, hassas bilgi filtresi, 5 JVM regresyon testi ve PR/push QA workflow'u eklendi. CI bekleniyor; streaming henüz yapılmadı.
 
 **SONRAKİ ADIM:** B1 mevcut sohbet çağrı zinciri, bellek saklama ve test altyapısını çıkar; küçük bir streaming/bellek dilimi tasarla.
