@@ -1399,10 +1399,11 @@ class CareerActivity : Activity() {
                     readButton.isEnabled = false
                     return@evaluateJavascript
                 }
-                statusView.text = "Metin alındı. AI yalnızca bu metindeki kanıtları kullanarak alanları çıkarıyor…"
+                val safePageText = CareerListingPagePolicy.sanitizeForAi(check.text)
+                statusView.text = "Metin alındı; e-posta/telefon/kimlik/IBAN maskelendi. AI yalnızca kalan kaynak kanıtlarını kullanıyor…"
                 Thread {
                     val report = runCatching {
-                        extractWithAi(check.text, finalUrl, check.truncated)
+                        extractWithAi(safePageText, finalUrl, check.truncated)
                     }.getOrElse {
                         "Alan çıkarımı yapılamadı: " + (it.message ?: "AI veya JSON yanıtı hatası") +
                             "\n\nKaynak sayfa açılmış olabilir; giriş/CAPTCHA kontrolü aşılmamış ve alanlar doğrulanmış sayılmamıştır."
