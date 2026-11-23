@@ -47,12 +47,13 @@
 
 ## 23.11 kullanıcı ekranı teknik teşhisleri
 - C2 kullanıcı ekranı kök nedeni: Haber sayfasındaki iki genel tarama düğmesi `renderPage(2)` çağırıyor (Takip); #31'de Haber içinde kalacak şekilde düzeltildi. Ayrı kamu alım haber sorgusu ve 45 sn üst sınır eklendi.
-- C2 PR #31 açık/taslak: `fix/c2-news-search-in-news` → `is/c3-ilan-semasi-ai-kaynak-kaniti`; C3 PR #30'a yığılmıştır, #30 önce birleşmelidir. HEAD `27464446c9cef8a88e6ae7034bb5aaa5702b73f1`; testler eklendi; APK #641 ve Full QA #87 halen çalışıyor.
+- C2 PR #31 açık/taslak: `fix/c2-news-search-in-news` → `is/c3-ilan-semasi-ai-kaynak-kaniti`; C3 PR #30'a yığılmıştır, #30 önce birleşmelidir. HEAD `27464446c9cef8a88e6ae7034bb5aaa5702b73f1`; APK #641 SUCCESS; Full QA #87 statik/lint/birim/APK SUCCESS, API29/33/34/35 UI emülatör işleri sürüyor.
 - İlan aramasının 0/12 kök nedeni: 12 sorgu, dört eşzamanlı görev, DDG HTML → Bing HTML → Google News RSS → Brave sıralı fallback ve 90 sn üst sınırı; DDG güvenlik kontrolü/Brave limit/Bing okunamayan sayfa raporlanmış. Kaynak kataloğu URL dizinidir, canlı reader değildir; K1/C1 Cline görevi bekleniyor. #31 bu 0/12 motor sorununu çözmüş sayılmaz.
 - Bildirim davranışı: Kariyer takibi etkinse WorkManager 08:30/20:30 civarında iki günlük tarama planlar (kesin saat garantisi yok); manuel tarama bildirim üretmez. Yalnız yeni, güvenilir resmî kaynaklı, gelecek son tarihli ilanlar ve belirli süreç aşamaları bildirilir; Android 13+ POST_NOTIFICATIONS izni yoksa sessizce atlanır.
 - Chrome beyaz ekran: kariyer kartı kaynak bağlantıları `Intent.ACTION_VIEW` ile harici tarayıcıya açılır; Chrome render'ı Aries kontrol etmez. Görseldeki `app.simplelogin.io` SimpleLogin web uygulaması alan adıdır (iş/kamu ilan portalı değildir); kırpılmış görüntü, o URL'ye hangi sonuç/düğmenin götürdüğünü kanıtlamaz.
 - Tema: A2 #28 hâlâ açık/taslak. `is/a2-theme-completion` dalında kaydedilen açık/koyu tercih var; #638'in C3 dalındaki `MainActivity` bunu içermiyor. Uygulama kodunda seçilen arka plan görselini kaydedip ekrana bağlayan akış bulunmadı.
 - Film: #638'in C3 kaynak ağacındaki `MediaSourceBrowser` arama tarafı yalnız DuckDuckGo HTML ve iki DOM seçicisi kullanıyor; tarayıcı isteği/DOM kaynaklarından HLS/DASH/MP4 vb. aday akışı yakalamaya çalışıyor ve yaklaşık 18 sn sonra kaynak değiştiriyor. Çoklu motor keşfi ayrı medya PR/branch'inde; DRM/giriş/CAPTCHA/özel player kısıtlarını aşma yok. Gerçek oynatma cihazda denenmedi.
+- C2 test APK #641 artefaktı `14851401572` indirildi: `app-debug.apk` 14,888,667 bayt; SHA-256 `639a0bee97e207415d0978def39cc1dbe8b32a0043676c9857b7b81f16085af5`. Bu test derlemesidir, PR #31 birleşmiş/son ürün değildir.
 - 23.11.2026 resmî alım örneği: İçişleri 1.170 + Jandarma 9.000 = 10.170; İçişleri Malatya tablosunda 3 P3 lisans yeri ve Yeşilyurt'ta 1 P94 temizlik görevlisi yeri var. P94 başvurusu yalnız uygun unvan/şartlarla değerlendirilmeli.
 
 ## Cline'a ayrılmış net işler
