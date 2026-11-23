@@ -68,6 +68,8 @@ object CareerSourceCatalog {
         Source("Memur 365 – kamu personel haberleri", "https://memur365.com/kamu-personel-alimi", "Haber / kamu personel gündemi · resmî ilan değildir", false),
         Source("Memur 365 – kamu haberleri", "https://memur365.com/kamu-haberleri", "Haber / kamu duyuruları · resmî ilan değildir", false),
         Source("Memurlar.net – kamu personel haberleri", "https://www.memurlar.net/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
+        Source("Kamu Personeli – kamu alım haberleri", "https://www.kamupersoneli.net/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
+        Source("İş Kamu – kamu personel haberleri", "https://www.iskamu.com/", "Haber / kamu personel gündemi · resmî ilan değildir", false),
         Source("Sahil Güvenlik Komutanlığı", "https://www.sg.gov.tr/", "Kamu / güvenlik personeli"),
         Source("Çalışma ve Sosyal Güvenlik Bakanlığı – duyurular", "https://www.csgb.gov.tr/duyurular/", "Kamu / bakanlık"),
         Source("Kültür ve Turizm Bakanlığı – Personel Genel Müdürlüğü", "https://pgm.ktb.gov.tr/", "Kamu / personel genel müdürlüğü"),
@@ -605,6 +607,16 @@ object CareerListingParser {
     fun publicationDate(text: String): String? =
         publicationDatePattern.find(text)?.groupValues?.getOrNull(1)?.let(::parseDate)
 
+    /** Returns a timestamp only for an explicitly labelled source publication date. */
+    fun publicationTimestamp(text: String): Long? {
+        val published = publicationDate(text) ?: return null
+        return runCatching {
+            java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                .apply { isLenient = false }
+                .parse(published)?.time
+        }.getOrNull()
+    }
+
     /**
      * Returns a closing time only when it appears immediately after an explicitly labelled
      * application deadline. Unrelated exam/event times elsewhere in the snippet are ignored.
@@ -717,7 +729,7 @@ data class CareerScanBatch(
 /** DuckDuckGo results are discovery only. Returned listings must be classified and checked. */
 
 object CareerSearchEngine {
-    private fun queryList(category: Int, role: String, city: String): List<String> {
+    internal fun queryList(category: Int, role: String, city: String): List<String> {
         val year = Calendar.getInstance().get(Calendar.YEAR)
         val r = role.ifBlank { "elektrik teknisyeni pano montaj bakım üretim depo operatör satış işçi personel" }
         val c = city.ifBlank { "Malatya Türkiye" }
@@ -845,6 +857,16 @@ object CareerSearchEngine {
             7 -> dailyPrivate + listOf(extra)
             8 -> municipal + kuraQueries.take(3) + listOf(extra)
             9 -> studentPrograms
+            10 -> listOf(
+                "site:memur365.com/kamu-personel-alimi $year kamu personel alımı ilan başvuru şartları son başvuru tarihi",
+                "site:memurlar.net $year kamu personel alımı başvuru başladı son başvuru tarihi",
+                "site:kamupersoneli.net $year kamu personel alımı ilanı KPSS başvuru",
+                "site:iskamu.com $year kamu personel alımı ilanı başvuru şartları",
+                "site:kamuilan.sbb.gov.tr $year kamu personel alımı yeni ilan KPSS",
+                "site:resmigazete.gov.tr/ilanlar/ $year sözleşmeli personel sürekli işçi alımı başvuru",
+                "site:gov.tr $year personel alım ilanı başvuru son tarihi kamu",
+                "$c $year kamu personel alımı işçi memur güncel ilan başvuru tarihi"
+            )
             else -> generalQuick
         }.distinct()
     }
@@ -1135,6 +1157,7 @@ object CareerSearchEngine {
             7 -> "günlük üretim depo vardiyalı işçi ve teknisyen ilanı"
             8 -> "belediye ve yerel yönetim personel işçi alımı"
             9 -> "üniversite öğrencisi staj ve gençlik programı"
+            10 -> "güncel kamu personel alım haberleri kurum duyuruları başvuru takvimi"
             else -> "kamu ve özel sektör açık iş ilanı personel alımı"
         }
         return "$role $city Türkiye $focus $year resmî kurum işveren başvuru şartları son başvuru tarihi"
@@ -1203,7 +1226,7 @@ object CareerSearchEngine {
         val extraErrors = cloudErrors + (cloud?.errorMessages.orEmpty())
         val collected = collect(
             queryList(category, role, city).take(12),
-            90,
+            if (category == 10) 45 else 90,
             city,
             cloudHits,
             extraErrors,
@@ -1399,6 +1422,60 @@ object CareerRecruitmentTracker {
     fun detectStage(title: String, snippet: String): String? =
         detectStages(title, snippet).firstOrNull()
 
+    /** A result that has already been published belongs to history, not the upcoming queue. */
+    fun isCompletedResultNotice(title: String, snippet: String): Boolean {
+        val text = normalize(title + " " + snippet)
+            .replace(Regex("""\s+"""), " ")
+            .trim()
+        val resultContext = listOf(
+            "kura sonuc", "sinav sonuc", "mulakat sonuc",
+            "nihai sonuc", "yerlestirme sonuc", "asil ve yedek",
+            "asil aday listesi", "yedek aday listesi"
+        ).any(text::contains)
+        val publishedWording = listOf(
+            "aciklandi", "aciklanmistir", "yayinlandi", "yayimlandi",
+            "duyuruldu", "duyurulmustur", "belli oldu", "sonuclandi",
+            "ilan edildi"
+        ).any(text::contains)
+        return resultContext && publishedWording
+    }
+
+    private fun isResultStage(stage: String): Boolean =
+        stage.startsWith("NOTER KURASI SONUCU") ||
+            stage.startsWith("SINAV SONUCU") ||
+            stage.startsWith("NİHAİ SONUÇ")
+
+    private fun hasExplicitFutureResultWording(title: String, snippet: String): Boolean {
+        val text = normalize(title + " " + snippet)
+        return listOf(
+            "aciklanacak", "aciklanacaktir", "duyurulacak", "duyurulacaktir",
+            "yayinlanacak", "yayinlanacaktir", "yayimlanacak", "yayimlanacaktir",
+            "belli olacak"
+        ).any(text::contains)
+    }
+
+    fun isHistoricalEvent(
+        event: CareerProcessEvent,
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean {
+        val eventDateHasPassed = event.eventAt?.let { it < nowMillis } == true
+        if (eventDateHasPassed || isCompletedResultNotice(event.title, event.snippet)) return true
+
+        // An undated result headline is not an upcoming event. Keep it in the archive
+        // as "date not verified" unless the source explicitly says it will be announced.
+        val undatedResultWithoutFuturePromise =
+            event.eventAt == null &&
+                isResultStage(event.stage) &&
+                !hasExplicitFutureResultWording(event.title, event.snippet)
+        return undatedResultWithoutFuturePromise
+    }
+
+    /** Historical records are stored for reference but must never trigger a "new process" alert. */
+    fun shouldNotifyAsNew(
+        event: CareerProcessEvent,
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean = !isHistoricalEvent(event, nowMillis)
+
     fun parseEventTime(title: String, snippet: String, stage: String? = null): Pair<Long, Boolean>? {
         val text = title + " " + snippet
         val isResultStage =
@@ -1481,8 +1558,13 @@ object CareerRecruitmentTracker {
             )
         }.sortedWith(
             compareBy<CareerProcessEvent> { event ->
-                event.eventAt?.takeIf { it >= System.currentTimeMillis() } ?: Long.MAX_VALUE
-            }.thenByDescending { it.detectedAt }
+                when {
+                    isHistoricalEvent(event) -> 2
+                    event.eventAt != null -> 0
+                    else -> 1
+                }
+            }.thenBy { event -> event.eventAt ?: Long.MAX_VALUE }
+                .thenByDescending { event -> event.detectedAt }
         )
     }
 
@@ -1521,7 +1603,9 @@ object CareerRecruitmentTracker {
                     eventAt = parsed?.first,
                     hasExplicitTime = parsed?.second ?: false
                 )
-                added += event
+                // Persist old results for the archive, but only future/unresolved events
+                // can trigger a fresh-process notification.
+                if (shouldNotifyAsNew(event, now)) added += event
                 events.add(0, event)
             }
         }

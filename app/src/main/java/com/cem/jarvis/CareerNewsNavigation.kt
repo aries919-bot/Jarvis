@@ -1,0 +1,46 @@
+package com.cem.jarvis
+
+/** Keeps each Haber filter connected to a search that stays within Haber. */
+internal object CareerNewsNavigation {
+    /** Kura and exam results are process records, not archive news filters. */
+    fun processQueryCategory(): Int = 6
+
+    fun queryForFilter(filter: Int): Int = when (filter) {
+        1 -> 9  // Staj / öğrenci programları
+        else -> 10 // Güncel kamu personel alım haberleri
+    }
+
+    fun matchesArchiveFilter(filter: Int, type: CareerContentType): Boolean = when (filter) {
+        1 -> type == CareerContentType.STUDENT_PROGRAM
+        2 -> type == CareerContentType.INSTITUTION_NOTICE
+        3 -> type == CareerContentType.NEWS
+        4 -> type == CareerContentType.REVIEW_REQUIRED
+        else -> type != CareerContentType.PROCESS_NOTICE
+    }
+}
+
+/** The listings picker contains only real vacancy categories. Kura/news/program searches stay in Haber. */
+internal object CareerListingCategoryMap {
+    private val queryCategoryIds = listOf(0, 1, 2, 3, 4, 5, 7, 8)
+
+    fun queryCategoryForPosition(position: Int): Int =
+        queryCategoryIds.getOrElse(position) { 0 }
+
+    fun positionForQueryCategory(category: Int): Int =
+        queryCategoryIds.indexOf(category).takeIf { it >= 0 } ?: 0
+
+    /** Migrate positions stored by older builds that mixed news-only categories into listings. */
+    fun restoreStoredPosition(oldPosition: Int): Int = when (oldPosition) {
+        in 0..5 -> oldPosition
+        6, 9 -> 0
+        7 -> 6
+        8 -> 7
+        else -> 0
+    }
+
+    fun initialPositionForStoredFilter(oldPosition: Int, migrationAlreadyApplied: Boolean): Int =
+        if (migrationAlreadyApplied) oldPosition.coerceIn(0, queryCategoryIds.lastIndex)
+        else restoreStoredPosition(oldPosition)
+
+    fun queryCategories(): List<Int> = queryCategoryIds.toList()
+}

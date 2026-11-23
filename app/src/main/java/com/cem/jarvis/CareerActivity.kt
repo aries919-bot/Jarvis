@@ -33,9 +33,19 @@ class CareerActivity : Activity() {
     private lateinit var processEventsContainer: LinearLayout
     private lateinit var finishedApplicationsContainer: LinearLayout
     private var processPage = 0
+    private var processFilter = 0 // 0: upcoming/check; 1: historical result archive
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val filters = listOf("Tüm iş ilanları", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Haber: kura / noter / sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Haber: öğrenci / staj programları")
+    private val filters = listOf(
+        "Tüm iş ilanları",
+        "Kamu · KPSS P94",
+        "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları",
+        "Özel sektör · teknik işler",
+        "Büyük şirketler · ASELSAN / TCDD vb.",
+        "Ön lisans mezuniyetinden sonra",
+        "Günlük özel sektör · üretim/işçi",
+        "Belediye · yerel yönetim alımları"
+    )
     // Kariyer ekranı da ana uygulama ve Film & Dizi ile aynı tasarım sistemini kullanır.
     private val bgColor = Color.parseColor(Pal.BG)
     private val surfaceColor = Color.parseColor(Pal.CARD)
@@ -324,26 +334,38 @@ class CareerActivity : Activity() {
         category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filters).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        category.setSelection(prefs.getInt("career_filter", 0).coerceIn(0, filters.lastIndex))
+        val savedListingFilter = prefs.getInt("career_filter", 0)
+        val listingFilterMigrationApplied = prefs.getBoolean("career_filter_v2_migrated", false)
+        val initialListingFilter = CareerListingCategoryMap.initialPositionForStoredFilter(
+            savedListingFilter,
+            listingFilterMigrationApplied
+        ).coerceIn(0, filters.lastIndex)
+        category.setSelection(initialListingFilter)
+        if (!listingFilterMigrationApplied) {
+            // Persist the migrated index exactly once; do not reinterpret new index 6/7 next launch.
+            prefs.edit()
+                .putInt("career_filter", initialListingFilter)
+                .putBoolean("career_filter_v2_migrated", true)
+                .apply()
+        }
         category.background = rounded(surfaceRaised, borderColor)
         category.setPadding(dp(10), dp(2), dp(10), dp(2))
         category.contentDescription = "İlan kategorisini seç"
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
         filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
         filtersCard.addView(quickChipRow(
-            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / sonuçlar", "Büyük kurumlar", "Özel sektör", "Belediye", "Staj / program")
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Büyük kurumlar", "Özel sektör", "Belediye", "Günlük özel sektör")
         ) { selected ->
             val target = when (selected) {
                 "Kamu · KPSS" -> 1
                 "KPSS'siz kamu" -> 2
-                "Kura / sonuçlar" -> 6
                 "Büyük kurumlar" -> 4
                 "Özel sektör" -> 3
                 "Belediye" -> 8
-                "Staj / program" -> 9
+                "Günlük özel sektör" -> 7
                 else -> 0
             }
-            category.setSelection(target)
+            category.setSelection(CareerListingCategoryMap.positionForQueryCategory(target))
             searchJobs()
         }, params(-1, dp(50), 0, 2, 0, 8))
         search = primaryButton("⌕  İlanları şimdi ara") { searchJobs() }
@@ -491,8 +513,8 @@ class CareerActivity : Activity() {
         pageContent.addView(dailyResultsContainer, params(-1, -2, 0, 6, 0, 14))
         showDailyResults(dailyResultsContainer)
 
-        pageContent.addView(button("Kura, sınav ve sonuç duyurularını gör") {
-            renderPage(4)
+        pageContent.addView(button("Haber sekmesindeki kura ve sonuç arşivini aç") {
+            renderPage(5)
         }, params(-1, dp(48), 0, 0, 0, 12))
         queueFirstAutomaticScanIfNeeded()
     }
@@ -693,7 +715,7 @@ class CareerActivity : Activity() {
                     }
                     androidx.work.WorkInfo.State.SUCCEEDED -> {
                         showDailyResults(dailyResultsContainer)
-                        if (currentPage == 4 && ::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                        if (currentPage == 5 && ::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
                         if (currentPage == 4 && ::finishedApplicationsContainer.isInitialized) showFinishedApplications(finishedApplicationsContainer)
                         refreshMonitorStatus()
                         manualScanButton.isEnabled = true
@@ -729,11 +751,7 @@ class CareerActivity : Activity() {
             ?.hideSoftInputFromWindow(if (::role.isInitialized) role.windowToken else window.decorView.windowToken, 0)
         val r = role.text.toString().trim()
         val p = place.text.toString().trim()
-        val selectedCategory = category.selectedItemPosition
-        if (selectedCategory == 6 || selectedCategory == 9) {
-            searchNewsCategory(selectedCategory)
-            return
-        }
+        val selectedCategory = CareerListingCategoryMap.queryCategoryForPosition(category.selectedItemPosition)
         if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
         saveCv(showToast = false)
         search.isEnabled = false
@@ -747,7 +765,7 @@ class CareerActivity : Activity() {
         loadingCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             addView(label("Kaynaklar taranıyor", 14f, true, primaryText))
-            addView(label("Aynı ilanlar tekilleştiriliyor; kamu, kura, KPSS ve özel sektör ayrı gruplara ayrılıyor…", 11f, false, muted))
+            addView(label("Aynı iş ilanları tekilleştiriliyor; kamu, KPSS, KPSS'siz ve özel sektör ayrılıyor…", 11f, false, muted))
         }, LinearLayout.LayoutParams(0, -2, 1f))
         results.addView(loadingCard, params(-1, -2, 0, 2, 0, 8))
         Thread {
@@ -895,13 +913,13 @@ class CareerActivity : Activity() {
             emptyCard.addView(label("Bu, ilan olmadığı anlamına gelmez. Bazı arama servisleri güvenlik kontrolü veya geçici istek sınırı nedeniyle sonuçları göstermemiş olabilir.", 12f, false, muted))
             if (searchDiagnostic.isNotBlank()) emptyCard.addView(label(searchDiagnostic, 11f, false, muted))
             results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
-            results.addView(primaryButton("Daha geniş arama yap") {
-                role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
+            results.addView(primaryButton("Türkiye genelinde daha geniş ara") {
+                role.setText("Elektrik teknisyeni, pano montajı, bakım-onarım, üretim, depo, operatör, işçi, personel")
+                place.setText("Türkiye geneli")
                 category.setSelection(0)
                 searchJobs()
             }, params(-1, dp(48), 0, 6, 0, 6))
-            results.addView(button("Resmî ve kurumsal kaynakları aç") { showSources() }, params(-1, dp(48), 0, 2, 0, 6))
-            results.addView(button("Günlük tam kaynak taramasına geç") { renderPage(2) }, params(-1, dp(48), 0, 2, 0, 6))
+            results.addView(button("Resmî ve kurumsal kaynakları aç") { showSources() }, params(-1, dp(48), 0, 2, 0, 0))
             return
         }
 
@@ -1201,12 +1219,12 @@ class CareerActivity : Activity() {
             setPadding(dp(12), dp(8), dp(12), dp(8))
         }
         val explanation = label(
-            "Bu sayfa yalnızca sen dokunduğun için açılıyor. İçerik okununca herkese açık ilan alanları çıkarılır; CV veya profil bilgisi yapay zekâya gönderilmez.",
+            "Kaynak sayfa yalnızca senin isteğinle açılır. Önce metin cihazda okunur; AI'ya gönderim için ayrıca onay istenir. Onay verirsen maskelenmiş sayfa metni Ayarlar'da kayıtlı AI sağlayıcılarına gönderilebilir. Kaynak URL AI istemine eklenmez. CV/profil bilgilerin gönderilmez. Maskeleme her kişisel veriyi bulmayı garanti etmez.",
             12f, false, muted
         )
         val statusView = label("Kaynak sayfa açılıyor…", 12f, true, accentBlue)
         val webView = WebView(this)
-        val readButton = button("Sayfa metnini oku ve alanları çıkar") { }
+        val readButton = button("Sayfa metnini oku · cihazda") { }
         readButton.isEnabled = false
         container.addView(explanation)
         container.addView(statusView)
@@ -1228,16 +1246,53 @@ class CareerActivity : Activity() {
             cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         }
         webView.webChromeClient = android.webkit.WebChromeClient()
+        android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.settings.safeBrowsingEnabled = true
+        }
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: android.webkit.WebResourceRequest
+            ): android.webkit.WebResourceResponse? {
+                // Block private/IP/cleartext resources too, not only top-level navigation.
+                // This protects the user-triggered page reader from obvious local-network probes.
+                val blocked = CareerListingPagePolicy.validateHttpsUrl(request.url.toString())
+                if (blocked != null) {
+                    return android.webkit.WebResourceResponse(
+                        "text/plain",
+                        "utf-8",
+                        java.io.ByteArrayInputStream(ByteArray(0))
+                    )
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 request: android.webkit.WebResourceRequest
             ): Boolean {
-                return !request.url.scheme.equals("https", ignoreCase = true)
+                if (!request.isForMainFrame) return false
+                val blocked = CareerListingPagePolicy.validateNavigationUrl(hit.url, request.url.toString())
+                if (blocked != null) {
+                    pageError = blocked
+                    statusView.text = blocked
+                    readButton.isEnabled = false
+                    return true
+                }
+                return false
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                val blocked = CareerListingPagePolicy.validateNavigationUrl(hit.url, url)
+                if (blocked != null) {
+                    pageError = blocked
+                    readButton.isEnabled = false
+                    statusView.text = blocked
+                    view.stopLoading()
+                    return
+                }
                 httpStatus = null
                 pageError = null
                 readButton.isEnabled = false
@@ -1341,7 +1396,7 @@ class CareerActivity : Activity() {
                 appendLine("Yalnız geçerli JSON döndür; açıklama, markdown veya kod bloğu ekleme.")
                 appendLine("ŞEMA:")
                 appendLine("""{"employer":{"value":"","evidence":""},"position":{"value":"","evidence":""},"province":{"value":"","evidence":""},"recruitmentMethod":{"value":"","evidence":""},"kpssScoreType":{"value":"","evidence":""},"qualificationCodes":{"value":"","evidence":""},"quota":{"value":"","evidence":""},"conditions":{"value":"","evidence":""},"deadline":{"value":"","evidence":""}}""")
-                appendLine("KAYNAK URL (yeni bilgi üretmek için kullanma): " + sourceUrl)
+                appendLine("Kaynak URL modele gönderilmez; yalnızca uygulamadaki rapora kaydedilir.")
                 appendLine("SAYFA METNİ BAŞLANGICI — GÜVENİLMEYEN VERİ")
                 appendLine(pageText)
                 appendLine("SAYFA METNİ SONU")
@@ -1362,6 +1417,7 @@ class CareerActivity : Activity() {
             ).report()
         }
 
+        lateinit var pageDialog: AlertDialog
         readButton.setOnClickListener {
             if (httpStatus?.let { it !in 200..299 } == true) {
                 statusView.text = CareerListingPagePolicy.inspect(httpStatus, "", "").message
@@ -1400,35 +1456,78 @@ class CareerActivity : Activity() {
                     return@evaluateJavascript
                 }
                 val safePageText = CareerListingPagePolicy.sanitizeForAi(check.text)
-                statusView.text = "Metin alındı; e-posta/telefon/kimlik/IBAN maskelendi. AI yalnızca kalan kaynak kanıtlarını kullanıyor…"
-                Thread {
-                    val report = runCatching {
-                        extractWithAi(safePageText, finalUrl, check.truncated)
-                    }.getOrElse {
-                        "Alan çıkarımı yapılamadı: " + (it.message ?: "AI veya JSON yanıtı hatası") +
-                            "\n\nKaynak sayfa açılmış olabilir; giriş/CAPTCHA kontrolü aşılmamış ve alanlar doğrulanmış sayılmamıştır."
+                val configuredProviders = listOf("bulut", "groq", "gemini", "mistral")
+                    .filter { provider ->
+                        val preferenceKey = when (provider) {
+                            "bulut" -> "bulut"
+                            "groq" -> "groq"
+                            "gemini" -> "key"
+                            else -> "mistral"
+                        }
+                        prefs.getString(preferenceKey, "").orEmpty().isNotBlank()
                     }
-                    runOnUiThread {
-                        if (isFinishing) return@runOnUiThread
-                        statusView.text = "İşlem tamamlandı. Kaynak sayfa kanıt raporu hazır."
-                        readButton.isEnabled = true
-                        showReport(report)
+                if (configuredProviders.isEmpty()) {
+                    statusView.text = "AI sağlayıcısı ayarlanmamış. Metin cihazda kaldı; hiçbir yere gönderilmedi."
+                    readButton.isEnabled = true
+                    return@evaluateJavascript
+                }
+
+                val disclosure = buildString {
+                    appendLine("Bu işlem, sayfanın maskelenmiş metnini AI hizmetine gönderir. Kaynak bağlantısı yalnızca cihazdaki raporda saklanır; AI isteğine eklenmez.")
+                    appendLine()
+                    appendLine("Kullanılabilecek sağlayıcılar (sırayla):")
+                    appendLine(configuredProviders.joinToString(" → ") { Ai.displayName(it) })
+                    appendLine("Bir sağlayıcı hata verirse aynı içerik listedeki sonraki sağlayıcıya gönderilebilir.")
+                    appendLine()
+                    appendLine("Gönderilecek metin: " + safePageText.length + " karakter.")
+                    appendLine("E-posta, telefon, 11 haneli kimlik numarası ve IBAN biçimleri maskelenir; tüm kişisel verilerin bulunması garanti değildir.")
+                    appendLine("CV ve profil bilgisi bu isteğe eklenmez.")
+                    if (check.truncated) appendLine("UYARI: Sayfa metni 24.000 karakter sınırında kesildi; sonuçlar eksik olabilir.")
+                    appendLine()
+                    append("Onay vermiyorsan gönderim yapılmaz.")
+                }
+                statusView.text = "Sayfa metni cihazda hazır. AI'ya gönderim için ayrıca onay bekleniyor."
+                readButton.isEnabled = true
+                AlertDialog.Builder(this)
+                    .setTitle("Sayfa metni AI'ya gönderilsin mi?")
+                    .setMessage(disclosure)
+                    .setNegativeButton("Gönderme") { _, _ ->
+                        statusView.text = "Gönderim iptal edildi. Sayfa metni cihazdan gönderilmedi."
                     }
-                }.start()
+                    .setPositiveButton("Onayla ve alanları çıkar") { _, _ ->
+                        if (!pageDialog.isShowing || isFinishing) return@setPositiveButton
+                        readButton.isEnabled = false
+                        statusView.text = "Onaylandı. Kaynak alanları AI ile çıkarılıyor…"
+                        Thread {
+                            val report = runCatching {
+                                extractWithAi(safePageText, finalUrl, check.truncated)
+                            }.getOrElse {
+                                "Alan çıkarımı yapılamadı: " + (it.message ?: "AI veya JSON yanıtı hatası") +
+                                    "\n\nKaynak sayfa açılmış olabilir; giriş/CAPTCHA kontrolü aşılmamış ve alanlar doğrulanmış sayılmamıştır."
+                            }
+                            runOnUiThread {
+                                if (isFinishing || isDestroyed || !pageDialog.isShowing) return@runOnUiThread
+                                statusView.text = "İşlem tamamlandı. Kaynak sayfa kanıt raporu hazır."
+                                readButton.isEnabled = true
+                                showReport(report)
+                            }
+                        }.start()
+                    }
+                    .show()
             }
         }
 
-        val dialog = AlertDialog.Builder(this)
+        pageDialog = AlertDialog.Builder(this)
             .setTitle("Aries · ilan kaynağı")
             .setView(container)
             .setNegativeButton("Kapat", null)
             .create()
-        dialog.setOnDismissListener {
+        pageDialog.setOnDismissListener {
             webView.stopLoading()
             webView.loadUrl("about:blank")
             webView.destroy()
         }
-        dialog.show()
+        pageDialog.show()
         webView.loadUrl(hit.url)
     }
 
@@ -1633,6 +1732,7 @@ class CareerActivity : Activity() {
         for (i in 0 until stored.length()) {
             stored.optJSONObject(i)?.let { items.add(JSONObject(it.toString())) }
         }
+        val scannedAt = System.currentTimeMillis()
         hits.forEach { hit ->
             val classification = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url)
             if (classification.isJobListing || hit.url.isBlank()) return@forEach
@@ -1642,27 +1742,48 @@ class CareerActivity : Activity() {
                     hit
                 )
             }
+            val previous = items.getOrNull(index)
+            val previousSnippet = previous?.optString("snippet").orEmpty()
+            val chosenSnippet = if (previousSnippet.length > hit.snippet.length) previousSnippet else hit.snippet
+            val notice = CareerListingParser.noticeText(hit.title, chosenSnippet)
+            val publishedDate = CareerListingParser.publicationDate(notice)
+                ?: previous?.optString("publishedDate")?.takeIf { it.isNotBlank() }
+            val publishedAt = CareerListingParser.publicationTimestamp(notice)
+                ?: previous?.optLong("publishedAt", 0L)?.takeIf { it > 0L }
+            val firstSeenAt = if (previous == null) {
+                scannedAt
+            } else {
+                previous.optLong("firstSeenAt", previous.optLong("createdAt", 0L))
+            }
+
             val item = JSONObject()
                 .put("title", hit.title)
                 .put("url", hit.url)
-                .put("snippet", hit.snippet)
+                .put("snippet", chosenSnippet)
                 .put("contentType", classification.type.name)
                 .put("contentLabel", classification.label)
                 .put("contentReason", classification.reason)
                 .put("contentConfidence", classification.confidence)
-                .put("lastSeenAt", System.currentTimeMillis())
-            if (index < 0) items.add(item)
-            else if (hit.snippet.length > items[index].optString("snippet").length) {
-                item.put("createdAt", items[index].optLong("createdAt", 0L))
-                items[index] = item
-            } else {
-                items[index].put("lastSeenAt", System.currentTimeMillis())
-            }
+                .put("firstSeenAt", firstSeenAt)
+                .put("lastSeenAt", scannedAt)
+                .put("publishedAt", publishedAt ?: 0L)
+            if (publishedDate != null) item.put("publishedDate", publishedDate)
+            if (index < 0) items.add(item) else items[index] = item
         }
         val output = JSONArray()
-        items.sortedByDescending { it.optLong("lastSeenAt", 0L) }.take(100)
-            .forEach { output.put(it) }
+        items.sortedWith(
+            compareByDescending<JSONObject> { it.optLong("publishedAt", 0L) }
+                .thenByDescending { it.optLong("firstSeenAt", 0L) }
+        ).take(100).forEach { output.put(it) }
         prefs.edit().putString("career_news_items", output.toString()).apply()
+    }
+
+    private fun copyPublishedDate(item: JSONObject): String? {
+        return item.optString("sourcePublishedDate").takeIf { it.isNotBlank() }
+            ?: item.optString("publishedDate").takeIf { it.isNotBlank() }
+            ?: CareerListingParser.publicationDate(
+                CareerListingParser.noticeText(item.optString("title"), item.optString("snippet"))
+            )
     }
 
     private fun newsCandidates(): List<JSONObject> {
@@ -1692,30 +1813,64 @@ class CareerActivity : Activity() {
                 }
                 if (duplicate < 0) {
                     val copy = JSONObject(item.toString())
+                    val publicationText = CareerListingParser.noticeText(title, item.optString("snippet"))
+                    val publishedDate = item.optString("publishedDate").takeIf { it.isNotBlank() }
+                        ?: CareerListingParser.publicationDate(publicationText)
+                    val publishedAt = item.optLong("publishedAt", 0L).takeIf { it > 0L }
+                        ?: CareerListingParser.publicationTimestamp(publicationText)
+                        ?: publishedDate?.let { CareerListingParser.publicationTimestamp("Yayın tarihi: " + it) }
                     copy.put("contentType", classification.type.name)
                         .put("contentLabel", classification.label)
                         .put("contentReason", classification.reason)
                         .put("contentConfidence", classification.confidence)
+                        .put("publishedAt", publishedAt ?: 0L)
+                        .put("firstSeenAt", item.optLong("firstSeenAt", item.optLong("createdAt", 0L)))
+                    if (publishedDate != null) copy.put("sourcePublishedDate", publishedDate)
                     combined.add(copy)
-                } else if (item.optString("snippet").length > combined[duplicate].optString("snippet").length) {
-                    combined[duplicate] = JSONObject(item.toString())
+                } else {
+                    val existing = combined[duplicate]
+                    val replacement = if (item.optString("snippet").length > existing.optString("snippet").length) {
+                        JSONObject(item.toString())
+                    } else {
+                        JSONObject(existing.toString())
+                    }
+                    val sourceDate = existing.optString("sourcePublishedDate").takeIf { it.isNotBlank() }
+                        ?: copyPublishedDate(item)
+                    val sourceTimestamp = maxOf(
+                        existing.optLong("publishedAt", 0L),
+                        item.optLong("publishedAt", 0L),
+                        sourceDate?.let { CareerListingParser.publicationTimestamp("Yayın tarihi: " + it) } ?: 0L
+                    )
+                    val firstSeenValues = listOf(
+                        existing.optLong("firstSeenAt", 0L),
+                        item.optLong("firstSeenAt", 0L)
+                    ).filter { it > 0L }
+                    replacement.put("publishedAt", sourceTimestamp)
+                        .put("firstSeenAt", firstSeenValues.minOrNull() ?: 0L)
+                    if (sourceDate != null) replacement.put("sourcePublishedDate", sourceDate)
+                    combined[duplicate] = replacement
                 }
             }
         }
-        return combined.sortedByDescending {
-            maxOf(it.optLong("lastSeenAt", 0L), it.optLong("createdAt", 0L))
-        }
+        return combined.sortedWith(
+            compareByDescending<JSONObject> { it.optLong("publishedAt", 0L) }
+                .thenByDescending { it.optLong("firstSeenAt", 0L) }
+        )
     }
 
-    private fun searchNewsCategory(categoryId: Int) {
-        if (categoryId != 6 && categoryId != 9) return
-        newsFilter = if (categoryId == 6) 1 else 2
+    private fun searchNewsCategory(categoryId: Int, resetArchiveFilter: Boolean = false) {
+        if (categoryId != 6 && categoryId != 9 && categoryId != 10) return
+        when (categoryId) {
+            6 -> processFilter = 0
+            9 -> newsFilter = 1
+            10 -> if (resetArchiveFilter) newsFilter = 0
+        }
         if (currentPage != 5) renderPage(5)
         if (::newsSearchStatus.isInitialized) {
-            newsSearchStatus.text = if (categoryId == 6) {
-                "Kura, noter çekimi, asıl-yedek ve sınav/sonuç duyuruları taranıyor…"
-            } else {
-                "Ulusal Staj, İŞKUR Gençlik ve öğrenci programları taranıyor…"
+            newsSearchStatus.text = when (categoryId) {
+                6 -> "Kura, noter çekimi, asıl-yedek ve sınav/sonuç duyuruları taranıyor…"
+                9 -> "Ulusal Staj, İŞKUR Gençlik ve öğrenci programları taranıyor…"
+                else -> "Güncel kamu personel alım haberleri ve kurum duyuruları taranıyor…"
             }
         }
         if (::newsResultsContainer.isInitialized) {
@@ -1741,11 +1896,22 @@ class CareerActivity : Activity() {
             }
             runOnUiThread {
                 if (batch != null) {
+                    if (categoryId == 6) {
+                        // Kura/result candidates belong to the dedicated process timeline,
+                        // not the general news archive. Manual scanning creates no push alert.
+                        val newProcessEvents = CareerRecruitmentTracker.recordNew(prefs, batch.hits)
+                        newProcessEvents.forEach { CareerMonitorScheduler.scheduleProcessReminders(this, it) }
+                        if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                    }
                     cacheNewsCandidates(batch.hits)
                     newsSearchStatus.text = buildString {
                         append(batch.hits.size).append(" kaynak sonucu incelendi · ")
                         append(batch.successfulQueries).append("/").append(batch.totalQueries).append(" sorgu tamamlandı.")
-                        append(if (categoryId == 6) " Kura/sonuç kayıtları listeleniyor." else " Öğrenci/program kayıtları listeleniyor.")
+                        append(when (categoryId) {
+                            6 -> " Kura/sonuç kayıtları üstteki süreç panosuna ayrıldı."
+                            9 -> " Staj/öğrenci programları haber arşivinde listeleniyor."
+                            else -> " Güncel kamu alım haberleri ve kurum duyuruları listeleniyor."
+                        })
                         if (batch.failedQueries > 0) append(" Bazı kaynaklar geçici olarak yanıt vermedi.")
                     }
                 } else {
@@ -1759,12 +1925,12 @@ class CareerActivity : Activity() {
 
     private fun buildNewsPage() {
         val hero = panel()
-        hero.addView(label("ARIES  /  HABER & DUYURULAR", 10f, true, accentColor))
-        hero.addView(label("İlan olmayan gelişmeler tek yerde.", 21f, true, primaryText).apply {
+        hero.addView(label("ARIES  /  HABERLER VE KURUM DUYURULARI", 10f, true, accentColor))
+        hero.addView(label("Haber başka, alım süreci başka.", 21f, true, primaryText).apply {
             setPadding(0, dp(5), 0, dp(3))
         })
         hero.addView(label(
-            "Noter kurası, asıl-yedek listeleri, sınav ve mülakat sonuçları, başvuru süreci güncellemeleri, staj programları ve kurum haberleri burada görünür. Bunlar yeni iş ilanı olarak sayılmaz.",
+            "Kura, sınav, asıl-yedek ve sonuçlar üstteki ayrı süreç panosunda tutulur. Bu arşivde kurum haberleri, kamu alım gündemi, staj ve öğrenci programları görünür; iş ilanları İlanlar sekmesinde kalır.",
             12f, false, muted
         ))
         pageContent.addView(hero, params(-1, -2, 0, 2, 0, 12))
@@ -1777,10 +1943,13 @@ class CareerActivity : Activity() {
         )
         scanCard.addView(newsSearchStatus, params(-1, -2, 0, 5, 0, 6))
         scanCard.addView(primaryButton("Kura / noter / sınav / sonuçları tara") {
-            searchNewsCategory(6)
+            searchNewsCategory(CareerNewsNavigation.processQueryCategory())
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
         scanCard.addView(button("Staj / İŞKUR Gençlik / öğrenci programlarını tara") {
             searchNewsCategory(9)
+        }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 5))
+        scanCard.addView(button("Güncel kamu alım haberlerini tara") {
+            searchNewsCategory(10, resetArchiveFilter = true)
         }, params(-1, dp(Tok.MIN_TOUCH_DP), 0, 2, 0, 0))
         pageContent.addView(scanCard, params(-1, -2, 0, 2, 0, 12))
 
@@ -1792,8 +1961,12 @@ class CareerActivity : Activity() {
                 ).type == type
             }
         }
+        val processCount = CareerRecruitmentTracker.read(prefs).count { event ->
+            !(event.stage == "BAŞVURU / YENİ ALIM" &&
+                CareerContentClassifier.classify(event.title, event.snippet, event.url).isJobListing)
+        }
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        metrics.addView(statCard("SÜREÇ / KURA", (counts[CareerContentType.PROCESS_NOTICE] ?: 0).toString(), "Sonuç ve aşamalar"),
+        metrics.addView(statCard("SÜREÇ / KURA", processCount.toString(), "Sonuç ve aşamalar"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, dp(4), 0) })
         metrics.addView(statCard("PROGRAM", (counts[CareerContentType.STUDENT_PROGRAM] ?: 0).toString(), "Staj / öğrenci"),
             LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
@@ -1804,7 +1977,9 @@ class CareerActivity : Activity() {
         pageContent.addView(metrics, params(-1, -2, 0, 0, 0, 12))
 
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        actions.addView(primaryButton("Kaynakları tara") { renderPage(2) },
+        actions.addView(primaryButton("Kaynakları tara") {
+            searchNewsCategory(CareerNewsNavigation.queryForFilter(newsFilter))
+        },
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(0, 0, dp(4), 0) })
         actions.addView(button("Kaynak listesi") { showSources() },
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(4), 0, 0, 0) })
@@ -1819,8 +1994,8 @@ class CareerActivity : Activity() {
         pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 12))
         showProcessEvents(processEventsContainer)
 
-        pageContent.addView(label("Haber ve duyuru arşivi · içerik türüne göre filtrele", 17f, true, primaryText))
-        val filters = listOf("Tümü", "Kura / sonuç", "Staj / program", "Kurum duyurusu", "Haber", "Doğrula")
+        pageContent.addView(label("Kurum haberleri ve duyuruları · türüne göre filtrele", 17f, true, primaryText))
+        val filters = listOf("Tümü", "Staj / program", "Kurum duyurusu", "Haber", "Doğrula")
         val filterScroll = HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             overScrollMode = android.view.View.OVER_SCROLL_NEVER
@@ -1849,14 +2024,7 @@ class CareerActivity : Activity() {
             val type = CareerContentClassifier.classify(
                 item.optString("title"), item.optString("snippet"), item.optString("url")
             ).type
-            when (newsFilter) {
-                1 -> type == CareerContentType.PROCESS_NOTICE
-                2 -> type == CareerContentType.STUDENT_PROGRAM
-                3 -> type == CareerContentType.INSTITUTION_NOTICE
-                4 -> type == CareerContentType.NEWS
-                5 -> type == CareerContentType.REVIEW_REQUIRED
-                else -> true
-            }
+            CareerNewsNavigation.matchesArchiveFilter(newsFilter, type)
         }
         parent.addView(label(
             filtered.size.toString() + " kayıt gösteriliyor · " + allItems.size + " toplam duyuru/haber/süreç kaydı",
@@ -1872,7 +2040,9 @@ class CareerActivity : Activity() {
                 "Otomatik takip veya manuel tarama sırasında ilan olmayan kayıtlar burada birikir. İş ilanı olduğu kanıtlanamayan içerikler de yanlış yönlendirmemek için bu alanda tutulur.",
                 12f, false, muted
             ))
-            empty.addView(primaryButton("Kaynakları şimdi tara") { renderPage(2) },
+            empty.addView(primaryButton("Kaynakları şimdi tara") {
+                searchNewsCategory(CareerNewsNavigation.queryForFilter(newsFilter))
+            },
                 params(-1, dp(48), 0, 8, 0, 0))
             parent.addView(empty, params(-1, -2, 0, 2, 0, 8))
             return
@@ -1902,11 +2072,25 @@ class CareerActivity : Activity() {
                     " · Sınıflandırma güveni: " + classification.confidence,
                 10f, true, muted
             ).apply { setPadding(0, dp(6), 0, dp(2)) })
-            val seenAt = maxOf(item.optLong("lastSeenAt", 0L), item.optLong("createdAt", 0L))
-            if (seenAt > 0L) {
+            val publishedDate = item.optString("sourcePublishedDate").takeIf { it.isNotBlank() }
+                ?: item.optString("publishedDate").takeIf { it.isNotBlank() }
+            if (publishedDate != null) {
                 card.addView(label(
-                    "Aries'in son gördüğü: " +
-                        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(seenAt)),
+                    "Kaynağın yayın tarihi: $publishedDate",
+                    10f, true, muted
+                ))
+            } else {
+                card.addView(label(
+                    "Kaynak yayın tarihi doğrulanamadı · bu kayıt yeni duyuru olarak kabul edilmez",
+                    10f, true, warningColor
+                ))
+            }
+            val lastScanAt = item.optLong("lastSeenAt", 0L)
+            if (lastScanAt > 0L) {
+                card.addView(label(
+                    "Aries'in son tarama zamanı: " +
+                        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(lastScanAt)) +
+                        " · yayın tarihi değildir",
                     10f, false, muted
                 ))
             }
@@ -1920,17 +2104,41 @@ class CareerActivity : Activity() {
 
     private fun showProcessEvents(parent: LinearLayout) {
         parent.removeAllViews()
-        val events = CareerRecruitmentTracker.read(prefs).filterNot { event ->
+        val allEvents = CareerRecruitmentTracker.read(prefs).filterNot { event ->
             event.stage == "BAŞVURU / YENİ ALIM" &&
                 CareerContentClassifier.classify(event.title, event.snippet, event.url).isJobListing
         }
+        val upcomingEvents = allEvents.filterNot { CareerRecruitmentTracker.isHistoricalEvent(it) }
+        val historicalEvents = allEvents.filter { CareerRecruitmentTracker.isHistoricalEvent(it) }
+        val events = if (processFilter == 1) historicalEvents else upcomingEvents
+
+        val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        filterRow.addView(chipButton("Yaklaşan (" + upcomingEvents.size + ")", processFilter == 0) {
+            processFilter = 0
+            processPage = 0
+            showProcessEvents(parent)
+        }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
+            setMargins(0, 0, dp(4), 0)
+        })
+        filterRow.addView(chipButton("Geçmiş / doğrulanmamış (" + historicalEvents.size + ")", processFilter == 1) {
+            processFilter = 1
+            processPage = 0
+            showProcessEvents(parent)
+        }, LinearLayout.LayoutParams(0, dp(Tok.MIN_TOUCH_DP), 1f).apply {
+            setMargins(dp(4), 0, 0, 0)
+        })
+        parent.addView(filterRow, params(-1, dp(52), 0, 2, 0, 8))
+
         if (events.isEmpty()) {
             val emptyCard = panel()
-            emptyCard.addView(label("Süreç güncellemesi bekleniyor", 14f, true, primaryText))
-            emptyCard.addView(label(
-                "Yeni evrak, kura, asıl/yedek, sınav ve sonuç duyuruları günlük taramalarda burada toplanacak.",
-                12f, false, muted
-            ))
+            val title = if (processFilter == 1) "Geçmiş kura / sonuç kaydı yok" else "Yaklaşan süreç güncellemesi yok"
+            val description = if (processFilter == 1) {
+                "Yayımlandığı veya tarihi geçtiği belirlenen kura, sınav ve sonuç kayıtları burada arşivlenir."
+            } else {
+                "Yalnız gelecekteki tarih veya henüz tamamlanmamış süreç işaretleri bu listede görünür. Yayın tarihi yeni diye varsayılmaz."
+            }
+            emptyCard.addView(label(title, 14f, true, primaryText))
+            emptyCard.addView(label(description, 12f, false, muted))
             parent.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
             return
         }
@@ -1943,8 +2151,20 @@ class CareerActivity : Activity() {
         ))
         val start = processPage * pageSize
         events.drop(start).take(pageSize).forEach { event ->
+            val historical = CareerRecruitmentTracker.isHistoricalEvent(event)
+            val publishedResult = CareerRecruitmentTracker.isCompletedResultNotice(event.title, event.snippet)
             val card = panel()
-            card.addView(label("SÜREÇ AŞAMASI", 9f, true, muted))
+            card.addView(label(
+                when {
+                    CareerRecruitmentTracker.isCompletedResultNotice(event.title, event.snippet) ->
+                        "YAYIMLANMIŞ SONUÇ · GEÇMİŞ ARŞİV"
+                    event.eventAt != null && event.eventAt < System.currentTimeMillis() ->
+                        "TARİHİ GEÇMİŞ · ARŞİV"
+                    historical -> "TARİHİ DOĞRULANAMADI · ARŞİV"
+                    else -> "TAKİP EDİLEN SÜREÇ"
+                },
+                9f, true, if (historical) dangerColor else muted
+            ))
             card.addView(label(event.stage, 12f, true, accentColor).apply {
                 setPadding(dp(10), dp(7), dp(10), dp(7))
                 background = rounded(Color.parseColor(Pal.ACCENT_SOFT), Color.rgb(84, 70, 140))
@@ -1954,7 +2174,7 @@ class CareerActivity : Activity() {
             val detected = if (event.detectedAt > 0L) {
                 SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR")).format(Date(event.detectedAt))
             } else "Tespit zamanı bilinmiyor"
-            card.addView(label("Aries'in tespit zamanı: " + detected, 10f, false, muted))
+            card.addView(label("Aries'in ilk tespit zamanı: " + detected + " · bu, duyurunun yayın tarihi değildir", 10f, false, muted))
             if (event.eventAt != null) {
                 val date = SimpleDateFormat(
                     if (event.hasExplicitTime) "dd.MM.yyyy HH:mm" else "dd.MM.yyyy",
@@ -1968,9 +2188,14 @@ class CareerActivity : Activity() {
                         else " · Eski duyuru; yeni tarih var mı kontrol et"),
                     11f, true, if (isUpcoming) warningColor else dangerColor
                 ))
+            } else if (publishedResult) {
+                card.addView(label(
+                    "SONUÇ YAYIMLANMIŞ · GEÇMİŞ KAYIT · Kaynakta yeni kura/sonuç tarihi doğrulanmadı.",
+                    11f, true, dangerColor
+                ))
             } else {
                 card.addView(label(
-                    "Tarih/saat metinden güvenle çıkarılamadı. Kurum duyurusunu açıp takvimi kontrol et.",
+                    "Tarih/saat metinden güvenle çıkarılamadı. Yaklaşan tarih olduğu varsayılmaz; kurum duyurusunu kontrol et.",
                     11f, true, warningColor
                 ))
             }
@@ -1979,9 +2204,11 @@ class CareerActivity : Activity() {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
                     .onFailure { toast("Kaynak açılamadı.") }
             }, LinearLayout.LayoutParams(0, dp(48), 1f))
-            actions.addView(button("Başvurulara kaydet") {
-                saveJob(Net.Hit(event.title, event.url, event.snippet))
-            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            if (!historical) {
+                actions.addView(button("Başvurulara kaydet") {
+                    saveJob(Net.Hit(event.title, event.url, event.snippet))
+                }, LinearLayout.LayoutParams(0, dp(48), 1f))
+            }
             card.addView(actions)
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
