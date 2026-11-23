@@ -30,8 +30,8 @@ android {
         applicationId = "com.cem.jarvis"
         minSdk = 24
         targetSdk = 34
-        versionCode = 20
-        versionName = "1.20"
+        versionCode = 21
+        versionName = "1.21"
         buildConfigField("String", "TMDB_TOKEN", "\"$tmdbToken\"")
     }
     compileOptions {
