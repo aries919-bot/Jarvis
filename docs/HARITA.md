@@ -18,7 +18,7 @@
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
 | A2 Material 3 Expressive tüm uygulama | PR AÇIK | PR #25; push CI 45169532073 SUCCESS, PR CI 45169541324 FAILED (:app:checkDebugAarMetadata, path null); PR merge-test hatası araştırılmalı, bağımsız hakem gerekli. |
-| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26 `is/b1-ai-memory-foundation` → `is/a2-expressive-theme`, HEAD `79b30b6`, mergeable, taslak. PR CI 45174616897 + push CI 45174607364 SUCCESS; unit tests + debug APK geçti. Hafıza yerel/opt-in bulut paylaşım; Groq/Mistral/Gemini SSE ve kademeli JSON yanıt eklendi. Worker SSE doğrulanmadı; canlı provider key/telefon testi ve bağımsız insan hakem onayı bekliyor. |
+| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26 `is/b1-ai-memory-foundation` → `is/a2-expressive-theme`, son değişiklik HEAD `dbab9d9`. Önceki HEAD `79b30b6` PR/push CI yeşildi. Ek düzeltme: yarım kalan OpenAI SSE `[DONE]` yoksa hata, Gemini `finishReason` yoksa hata; kesik akış sessizce tamamlanmış sayılmıyor. Kısmi yanıt uyarısının satır sonu düzeltildi. Son HEAD PR/push CI 45175625717/45175618746/45175614049 sürüyor. Bağımsız insan incelemesi, canlı sağlayıcı anahtarı ve telefon testi bekliyor. |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
@@ -45,4 +45,4 @@
 8. B1 PR #26 A2 üzerine taşındı; hafıza kontrolleri Ayarlar'da, notlar yerel, bulut paylaşımı varsayılan kapalı, silme onaylı. HEAD 3a832bb CI yeşil.
 9. B1 streaming: Groq/Mistral/Gemini SSE, kademeli JSON reply, saf Kotlin parser, SSE metadata ayrıştırma ve hata sınıflandırması eklendi. HEAD 024681a CI test+APK yeşil.
 10. B1 HEAD 79b30b6: birim testleri PR/push SUCCESS; Android debug APK adımı iki koşuda da sürüyor. Akış gerçek sağlayıcı anahtarlarıyla ve telefonda doğrulanmadı.
-**SONRAKİ ADIM:** PR #26 için bağımsız insan incelemesi al; A2 PR #25'in başarısız PR kontrolünü ayrıca düzelt. Ardından ücretsiz sağlayıcı anahtarlarıyla canlı SSE, sesli/yazılı ve cihaz testlerini yap.
+**SONRAKİ ADIM:** B1 HEAD `dbab9d9` PR/push CI sonuçlarını denetle; yeşilse bağımsız insan incelemesi için PR #26'yı hazırla. Ardından canlı sağlayıcı ve telefon doğrulamasına geç.
