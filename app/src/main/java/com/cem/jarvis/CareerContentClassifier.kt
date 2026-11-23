@@ -112,6 +112,18 @@ object CareerContentClassifier {
             )
         }
 
+        // News publishers are useful discovery sources, but even a story that repeats
+        // application language is not the employer's original vacancy or application page.
+        // Keep it in News & Announcements and let searches find the primary source separately.
+        if (CareerSourceCatalog.isNewsDiscoverySource(url)) {
+            return CareerContentClassification(
+                CareerContentType.NEWS,
+                "Kamu personel haberi · resmî ilan değil",
+                "Bu bağlantı bir haber/yayın kaynağıdır. Haberde başvuru başladığı yazsa bile şartlar, son tarih ve başvuru adresi doğrudan kurumun veya işverenin kendi sayfasından doğrulanmalıdır.",
+                "Yüksek"
+            )
+        }
+
         // Generic application-opening language alone is not proof of a job vacancy:
         // event, course, grant and student programme registrations use the same wording.
         val explicitJobLanguage = vacancyPattern.containsMatchIn(text) ||
