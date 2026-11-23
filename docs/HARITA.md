@@ -27,7 +27,7 @@
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt. PR #26 CI yeşil; bağımsız inceleme, canlı API ve telefon testi bekliyor. |
 | C1 Sunucu ilan toplayıcı + tekilleştirme JSON | CLINE BEKLİYOR | sahip: cline. K1 onayından sonra başla; yalnız doğrulanmış açık kaynakları kullan. |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt. PR #22'de kategori grupları ve Haber/Süreç/Öğrenci ayrımı var; bağımsız inceleme ve telefon testi bekliyor. |
-| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt. PR #29 taslak, güncel HEAD `350f38bc9bd1939a5481689c32889c9b326f1d63`; alan kanıtı/provenansı, manuel HTTPS WebView ve kişisel veri koruma inceleniyor. Full App QA #45223612544 + APK #45223612431 çalışıyor. |
+| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt. PR #29 taslak, güncel HEAD `350f38bc9bd1939a5481689c32889c9b326f1d63`; alan kanıtı/provenansı, manuel HTTPS WebView ve kişisel veri koruma inceleniyor. Android APK #45223612431 SUCCESS (birim test + debug APK); Full App QA #45223612544: statik/lint/build SUCCESS, API29/33/34/35 emulator işleri sürüyor. |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt. Kişisel profil telefonda kalır. |
 | C5 Gelecek alım takvimi ve bildirim | YAPILMADI | sahip: chatgpt. Resmî tarih ile tahmin ayrı. |
 | D1 Film & Dizi | YAPILMADI | sahip: chatgpt. Yalnız yasal/izinli akış. |
@@ -72,5 +72,5 @@
 7. A2 PR #28 açık/koyu mod, yerel tercih, dashboard özeti ve skeleton; PR/push CI SUCCESS.
 8. Cline sahiplik kuralı eklendi: K1/C1/E1-Veri Cline; A1/A2/B1 ve kalan uygulama işleri ChatGPT.
 9. C2 PR #22 kategori filtreleri + Haber/Süreç/Program ayrımı; Full App QA/API29-35 ve APK CI SUCCESS, PR açık.
-10. C3 PR #29 HEAD `350f38b`: schema/kanıt, manuel HTTPS WebView, PII maskeleme ve aday sonuç listesi engeli; Full App QA + APK CI sürüyor.
+10. C3 PR #29 HEAD `350f38b`: Android APK/birim test ve Full QA statik-lint-build SUCCESS; API29/33/34/35 emülatör denetimi sürüyor.
 **SONRAKİ ADIM:** C3 PR #29'u bağımsız incele; AI'ya kaynak metni gönderilmeden önce açık onay, URL yönlendirme güvenliği ve eksik regresyon testlerini denetle; CI tamamlanınca sonucu kaydet. Cline `DEVAM: K1` diyene kadar Cline'ın sunucu/veri dosyalarına dokunulmaz.
