@@ -33,9 +33,20 @@ class CareerActivity : Activity() {
     private lateinit var processEventsContainer: LinearLayout
     private lateinit var finishedApplicationsContainer: LinearLayout
     private var processPage = 0
+    private var processFilter = 0 // 0: upcoming/check; 1: historical result archive
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
-    private val filters = listOf("Tüm iş ilanları", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Haber: kura / noter / sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Haber: öğrenci / staj programları")
+    private val listingCategoryIds = listOf(0, 1, 2, 3, 4, 5, 7, 8)
+    private val filters = listOf(
+        "Tüm iş ilanları",
+        "Kamu · KPSS P94",
+        "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları",
+        "Özel sektör · teknik işler",
+        "Büyük şirketler · ASELSAN / TCDD vb.",
+        "Ön lisans mezuniyetinden sonra",
+        "Günlük özel sektör · üretim/işçi",
+        "Belediye · yerel yönetim alımları"
+    )
     // Kariyer ekranı da ana uygulama ve Film & Dizi ile aynı tasarım sistemini kullanır.
     private val bgColor = Color.parseColor(Pal.BG)
     private val surfaceColor = Color.parseColor(Pal.CARD)
@@ -324,26 +335,35 @@ class CareerActivity : Activity() {
         category.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filters).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        category.setSelection(prefs.getInt("career_filter", 0).coerceIn(0, filters.lastIndex))
+        val savedListingFilter = prefs.getInt("career_filter", 0)
+        // Older builds stored Haber-only kura/staj filters in the listings picker.
+        // Drop those legacy selections instead of silently routing the user to another tab.
+        val restoredListingFilter = when (savedListingFilter) {
+            in 0..5 -> savedListingFilter
+            6, 9 -> 0
+            7 -> 6
+            8 -> 7
+            else -> 0
+        }
+        category.setSelection(restoredListingFilter.coerceIn(0, filters.lastIndex))
         category.background = rounded(surfaceRaised, borderColor)
         category.setPadding(dp(10), dp(2), dp(10), dp(2))
         category.contentDescription = "İlan kategorisini seç"
         filtersCard.addView(category, params(-1, dp(48), 0, 2, 0, 8))
         filtersCard.addView(label("HIZLI ALIM KATEGORİLERİ", 10f, true, muted))
         filtersCard.addView(quickChipRow(
-            listOf("Kamu · KPSS", "KPSS'siz kamu", "Kura / sonuçlar", "Büyük kurumlar", "Özel sektör", "Belediye", "Staj / program")
+            listOf("Kamu · KPSS", "KPSS'siz kamu", "Büyük kurumlar", "Özel sektör", "Belediye", "Günlük özel sektör")
         ) { selected ->
             val target = when (selected) {
                 "Kamu · KPSS" -> 1
                 "KPSS'siz kamu" -> 2
-                "Kura / sonuçlar" -> 6
                 "Büyük kurumlar" -> 4
                 "Özel sektör" -> 3
                 "Belediye" -> 8
-                "Staj / program" -> 9
+                "Günlük özel sektör" -> 7
                 else -> 0
             }
-            category.setSelection(target)
+            category.setSelection(CareerListingCategoryMap.positionForQueryCategory(target))
             searchJobs()
         }, params(-1, dp(50), 0, 2, 0, 8))
         search = primaryButton("⌕  İlanları şimdi ara") { searchJobs() }
@@ -729,11 +749,7 @@ class CareerActivity : Activity() {
             ?.hideSoftInputFromWindow(if (::role.isInitialized) role.windowToken else window.decorView.windowToken, 0)
         val r = role.text.toString().trim()
         val p = place.text.toString().trim()
-        val selectedCategory = category.selectedItemPosition
-        if (selectedCategory == 6 || selectedCategory == 9) {
-            searchNewsCategory(selectedCategory)
-            return
-        }
+        val selectedCategory = CareerListingCategoryMap.queryCategoryForPosition(category.selectedItemPosition)
         if (r.isBlank()) { toast("Aramak istediğin pozisyonu yaz."); return }
         saveCv(showToast = false)
         search.isEnabled = false
@@ -895,13 +911,13 @@ class CareerActivity : Activity() {
             emptyCard.addView(label("Bu, ilan olmadığı anlamına gelmez. Bazı arama servisleri güvenlik kontrolü veya geçici istek sınırı nedeniyle sonuçları göstermemiş olabilir.", 12f, false, muted))
             if (searchDiagnostic.isNotBlank()) emptyCard.addView(label(searchDiagnostic, 11f, false, muted))
             results.addView(emptyCard, params(-1, -2, 0, 2, 0, 8))
-            results.addView(primaryButton("Daha geniş arama yap") {
-                role.setText("Elektrik teknisyeni, pano montajı, bakım, üretim, işçi, personel")
+            results.addView(primaryButton("Türkiye genelinde daha geniş ara") {
+                role.setText("Elektrik teknisyeni, pano montajı, bakım-onarım, üretim, depo, operatör, işçi, personel")
+                place.setText("Türkiye geneli")
                 category.setSelection(0)
                 searchJobs()
             }, params(-1, dp(48), 0, 6, 0, 6))
-            results.addView(button("Resmî ve kurumsal kaynakları aç") { showSources() }, params(-1, dp(48), 0, 2, 0, 6))
-            results.addView(button("Günlük tam kaynak taramasına geç") { renderPage(2) }, params(-1, dp(48), 0, 2, 0, 6))
+            results.addView(button("Resmî ve kurumsal kaynakları aç") { showSources() }, params(-1, dp(48), 0, 2, 0, 0))
             return
         }
 
