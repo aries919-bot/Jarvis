@@ -19,5 +19,14 @@ internal object CareerListingCategoryMap {
     fun positionForQueryCategory(category: Int): Int =
         queryCategoryIds.indexOf(category).takeIf { it >= 0 } ?: 0
 
+    /** Migrate positions stored by older builds that mixed news-only categories into listings. */
+    fun restoreStoredPosition(oldPosition: Int): Int = when (oldPosition) {
+        in 0..5 -> oldPosition
+        6, 9 -> 0
+        7 -> 6
+        8 -> 7
+        else -> 0
+    }
+
     fun queryCategories(): List<Int> = queryCategoryIds.toList()
 }
