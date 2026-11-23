@@ -607,6 +607,16 @@ object CareerListingParser {
     fun publicationDate(text: String): String? =
         publicationDatePattern.find(text)?.groupValues?.getOrNull(1)?.let(::parseDate)
 
+    /** Returns a timestamp only for an explicitly labelled source publication date. */
+    fun publicationTimestamp(text: String): Long? {
+        val published = publicationDate(text) ?: return null
+        return runCatching {
+            java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                .apply { isLenient = false }
+                .parse(published)?.time
+        }.getOrNull()
+    }
+
     /**
      * Returns a closing time only when it appears immediately after an explicitly labelled
      * application deadline. Unrelated exam/event times elsewhere in the snippet are ignored.
@@ -1412,6 +1422,38 @@ object CareerRecruitmentTracker {
     fun detectStage(title: String, snippet: String): String? =
         detectStages(title, snippet).firstOrNull()
 
+    /** A result that has already been published belongs to history, not the upcoming queue. */
+    fun isCompletedResultNotice(title: String, snippet: String): Boolean {
+        val text = normalize(title + " " + snippet)
+            .replace(Regex("""\\s+"""), " ")
+            .trim()
+        val resultContext = listOf(
+            "kura sonuc", "sinav sonuc", "mulakat sonuc",
+            "nihai sonuc", "yerlestirme sonuc", "asil ve yedek",
+            "asil aday listesi", "yedek aday listesi"
+        ).any(text::contains)
+        val publishedWording = listOf(
+            "aciklandi", "aciklanmistir", "yayinlandi", "yayimlandi",
+            "duyuruldu", "duyurulmustur", "belli oldu", "sonuclandi",
+            "ilan edildi"
+        ).any(text::contains)
+        return resultContext && publishedWording
+    }
+
+    fun isHistoricalEvent(
+        event: CareerProcessEvent,
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean {
+        val eventDateHasPassed = event.eventAt?.let { it < nowMillis } == true
+        return eventDateHasPassed || isCompletedResultNotice(event.title, event.snippet)
+    }
+
+    /** Historical records are stored for reference but must never trigger a "new process" alert. */
+    fun shouldNotifyAsNew(
+        event: CareerProcessEvent,
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean = !isHistoricalEvent(event, nowMillis)
+
     fun parseEventTime(title: String, snippet: String, stage: String? = null): Pair<Long, Boolean>? {
         val text = title + " " + snippet
         val isResultStage =
@@ -1494,8 +1536,13 @@ object CareerRecruitmentTracker {
             )
         }.sortedWith(
             compareBy<CareerProcessEvent> { event ->
-                event.eventAt?.takeIf { it >= System.currentTimeMillis() } ?: Long.MAX_VALUE
-            }.thenByDescending { it.detectedAt }
+                when {
+                    isHistoricalEvent(event) -> 2
+                    event.eventAt != null -> 0
+                    else -> 1
+                }
+            }.thenBy { event -> event.eventAt ?: Long.MAX_VALUE }
+                .thenByDescending { event -> event.detectedAt }
         )
     }
 
@@ -1534,7 +1581,9 @@ object CareerRecruitmentTracker {
                     eventAt = parsed?.first,
                     hasExplicitTime = parsed?.second ?: false
                 )
-                added += event
+                // Persist old results for the archive, but only future/unresolved events
+                // can trigger a fresh-process notification.
+                if (shouldNotifyAsNew(event, now)) added += event
                 events.add(0, event)
             }
         }
