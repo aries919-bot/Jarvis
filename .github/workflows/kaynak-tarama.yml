@@ -1,0 +1,64 @@
+name: Kaynak Tarama ve Kayit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 5,17 * * *"
+  push:
+    branches: ["cline/K1"]
+    paths:
+      - "scripts/kaynak_tara.py"
+      - "career/adaylar.txt"
+      - ".github/workflows/kaynak-tarama.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kaynak-tarama
+  cancel-in-progress: false
+
+jobs:
+  tara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Onceki kaydi durum dalindan al
+        run: |
+          git fetch origin durum || true
+          if git rev-parse --verify origin/durum >/dev/null 2>&1; then
+            git show origin/durum:career/kaynak_kayit.json > career/kaynak_kayit.json || rm -f career/kaynak_kayit.json
+          fi
+
+      - name: Toplu tarama
+        run: python3 scripts/kaynak_tara.py
+
+      - name: Sonucu durum dalina yaz
+        run: |
+          mkdir -p /tmp/durum
+          cp career/calisan_kaynaklar.json career/kaynak_kayit.json /tmp/durum/
+          git config user.name "kaynak-bot"
+          git config user.email "kaynak-bot@users.noreply.github.com"
+          if git rev-parse --verify origin/durum >/dev/null 2>&1; then
+            git checkout -f -B durum origin/durum
+          else
+            git checkout --orphan durum
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+          mkdir -p career
+          cp /tmp/durum/*.json career/
+          git add career/calisan_kaynaklar.json career/kaynak_kayit.json
+          if git diff --cached --quiet; then
+            echo "degisiklik yok"
+          else
+            git commit -m "kaynak kaydi $(date -u +%Y-%m-%dT%H:%MZ)"
+          fi
+          git push origin durum
