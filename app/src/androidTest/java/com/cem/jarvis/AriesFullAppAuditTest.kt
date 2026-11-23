@@ -205,14 +205,14 @@ class AriesFullAppAuditTest {
 
         if (clickDescription("Ekle")) {
             SystemClock.sleep(250)
-            val assistantOpened = clickText("Hatırlatmalar ve görevler")
+            val assistantOpened = clickText("Hatırlatıcılar ve görevler")
             if (assistantOpened) {
                 SystemClock.sleep(500)
                 captureAndAudit("11-assistant-tasks-reminders")
                 device.pressBack()
                 SystemClock.sleep(400)
             } else {
-                recordFinding("error", "navigation", "home", "Quick action 'Hatırlatmalar ve görevler' was not found.")
+                recordFinding("error", "navigation", "home", "Quick action 'Hatırlatıcılar ve görevler' was not found.")
                 device.pressBack()
             }
         } else {

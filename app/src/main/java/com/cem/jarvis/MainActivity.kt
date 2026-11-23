@@ -361,7 +361,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         chatScroll.visibility = View.GONE
         chatScroll.alpha = 0f
         homeMid.addView(chatScroll, FrameLayout.LayoutParams(-1, -1))
-        holo = HoloView(this)
+        holo = HoloView(this).apply {
+            contentDescription = "Aries asistan küresi; aşağı çekerek sohbeti aç"
+        }
         homeMid.addView(holo, FrameLayout.LayoutParams(dp(ORB_DP), dp(ORB_DP), Gravity.CENTER))
         homeMid.addOnLayoutChangeListener { _, _, tp, _, bt, _, otp, _, obt ->
             if (chatOpen && (bt - tp) != (obt - otp)) holo.post {
@@ -400,6 +402,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         panel.gravity = Gravity.CENTER_HORIZONTAL
         val pc = android.graphics.Color.parseColor(Pal.CARD2); val pd = android.graphics.Color.rgb((android.graphics.Color.red(pc) * 0.6f).toInt(), (android.graphics.Color.green(pc) * 0.6f).toInt(), (android.graphics.Color.blue(pc) * 0.6f).toInt()); val pbg = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(pc, pd)); pbg.cornerRadius = dp(20).toFloat(); pbg.setStroke(dp(1), android.graphics.Color.parseColor(Pal.LINE))
         panel.background = pbg
+        panel.contentDescription = "Yaklaşan hatırlatmalar ve saat bilgisi"
         panel.setPadding(dp(24), dp(14), dp(24), dp(14)); panel.elevation = dp(10).toFloat()
         val pt1 = android.widget.TextView(this); pt1.textSize = 20f; pt1.setTextColor(android.graphics.Color.parseColor(Pal.WHITE)); pt1.gravity = Gravity.CENTER_HORIZONTAL; pt1.maxLines = 2
         val pt2 = android.widget.TextView(this); pt2.textSize = 12f; pt2.setTextColor(android.graphics.Color.parseColor(Pal.MUTED)); pt2.gravity = Gravity.CENTER_HORIZONTAL

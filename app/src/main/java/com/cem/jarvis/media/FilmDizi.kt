@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -294,19 +296,32 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
         }
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Raised).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            TextField(q, { q = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Film veya dizi ara") },
+            TextField(
+                q,
+                { q = it },
+                Modifier.weight(1f).semantics { contentDescription = "Film veya dizi ara" },
+                singleLine = true,
+                placeholder = { Text("Film veya dizi ara") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { vm.search(q) }),
                 colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                     focusedTextColor = Color.White, unfocusedTextColor = Color.White))
-            Button(onClick = { vm.search(q) }) { Text("Ara") }
+            Button(onClick = { vm.search(q) }, modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Film ve dizi ara" }) { Text("Ara") }
         }
     }
 }
 
 @Composable
 fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).clickable(onClick = onClick).padding(vertical = 10.dp)) {
+    val mediaType = if (media.media_type == "movie" || media.title != null) "Film" else "TV dizisi"
+    val accessibilityLabel = "$rank. sırada, ${media.label}, ${media.year}, $mediaType, puan ${"%.1f".format(media.vote_average ?: 0.0)}"
+    Row(
+        Modifier.fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp)
+            .clickable(onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = accessibilityLabel }
+            .padding(vertical = 10.dp)
+    ) {
         Box {
             AsyncImage(webImg(media.poster_path), media.label, Modifier.size(58.dp, 82.dp).clip(RoundedCornerShape(10.dp)))
             Text("$rank", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp,

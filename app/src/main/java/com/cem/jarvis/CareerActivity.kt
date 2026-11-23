@@ -2641,7 +2641,7 @@ class CareerActivity : Activity() {
             })
         }
         horizontal.addView(row)
-        parent.addView(horizontal, params(-1, dp(48), 0, 0, 0, 8))
+        parent.addView(horizontal, params(-1, dp(56), 0, 0, 0, 8))
 
         val items = when (savedFilter) {
             1 -> allItems.filter {
