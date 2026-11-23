@@ -68,4 +68,17 @@ class CareerNewsNavigationTest {
         assertEquals(8, CareerListingCategoryMap.queryCategoryForPosition(7))
         assertEquals(0, CareerListingCategoryMap.queryCategoryForPosition(99))
     }
+
+    @Test
+    fun migratedNewPositionsAreNotRemappedAgainOnNextLaunch() {
+        assertEquals(6, CareerListingCategoryMap.initialPositionForStoredFilter(6, true))
+        assertEquals(7, CareerListingCategoryMap.initialPositionForStoredFilter(7, true))
+    }
+
+    @Test
+    fun legacyPositionsAreMappedOnlyBeforeMigrationFlagIsSet() {
+        assertEquals(0, CareerListingCategoryMap.initialPositionForStoredFilter(6, false))
+        assertEquals(6, CareerListingCategoryMap.initialPositionForStoredFilter(7, false))
+        assertEquals(7, CareerListingCategoryMap.initialPositionForStoredFilter(8, false))
+    }
 }
