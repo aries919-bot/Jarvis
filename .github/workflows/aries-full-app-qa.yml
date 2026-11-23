@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ kariyer-modulu ]
   push:
-    branches: [ kariyer-modulu, is/full-app-qa-lab ]
+    branches: [ kariyer-modulu ]
 
 permissions:
   contents: read
