@@ -111,4 +111,41 @@ class CareerContentClassifierTest {
         )
         assertEquals(CareerContentType.REVIEW_REQUIRED, ambiguous.type)
     }
+
+    @Test
+    fun routesUnconfirmedComingSoonRecruitmentHeadlinesToNews() {
+        val result = CareerContentClassifier.classify(
+            "Jandarmaya 10 Bin Personel Alımı Geliyor",
+            "Başvuru tarihi bekleniyor; henüz resmî başvuru ilanı yayımlanmadı.",
+            "https://memur365.com/kamu-personel-alimi/jandarma-10-bin-personel"
+        )
+        assertEquals(CareerContentType.NEWS, result.type)
+        assertFalse(result.isJobListing)
+        assertTrue(result.label.contains("başvuru doğrulanmadı"))
+    }
+
+    @Test
+    fun recognizesAnActualJandarmaApplicationNoticeAsAJobCandidate() {
+        val result = CareerContentClassifier.classify(
+            "9.000 Uzman Erbaş Alımı İçin Başvurular Başladı",
+            "Son başvuru tarihi: 07.12.2026",
+            "https://personeltemin.jandarma.gov.tr/"
+        )
+        assertEquals(CareerContentType.JOB_LISTING, result.type)
+        assertTrue(result.isJobListing)
+    }
+
+
+    @Test
+    fun keepsEvenApparentlyOpenMemur365StoriesInNewsUntilPrimarySourceIsFound() {
+        val result = CareerContentClassifier.classify(
+            "Uzman erbaş alımı başvuruları başladı",
+            "Başvurular başladı. Son başvuru tarihi: 07.12.2026. Ayrıntılar haberimizde.",
+            "https://memur365.com/kamu-personel-alimi/uzman-erbas"
+        )
+        assertEquals(CareerContentType.NEWS, result.type)
+        assertFalse(result.isJobListing)
+        assertTrue(result.reason.contains("doğrudan kurumun"))
+    }
+
 }
