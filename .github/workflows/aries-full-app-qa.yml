@@ -109,6 +109,8 @@ jobs:
             PULL_EXIT=$?
             adb logcat -d -v threadtime > qa-output/logcat.txt
             adb shell dumpsys activity activities > qa-output/activities.txt
+            adb shell dumpsys meminfo com.cem.jarvis > qa-output/meminfo.txt
+            adb shell dumpsys gfxinfo com.cem.jarvis > qa-output/gfxinfo.txt
             printf '{"instrumentationExit":%s,"evidencePullExit":%s,"apiLevel":%s}\n' "$TEST_EXIT" "$PULL_EXIT" "${{ matrix.api-level }}" > qa-output/emulator-status.json
             python3 scripts/qa/build_qa_report.py --repo-root . --qa-dir qa-output --out-dir qa-output/report --api-level "${{ matrix.api-level }}"
             REPORT_EXIT=$?
