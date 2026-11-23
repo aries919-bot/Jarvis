@@ -18,7 +18,7 @@
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
 | A2 Material 3 Expressive tüm uygulama | PR AÇIK | PR #25; push CI 45169532073 SUCCESS, PR CI 45169541324 FAILED (:app:checkDebugAarMetadata, path null); PR merge-test hatası araştırılmalı, bağımsız hakem gerekli. |
-| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26 (is/b1-ai-memory-foundation) açık/taslak: cihaz içi hafıza paylaşımı varsayılan kapalı, güvenli filtre ve JVM testleri; CI 45170464639/45170434646 sürüyor. Streaming sonraki alt adım. |
+| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26 açık/taslak, base is/a2-expressive-theme; opt-in hafıza paylaşımı + filtre + 5 JVM testi. Eski CI denemeleri main'deki eksik Compose/WebView bağımlılıkları nedeniyle FAILED; A2 tabanlı yeni CI 45170748530/45170866204 çalışıyor. Streaming sonraki alt adım. |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
@@ -46,6 +46,6 @@
 9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
 10. K1'de indeks öz-bağlantısı/sonuç yanlış pozitifleri düzeltildi, TUSAŞ/ROKETSAN programları ayrıldı, TEI HTTP 403 manual_only, yönlendirme aynı HTTPS hostla sınırlandı, 20 kaynağın browserCheck durumu test edildi. Sonraki: K1 için bağımsız insan hakem onayı.
 11. A1 iki ekran tasarımı Cem tarafından onaylandı. A2 PR #25 açıldı; push CI SUCCESS, PR merge-test FAILED (:app:checkDebugAarMetadata, path null). Sonraki: PR CI farkını araştır.
-12. B1 PR #26 açıldı; hafıza notlarının bulut AI'ya gönderilmesi için ayrı ve varsayılan kapalı onay anahtarı, hassas bilgi filtresi, 5 JVM regresyon testi ve PR/push QA workflow'u eklendi. CI bekleniyor; streaming henüz yapılmadı.
+12. B1 PR #26 A2 tabanına yığıldı; hafıza paylaşımı varsayılan kapalı, hassas veri filtresi ve 5 JVM testi eklendi. İlk CI, main'deki eksik Compose/WebView bağımlılıkları yüzünden test aşamasında kaldı; A2 bağımlılık tabanlı yeni CI çalışıyor. Streaming sonraki alt adım.
 
 **SONRAKİ ADIM:** B1 mevcut sohbet çağrı zinciri, bellek saklama ve test altyapısını çıkar; küçük bir streaming/bellek dilimi tasarla.
