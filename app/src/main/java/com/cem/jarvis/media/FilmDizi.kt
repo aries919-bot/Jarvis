@@ -311,7 +311,7 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
                         }) { Text("Tekrar dene") }
                     }
                 }
-            } }
+            }
             if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Ap.Muted, modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
             else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
