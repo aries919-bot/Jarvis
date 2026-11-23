@@ -78,9 +78,9 @@ class CareerActivity : Activity() {
 
         window.statusBarColor = bgColor
         window.navigationBarColor = bgColor
-        window.decorView.systemUiVisibility =
-            android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
-                android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        // This screen uses a dark surface. LIGHT_STATUS_BAR / LIGHT_NAVIGATION_BAR
+        // would draw dark system icons over the dark bars and reduce visibility.
+        window.decorView.systemUiVisibility = 0
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         val root = LinearLayout(this).apply {
