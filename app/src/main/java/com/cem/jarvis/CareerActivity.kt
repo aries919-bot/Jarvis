@@ -746,7 +746,7 @@ class CareerActivity : Activity() {
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty())
+                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty(), prefs.getString("key", "").orEmpty())
             } catch (error: Exception) {
                 exceptionMessage = error.message
                 null
@@ -1471,7 +1471,7 @@ class CareerActivity : Activity() {
         Thread {
             var failure: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(categoryId, roleText, cityText, cloudToken)
+                CareerSearchEngine.searchBatch(categoryId, roleText, cityText, cloudToken, prefs.getString("key", "").orEmpty())
             } catch (error: Exception) {
                 failure = error.message ?: error.javaClass.simpleName
                 null
