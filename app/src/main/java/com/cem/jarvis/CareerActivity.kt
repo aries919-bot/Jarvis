@@ -1851,8 +1851,8 @@ class CareerActivity : Activity() {
     private fun searchNewsCategory(categoryId: Int, resetArchiveFilter: Boolean = false) {
         if (categoryId != 6 && categoryId != 9 && categoryId != 10) return
         when (categoryId) {
-            6 -> newsFilter = 1
-            9 -> newsFilter = 2
+            6 -> processFilter = 0
+            9 -> newsFilter = 1
             10 -> if (resetArchiveFilter) newsFilter = 0
         }
         if (currentPage != 5) renderPage(5)
@@ -1886,14 +1886,21 @@ class CareerActivity : Activity() {
             }
             runOnUiThread {
                 if (batch != null) {
+                    if (categoryId == 6) {
+                        // Kura/result candidates belong to the dedicated process timeline,
+                        // not the general news archive. Manual scanning creates no push alert.
+                        val newProcessEvents = CareerRecruitmentTracker.recordNew(prefs, batch.hits)
+                        newProcessEvents.forEach { CareerMonitorScheduler.scheduleProcessReminders(this, it) }
+                        if (::processEventsContainer.isInitialized) showProcessEvents(processEventsContainer)
+                    }
                     cacheNewsCandidates(batch.hits)
                     newsSearchStatus.text = buildString {
                         append(batch.hits.size).append(" kaynak sonucu incelendi · ")
                         append(batch.successfulQueries).append("/").append(batch.totalQueries).append(" sorgu tamamlandı.")
                         append(when (categoryId) {
-                            6 -> " Kura/sonuç kayıtları listeleniyor."
-                            9 -> " Öğrenci/program kayıtları listeleniyor."
-                            else -> " Güncel kamu alım haberleri listeleniyor."
+                            6 -> " Kura/sonuç kayıtları üstteki süreç panosuna ayrıldı."
+                            9 -> " Staj/öğrenci programları haber arşivinde listeleniyor."
+                            else -> " Güncel kamu alım haberleri ve kurum duyuruları listeleniyor."
                         })
                         if (batch.failedQueries > 0) append(" Bazı kaynaklar geçici olarak yanıt vermedi.")
                     }
@@ -1908,12 +1915,12 @@ class CareerActivity : Activity() {
 
     private fun buildNewsPage() {
         val hero = panel()
-        hero.addView(label("ARIES  /  HABER & DUYURULAR", 10f, true, accentColor))
-        hero.addView(label("İlan olmayan gelişmeler tek yerde.", 21f, true, primaryText).apply {
+        hero.addView(label("ARIES  /  HABERLER VE KURUM DUYURULARI", 10f, true, accentColor))
+        hero.addView(label("Haber başka, alım süreci başka.", 21f, true, primaryText).apply {
             setPadding(0, dp(5), 0, dp(3))
         })
         hero.addView(label(
-            "Noter kurası, asıl-yedek listeleri, sınav ve mülakat sonuçları, başvuru süreci güncellemeleri, staj programları ve kurum haberleri burada görünür. Bunlar yeni iş ilanı olarak sayılmaz.",
+            "Kura, sınav, asıl-yedek ve sonuçlar üstteki ayrı süreç panosunda tutulur. Bu arşivde kurum haberleri, kamu alım gündemi, staj ve öğrenci programları görünür; iş ilanları İlanlar sekmesinde kalır.",
             12f, false, muted
         ))
         pageContent.addView(hero, params(-1, -2, 0, 2, 0, 12))
@@ -1973,8 +1980,8 @@ class CareerActivity : Activity() {
         pageContent.addView(processEventsContainer, params(-1, -2, 0, 4, 0, 12))
         showProcessEvents(processEventsContainer)
 
-        pageContent.addView(label("Haber ve duyuru arşivi · içerik türüne göre filtrele", 17f, true, primaryText))
-        val filters = listOf("Tümü", "Kura / sonuç", "Staj / program", "Kurum duyurusu", "Haber", "Doğrula")
+        pageContent.addView(label("Kurum haberleri ve duyuruları · türüne göre filtrele", 17f, true, primaryText))
+        val filters = listOf("Tümü", "Staj / program", "Kurum duyurusu", "Haber", "Doğrula")
         val filterScroll = HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             overScrollMode = android.view.View.OVER_SCROLL_NEVER
@@ -2004,12 +2011,11 @@ class CareerActivity : Activity() {
                 item.optString("title"), item.optString("snippet"), item.optString("url")
             ).type
             when (newsFilter) {
-                1 -> type == CareerContentType.PROCESS_NOTICE
-                2 -> type == CareerContentType.STUDENT_PROGRAM
-                3 -> type == CareerContentType.INSTITUTION_NOTICE
-                4 -> type == CareerContentType.NEWS
-                5 -> type == CareerContentType.REVIEW_REQUIRED
-                else -> true
+                1 -> type == CareerContentType.STUDENT_PROGRAM
+                2 -> type == CareerContentType.INSTITUTION_NOTICE
+                3 -> type == CareerContentType.NEWS
+                4 -> type == CareerContentType.REVIEW_REQUIRED
+                else -> type != CareerContentType.PROCESS_NOTICE
             }
         }
         parent.addView(label(
