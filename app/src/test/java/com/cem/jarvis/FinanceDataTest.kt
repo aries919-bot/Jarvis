@@ -89,6 +89,15 @@ class FinanceDataTest {
     }
 
     @Test
+    fun marketSnapshotOlderThanTwoHoursIsMarkedStale() {
+        val formatter = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+        val old = formatter.format(java.util.Date(System.currentTimeMillis() - 3L * 60L * 60L * 1000L))
+        assertTrue(FinanceData.timestampIsStale(old))
+    }
+
+    @Test
     fun symbolValidationRejectsUrlOrWhitespaceInput() {
         assertTrue(FinanceData.isValidSymbol("THYAO.IS"))
         assertTrue(FinanceData.isValidSymbol("BIST:THYAO"))

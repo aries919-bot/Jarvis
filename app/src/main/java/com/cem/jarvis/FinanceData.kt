@@ -175,7 +175,7 @@ object FinanceData {
         )
     }
 
-    internal fun timestampIsStale(value: String, maxAgeHours: Long = 36L): Boolean {
+    internal fun timestampIsStale(value: String, maxAgeHours: Long = 2L): Boolean {
         if (value.isBlank()) return true
         val patterns = listOf("yyyy-MM-dd'T'HH:mm:ss.SSSX", "yyyy-MM-dd'T'HH:mm:ssX")
         val date = patterns.firstNotNullOfOrNull { pattern ->
