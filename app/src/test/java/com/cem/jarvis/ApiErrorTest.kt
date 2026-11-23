@@ -25,4 +25,11 @@ class ApiErrorTest {
         assertTrue(ApiError(403, "test").badKey)
         assertFalse(ApiError(429, "test").badKey)
     }
+
+    @Test
+    fun streamTimeoutAndTruncationMessagesRemainSpecific() {
+        assertTrue(Ai.friendly(java.io.IOException("Yapay zekâ yanıtı zaman aşımına uğradı.")).contains("zaman aşımına"))
+        assertTrue(Ai.friendly(java.io.IOException("Gemini akış yanıtı çözümlenemedi.")).contains("akış"))
+        assertEquals("İnternete ulaşamadım.", Ai.friendly(java.io.IOException("Connection refused")))
+    }
 }
