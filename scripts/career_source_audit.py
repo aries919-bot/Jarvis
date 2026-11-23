@@ -6,7 +6,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT=Path(__file__).resolve().parents[1]
 REGISTRY=ROOT/"career"/"sources.json"
@@ -77,15 +77,33 @@ def application_window(text,today=None):
     else: status="unknown"
     return {"startDate":start.isoformat() if start else None,"deadline":end.isoformat() if end else None,"status":status}
 
+class SameHostHttpsRedirect(HTTPRedirectHandler):
+    def __init__(self, allowed_host):
+        super().__init__()
+        self.allowed_host=allowed_host.lower()
+
+    def redirect_request(self,req,fp,code,msg,headers,newurl):
+        target=urlparse(newurl)
+        if (target.scheme.lower()!="https" or not target.hostname
+                or target.hostname.lower()!=self.allowed_host
+                or target.username or target.password
+                or target.port not in (None,443)):
+            raise ValueError("Cross-host, credentialed or non-HTTPS redirect blocked.")
+        return super().redirect_request(req,fp,code,msg,headers,newurl)
+
 def fetch(url):
+    origin=urlparse(url)
+    if (origin.scheme.lower()!="https" or not origin.hostname
+            or origin.username or origin.password or origin.port not in (None,443)):
+        raise ValueError("Unsafe source URL; HTTPS on the default port is required.")
+    opener=build_opener(SameHostHttpsRedirect(origin.hostname))
     req=Request(url,headers={"User-Agent":UA,"Accept":"text/html,application/xhtml+xml;q=0.9,*/*;q=0.5","Accept-Language":"tr-TR,tr;q=0.9"},method="GET")
-    with urlopen(req,timeout=TIMEOUT) as r:
+    with opener.open(req,timeout=TIMEOUT) as r:
         raw=r.read(MAX_BYTES+1); ctype=r.headers.get("Content-Type",""); enc=re.search(r"charset=([\w-]+)",ctype,re.I)
         try: body=raw[:MAX_BYTES].decode(enc.group(1) if enc else "utf-8",errors="replace")
         except LookupError: body=raw[:MAX_BYTES].decode("utf-8",errors="replace")
         if len(raw)>MAX_BYTES: body+=" [TRUNCATED]"
         return r.status,r.geturl(),ctype,body
-
 def kind(label,href,candidate_terms=(),programme_terms=()):
     value=norm(label+" "+href)
     if any(norm(x) in value for x in PROCESS_TERMS): return "process_notice"
@@ -144,10 +162,18 @@ def validate(sources):
     if len(urls)!=len(set(urls)): raise ValueError("Duplicate source URLs")
     if not 15<=len(sources)<=20: raise ValueError("First wave must contain 15–20 sources")
     for s in sources:
-        if not s["url"].startswith("https://"): raise ValueError("HTTPS required: "+s["id"])
+        source_url=urlparse(s["url"])
+        if (source_url.scheme.lower()!="https" or not source_url.hostname
+                or source_url.username or source_url.password or source_url.port not in (None,443)):
+            raise ValueError("HTTPS on the default port required: "+s["id"])
         if any(x in s["url"].lower() for x in ("linkedin.com","indeed.com")): raise ValueError("Do not scrape login-gated job boards")
-        if s["readerMode"] in ("html_index","html_detail") and not s.get("probeUrl"): raise ValueError("Missing probeUrl: "+s["id"])
-
+        if s["readerMode"] in ("html_index","html_detail"):
+            if not s.get("probeUrl"): raise ValueError("Missing probeUrl: "+s["id"])
+            probe_url=urlparse(s["probeUrl"])
+            if (probe_url.scheme.lower()!="https" or not probe_url.hostname
+                    or probe_url.hostname.lower()!=source_url.hostname.lower()
+                    or probe_url.username or probe_url.password or probe_url.port not in (None,443)):
+                raise ValueError("Probe URL must use HTTPS on the registered source host: "+s["id"])
 def report(sources,results):
     working=[x for x in results if x["readerOk"] and (x["candidateCount"]+x.get("programmeCount",0))>0]
     detail=[x for x in working if x["readerMode"]=="html_detail"]
