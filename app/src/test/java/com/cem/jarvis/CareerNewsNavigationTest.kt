@@ -11,13 +11,13 @@ class CareerNewsNavigationTest {
     }
 
     @Test
-    fun studentProgramFilterUsesStudentSearch() {
-        assertEquals(9, CareerNewsNavigation.queryForFilter(2))
+    fun studentProgramArchiveFilterUsesStudentSearch() {
+        assertEquals(9, CareerNewsNavigation.queryForFilter(1))
     }
 
     @Test
     fun generalAndOtherNewsFiltersUsePublicRecruitmentNewsSearch() {
-        listOf(0, 3, 4, 5).forEach { filter ->
+        listOf(0, 2, 3, 4, 5).forEach { filter ->
             assertEquals(10, CareerNewsNavigation.queryForFilter(filter))
         }
     }
