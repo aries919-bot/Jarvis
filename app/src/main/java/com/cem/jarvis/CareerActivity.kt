@@ -947,7 +947,7 @@ class CareerActivity : Activity() {
             11f, true, accentBlue
         ))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        listOf("Son tarih + kurum/işveren", "Tüm adaylar / kontrol", "Geçmiş / kapanmış").forEachIndexed { index, title ->
+        listOf("Güncel + kontrol", "Tüm adaylar", "Geçmiş / kapanmış").forEachIndexed { index, title ->
             val chip = chipButton(title, searchFilter == index) {
                 searchFilter = index
                 searchPage = 0
@@ -969,12 +969,34 @@ class CareerActivity : Activity() {
         val eligibleHits = when (searchFilter) {
             2 -> sectorHits.filter(::isInactive)
             1 -> sectorHits
-            else -> sectorHits.filter(::isMainFeedCandidate)
+            // Show every non-expired job candidate by default. Missing deadlines and
+            // secondary platforms must be visible with a clear evidence warning, not hidden.
+            else -> sectorHits.filterNot(::isInactive)
         }
-        // Keep all result groups stable for every filter, not only the unfiltered view.
-        val visibleHits = eligibleHits.sortedBy {
-            recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url))
-        }
+        // Rank first-party sources with explicit future deadlines first, then other
+        // first-party candidates, then secondary/unknown sources. Profile relevance breaks ties.
+        val visibleHits = eligibleHits.sortedWith(
+            compareBy<Net.Hit> {
+                when {
+                    isMainFeedCandidate(it) -> 0
+                    hasDirectSource(it) && !isInactive(it) -> 1
+                    !CareerSourceCatalog.isSecondary(it.url) && !isInactive(it) -> 2
+                    !isInactive(it) -> 3
+                    else -> 4
+                }
+            }.thenBy { recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(it.title, it.snippet, it.url)) }
+                .thenByDescending {
+                    CareerEligibility.profileMatchScore(
+                        it.title, it.snippet,
+                        prefs.getString("career_role", "").orEmpty(),
+                        prefs.getString("career_place", "").orEmpty(),
+                        CareerEligibility.assess(
+                            it.title, it.snippet, it.url,
+                            prefs.getBoolean("career_associate_graduated", false)
+                        )
+                    )
+                }
+        )
 
         if (visibleHits.isEmpty()) {
             val emptyMessage = when (searchFilter) {
@@ -1083,6 +1105,34 @@ class CareerActivity : Activity() {
         card.addView(label(
             classification.label + " · sınıflandırma güveni: " + classification.confidence,
             11f, true, successColor
+        ))
+        val directSource = CareerSourceCatalog.isTrustedUrl(hit.url) &&
+            !CareerSourceCatalog.isSecondary(hit.url) &&
+            !CareerSourceCatalog.isNewsDiscoverySource(hit.url)
+        val sourceEvidence = when {
+            CareerSourceCatalog.isNewsDiscoverySource(hit.url) ->
+                "Kaynak kanıtı: haber sitesi · işveren veya başvuru kurumu değil"
+            CareerSourceCatalog.isSecondary(hit.url) ->
+                "Kaynak kanıtı: ikincil ilan platformu · gerçek işveren ilanda doğrulanmalı"
+            directSource ->
+                "Kaynak kanıtı: tanımlı kurum/işveren alan adı · ilan ve başvuru durumu yine de kontrol edilmeli"
+            else ->
+                "Kaynak kanıtı: alan adı henüz doğrulanmadı · kişisel/ödeme bilgisi paylaşmadan önce kontrol et"
+        }
+        card.addView(label(sourceEvidence, 11f, true, if (directSource) successColor else warningColor))
+        val deadlineEvidence = storedDeadline?.takeIf { it.isNotBlank() }
+            ?: CareerListingParser.deadlineStatus(CareerListingParser.noticeText(hit.title, hit.snippet))
+        val deadlineMessage = when {
+            CareerListingParser.isInactiveStatus(deadlineEvidence) ->
+                "Başvuru zamanı: geçmiş/kapanmış veya güncelliği ayrıca doğrulanmalı"
+            CareerListingParser.hasFutureDeadline(deadlineEvidence) ->
+                "Son tarih bilgisi: $deadlineEvidence · resmî sayfada tekrar teyit et"
+            else ->
+                "Son tarih bilgisi: arama özetinde bulunamadı · tam ilanda kontrol et"
+        }
+        card.addView(label(
+            deadlineMessage, 11f, true,
+            if (CareerListingParser.hasFutureDeadline(deadlineEvidence)) accentBlue else warningColor
         ))
         card.addView(label("Duyuru türü: " + facts.noticeType, 11f, true, primaryText))
         card.addView(label("Başvuru yolu: " + facts.applicationChannel, 11f, false, muted))
@@ -1205,7 +1255,7 @@ class CareerActivity : Activity() {
         }
         parent.addView(label("Kategori: " + sectorFilterLabels[dailySectorFilter] + " · " + sectorItems.size + " kayıt", 11f, true, accentBlue))
         val filterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        listOf("Son tarih + kurum/işveren", "Tüm adaylar / kontrol", "Geçmiş / kapanmış").forEachIndexed { index, title ->
+        listOf("Güncel + kontrol", "Tüm adaylar", "Geçmiş / kapanmış").forEachIndexed { index, title ->
             val chip = chipButton(title, dailyFilter == index) {
                 dailyFilter = index
                 dailyPage = 0
@@ -1227,16 +1277,25 @@ class CareerActivity : Activity() {
         val filtered = when (dailyFilter) {
             2 -> sectorItems.filter(::isInactive)
             1 -> sectorItems
-            else -> sectorItems.filter(::isMainFeedCandidate)
-        }.sortedWith(compareByDescending<JSONObject> { it.optInt("profileMatchScore", 0) }
-            .thenByDescending { it.optLong("createdAt", 0L) })
-        dailyItems = if (dailySectorFilter == 0) {
-            filtered.sortedBy {
-                recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(
+            // Keep all non-expired candidates visible even when the search snippet omitted
+            // a closing date or the discovery result came from a secondary job platform.
+            else -> sectorItems.filterNot(::isInactive)
+        }
+        fun evidenceRank(item: JSONObject): Int = when {
+            hasFutureDeadline(item) && hasDirectSource(item) -> 0
+            hasDirectSource(item) && !isInactive(item) -> 1
+            !CareerSourceCatalog.isSecondary(item.optString("url")) && !isInactive(item) -> 2
+            !isInactive(item) -> 3
+            else -> 4
+        }
+        dailyItems = filtered.sortedWith(
+            compareBy<JSONObject> { evidenceRank(it) }
+                .thenBy { recruitmentGroupOrder(CareerSourceCatalog.recruitmentGroup(
                     it.optString("title"), it.optString("snippet"), it.optString("url")
-                ))
-            }
-        } else filtered
+                )) }
+                .thenByDescending { it.optInt("profileMatchScore", 0) }
+                .thenByDescending { it.optLong("createdAt", 0L) }
+        )
 
         if (dailyItems.isEmpty()) {
             val message = when {
