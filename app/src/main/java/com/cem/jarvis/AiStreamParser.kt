@@ -137,3 +137,20 @@ internal object AiStreamParser {
         return out
     }
 }
+
+
+/** Extracts data payloads from individual SSE lines; comments and metadata are ignored. */
+internal object SseLineParser {
+    fun dataFromLine(line: String): String? {
+        val value = line.trim()
+        if (value.isEmpty() || value.startsWith(":") ||
+            value.startsWith("event:") || value.startsWith("id:") || value.startsWith("retry:")
+        ) return null
+        val data = when {
+            value.startsWith("data:") -> value.substring(5).trim()
+            value.startsWith("{") -> value
+            else -> return null
+        }
+        return data.ifEmpty { null }
+    }
+}
