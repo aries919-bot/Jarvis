@@ -171,7 +171,7 @@ fun PlayerControls(
 
         // Açılır menüler
         if (menu != null && !locked) Column(
-            Modifier.align(Alignment.BottomCenter).padding(bottom = 84.dp).background(Color(0xFF181B26), RoundedCornerShape(16.dp)).padding(8.dp)
+            Modifier.align(Alignment.BottomCenter).padding(bottom = 84.dp).background(Ap.Card, RoundedCornerShape(16.dp)).padding(8.dp)
         ) {
             when (menu) {
                 "q" -> listOf("Otomatik" to 0, "360P" to 360, "540P" to 540, "720P" to 720, "1080P" to 1080).forEach { (l, h) ->
@@ -212,5 +212,5 @@ fun PlayerControls(
 
 @Composable private fun MenuItem(text: String, selected: Boolean, onClick: () -> Unit) =
     Text(text, color = Color.White, fontSize = 14.sp,
-        modifier = Modifier.fillMaxWidth().background(if (selected) Color(0xFF202433) else Color.Transparent, RoundedCornerShape(10.dp))
+        modifier = Modifier.fillMaxWidth().background(if (selected) Ap.Raised else Color.Transparent, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick).padding(horizontal = 18.dp, vertical = 10.dp))
