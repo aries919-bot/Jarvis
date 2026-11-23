@@ -176,3 +176,178 @@ def clean_title(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     return text[:220]
 
+
+
+# --- canli okuma -----------------------------------------------------------
+def _decode(raw, enc, ctype):
+    enc = (enc or "").lower()
+    try:
+        if "gzip" in enc:
+            raw = gzip.decompress(raw)
+        elif "deflate" in enc:
+            raw = zlib.decompress(raw)
+    except Exception:
+        pass
+    raw = raw[:MAX_BYTES]
+    m = re.search(r"charset=([\w\-]+)", ctype or "", re.I)
+    for cs in ((m.group(1) if m else None), "utf-8", "cp1254"):
+        if not cs:
+            continue
+        try:
+            return raw.decode(cs)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return raw.decode("utf-8", "replace")
+
+
+def fetch(url, timeout=DEFAULT_TIMEOUT):
+    t0 = time.monotonic()
+    out = {"status": None, "text": "", "bytes": 0, "error": "", "ms": 0}
+    req = urllib.request.Request(url, headers={
+        "User-Agent": USER_AGENT,
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "tr,en;q=0.5"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            raw = r.read(MAX_BYTES)
+            out["status"] = r.status
+            out["bytes"] = len(raw)
+            out["text"] = _decode(raw, r.headers.get("Content-Encoding"),
+                                  r.headers.get("Content-Type"))
+    except urllib.error.HTTPError as e:
+        out["status"] = e.code
+        out["error"] = "HTTP %d" % e.code
+    except (urllib.error.URLError, socket.timeout, ssl.SSLError, OSError) as e:
+        out["error"] = (type(e).__name__ + ": " + str(e))[:140]
+    out["ms"] = int((time.monotonic() - t0) * 1000)
+    return out
+
+
+def check_robots(url):
+    import urllib.robotparser
+    p = urllib.parse.urlsplit(url)
+    rurl = "%s://%s/robots.txt" % (p.scheme, p.netloc)
+    r = fetch(rurl)
+    if r["status"] is None:
+        res = "erisilemedi"
+    elif r["status"] == 404:
+        res = "yok"
+    elif (r["status"] != 200 or not r["text"].strip()
+          or re.search(r"<\s*(html|!doctype)", r["text"][:500], re.I)):
+        res = "gecersiz"
+    else:
+        rp = urllib.robotparser.RobotFileParser()
+        rp.parse(r["text"].splitlines())
+        res = "izinli" if rp.can_fetch(USER_AGENT, url) else "reddedildi"
+    return {"url": rurl, "result": res, "http_status": r["status"],
+            "fetch_ms": r["ms"]}
+
+
+def scan_markers(text):
+    hits = []
+    for label, pats in (("login", LOGIN_MARKERS), ("captcha", CAPTCHA_MARKERS),
+                        ("waf", WAF_MARKERS), ("soft_404", SOFT_404_MARKERS)):
+        for pat in pats:
+            if re.search(pat, text, re.I):
+                hits.append("%s:%s" % (label, pat))
+    return hits
+
+
+def find_pattern(rule):
+    for v in (rule or {}).values():
+        if isinstance(v, str):
+            try:
+                p = re.compile(v, re.IGNORECASE | re.DOTALL)
+            except re.error:
+                continue
+            if "href" in p.groupindex and "title" in p.groupindex:
+                return p
+    return None
+
+
+def audit_source(src):
+    now = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    rule = src.get("rule") or {}
+    rob = check_robots(src["url"])
+    res = {"id": src["id"], "url": src["url"], "checked_at": now,
+           "robots": rob, "http_status": None, "bytes": 0, "ms": 0,
+           "listing_count": 0, "examples": [], "marker_hits": [],
+           "error": "", "decision": "", "open": False}
+    if rob["result"] not in ("izinli", "yok"):
+        res["decision"] = "robots-engel"
+        return res
+    if src.get("login_required"):
+        res["decision"] = "giris-istiyor"
+        return res
+    time.sleep(1.0)
+    page = fetch(src["url"])
+    res.update(http_status=page["status"], bytes=page["bytes"],
+               ms=page["ms"], error=page["error"])
+    if page["status"] != 200:
+        res["decision"] = "erisilemedi" if page["status"] is None else "http-hata"
+        return res
+    res["marker_hits"] = scan_markers(page["text"])
+    pat = find_pattern(rule)
+    items = []
+    if pat:
+        for m in pat.finditer(page["text"]):
+            href = urllib.parse.urljoin(rule.get("base_url") or src["url"],
+                                        html.unescape(m.group("href")))
+            items.append({"title": m.group("title"), "url": href})
+    items = [i for i in dedupe_listings(items) if i["title"]]
+    res["listing_count"] = len(items)
+    res["examples"] = items[:3]
+    need = max(1, int(src.get("expected_min_listings") or 0))
+    if len(items) >= need:
+        res["decision"] = "ok"
+    elif res["marker_hits"]:
+        res["decision"] = "engelli"
+    else:
+        res["decision"] = "eksik-ilan"
+    res["open"] = (res["decision"] == "ok"
+                   and not rule.get("js_rendered")
+                   and not rule.get("requires_post"))
+    return res
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="K1 kaynak denetimi")
+    ap.add_argument("--sources", default="career/sources.json")
+    ap.add_argument("--out-dir", default="career-audit-report")
+    ap.add_argument("--min-ok", type=int, default=3)
+    ap.add_argument("--offline", action="store_true")
+    a = ap.parse_args(argv)
+    with open(a.sources, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    srcs = doc["sources"]
+    eksik = sorted({s.get("id", "?") for s in srcs
+                    for k in REQUIRED_SOURCE_KEYS if k not in s})
+    if eksik:
+        print("HATA: alan eksik:", eksik)
+        return 1
+    if a.offline:
+        print("offline: %d kaynak, sema tamam" % len(srcs))
+        return 0
+    rows = []
+    for s in srcs:
+        r = audit_source(s)
+        rows.append(r)
+        print("%-24s robots=%-11s http=%-4s ilan=%-3s %s" % (
+            r["id"][:24], r["robots"]["result"], r["http_status"],
+            r["listing_count"], r["decision"]))
+    n_open = sum(1 for r in rows if r["open"])
+    toplam = sum(r["listing_count"] for r in rows if r["open"])
+    os.makedirs(a.out_dir, exist_ok=True)
+    rapor = {"schema_version": SCHEMA_VERSION,
+             "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+             "min_ok": a.min_ok, "open_sources": n_open,
+             "open_listing_total": toplam, "results": rows}
+    with open(os.path.join(a.out_dir, "audit_sonuc.json"), "w", encoding="utf-8") as fh:
+        json.dump(rapor, fh, ensure_ascii=False, indent=2)
+    print("ACIK KAYNAK: %d (alt sinir %d), acik kaynaklardan ilan: %d" % (
+        n_open, a.min_ok, toplam))
+    return 0 if n_open >= a.min_ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
