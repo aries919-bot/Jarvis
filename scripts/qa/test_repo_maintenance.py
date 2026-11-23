@@ -14,6 +14,13 @@ assert SPEC and SPEC.loader
 DENETLE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(DENETLE)
 
+QA_SPEC = importlib.util.spec_from_file_location(
+    "qa_report", ROOT / "scripts" / "qa" / "build_qa_report.py"
+)
+assert QA_SPEC and QA_SPEC.loader
+BUILD_QA = importlib.util.module_from_spec(QA_SPEC)
+QA_SPEC.loader.exec_module(BUILD_QA)
+
 
 class DiffReviewTests(unittest.TestCase):
     def test_secret_after_legacy_12000_character_limit_is_detected(self) -> None:
@@ -49,6 +56,49 @@ class DiffReviewTests(unittest.TestCase):
         self.assertEqual("RED", DENETLE._verdict("ONAY. Bütün sorunlar kapandı"))
         self.assertEqual("RED", DENETLE._verdict("ONAY\nRED"))
         self.assertEqual("RED", DENETLE._verdict(""))
+
+
+class QaLogcatTests(unittest.TestCase):
+    def _scan(self, text: str) -> list[dict[str, str]]:
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "logcat.txt").write_text(text, encoding="utf-8")
+            return BUILD_QA.scan_logcat(Path(tmp))
+
+    def test_system_anr_is_not_reported_as_aries_error(self) -> None:
+        logcat = (
+            "ActivityManager: ANR in com.google.android.googlequicksearchbox:search\\n"
+            "ActivityManager: PID: 2942\\n"
+            "ActivityManager: Reason: Broadcast pkg=com.google.android.googlequicksearchbox\\n"
+        )
+        self.assertEqual([], self._scan(logcat))
+
+    def test_aries_anr_is_reported(self) -> None:
+        logcat = (
+            "ActivityManager: ANR in com.cem.jarvis\\n"
+            "ActivityManager: PID: 2942\\n"
+            "ActivityManager: Reason: Input dispatching timed out\\n"
+        )
+        findings = self._scan(logcat)
+        self.assertEqual(["anr"], [item["category"] for item in findings])
+        self.assertEqual(["error"], [item["severity"] for item in findings])
+
+    def test_system_fatal_exception_is_not_reported_as_aries_error(self) -> None:
+        logcat = (
+            "FATAL EXCEPTION: main\\n"
+            "Process: com.google.android.googlequicksearchbox, PID: 2942\\n"
+            "java.lang.IllegalStateException: unrelated\\n"
+        )
+        self.assertEqual([], self._scan(logcat))
+
+    def test_aries_fatal_exception_is_reported(self) -> None:
+        logcat = (
+            "FATAL EXCEPTION: main\\n"
+            "Process: com.cem.jarvis, PID: 2942\\n"
+            "java.lang.IllegalStateException: app failure\\n"
+        )
+        findings = self._scan(logcat)
+        self.assertEqual(["crash"], [item["category"] for item in findings])
+        self.assertEqual(["error"], [item["severity"] for item in findings])
 
 
 class CodeMapTests(unittest.TestCase):

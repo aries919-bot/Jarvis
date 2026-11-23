@@ -119,6 +119,11 @@ class HoloView(c: Context) : View(c) {
         pr = rs.toIntArray()
     }
 
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
+    }
+
     private fun hash(i: Int): Double {
         val v = Math.sin(i * 12.9898) * 43758.5453
         return v - Math.floor(v)

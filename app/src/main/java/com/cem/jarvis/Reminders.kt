@@ -460,6 +460,11 @@ class ReminderReceiver : BroadcastReceiver() {
 // ============================================================
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        Reminders.restoreAll(ctx)
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            "android.intent.action.QUICKBOOT_POWERON" -> Reminders.restoreAll(ctx)
+            else -> return
+        }
     }
 }

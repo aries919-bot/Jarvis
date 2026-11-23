@@ -321,6 +321,13 @@ def scan_logcat(qa_dir: Path) -> list[dict[str, str]]:
         for i, line in enumerate(lines):
             if not pattern.search(line):
                 continue
+            # Logcat contains every process on the emulator. Scope crashes/ANRs
+            # to Aries so a Google launcher or system-process ANR cannot fail
+            # the application's QA report.
+            if category in {"crash", "anr"}:
+                context = "\\n".join(lines[max(0, i - 3):min(len(lines), i + 9)]).lower()
+                if "com.cem.jarvis" not in context:
+                    continue
             # Android removes the debug app after instrumentation completes.
             # This deliberate cleanup is not an app crash.
             if category == "process-death" and "due to finished inst" in line.lower():
