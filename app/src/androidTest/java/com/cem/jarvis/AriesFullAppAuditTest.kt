@@ -53,8 +53,26 @@ class AriesFullAppAuditTest {
         val launchStartedAt = SystemClock.elapsedRealtime()
         context.startActivity(launchIntent)
 
+        // MainActivity requests microphone, contacts, phone and (on newer Android)
+        // notification permissions during onCreate. The system permission controller
+        // temporarily owns the foreground, so waiting for the Aries package first would
+        // deadlock the test before it ever taps the permission dialog.
+        val permissionPackages = listOf(
+            "com.android.permissioncontroller",
+            "com.google.android.permissioncontroller",
+            "com.android.packageinstaller"
+        )
+        val permissionPromptVisible = permissionPackages.any { packageName ->
+            device.wait(Until.hasObject(By.pkg(packageName)), 5_000)
+        }
+        if (permissionPromptVisible) {
+            handleRuntimePermissionDialogs()
+        }
+
+        // Also handle any sequential permission prompt that appears after the first one.
+        handleRuntimePermissionDialogs()
         assertTrue(
-            "Aries did not appear in the foreground after launch",
+            "Aries did not appear in the foreground after launch and runtime-permission handling",
             device.wait(Until.hasObject(By.pkg(packageName)), 20_000)
         )
         launchToVisibleMs = SystemClock.elapsedRealtime() - launchStartedAt
