@@ -27,7 +27,7 @@
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt. PR #26 CI yeşil; bağımsız inceleme, canlı API ve telefon testi bekliyor. |
 | C1 Sunucu ilan toplayıcı + tekilleştirme JSON | CLINE BEKLİYOR | sahip: cline. K1 onayından sonra başla; yalnız doğrulanmış açık kaynakları kullan. |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt. PR #22'de kategori grupları ve Haber/Süreç/Öğrenci ayrımı var; bağımsız inceleme ve telefon testi bekliyor. |
-| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt. `is/c3-ilan-semasi-ai-kaynak-kaniti` → `is/kariyer-1-21-verified-search`; alan şeması/provenans, kaynak kanıtı ve yalnız kullanıcı eylemiyle WebView yenileme. |
+| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | PR AÇIK | sahip: chatgpt. PR #29 taslak; alan şeması/provenans, kaynak kanıtı ve kullanıcı eylemiyle HTTPS WebView yenileme. CI bekleniyor. |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt. Kişisel profil telefonda kalır. |
 | C5 Gelecek alım takvimi ve bildirim | YAPILMADI | sahip: chatgpt. Resmî tarih ile tahmin ayrı. |
 | D1 Film & Dizi | YAPILMADI | sahip: chatgpt. Yalnız yasal/izinli akış. |
@@ -72,5 +72,5 @@
 7. A2 PR #28 açık/koyu mod, yerel tercih, dashboard özeti ve skeleton; PR/push CI SUCCESS.
 8. Cline sahiplik kuralı eklendi: K1/C1/E1-Veri Cline; A1/A2/B1 ve kalan uygulama işleri ChatGPT.
 9. C2 PR #22 kategori filtreleri + Haber/Süreç/Program ayrımı; Full App QA/API29-35 ve APK CI SUCCESS, PR açık.
-10. C3 DEVAM: kaynak metninden yapılandırılmış alan çıkarımı ve her alan için kanıt/provenans; Cline işlerine dokunulmayacak.
+10. C3 PR #29 taslak: kaynak metninden alan şeması, kanıt/provenans ve kullanıcı tetikli HTTPS WebView yedeği; CI/bağımsız inceleme/telefon testi bekliyor.
 **SONRAKİ ADIM:** ChatGPT `is/c3-ilan-semasi-ai-kaynak-kaniti` dalında C3 kaynak metni → şema/provenans/AI doğrulaması ve kullanıcı tetikli yenilemeyi uygular; Cline `DEVAM: K1` diyene kadar Cline'ın sunucu/veri dosyalarına dokunulmaz.
