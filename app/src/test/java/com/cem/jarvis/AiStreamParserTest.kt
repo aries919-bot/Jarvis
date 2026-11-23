@@ -40,4 +40,16 @@ class AiStreamParserTest {
         assertNull(AiStreamParser.partialReply("""{"command":"open_app"""))
         assertTrue(AiStreamParser.partialReply("""{"reply":"A""")!!.startsWith("A"))
     }
+
+    @Test
+    fun handlesBracesAndQuotesInsideStringValues() {
+        val payload = """{"choices":[{"delta":{"content":"{ \"ok\": true }"}}]}"""
+        assertEquals("{ \"ok\": true }", AiStreamParser.openAiDelta(payload))
+    }
+
+    @Test
+    fun rejectsMissingArrayWithoutThrowing() {
+        assertEquals("", AiStreamParser.openAiDelta("""{"other":[]}"""))
+        assertEquals("", AiStreamParser.geminiDelta("""{"other":[]}"""))
+    }
 }
