@@ -1233,6 +1233,23 @@ class CareerActivity : Activity() {
             webView.settings.safeBrowsingEnabled = true
         }
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: android.webkit.WebResourceRequest
+            ): android.webkit.WebResourceResponse? {
+                // Block private/IP/cleartext resources too, not only top-level navigation.
+                // This protects the user-triggered page reader from obvious local-network probes.
+                val blocked = CareerListingPagePolicy.validateHttpsUrl(request.url.toString())
+                if (blocked != null) {
+                    return android.webkit.WebResourceResponse(
+                        "text/plain",
+                        "utf-8",
+                        java.io.ByteArrayInputStream(ByteArray(0))
+                    )
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 request: android.webkit.WebResourceRequest
