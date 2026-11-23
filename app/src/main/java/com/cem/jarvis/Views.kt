@@ -26,17 +26,36 @@ import android.widget.TextView
 // RENKLER: Tema değiştirmek istediğinde yalnızca bu bloğu düzenle.
 // ============================================================
 object Pal {
-    const val BG = "#0B0D12"       // ekran zemini (saf siyah)
+    const val BG = "#0B0D12"       // ekran zemini
     const val CARD = "#12151C"     // kart zemini
-    const val CARD2 = "#1A1E28"    // düğme ve giriş kutusu zemini
-    const val LINE = "#2A3040"     // ince kenar çizgisi
+    const val CARD2 = "#1A1F2B"    // düğme ve giriş kutusu zemini
+    const val RAISED = "#222838"   // üst katman (seçili öğe, açılır menü)
+    const val LINE = "#2B3245"     // ince kenar çizgisi
     const val TEXT = "#EDEFF5"     // yazı
-    const val MUTED = "#8B93A7"    // pasif yazı
+    const val MUTED = "#9AA3B8"    // pasif yazı (koyu zeminde 4.5:1 üzeri kontrast)
     const val WHITE = "#FFFFFF"    // dinleme / vurgu
     const val GREEN = "#34D399"    // başarılı işlem
     const val RED = "#FF6B6B"      // uyarı / durdur
-    const val ACCENT = "#C4B5FD"   // lavanta vurgu (tek vurgu rengi)
+    const val AMBER = "#F5B455"    // dikkat / süre dolmak üzere
+    const val BLUE = "#7DB2FF"     // bilgi / bağlantı
+    const val ACCENT = "#C4B5FD"   // lavanta vurgu (ana vurgu rengi)
+    const val ON_ACCENT = "#17122B"// vurgu rengi üstündeki yazı
+    const val ACCENT_SOFT = "#272046" // vurgunun sönük zemini (seçili sekme, rozet)
     const val BUBBLE_ME = "#1E1B2E"// kullanıcı balonu zemini (koyu lavanta alt tonu)
+}
+
+// ============================================================
+// TASARIM ÖLÇÜLERİ: boşluk, köşe ve yazı boyutları tek yerden.
+// Tüm ekranlar (ana, Kariyer, Film & Dizi) aynı ölçüleri kullanır.
+// ============================================================
+object Tok {
+    const val MIN_TOUCH_DP = 48        // Android erişilebilirlik asgarisi
+    const val R_CARD = 18              // kart köşesi (dp)
+    const val R_CONTROL = 14           // düğme / giriş köşesi (dp)
+    const val R_PILL = 20              // hap biçimli etiket (dp)
+    const val T_CAPTION = 12f          // en küçük yazı (sp): 12'nin altına inilmez
+    const val T_BODY = 15f
+    const val T_TITLE = 18f
 }
 
 // ============================================================
@@ -287,8 +306,24 @@ object Ui {
         val g = GradientDrawable()
         g.setColor(Color.parseColor(fill))
         g.cornerRadius = radius
-        if (stroke != null) g.setStroke(2, Color.parseColor(stroke))
+        if (stroke != null) g.setStroke(strokePx(), Color.parseColor(stroke))
         return g
+    }
+
+    // 1dp'lik çizgi: her ekran yoğunluğunda aynı incelikte görünür (eskiden sabit 2px idi).
+    private fun strokePx(): Int =
+        android.content.res.Resources.getSystem().displayMetrics.density.let { Math.max(1, Math.round(it)) }
+
+    // Dokunma geri bildirimi (ripple). İçerik çizimi değişmez, üstüne basınca hafif ışık yayılır.
+    fun pressable(ctx: Context, content: android.graphics.drawable.Drawable, radiusDp: Int = Tok.R_CONTROL): android.graphics.drawable.Drawable {
+        val mask = GradientDrawable()
+        mask.setColor(Color.WHITE)
+        mask.cornerRadius = dp(ctx, radiusDp).toFloat()
+        return android.graphics.drawable.RippleDrawable(
+            ColorStateList.valueOf(Color.parseColor("#33FFFFFF")),
+            content,
+            mask
+        )
     }
 
     fun column(ctx: Context): LinearLayout {
@@ -314,9 +349,9 @@ object Ui {
     }
 
     fun section(ctx: Context, s: String): TextView {
-        val t = text(ctx, s.uppercase(java.util.Locale("tr", "TR")), 11f, Pal.MUTED, true)
-        t.letterSpacing = 0.12f
-        t.setPadding(dp(ctx, 4), dp(ctx, 6), 0, 0)
+        val t = text(ctx, s.uppercase(java.util.Locale("tr", "TR")), Tok.T_CAPTION, Pal.MUTED, true)
+        t.letterSpacing = 0.1f
+        t.setPadding(dp(ctx, 4), dp(ctx, 12), 0, dp(ctx, 2))
         return t
     }
 
@@ -338,17 +373,19 @@ object Ui {
         b.textSize = 14f
         b.stateListAnimator = null
         b.minHeight = 0
-        b.minimumHeight = dp(ctx, 46)
+        b.minimumHeight = dp(ctx, Tok.MIN_TOUCH_DP)
         b.setTextColor(Color.parseColor(Pal.TEXT))
-        b.background = rounded(Pal.CARD2, Pal.LINE, dp(ctx, 16).toFloat())
+        b.background = pressable(ctx, rounded(Pal.CARD2, Pal.LINE, dp(ctx, Tok.R_CONTROL).toFloat()))
         b.setOnClickListener { onClick() }
         return b
     }
 
+    // Ana eylem düğmesi: lavanta dolgu, koyu yazı (beyaz dolgudan daha yumuşak, kontrast yüksek).
     fun primary(ctx: Context, s: String, onClick: () -> Unit): Button {
         val b = button(ctx, s, onClick)
-        b.setTextColor(Color.BLACK)
-        b.background = rounded(Pal.WHITE, null, dp(ctx, 16).toFloat())
+        b.setTextColor(Color.parseColor(Pal.ON_ACCENT))
+        b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
+        b.background = pressable(ctx, rounded(Pal.ACCENT, null, dp(ctx, Tok.R_CONTROL).toFloat()))
         return b
     }
 
@@ -416,16 +453,18 @@ object Ui {
     }
 
     fun badge(ctx: Context, s: String, color: String): TextView {
-        val t = text(ctx, s, 11f, color, true)
+        val t = text(ctx, s, Tok.T_CAPTION, color, true)
         t.background = rounded(Pal.CARD2, color, dp(ctx, 10).toFloat())
-        t.setPadding(dp(ctx, 8), dp(ctx, 3), dp(ctx, 8), dp(ctx, 3))
+        t.setPadding(dp(ctx, 9), dp(ctx, 4), dp(ctx, 9), dp(ctx, 4))
         return t
     }
 
     fun chip(ctx: Context, s: String, active: Boolean, onClick: () -> Unit): TextView {
-        val t = text(ctx, s, 13f, if (active) "#000000" else Pal.TEXT)
-        t.background = rounded(if (active) Pal.WHITE else Pal.CARD2, if (active) null else Pal.LINE, dp(ctx, 18).toFloat())
-        t.setPadding(dp(ctx, 14), dp(ctx, 8), dp(ctx, 14), dp(ctx, 8))
+        val t = text(ctx, s, 14f, if (active) Pal.ON_ACCENT else Pal.TEXT, active)
+        t.background = pressable(ctx, rounded(if (active) Pal.ACCENT else Pal.CARD2, if (active) null else Pal.LINE, dp(ctx, Tok.R_PILL).toFloat()), Tok.R_PILL)
+        t.gravity = Gravity.CENTER
+        t.minHeight = dp(ctx, 44)
+        t.setPadding(dp(ctx, 16), dp(ctx, 8), dp(ctx, 16), dp(ctx, 8))
         t.isClickable = true
         t.setOnClickListener { onClick() }
         val lp = LinearLayout.LayoutParams(-2, -2)
@@ -439,7 +478,9 @@ object Ui {
         val r = LinearLayout(ctx)
         r.orientation = LinearLayout.HORIZONTAL
         r.gravity = Gravity.CENTER_VERTICAL
-        r.background = rounded(Pal.CARD, Pal.LINE, dp(ctx, 18).toFloat())
+        r.background = if (onClick != null) pressable(ctx, rounded(Pal.CARD, Pal.LINE, dp(ctx, Tok.R_CARD).toFloat()), Tok.R_CARD)
+                       else rounded(Pal.CARD, Pal.LINE, dp(ctx, Tok.R_CARD).toFloat())
+        r.minimumHeight = dp(ctx, 64)
         r.setPadding(dp(ctx, 14), dp(ctx, 12), dp(ctx, 12), dp(ctx, 12))
         val tile = FrameLayout(ctx)
         tile.background = rounded(Pal.CARD2, Pal.LINE, dp(ctx, 12).toFloat())
@@ -526,9 +567,11 @@ object Ui {
             fun act(label: String, run: () -> Unit): TextView {
                 val a = TextView(ctx)
                 a.text = label
-                a.textSize = 12f
-                a.setTextColor(Color.parseColor("#B4B9D0"))
-                a.setPadding(dp(ctx, 6), dp(ctx, 8), dp(ctx, 12), dp(ctx, 6))
+                a.textSize = 13f
+                a.setTextColor(Color.parseColor(Pal.MUTED))
+                a.gravity = Gravity.CENTER_VERTICAL
+                a.minHeight = dp(ctx, Tok.MIN_TOUCH_DP)
+                a.setPadding(dp(ctx, 6), dp(ctx, 8), dp(ctx, 14), dp(ctx, 8))
                 a.setOnClickListener { run() }
                 return a
             }
