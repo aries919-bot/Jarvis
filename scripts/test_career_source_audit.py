@@ -6,6 +6,19 @@ p=Path(__file__).with_name("career_source_audit.py")
 spec=importlib.util.spec_from_file_location("career_source_audit",p); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
 
 class Tests(unittest.TestCase):
+    def test_every_source_has_browser_check_and_login_boundary_is_explicit(self):
+        rows=json.loads(mod.REGISTRY.read_text(encoding="utf-8"))["sources"]
+        self.assertEqual(20,len(rows))
+        for row in rows:
+            check=row.get("browserCheck")
+            self.assertIsInstance(check,dict)
+            self.assertEqual("2026-11-23",check.get("checkedAt"))
+            self.assertTrue(check.get("status"))
+            self.assertIn(check.get("loginRequired"),(True,False,None))
+        by_id={row["id"]:row for row in rows}
+        self.assertIs(True,by_id["edevlet"]["browserCheck"]["loginRequired"])
+        self.assertIsNone(by_id["ilan_gov"]["browserCheck"]["loginRequired"])
+
     def test_registry_20_unique_and_no_login_gated_boards(self):
         rows=json.loads(mod.REGISTRY.read_text(encoding="utf-8"))["sources"]; mod.validate(rows)
         self.assertEqual(20,len(rows)); self.assertEqual(len(rows),len({x["url"] for x in rows}))
