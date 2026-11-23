@@ -612,6 +612,7 @@ fun MediaSourceBrowser(
                         color = AriesText,
                         fontSize = 32.sp,
                         modifier = Modifier
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                             .clickable {
                                 if (activeSite != null) {
                                     siteView?.stopLoading()
@@ -639,7 +640,7 @@ fun MediaSourceBrowser(
                             "Ara",
                             color = AriesText,
                             fontSize = 16.sp,
-                            modifier = Modifier.clickable { startSearch(searchText) }.padding(8.dp)
+                            modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { startSearch(searchText) }.padding(8.dp)
                         )
                     } else {
                         Column(Modifier.weight(1f)) {
@@ -662,7 +663,7 @@ fun MediaSourceBrowser(
                         Text(
                             "Yenile",
                             color = AriesText,
-                            modifier = Modifier.clickable { siteView?.reload() }.padding(6.dp)
+                            modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { siteView?.reload() }.padding(6.dp)
                         )
                     }
                 }
@@ -881,7 +882,7 @@ private fun AriesWatchScreen(
                 "×",
                 color = AriesText,
                 fontSize = 34.sp,
-                modifier = Modifier.clickable { onBack() }.padding(end = 22.dp)
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { onBack() }.padding(end = 22.dp)
             )
             Text(
                 "Aries – Film ve Dizi",
@@ -952,6 +953,7 @@ private fun AriesWatchScreen(
                                     Modifier
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(if (selected) AriesWatchSel else AriesWatchChip)
+                                        .defaultMinSize(minHeight = 48.dp)
                                         .clickable { onSelectSource(source) }
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
                                 ) {
@@ -1161,7 +1163,7 @@ private fun AriesFallbackCard(title: String, note: String, onWatch: () -> Unit) 
             Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp)
-                .height(46.dp)
+                .height(48.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(AriesChip)
                 .clickable { onWatch() },
