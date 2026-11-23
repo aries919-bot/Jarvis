@@ -49,6 +49,25 @@ class FinanceDataTest {
     }
 
     @Test
+    fun offlineCachedMarketSnapshotIsAlwaysMarkedStale() {
+        val now = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
+        val json = """
+            {
+              "date":"2026-11-23",
+              "updated_at":"__NOW__",
+              "is_stale":false,
+              "sources":["truncgil"],
+              "try":{"xau_gram":{"bid":5700,"ask":5710,"source":"truncgil","updated_at":"__NOW__","stale":false}}
+            }
+        """.trimIndent().replace("__NOW__", now)
+        val offline = FinanceData.asOfflineSnapshot(FinanceData.parseTurkishMarket(json))
+        assertTrue(offline.stale)
+        assertTrue(offline.prices.all { it.stale })
+    }
+
+    @Test
     fun parsesFinnhubQuoteWithoutInventingMissingValues() {
         val quote = FinanceData.parseFinnhubQuote(
             "THYAO.IS",

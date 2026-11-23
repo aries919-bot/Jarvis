@@ -20,15 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.9'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Run independent build checks
@@ -50,7 +50,7 @@ jobs:
           fi
       - name: Upload static and unit-test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: aries-static-unit-qa
           path: |
@@ -78,15 +78,15 @@ jobs:
           - api-level: 35
             font-scale: "1.3"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.9'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Enable Android emulator hardware acceleration
@@ -119,7 +119,7 @@ jobs:
             sh -c 'set +e; mkdir -p qa-output/ui; adb shell settings put system font_scale "${{ matrix.font-scale }}"; adb shell settings put global window_animation_scale 0; adb shell settings put global transition_animation_scale 0; adb shell settings put global animator_duration_scale 0; gradle connectedDebugAndroidTest --no-daemon; TEST_EXIT=$?; adb pull "/sdcard/Download/AriesQA/aries-ui-audit-api-${{ matrix.api-level }}.zip" qa-output/ui/; PULL_EXIT=$?; unzip -q "qa-output/ui/aries-ui-audit-api-${{ matrix.api-level }}.zip" -d qa-output/ui/bundle; UNZIP_EXIT=$?; adb logcat -d -v threadtime > qa-output/logcat.txt; adb shell dumpsys activity activities > qa-output/activities.txt; adb shell dumpsys meminfo com.cem.jarvis > qa-output/meminfo.txt; adb shell dumpsys gfxinfo com.cem.jarvis > qa-output/gfxinfo.txt; printf "{\"instrumentationExit\":%s,\"evidencePullExit\":%s,\"evidenceUnzipExit\":%s,\"apiLevel\":%s}\\n" "$TEST_EXIT" "$PULL_EXIT" "$UNZIP_EXIT" "${{ matrix.api-level }}" > qa-output/emulator-status.json; python3 scripts/qa/build_qa_report.py --repo-root . --qa-dir qa-output --out-dir qa-output/report --api-level "${{ matrix.api-level }}"; REPORT_EXIT=$?; test "$TEST_EXIT" -eq 0 && test "$PULL_EXIT" -eq 0 && test "$UNZIP_EXIT" -eq 0 && test "$REPORT_EXIT" -eq 0'
       - name: Upload emulator evidence and full report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: aries-full-app-qa-android-${{ matrix.api-level }}-font-${{ matrix.font-scale }}
           path: |

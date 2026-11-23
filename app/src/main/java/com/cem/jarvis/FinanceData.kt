@@ -48,7 +48,8 @@ data class FinanceQuote(
     val change: Double?,
     val changePercent: Double?,
     val previousClose: Double?,
-    val timestampSeconds: Long
+    val timestampSeconds: Long,
+    val stale: Boolean = false
 )
 
 object FinanceData {
@@ -71,10 +72,13 @@ object FinanceData {
         Triple("gbp", "İngiliz sterlini", "TRY")
     )
 
-    fun fetchTurkishMarket(): TurkishMarketSnapshot {
-        val json = request(TURKEY_MARKET_URL)
-        return parseTurkishMarket(json)
-    }
+    fun fetchTurkishMarket(): TurkishMarketSnapshot =
+        parseTurkishMarket(fetchTurkishMarketPayload())
+
+    internal fun fetchTurkishMarketPayload(): String = request(TURKEY_MARKET_URL)
+
+    internal fun asOfflineSnapshot(snapshot: TurkishMarketSnapshot): TurkishMarketSnapshot =
+        snapshot.copy(stale = true, prices = snapshot.prices.map { it.copy(stale = true) })
 
     internal fun parseTurkishMarket(json: String): TurkishMarketSnapshot {
         val root = JSONObject(json)

@@ -29,7 +29,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
+private const val MARKET_CACHE_PREF = "finance_market_snapshot_v1"
+private const val QUOTE_CACHE_PREFIX = "finance_quote_cache_v1_"
 
 class FinanceActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
@@ -42,6 +47,10 @@ class FinanceActivity : Activity() {
     private lateinit var alertRows: LinearLayout
     private lateinit var apiKeyStatus: TextView
     private var latestMarket: TurkishMarketSnapshot? = null
+    private val ioExecutor: ExecutorService = Executors.newFixedThreadPool(3)
+    private var marketRequestId = 0
+    private var symbolSearchRequestId = 0
+    private var stocksRequestId = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +60,14 @@ class FinanceActivity : Activity() {
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         setContentView(buildScreen())
         refreshAll()
+    }
+
+    override fun onDestroy() {
+        marketRequestId++
+        symbolSearchRequestId++
+        stocksRequestId++
+        ioExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     private fun buildScreen(): ScrollView {
@@ -162,25 +179,43 @@ class FinanceActivity : Activity() {
     }
 
     private fun refreshMarket() {
-        if (!::marketStatus.isInitialized) return
-        marketStatus.text = "Altın ve döviz verisi alınıyor…"
-        Thread {
-            val result = runCatching { FinanceData.fetchTurkishMarket() }
+        if (!::marketStatus.isInitialized || isFinishing || isDestroyed) return
+        val requestId = ++marketRequestId
+        if (latestMarket == null) {
+            val cachedJson = prefs.getString(MARKET_CACHE_PREF, null).orEmpty()
+            if (cachedJson.isNotBlank()) {
+                val cached = runCatching {
+                    FinanceData.asOfflineSnapshot(FinanceData.parseTurkishMarket(cachedJson))
+                }.getOrNull()
+                if (cached != null) {
+                    latestMarket = cached
+                    renderMarket(cached, " · ÇEVRİMDIŞI ÖNBELLEK")
+                }
+            }
+        }
+        if (latestMarket == null) marketStatus.text = "Altın ve döviz verisi alınıyor…"
+        ioExecutor.execute {
+            val result = runCatching {
+                val payload = FinanceData.fetchTurkishMarketPayload()
+                FinanceData.parseTurkishMarket(payload) to payload
+            }
             runOnUiThread {
-                result.onSuccess {
-                    latestMarket = it
-                    renderMarket(it)
+                if (isFinishing || isDestroyed || requestId != marketRequestId) return@runOnUiThread
+                result.onSuccess { (snapshot, payload) ->
+                    latestMarket = snapshot
+                    prefs.edit().putString(MARKET_CACHE_PREF, payload).apply()
+                    renderMarket(snapshot)
                 }.onFailure { error ->
                     val cached = latestMarket
                     marketStatus.text = if (cached == null) {
                         "Veri alınamadı: " + safeError(error)
                     } else {
-                        "Yenileme başarısız. Son başarılı veri gösteriliyor; güncelliğini kontrol et."
+                        "Yenileme başarısız. Kayıtlı fiyat gösteriliyor; eski olabilir."
                     }
-                    if (cached != null) renderMarket(cached, " · SON BAŞARILI VERİ")
+                    if (cached != null) renderMarket(cached, " · ÖNBELLEK / ESKİ OLABİLİR")
                 }
             }
-        }.start()
+        }
     }
 
     private fun renderMarket(snapshot: TurkishMarketSnapshot, suffix: String = "") {
@@ -246,6 +281,7 @@ class FinanceActivity : Activity() {
     }
 
     private fun searchSymbols() {
+        val requestId = ++symbolSearchRequestId
         val key = FinanceKeyStore.read(this)
         val query = symbolInput.text.toString().trim()
         if (key.isBlank()) {
@@ -259,9 +295,10 @@ class FinanceActivity : Activity() {
         }
         lookupRows.removeAllViews()
         lookupRows.addView(Ui.text(this, "Semboller aranıyor…", 12f, Pal.MUTED))
-        Thread {
+        ioExecutor.execute {
             val result = runCatching { FinanceData.searchFinnhubSymbols(query, key) }
             runOnUiThread {
+                if (isFinishing || isDestroyed || requestId != symbolSearchRequestId) return@runOnUiThread
                 lookupRows.removeAllViews()
                 result.onSuccess { candidates ->
                     if (candidates.isEmpty()) {
@@ -287,11 +324,12 @@ class FinanceActivity : Activity() {
                     lookupRows.addView(Ui.text(this, safeError(error), 12f, Pal.AMBER))
                 }
             }
-        }.start()
+        }
     }
 
     private fun refreshStocks() {
-        if (!::stockRows.isInitialized) return
+        if (!::stockRows.isInitialized || isFinishing || isDestroyed) return
+        val requestId = ++stocksRequestId
         stockRows.removeAllViews()
         val watch = Store(this).watch().distinct().take(12)
         val key = FinanceKeyStore.read(this)
@@ -305,22 +343,59 @@ class FinanceActivity : Activity() {
             return
         }
         stockRows.addView(Ui.text(this, "Hisse fiyatları alınıyor…", 12f, Pal.MUTED))
-        Thread {
+        ioExecutor.execute {
             val results = watch.map { symbol ->
                 symbol to runCatching { FinanceData.fetchFinnhubQuote(symbol, key) }
             }
             runOnUiThread {
+                if (isFinishing || isDestroyed || requestId != stocksRequestId) return@runOnUiThread
                 stockRows.removeAllViews()
                 results.forEach { (symbol, result) ->
                     result.onSuccess { quote ->
+                        saveQuoteCache(quote)
                         stockRows.addView(quoteRow(quote), margins(bottom = 7))
                     }.onFailure { error ->
-                        stockRows.addView(errorQuoteRow(symbol, safeError(error)), margins(bottom = 7))
+                        val cached = readQuoteCache(symbol)
+                        if (cached != null) {
+                            stockRows.addView(quoteRow(cached, " · ÖNBELLEK"), margins(bottom = 7))
+                        } else {
+                            stockRows.addView(errorQuoteRow(symbol, safeError(error)), margins(bottom = 7))
+                        }
                     }
                 }
             }
-        }.start()
+        }
     }
+
+    private fun quoteCacheKey(symbol: String): String =
+        QUOTE_CACHE_PREFIX + symbol.uppercase(Locale.ROOT)
+
+    private fun saveQuoteCache(quote: FinanceQuote) {
+        val json = JSONObject()
+            .put("symbol", quote.symbol)
+            .put("current", quote.current)
+            .put("change", quote.change)
+            .put("changePercent", quote.changePercent)
+            .put("previousClose", quote.previousClose)
+            .put("timestampSeconds", quote.timestampSeconds)
+        prefs.edit().putString(quoteCacheKey(quote.symbol), json.toString()).apply()
+    }
+
+    private fun readQuoteCache(symbol: String): FinanceQuote? = runCatching {
+        val raw = prefs.getString(quoteCacheKey(symbol), null) ?: return null
+        val json = JSONObject(raw)
+        val current = json.optDouble("current", Double.NaN)
+        if (!current.isFinite() || current <= 0.0) return null
+        FinanceQuote(
+            symbol = json.optString("symbol", symbol),
+            current = current,
+            change = json.optDouble("change", Double.NaN).takeIf { it.isFinite() },
+            changePercent = json.optDouble("changePercent", Double.NaN).takeIf { it.isFinite() },
+            previousClose = json.optDouble("previousClose", Double.NaN).takeIf { it.isFinite() && it > 0.0 },
+            timestampSeconds = json.optLong("timestampSeconds", 0L),
+            stale = true
+        )
+    }.getOrNull()
 
     private fun watchOnlyRow(symbol: String): android.view.View {
         val row = Ui.row(this)
@@ -342,9 +417,9 @@ class FinanceActivity : Activity() {
         labels.addView(
             Ui.text(
                 this,
-                quoteTimeLabel(quote.timestampSeconds),
+                quoteTimeLabel(quote.timestampSeconds, quote.stale),
                 10f,
-                if (quoteIsStale(quote.timestampSeconds)) Pal.AMBER else Pal.MUTED
+                if (quoteIsStale(quote.timestampSeconds, quote.stale)) Pal.AMBER else Pal.MUTED
             )
         )
         top.addView(labels, LinearLayout.LayoutParams(0, -2, 1f))
@@ -370,7 +445,7 @@ class FinanceActivity : Activity() {
             "Günlük değişim: " + (quote.change?.let { "%+.2f".format(Locale.US, it) } ?: "yok") + "\n" +
             "Değişim yüzdesi: " + (quote.changePercent?.let { "%+.2f%%".format(Locale.US, it) } ?: "yok") + "\n" +
             "Önceki kapanış: " + (quote.previousClose?.let { formatTry(it) } ?: "yok") + "\n" +
-            "Veri zamanı: " + quoteTimeLabel(quote.timestampSeconds) + "\n\n" +
+            "Veri zamanı: " + quoteTimeLabel(quote.timestampSeconds, quote.stale) + "\n\n" +
             "Kaynak: Finnhub. Bu bilgi yatırım tavsiyesi değildir; fiyat gecikmeli olabilir."
         AlertDialog.Builder(this).setTitle(quote.symbol).setMessage(message)
             .setPositiveButton("Kapat", null).show()
@@ -442,17 +517,17 @@ class FinanceActivity : Activity() {
         else -> source.uppercase(Locale("tr", "TR"))
     }
 
-    private fun quoteIsStale(seconds: Long): Boolean {
-        if (seconds <= 0L) return true
+    private fun quoteIsStale(seconds: Long, forcedStale: Boolean = false): Boolean {
+        if (forcedStale || seconds <= 0L) return true
         val age = System.currentTimeMillis() - seconds * 1000L
         return age > TimeUnit.HOURS.toMillis(24) || age < -TimeUnit.MINUTES.toMillis(5)
     }
 
-    private fun quoteTimeLabel(seconds: Long): String {
+    private fun quoteTimeLabel(seconds: Long, forcedStale: Boolean = false): String {
         if (seconds <= 0L) return "Veri zamanı sağlayıcı tarafından verilmedi"
         val time = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
             .format(Date(seconds * 1000L))
-        return if (quoteIsStale(seconds)) "Eski/veri zamanı şüpheli · " + time else "Veri zamanı · " + time
+        return if (quoteIsStale(seconds, forcedStale)) "Eski / önbellek verisi · " + time else "Veri zamanı · " + time
     }
 
     private fun formatIso(value: String): String {

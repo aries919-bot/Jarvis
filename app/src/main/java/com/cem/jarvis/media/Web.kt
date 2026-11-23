@@ -15,6 +15,7 @@ import android.widget.FrameLayout
 import android.net.Uri
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.RenderProcessGoneDetail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -142,7 +143,21 @@ fun WebDialog(query: String, onClose: () -> Unit) {
                         settings.domStorageEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = false
                         webViewClient = object : WebViewClient() {
-                            override fun onPageFinished(v: WebView?, url: String?) { if (url != null) text = url }
+                            override fun onPageFinished(v: WebView?, url: String?) {
+                                if (url != null) text = url
+                            }
+
+                            override fun onRenderProcessGone(
+                                view: WebView,
+                                detail: RenderProcessGoneDetail
+                            ): Boolean {
+                                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                                view.stopLoading()
+                                view.destroy()
+                                wv = null
+                                text = "Web sayfası beklenmedik şekilde kapandı. Yeniden dene."
+                                return true
+                            }
                         }
                         webChromeClient = object : WebChromeClient() {
                             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) { custom = view; cbk = callback }

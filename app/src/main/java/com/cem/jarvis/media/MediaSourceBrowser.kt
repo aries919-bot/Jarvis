@@ -17,6 +17,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.RenderProcessGoneDetail
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -1543,6 +1544,18 @@ private fun createAriesSearchWebView(
                 """.trimIndent()
                 view.evaluateJavascript(js, null)
             }
+
+            override fun onRenderProcessGone(
+                view: WebView,
+                detail: RenderProcessGoneDetail
+            ): Boolean {
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                view.stopLoading()
+                view.destroy()
+                onLoading(false)
+                onStatus("Arama motoru sekmesi kapandı. Geri dönüp yeniden ara.")
+                return true
+            }
         }
     }
 }
@@ -1890,6 +1903,18 @@ private fun createAriesSiteWebView(
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val scheme = request?.url?.scheme ?: return false
                 return scheme != "http" && scheme != "https"
+            }
+
+            override fun onRenderProcessGone(
+                view: WebView,
+                detail: RenderProcessGoneDetail
+            ): Boolean {
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                view.stopLoading()
+                view.destroy()
+                onLoading(false)
+                onStatus("Video kaynağının web sayfası kapandı. Kaynak listesinden tekrar aç.")
+                return true
             }
         }
     }
