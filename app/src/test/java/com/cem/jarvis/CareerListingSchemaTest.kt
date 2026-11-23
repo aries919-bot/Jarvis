@@ -87,6 +87,16 @@ class CareerListingSchemaTest {
         CareerListingSchemaParser.parse("{not-json}", page, url, 10L, false)
     }
 
+    @Test(expected = Exception::class)
+    fun emptyAiResponseFailsClosed() {
+        CareerListingSchemaParser.parse("", page, url, 10L, false)
+    }
+
+    @Test(expected = Exception::class)
+    fun providerErrorTextCannotBeMistakenForListingData() {
+        CareerListingSchemaParser.parse("401 invalid API key", page, url, 10L, false)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rejectsHttpOrUnsafeSourceUrls() {
         CareerListingSchemaParser.parse(validAiJson(), page, "http://example.gov.tr/ilan", 10L, false)
@@ -131,6 +141,49 @@ class CareerListingSchemaTest {
         assertTrue(safe.contains("[TELEFON]"))
         assertTrue(safe.contains("[KIMLIK NUMARASI]"))
         assertTrue(safe.contains("[IBAN]"))
+    }
+
+    @Test
+    fun pagePolicyRejectsIpLiteralsAndPrivateNetworkHostnames() {
+        listOf(
+            "https://127.0.0.1/ilan",
+            "https://127.1/ilan",
+            "https://10.0.0.5/ilan",
+            "https://192.168.1.10/ilan",
+            "https://169.254.1.2/ilan",
+            "https://2130706433/ilan",
+            "https://0x7f000001/ilan",
+            "https://[::1]/ilan",
+            "https://print-server.local/ilan",
+            "https://admin.internal/ilan",
+            "https://intranet/ilan"
+        ).forEach { candidate ->
+            assertTrue("Adres engellenmeliydi: $candidate", CareerListingPagePolicy.validateHttpsUrl(candidate) != null)
+        }
+        assertEquals(null, CareerListingPagePolicy.validateHttpsUrl(url))
+    }
+
+    @Test
+    fun pagePolicyBlocksCrossOriginAndInsecureRedirects() {
+        assertEquals(
+            null,
+            CareerListingPagePolicy.validateNavigationUrl(
+                url,
+                "https://personel.example.gov.tr/ilan/yeni"
+            )
+        )
+        assertTrue(
+            CareerListingPagePolicy.validateNavigationUrl(
+                url,
+                "https://login.example.net/redirect"
+            ) != null
+        )
+        assertTrue(
+            CareerListingPagePolicy.validateNavigationUrl(
+                url,
+                "http://personel.example.gov.tr/ilan"
+            ) != null
+        )
     }
 
     @Test

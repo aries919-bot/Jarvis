@@ -1201,12 +1201,12 @@ class CareerActivity : Activity() {
             setPadding(dp(12), dp(8), dp(12), dp(8))
         }
         val explanation = label(
-            "Bu sayfa yalnızca sen dokunduğun için açılıyor. İçerik okununca herkese açık ilan alanları çıkarılır; CV veya profil bilgisi yapay zekâya gönderilmez.",
+            "Kaynak sayfa yalnızca senin isteğinle açılır. Önce metin cihazda okunur; AI'ya gönderim için ayrıca onay istenir. Onay verirsen maskelenmiş sayfa metni Ayarlar'da kayıtlı AI sağlayıcılarına gönderilebilir. Kaynak URL AI istemine eklenmez. CV/profil bilgilerin gönderilmez. Maskeleme her kişisel veriyi bulmayı garanti etmez.",
             12f, false, muted
         )
         val statusView = label("Kaynak sayfa açılıyor…", 12f, true, accentBlue)
         val webView = WebView(this)
-        val readButton = button("Sayfa metnini oku ve alanları çıkar") { }
+        val readButton = button("Sayfa metnini oku · cihazda") { }
         readButton.isEnabled = false
         container.addView(explanation)
         container.addView(statusView)
@@ -1228,16 +1228,53 @@ class CareerActivity : Activity() {
             cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         }
         webView.webChromeClient = android.webkit.WebChromeClient()
+        android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.settings.safeBrowsingEnabled = true
+        }
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: android.webkit.WebResourceRequest
+            ): android.webkit.WebResourceResponse? {
+                // Block private/IP/cleartext resources too, not only top-level navigation.
+                // This protects the user-triggered page reader from obvious local-network probes.
+                val blocked = CareerListingPagePolicy.validateHttpsUrl(request.url.toString())
+                if (blocked != null) {
+                    return android.webkit.WebResourceResponse(
+                        "text/plain",
+                        "utf-8",
+                        java.io.ByteArrayInputStream(ByteArray(0))
+                    )
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 request: android.webkit.WebResourceRequest
             ): Boolean {
-                return !request.url.scheme.equals("https", ignoreCase = true)
+                if (!request.isForMainFrame) return false
+                val blocked = CareerListingPagePolicy.validateNavigationUrl(hit.url, request.url.toString())
+                if (blocked != null) {
+                    pageError = blocked
+                    statusView.text = blocked
+                    readButton.isEnabled = false
+                    return true
+                }
+                return false
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                val blocked = CareerListingPagePolicy.validateNavigationUrl(hit.url, url)
+                if (blocked != null) {
+                    pageError = blocked
+                    readButton.isEnabled = false
+                    statusView.text = blocked
+                    view.stopLoading()
+                    return
+                }
                 httpStatus = null
                 pageError = null
                 readButton.isEnabled = false
@@ -1341,7 +1378,7 @@ class CareerActivity : Activity() {
                 appendLine("Yalnız geçerli JSON döndür; açıklama, markdown veya kod bloğu ekleme.")
                 appendLine("ŞEMA:")
                 appendLine("""{"employer":{"value":"","evidence":""},"position":{"value":"","evidence":""},"province":{"value":"","evidence":""},"recruitmentMethod":{"value":"","evidence":""},"kpssScoreType":{"value":"","evidence":""},"qualificationCodes":{"value":"","evidence":""},"quota":{"value":"","evidence":""},"conditions":{"value":"","evidence":""},"deadline":{"value":"","evidence":""}}""")
-                appendLine("KAYNAK URL (yeni bilgi üretmek için kullanma): " + sourceUrl)
+                appendLine("Kaynak URL modele gönderilmez; yalnızca uygulamadaki rapora kaydedilir.")
                 appendLine("SAYFA METNİ BAŞLANGICI — GÜVENİLMEYEN VERİ")
                 appendLine(pageText)
                 appendLine("SAYFA METNİ SONU")
@@ -1362,6 +1399,7 @@ class CareerActivity : Activity() {
             ).report()
         }
 
+        lateinit var pageDialog: AlertDialog
         readButton.setOnClickListener {
             if (httpStatus?.let { it !in 200..299 } == true) {
                 statusView.text = CareerListingPagePolicy.inspect(httpStatus, "", "").message
@@ -1400,35 +1438,78 @@ class CareerActivity : Activity() {
                     return@evaluateJavascript
                 }
                 val safePageText = CareerListingPagePolicy.sanitizeForAi(check.text)
-                statusView.text = "Metin alındı; e-posta/telefon/kimlik/IBAN maskelendi. AI yalnızca kalan kaynak kanıtlarını kullanıyor…"
-                Thread {
-                    val report = runCatching {
-                        extractWithAi(safePageText, finalUrl, check.truncated)
-                    }.getOrElse {
-                        "Alan çıkarımı yapılamadı: " + (it.message ?: "AI veya JSON yanıtı hatası") +
-                            "\n\nKaynak sayfa açılmış olabilir; giriş/CAPTCHA kontrolü aşılmamış ve alanlar doğrulanmış sayılmamıştır."
+                val configuredProviders = listOf("bulut", "groq", "gemini", "mistral")
+                    .filter { provider ->
+                        val preferenceKey = when (provider) {
+                            "bulut" -> "bulut"
+                            "groq" -> "groq"
+                            "gemini" -> "key"
+                            else -> "mistral"
+                        }
+                        prefs.getString(preferenceKey, "").orEmpty().isNotBlank()
                     }
-                    runOnUiThread {
-                        if (isFinishing) return@runOnUiThread
-                        statusView.text = "İşlem tamamlandı. Kaynak sayfa kanıt raporu hazır."
-                        readButton.isEnabled = true
-                        showReport(report)
+                if (configuredProviders.isEmpty()) {
+                    statusView.text = "AI sağlayıcısı ayarlanmamış. Metin cihazda kaldı; hiçbir yere gönderilmedi."
+                    readButton.isEnabled = true
+                    return@evaluateJavascript
+                }
+
+                val disclosure = buildString {
+                    appendLine("Bu işlem, sayfanın maskelenmiş metnini AI hizmetine gönderir. Kaynak bağlantısı yalnızca cihazdaki raporda saklanır; AI isteğine eklenmez.")
+                    appendLine()
+                    appendLine("Kullanılabilecek sağlayıcılar (sırayla):")
+                    appendLine(configuredProviders.joinToString(" → ") { Ai.displayName(it) })
+                    appendLine("Bir sağlayıcı hata verirse aynı içerik listedeki sonraki sağlayıcıya gönderilebilir.")
+                    appendLine()
+                    appendLine("Gönderilecek metin: " + safePageText.length + " karakter.")
+                    appendLine("E-posta, telefon, 11 haneli kimlik numarası ve IBAN biçimleri maskelenir; tüm kişisel verilerin bulunması garanti değildir.")
+                    appendLine("CV ve profil bilgisi bu isteğe eklenmez.")
+                    if (check.truncated) appendLine("UYARI: Sayfa metni 24.000 karakter sınırında kesildi; sonuçlar eksik olabilir.")
+                    appendLine()
+                    append("Onay vermiyorsan gönderim yapılmaz.")
+                }
+                statusView.text = "Sayfa metni cihazda hazır. AI'ya gönderim için ayrıca onay bekleniyor."
+                readButton.isEnabled = true
+                AlertDialog.Builder(this)
+                    .setTitle("Sayfa metni AI'ya gönderilsin mi?")
+                    .setMessage(disclosure)
+                    .setNegativeButton("Gönderme") { _, _ ->
+                        statusView.text = "Gönderim iptal edildi. Sayfa metni cihazdan gönderilmedi."
                     }
-                }.start()
+                    .setPositiveButton("Onayla ve alanları çıkar") { _, _ ->
+                        if (!pageDialog.isShowing || isFinishing) return@setPositiveButton
+                        readButton.isEnabled = false
+                        statusView.text = "Onaylandı. Kaynak alanları AI ile çıkarılıyor…"
+                        Thread {
+                            val report = runCatching {
+                                extractWithAi(safePageText, finalUrl, check.truncated)
+                            }.getOrElse {
+                                "Alan çıkarımı yapılamadı: " + (it.message ?: "AI veya JSON yanıtı hatası") +
+                                    "\n\nKaynak sayfa açılmış olabilir; giriş/CAPTCHA kontrolü aşılmamış ve alanlar doğrulanmış sayılmamıştır."
+                            }
+                            runOnUiThread {
+                                if (isFinishing || isDestroyed || !pageDialog.isShowing) return@runOnUiThread
+                                statusView.text = "İşlem tamamlandı. Kaynak sayfa kanıt raporu hazır."
+                                readButton.isEnabled = true
+                                showReport(report)
+                            }
+                        }.start()
+                    }
+                    .show()
             }
         }
 
-        val dialog = AlertDialog.Builder(this)
+        pageDialog = AlertDialog.Builder(this)
             .setTitle("Aries · ilan kaynağı")
             .setView(container)
             .setNegativeButton("Kapat", null)
             .create()
-        dialog.setOnDismissListener {
+        pageDialog.setOnDismissListener {
             webView.stopLoading()
             webView.loadUrl("about:blank")
             webView.destroy()
         }
-        dialog.show()
+        pageDialog.show()
         webView.loadUrl(hit.url)
     }
 

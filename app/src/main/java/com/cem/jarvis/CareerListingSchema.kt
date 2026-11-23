@@ -199,10 +199,31 @@ object CareerListingPagePolicy {
         if (!uri.scheme.equals("https", ignoreCase = true)) return "Güvenlik nedeniyle yalnız HTTPS kaynaklar açılabilir."
         if (uri.host.isNullOrBlank() || uri.rawUserInfo != null) return "Kaynak adresi geçerli değil."
         if (uri.port != -1 && uri.port != 443) return "Standart dışı bağlantı noktası engellendi."
-        val host = uri.host.lowercase(Locale.ROOT)
-        if (host == "localhost" || host.endsWith(".localhost") || host.endsWith(".local") ||
-            host == "127.0.0.1" || host == "::1"
-        ) return "Yerel ağ adresleri kaynak olarak açılamaz."
+
+        val host = uri.host.lowercase(Locale.ROOT).trimEnd('.')
+        val numericAddress = Regex("(?i)^(?:[0-9]+|0x[0-9a-f]+)(?:\\.(?:[0-9]+|0x[0-9a-f]+))*$")
+            .matches(host)
+        val blockedSuffixes = listOf(
+            ".localhost", ".local", ".internal", ".lan", ".home",
+            ".test", ".invalid", ".example", ".onion", ".arpa"
+        )
+        if (host.contains(':') || numericAddress || !host.contains('.') ||
+            host == "localhost" || blockedSuffixes.any(host::endsWith)
+        ) {
+            return "Yerel ağ, IP adresi veya özel alan adı kaynak olarak açılamaz."
+        }
+        return null
+    }
+
+    /** Only same-origin HTTPS top-level navigation is allowed inside the fallback WebView. */
+    fun validateNavigationUrl(sourceUrl: String, targetUrl: String): String? {
+        validateHttpsUrl(sourceUrl)?.let { return it }
+        validateHttpsUrl(targetUrl)?.let { return it }
+        val sourceHost = runCatching { URI(sourceUrl.trim()).host?.lowercase(Locale.ROOT)?.trimEnd('.') }.getOrNull()
+        val targetHost = runCatching { URI(targetUrl.trim()).host?.lowercase(Locale.ROOT)?.trimEnd('.') }.getOrNull()
+        if (sourceHost.isNullOrBlank() || targetHost.isNullOrBlank() || sourceHost != targetHost) {
+            return "Güvenlik nedeniyle kaynak sayfanın başka bir alan adına yönlendirmesi engellendi."
+        }
         return null
     }
 
