@@ -26,22 +26,26 @@ import android.widget.TextView
 // RENKLER: Tema değiştirmek istediğinde yalnızca bu bloğu düzenle.
 // ============================================================
 object Pal {
-    const val BG = "#0A111A"          // derin lacivert ana zemin
-    const val CARD = "#111D2A"        // temel yüzey
-    const val CARD2 = "#18283A"       // yükseltilmiş yüzey / giriş
-    const val RAISED = "#21364A"      // seçili / üst katman
-    const val LINE = "#2C4054"        // ince kenar
-    const val TEXT = "#F3F7FC"        // ana metin
-    const val MUTED = "#A5B6C8"       // ikincil metin
-    const val WHITE = "#FFFFFF"       // ses küresi / yüksek vurgu
-    const val ACCENT = "#58D6CC"      // Aries turkuazı
-    const val ON_ACCENT = "#062522"   // turkuaz üzeri metin
-    const val ACCENT_SOFT = "#163C40" // seçili durum zemini
-    const val BUBBLE_ME = "#173746"   // kullanıcı mesajı
-    const val GREEN = "#55D6A5"       // başarılı işlem
-    const val RED = "#FF7777"         // hata / durdur
-    const val AMBER = "#F4C36A"       // dikkat
-    const val BLUE = "#83C5F4"        // bilgi
+    /** Shared by native Views and Compose. Set before the screen is constructed. */
+    @Volatile var lightMode: Boolean = false
+    private fun pick(dark: String, light: String): String = if (lightMode) light else dark
+
+    val BG get() = pick("#0A111A", "#F3F7FB")
+    val CARD get() = pick("#111D2A", "#FFFFFF")
+    val CARD2 get() = pick("#18283A", "#EAF0F5")
+    val RAISED get() = pick("#21364A", "#DCE6ED")
+    val LINE get() = pick("#2C4054", "#CAD5DE")
+    val TEXT get() = pick("#F3F7FC", "#1A2C39")
+    val MUTED get() = pick("#A5B6C8", "#526779")
+    val WHITE get() = pick("#FFFFFF", "#1A2C39")
+    val ACCENT get() = pick("#58D6CC", "#0B786F")
+    val ON_ACCENT get() = pick("#062522", "#FFFFFF")
+    val ACCENT_SOFT get() = pick("#163C40", "#D8F1ED")
+    val BUBBLE_ME get() = pick("#173746", "#DCECF2")
+    val GREEN get() = pick("#55D6A5", "#1F835C")
+    val RED get() = pick("#FF7777", "#B42334")
+    val AMBER get() = pick("#F4C36A", "#946200")
+    val BLUE get() = pick("#83C5F4", "#1C6095")
 }
 
 object Tok {
@@ -154,7 +158,8 @@ class HoloView(c: Context) : View(c) {
         if (level > 0.01f) level *= 0.88f else level = 0f
         val lv = level.toDouble()
         val u = r * 0.82f * sc * (1f + level * 0.1f)
-        val col = if (state == 3) Color.parseColor(Pal.GREEN) else Color.WHITE
+        val col = Color.parseColor(if (state == 3) Pal.GREEN else Pal.WHITE)
+        lineP.color = Color.parseColor(Pal.WHITE)
         val ds = maxOf(1.3f, r * 0.009f) * dotScale
         val rot = t * 0.5
         val cr = Math.cos(rot)
@@ -279,7 +284,7 @@ class WaveView(c: Context) : View(c) {
         p.color = when (state) {
             1, 2 -> Color.parseColor(Pal.WHITE)
             3 -> Color.parseColor(Pal.GREEN)
-            else -> Color.parseColor("#5F6368")
+            else -> Color.parseColor(Pal.MUTED)
         }
         val mid = height / 2f
         for (i in 0 until bars) {
@@ -497,7 +502,7 @@ object Ui {
         val sw = Switch(ctx)
         val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
         sw.thumbTintList = ColorStateList(states, intArrayOf(Color.parseColor(Pal.GREEN), Color.parseColor(Pal.MUTED)))
-        sw.trackTintList = ColorStateList(states, intArrayOf(Color.parseColor("#14614A"), Color.parseColor(Pal.CARD2)))
+        sw.trackTintList = ColorStateList(states, intArrayOf(Color.parseColor(Pal.ACCENT_SOFT), Color.parseColor(Pal.CARD2)))
         sw.isChecked = checked
         val l = CompoundButton.OnCheckedChangeListener { _, b -> onChange(b) }
         sw.setOnCheckedChangeListener(l)
@@ -526,13 +531,13 @@ object Ui {
         tv.setTextIsSelectable(true)
         tv.maxWidth = (ctx.resources.displayMetrics.widthPixels * 0.84f).toInt()
         if (sys) {
-            tv.setTextColor(Color.parseColor("#B4B9D0"))
+            tv.setTextColor(Color.parseColor(Pal.MUTED))
             lp.gravity = android.view.Gravity.CENTER_HORIZONTAL
         } else {
-            tv.setTextColor(Color.parseColor("#FFFFFF"))
+            tv.setTextColor(Color.parseColor(Pal.TEXT))
             val bg = android.graphics.drawable.GradientDrawable()
             bg.cornerRadius = dp(ctx, 18).toFloat()
-            bg.setColor(Color.parseColor(if (me) "#3B3F8C" else "#1A1E28"))
+            bg.setColor(Color.parseColor(if (me) Pal.BUBBLE_ME else Pal.CARD2))
             tv.background = bg
             tv.setPadding(dp(ctx, 14), dp(ctx, 10), dp(ctx, 14), dp(ctx, 10))
         }
@@ -543,7 +548,7 @@ object Ui {
                 val a = TextView(ctx)
                 a.text = label
                 a.textSize = 12f
-                a.setTextColor(Color.parseColor("#B4B9D0"))
+                a.setTextColor(Color.parseColor(Pal.MUTED))
                 a.setPadding(dp(ctx, 6), dp(ctx, 8), dp(ctx, 12), dp(ctx, 6))
                 a.setOnClickListener { run() }
                 return a
@@ -565,18 +570,18 @@ object Ui {
                 val big = TextView(ctx)
                 big.text = text
                 big.textSize = 26f
-                big.setTextColor(Color.WHITE)
+                big.setTextColor(Color.parseColor(Pal.TEXT))
                 big.setPadding(dp(ctx, 20), dp(ctx, 20), dp(ctx, 20), dp(ctx, 20))
                 big.setTextIsSelectable(true)
                 val sv = android.widget.ScrollView(ctx)
-                sv.setBackgroundColor(Color.parseColor("#12151C"))
+                sv.setBackgroundColor(Color.parseColor(Pal.BG))
                 sv.addView(big)
                 android.app.AlertDialog.Builder(ctx).setView(sv).setPositiveButton("Kapat", null).show()
             })
             if (onSpeak != null) row.addView(act("Oku") { onSpeak() })
             if (onVote != null) {
                 val vk = text.hashCode()
-                val gri = "#B4B9D0"
+                val gri = Pal.MUTED
                 val up = icon(ctx, "jup", 18, if (oyDurum[vk] == 1) Pal.WHITE else gri)
                 val dn = icon(ctx, "jdown", 18, if (oyDurum[vk] == 0) Pal.WHITE else gri)
                 up.setPadding(dp(ctx, 10), dp(ctx, 8), dp(ctx, 10), dp(ctx, 6))
