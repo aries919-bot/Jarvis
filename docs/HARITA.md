@@ -18,7 +18,7 @@
 | K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
 | A2 Material 3 Expressive tüm uygulama | PR AÇIK | PR #25; push CI 45169532073 SUCCESS, PR CI 45169541324 FAILED (:app:checkDebugAarMetadata, path null); PR merge-test hatası araştırılmalı, bağımsız hakem gerekli. |
-| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26, base `is/a2-expressive-theme`. Hafıza HEAD `3a832bb` CI 45172217759/45172210304 SUCCESS (6 JVM test + APK). Streaming eklendi: Groq/Mistral OpenAI uyumlu SSE, Gemini streamGenerateContent SSE, kademeli JSON `reply` UI balonu. Bulut Worker SSE doğrulanmadı; tam yanıt fallback. HEAD `024681a` (stream parser refactor) PR CI 45173632685 + push CI 45173625550 SUCCESS (parser/unit tests + debug APK). Son ek HEAD `d9f5234` için PR/push CI 45174119037/45174112253 sürüyor; SSE line parser, HTTP 408 geçici hata sınıflandırması ve API error regresyonları eklendi. |
+| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | DEVAM | PR #26, base `is/a2-expressive-theme`; HEAD `79b30b6`. Yerel hafıza kontrolleri ve gizlilik varsayılanları tamamlandı. Groq/Mistral/Gemini SSE + kademeli JSON yanıt, kesilen akışta kısmi yanıt koruma, SSE line parser, 408/429/5xx ve 401/403 sınıflandırması eklendi. Son PR/push CI 45174616897/45174607364: birim testleri SUCCESS, APK aşaması sürüyor. Worker SSE ve gerçek sağlayıcı anahtarları/telefon denemesi doğrulanmadı. |
 | C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
 | C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
@@ -35,18 +35,14 @@
 - PR #24 yazarı bu oturumdaki hakemle aynı çalışma hattı; bu hakem kendi yamayı ONAYLAYAMAZ veya merge edemez. Bağımsız insan incelemesi gereklidir.
 
 ## Son 10 kayıt
-1. K1 için 20 kaynaklık liste ve ücretsiz kaynak sağlık probe'u eklendi.
-2. QA Türkçe T.C. normalizasyon hash hatasını buldu; düzeltildi.
-3. QA Türkçe ay adı tarih penceresi hatasını buldu; düzeltildi ve regresyon testi eklendi.
-4. TGA detay okuyucu eklendi.
-5. Rapor 5 okuyucu / 3 aktif detay kaynak olarak ayrıştırıldı.
-6. K1 PR #24 HEAD be740a3; 20 kaynağın browserCheck/login durumu kayıtlı, PR/push CI SUCCESS, artifact 20/12/6 (3 detay + 3 indeks). K1 bağımsız hakem bekliyor.
-7. Bu turda kod PR'ı merge edilmedi.
-8. Mevcut Android kariyer taraması hâlâ Worker endpoint + cihazda arama motoru HTML fallback kullanıyor; C1 bunu kaldıracak.
-9. Eski #22/#23/#18/#17 tabanları main ile farklı; otomatik birleştirilmeyecek.
-10. K1'de indeks öz-bağlantısı/sonuç yanlış pozitifleri düzeltildi, TUSAŞ/ROKETSAN programları ayrıldı, TEI HTTP 403 manual_only, yönlendirme aynı HTTPS hostla sınırlandı, 20 kaynağın browserCheck durumu test edildi. Sonraki: K1 için bağımsız insan hakem onayı.
-11. A1 iki ekran tasarımı Cem tarafından onaylandı. A2 PR #25 açıldı; push CI SUCCESS, PR merge-test FAILED (:app:checkDebugAarMetadata, path null). Sonraki: PR CI farkını araştır.
-12. B1 PR #26 A2 üzerine merge edildi; PR farkı B1 dosyalarıyla sınırlı. Hafıza kontrolleri Ayarlar'da, notlar yerel, bulut paylaşımı varsayılan kapalı ve silme onaylı. HEAD 3a832bb CI 45172217759/45172210304 SUCCESS (6 JVM testi + APK).
-13. B1 streaming eklendi: SSE transport, OpenAI-compatible Groq/Mistral chunk parser, Gemini streamGenerateContent parser, `reply` partial JSON decoder, UI geçici yanıt balonu. İlk parser CI'si Android `org.json` JVM stub'ları nedeniyle iki testte başarısız oldu; saf Kotlin parser'a dönüştürüldü, ek regresyon testleri eklendi. HEAD 024681a CI 45173632685/45173625550 bekleniyor.
-
-**SONRAKİ ADIM:** B1 HEAD d9f5234 PR/push CI'ını tamamla; gerekirse düzelt. Sonra 3 canlı sağlayıcıda akış, 401/429/408 ve boş/yarım SSE davranışını test et; cihazda sesli ve yazılı kullanım doğrula.
+1. K1 için 20 resmî/kurumsal kaynak ve ücretsiz kaynak sağlık probe'u eklendi.
+2. QA Türkçe T.C. normalizasyon hash hatası bulundu ve düzeltildi.
+3. Türkçe ay adı tarih penceresi regresyonu eklendi.
+4. TGA detay okuyucusu eklendi; okuyucu/indeks sayıları ayrıştırıldı.
+5. K1 PR #24: 20 kaynak matrisi, browser/login durumları ve canlı QA raporu; bağımsız inceleme bekliyor.
+6. A1 iki ekran tasarımı Cem tarafından onaylandı.
+7. A2 PR #25: push CI yeşil, PR check `:app:checkDebugAarMetadata` hatasıyla başarısız; bağımsız inceleme bekliyor.
+8. B1 PR #26 A2 üzerine taşındı; hafıza kontrolleri Ayarlar'da, notlar yerel, bulut paylaşımı varsayılan kapalı, silme onaylı. HEAD 3a832bb CI yeşil.
+9. B1 streaming: Groq/Mistral/Gemini SSE, kademeli JSON reply, saf Kotlin parser, SSE metadata ayrıştırma ve hata sınıflandırması eklendi. HEAD 024681a CI test+APK yeşil.
+10. B1 HEAD 79b30b6: birim testleri PR/push SUCCESS; Android debug APK adımı iki koşuda da sürüyor. Akış gerçek sağlayıcı anahtarlarıyla ve telefonda doğrulanmadı.
+**SONRAKİ ADIM:** B1 HEAD 79b30b6 PR/push APK kontrollerini bitir; yeşil olursa independent review için PR'ı hazırla, ardından sağlayıcı anahtarlarıyla canlı streaming ve sesli/yazılı cihaz testine geç.
