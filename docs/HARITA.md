@@ -6,44 +6,44 @@
 
 ## Repo gerçeği
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a`.
-- Notlar `durum` dalında; repo erişimi ve yazma izni doğrulandı.
-- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `be740a3d24049fb1145faf14207202c1edc405f2`, mergeable; PR/push CI 45165045934/45165041955 SUCCESS.
-- A2 PR #25 açık/taslak, dal `is/a2-expressive-theme`, base `main`, HEAD `2f0fbd8efb6c51083d1e0e0e484d867e1d6d0f73`, mergeable. PR CI 45169541324 FAILED: `testDebugUnitTest` aşamasındaki `:app:checkDebugAarMetadata` NPE (`path` null); APK adımı atlandı. Önceki webSearch imza uyuşmazlığı HEAD'de düzeltilmiş; bu ayrı Gradle/AGP hatası stacktrace ile teşhis edilecek.
-- Diğer açık PR'lar: #22/#23/#18/#17/#9/#4/#3/#2/#1; farklı tabanlı eski PR'lar main'e alınmış sayılmaz.
-- Son tamamlanmış HEAD baseline: c9a5ce6; PR CI 45164079348 ve push CI 45164072719 SUCCESS. HEAD c0a542a için PR/push CI 45164530319 ve 45164525918 SUCCESS. HEAD be740a3 için PR CI 45165045934 ve push CI 45165041955 SUCCESS; offline regresyon + 20 kaynak canlı probe tamamlandı.
+- Notlar `durum` dalında; repo okuma/yazma erişimi doğrulandı.
+- K1 PR #24 açık/taslak, dal `is/kariyer-kaynak-denetimi-1`, base `main`, HEAD `be740a3d24049fb1145faf14207202c1edc405f2`; PR/push CI SUCCESS.
+- A2 PR #25 açık/taslak, dal `is/a2-expressive-theme`, base `main`, HEAD `2f0fbd8efb6c51083d1e0e0e484d867e1d6d0f73`. İlk PR CI #45169541324, `:app:checkDebugAarMetadata` içinde `path is null` hatasıyla başarısız oldu. Aynı run'ın ikinci denemesi 23.11.2026 12:50 UTC itibarıyla IN_PROGRESS.
+- A2 tanılama PR #27 açık/taslak, `fix/a2-gradle-metadata-stacktrace` → `is/a2-expressive-theme`, HEAD `ce88f0c7985cbf94cbe2fdba64b113ad5dc37455`. A2 ile fark yalnızca `.github/workflows/android.yml` (4 ekleme/4 silme; tetikleyici + --stacktrace). PR CI #45177070960 ve push CI #45177061495 SUCCESS; `testDebugUnitTest` ve `assembleDebug` başarılı, APK artefaktı yüklendi. Eski NPE yeni çalışmalarda tekrarlanmadı; dolayısıyla stacktrace oluşmadı ve kök neden henüz belirlenmedi. PR #27'de bağımsız review yok.
+- B1 PR #26 açık/taslak, `is/b1-ai-memory-foundation` → A2, HEAD `dbab9d9d275cd8058a1d94900806fb04d82da9cf`; PR CI #45175633112 ve push CI #45175625717 SUCCESS. Bağımsız inceleme, canlı API ve telefon doğrulaması bekliyor.
+- Diğer açık PR'lar: #22/#23/#18/#17/#9/#4/#3/#2/#1; eski/farklı tabanlı PR'lar main'e alınmış sayılmaz.
 
 ## İş listesi
 | İş | Durum | Not |
 |---|---|---|
-| K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; PR/push CI yeşil, 20 kaynak tarayıcı/giriş durumu kayıtlı. Bağımsız hakem onayı bekleniyor; kendi PR'ımızı onaylamayız. |
+| K1 Kaynak tablosu ve okuyucu sağlığı | PR AÇIK | PR #24 HEAD be740a3; 20 kaynak erişim/giriş matrisi, 6 çalışan okuyucu; bağımsız hakem onayı bekliyor. |
 | A1 Tema: 2 ekran taslağı | ONAYLANDI | Cem Ana ekran + İş & Kariyer tasarımlarını onayladı. |
-| A2 Material 3 Expressive tüm uygulama | DEVAM | PR #25; HEAD 2f0fbd8. PR CI 45169541324 FAILED; `testDebugUnitTest` içindeki `:app:checkDebugAarMetadata` NPE (`path` null), APK adımı skip. Tanılama PR #27 (`fix/a2-gradle-metadata-stacktrace` → A2) açıldı; HEAD `ce88f0c`, workflow'a `--stacktrace` ve A2 hedefli PR tetikleyicisi eklendi. Push CI 45177061495 ve PR CI 45177070960 IN_PROGRESS; stacktrace/kök neden ve gerçek düzeltme bekliyor. PR #27'de bağımsız inceleme yok. |
-| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | PR AÇIK | PR #26 `is/b1-ai-memory-foundation` → `is/a2-expressive-theme`, son değişiklik HEAD `dbab9d9`. Önceki HEAD `79b30b6` PR/push CI yeşildi. Ek düzeltme: yarım kalan OpenAI SSE `[DONE]` yoksa hata, Gemini `finishReason` yoksa hata; kesik akış sessizce tamamlanmış sayılmıyor. Kısmi yanıt uyarısının satır sonu düzeltildi. Güncel HEAD `dbab9d9d275cd8058a1d94900806fb04d82da9cf`: PR CI 45175633112 ve push CI 45175625717 SUCCESS; her ikisinde birim test + debug APK başarılı. Ara commit `ad0fb76` sıralı dosya commitlerinden önce tetiklendiği için `geminiFinished` referansı eksik kaldı ve başarısız oldu; güncel HEAD'de parser ve test mevcut. Bağımsız insan incelemesi, canlı sağlayıcı anahtarı ve telefon testi bekliyor. B1 workflow yalnız JVM unit + debug APK çalıştırır; main'de tam uygulama QA raporu workflow/script'i bulunmuyor (PR #17 ayrı dalda). |
-| C1 Sunucu tarafı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok |
-| C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı |
-| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol |
-| C4 CV + KPSS tercih modülü | YAPILMADI | Profil ve nitelik kodları telefonda kalır |
-| C5 Gelecek alım, takvim ve bildirim | YAPILMADI | Resmî tarih / tahmin ayrı |
-| D1 Film & Dizi | YAPILMADI | Yasal kaynak; TMDB/JustWatch atfı; Media3 ve sezon/bölüm |
-| E1 Altın/Borsa + Xiaomi | YAPILMADI | PR #22'de kısmi çalışma var; main'e alınmış değil |
-| Z1 Gerçek telefon testleri | TELEFONDA DENENECEK | Mikrofon, Xiaomi pil, alarm/bildirim, canlı API, gerçek video |
+| A2 Material 3 Expressive tüm uygulama | DEVAM | PR #25 açık. #27 tanılama CI iki kez SUCCESS; ürün kodunda değişiklik yok, eski NPE tekrarlanmadı. PR #25 eski başarısız run'ı yeniden çalışıyor; sonuç gelmeden kök neden giderildi denmez. Bağımsız inceleme bekleniyor. |
+| B1 Yapay zekâ: streaming, bellek, ortak ses/yazı beyni, net hata | PR AÇIK | PR #26 HEAD dbab9d9; test + APK CI yeşil. Bağımsız insan incelemesi, canlı sağlayıcı ve telefon testi bekliyor. |
+| C1 Sunucu taraflı İş & Kariyer toplayıcı + JSON | YAPILMADI | K1 hakem kararı sonrası; ücretsiz Actions/Worker, arama motoru kazıma yok. |
+| C2 Ayrı listeler, geçmiş, Haber/Duyuru ayrımı | YAPILMADI | Kamu türleri/özel sektör/staj/kura ayrı. |
+| C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | YAPILMADI | Kaynak/AI/tarayıcı provenansı; son tarih ve puan çapraz kontrol. |
+| C4 CV + KPSS tercih modülü | YAPILMADI | Profil ve nitelik kodları telefonda kalır. |
+| C5 Gelecek alım, takvim ve bildirim | YAPILMADI | Resmî tarih / tahmin ayrı. |
+| D1 Film & Dizi | YAPILMADI | Yasal kaynak; TMDB/JustWatch atfı; Media3 ve sezon/bölüm. |
+| E1 Altın/Borsa + Xiaomi | YAPILMADI | PR #22'de kısmi çalışma var; main'e alınmış değil. |
+| Z1 Gerçek telefon testleri | TELEFONDA DENENECEK | Mikrofon, Xiaomi pil, alarm/bildirim, canlı API, gerçek video. |
 
 ## K1 kanıt özeti
 - Güncel be740a3 artifact: 20 kaynak, 12 probe, 6 çalışan okuyucu (3 detay + 3 indeks), 3 açık ilan detay kaynağı, 2 program okuyucu (3 program bağlantısı).
 - Açık detay örnekleri: Sayıştay, Anadolu Üniversitesi, TGA; Zafer Kalkınma Ajansı süreç duyurusu, güvenlik/CAPTCHA işareti nedeniyle otomasyondan hariç.
-- PR kapsamı yalnız envanter + sağlık denetimi + tarayıcı/giriş matrisi; sunucu JSON toplayıcı, dinamik Kariyer Kapısı/İŞKUR ve uygulama feed bağlantısı kapsam dışı.
-- PR #24 yazarı bu oturumdaki hakemle aynı çalışma hattı; bu hakem kendi yamayı ONAYLAYAMAZ veya merge edemez. Bağımsız insan incelemesi gereklidir.
+- PR kapsamı envanter + sağlık denetimi + tarayıcı/giriş matrisi; sunucu JSON toplayıcı, dinamik Kariyer Kapısı/İŞKUR ve uygulama feed bağlantısı kapsam dışı.
+- PR #24 yazarı bu oturumdaki hakemle aynı çalışma hattı; kendi yamamızı ONAYLAYAMAYIZ veya merge edemeyiz. Bağımsız insan incelemesi gereklidir.
 
 ## Son 10 kayıt
-1. K1 için 20 resmî/kurumsal kaynak ve ücretsiz kaynak sağlık probe'u eklendi.
-2. QA Türkçe T.C. normalizasyon hash hatası bulundu ve düzeltildi.
-3. Türkçe ay adı tarih penceresi regresyonu eklendi.
-4. TGA detay okuyucusu eklendi; okuyucu/indeks sayıları ayrıştırıldı.
-5. K1 PR #24: 20 kaynak matrisi, browser/login durumları ve canlı QA raporu; bağımsız inceleme bekliyor.
-6. A1 iki ekran tasarımı Cem tarafından onaylandı.
-7. A2 PR #25: push CI yeşil, PR check `:app:checkDebugAarMetadata` hatasıyla başarısız; bağımsız inceleme bekliyor.
-8. B1 PR #26 A2 üzerine taşındı; hafıza kontrolleri Ayarlar'da, notlar yerel, bulut paylaşımı varsayılan kapalı, silme onaylı. HEAD 3a832bb CI yeşil.
-9. B1 streaming: Groq/Mistral/Gemini SSE, kademeli JSON reply, saf Kotlin parser, SSE metadata ayrıştırma ve hata sınıflandırması eklendi. HEAD 024681a CI test+APK yeşil.
-10. B1 HEAD `dbab9d9`: yarım SSE akışı tespiti ve regresyon testi eklendi; PR CI 45175633112 + push CI 45175625717 SUCCESS (unit + APK). PR #26 açık/taslak; bağımsız review, canlı API ve telefon doğrulaması bekliyor.
-11. A2 PR #25 logu tekrar incelendi: `:app:checkDebugAarMetadata` `path` null NPE. Tanılama PR #27 açıldı; HEAD ce88f0c, push CI 45177061495 + PR CI 45177070960 çalışıyor; PR'da bağımsız inceleme yok, stacktrace bekleniyor.
-**SONRAKİ ADIM:** PR #27 CI'ından stacktrace'i al; kök nedeni belirleyip A2 derleme hatasını gerçek düzeltmeyle gider.
+1. QA Türkçe T.C. normalizasyon hash hatası bulundu ve düzeltildi.
+2. Türkçe ay adı tarih penceresi regresyonu eklendi.
+3. TGA detay okuyucusu eklendi; okuyucu/indeks sayıları ayrıştırıldı.
+4. K1 PR #24: 20 kaynak matrisi, browser/login durumları ve canlı QA raporu; bağımsız inceleme bekliyor.
+5. A1 iki ekran tasarımı Cem tarafından onaylandı.
+6. A2 PR #25: ilk PR CI `:app:checkDebugAarMetadata` NPE ile başarısız oldu; düzeltme iddiası yok.
+7. B1 PR #26 A2 üzerine taşındı; bellek kontrolleri, yerel not ve varsayılan kapalı bulut paylaşımı eklendi. HEAD 3a832bb CI yeşil.
+8. B1 streaming: Groq/Mistral/Gemini SSE, kademeli JSON reply, saf Kotlin parser ve hata sınıflandırması eklendi. HEAD 024681a CI test+APK yeşil.
+9. B1 HEAD dbab9d9: yarım SSE akışı tespiti ve regresyon testi; PR/push CI SUCCESS.
+10. A2 tanılama PR #27: workflow farkı dışında ürün kodu değişmedi; PR/push CI SUCCESS, test+APK geçti, NPE yeniden oluşmadı. PR #25 aynı commit CI tekrar denemesi sürüyor.
+**SONRAKİ ADIM:** PR #25 ikinci CI denemesinin sonucunu doğrula; başarısızsa log/stacktrace incele, başarılıysa A2 PR'ını bağımsız inceleme için beklet.
