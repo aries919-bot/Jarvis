@@ -422,7 +422,7 @@ object Ui {
         ctx: Context,
         name: String,
         desc: String,
-        sizeDp: Int = 42,
+        sizeDp: Int = Tok.MIN_TOUCH_DP,
         iconDp: Int = 22,
         color: String = Pal.TEXT,
         bg: String? = null,
@@ -464,7 +464,7 @@ object Ui {
         val t = text(ctx, s, 14f, if (active) Pal.ON_ACCENT else Pal.TEXT, active)
         t.background = pressable(ctx, rounded(if (active) Pal.ACCENT else Pal.CARD2, if (active) null else Pal.LINE, dp(ctx, Tok.R_PILL).toFloat()), Tok.R_PILL)
         t.gravity = Gravity.CENTER
-        t.minHeight = dp(ctx, 44)
+        t.minHeight = dp(ctx, Tok.MIN_TOUCH_DP)
         t.setPadding(dp(ctx, 16), dp(ctx, 8), dp(ctx, 16), dp(ctx, 8))
         t.isClickable = true
         t.setOnClickListener { onClick() }
