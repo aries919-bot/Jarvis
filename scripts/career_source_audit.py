@@ -18,7 +18,7 @@ PROCESS_TERMS=("kura sonucu","asıl yedek","sınav sonucu","mülakat tarihi","ba
 MONTH_NAMES="Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik"
 DATE_ATOM=r"(?:\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{1,2}\s+(?:"+MONTH_NAMES+r")\s+\d{4})"
 DATE_RE=re.compile(DATE_ATOM,re.I)
-RANGE_RE=re.compile(r"(?<!\d)("+DATE_ATOM+r")\s*(?:-|–|—|ile|/|\bve\b)\s*("+DATE_ATOM+r")(?!\d)",re.I)
+RANGE_RE=re.compile(r"(?<!\d)("+DATE_ATOM+r")\s*(?:-|–|—|ile|/|\bve\b|tarihinde\s+başlayıp[,]?)\s*("+DATE_ATOM+r")(?!\d)",re.I)
 BLOCK=("verify you are human","captcha","robot olmadığınızı","security challenge","automated requests","unusual traffic")
 LOGIN=("giriş yap","e-devlet ile giriş","oturum aç")
 
