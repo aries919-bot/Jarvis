@@ -61,7 +61,7 @@ class AriesFullAppAuditTest {
         )
         if (menuOpened) {
             captureAndAudit("02-sidebar")
-            val careerOpened = clickText("İş ve Kariyer")
+            val careerOpened = clickTextContains("İş ve Kariyer")
             assertTrue("The İş ve Kariyer entry was not reachable from the main menu", careerOpened)
             assertTrue(
                 "CareerActivity did not become visible",
@@ -103,7 +103,7 @@ class AriesFullAppAuditTest {
 
         if (clickDescription("Ekle")) {
             SystemClock.sleep(250)
-            val assistantOpened = clickText("Hatırlatmalar ve görevler")
+            val assistantOpened = clickText("Hatırlatıcılar ve görevler")
             if (assistantOpened) {
                 SystemClock.sleep(500)
                 captureAndAudit("11-assistant-tasks-reminders")
@@ -167,6 +167,7 @@ class AriesFullAppAuditTest {
 
     private fun clickDescription(value: String): Boolean = clickObject(By.desc(value))
     private fun clickText(value: String): Boolean = clickObject(By.text(value))
+    private fun clickTextContains(value: String): Boolean = clickObject(By.textContains(value))
 
     private fun clickObject(selector: androidx.test.uiautomator.BySelector): Boolean {
         val item = runCatching { device.wait(Until.findObject(selector), 3_500) }.getOrNull() ?: return false
@@ -256,6 +257,7 @@ class AriesFullAppAuditTest {
                         .put("sdk", android.os.Build.VERSION.SDK_INT)
                         .put("release", android.os.Build.VERSION.RELEASE)
                         .put("model", android.os.Build.MODEL)
+                        .put("density", InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density)
                 )
                 .put("screens", screenRecords)
                 .put("findings", findings)
