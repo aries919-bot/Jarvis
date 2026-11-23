@@ -192,6 +192,7 @@ object Ai {
 
     private fun errText(name: String, code: Int): String = when (code) {
         400 -> "$name isteği reddetti (model adı veya istek biçimi)."
+        408 -> "$name yanıtı zaman aşımına uğradı."
         401, 403 -> "$name anahtarı geçersiz veya yetkisiz."
         404 -> "$name modeli bulunamadı."
         429 -> "$name kullanım sınırına ulaştı."
@@ -548,6 +549,10 @@ object Ai {
     fun friendly(e: Exception): String = when {
         e is ApiError && e.badKey -> e.message ?: "Anahtar geçersiz."
         e is ApiError -> e.message ?: "Yapay zekâ hatası."
+        e is IOException && e.message?.contains("zaman aşımına uğradı", ignoreCase = true) == true ->
+            e.message ?: "Yapay zekâ yanıtı zaman aşımına uğradı."
+        e is IOException && e.message?.contains("akış", ignoreCase = true) == true ->
+            e.message ?: "Yapay zekâ akışı kesildi."
         e is IOException -> "İnternete ulaşamadım."
         else -> e.message ?: "Bir hata oldu."
     }
