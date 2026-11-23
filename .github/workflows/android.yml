@@ -6,6 +6,10 @@ on:
   push:
     branches: [ main, master, film-dizi-v2, is/a2-expressive-theme ]
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
