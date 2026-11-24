@@ -11,7 +11,7 @@ on:
         description: Exact jarvis-cloud commit SHA
         required: true
         type: string
-        default: 74816f3954c3fa8164ef0266b848b0b9e9a897d4
+        default: 0eeefed9534040a46ce7ef83157c0d6872b7f0b0
       base_sha:
         description: Exact private C1 base SHA for diff review
         required: true
@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '74816f3954c3fa8164ef0266b848b0b9e9a897d4' }}
+  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '0eeefed9534040a46ce7ef83157c0d6872b7f0b0' }}
   PRIVATE_C1_BASE_SHA: ${{ github.event.inputs.base_sha || 'd78df6104265cca25de67617ccb5031ba3d3bfdb' }}
 
 jobs:
@@ -230,13 +230,32 @@ jobs:
           rc=int(sys.argv[1]); path=sys.argv[2]; feed=None; error=None
           try: feed=json.load(open(path,encoding="utf-8"))
           except Exception as e: error=type(e).__name__
-          sources=[]
+          sources=[]; category_errors=[]
           if isinstance(feed,dict):
               for s in feed.get("sources",[]):
-                  sources.append({"id":s.get("id"),"name":s.get("name"),"category":s.get("category"),"state":"STALE" if s.get("stale") else "FRESH","status":s.get("status"),"robots":(s.get("robots") or {}).get("result"),"httpStatus":s.get("httpStatus"),"rawCount":s.get("rawCount",0),"listingCount":s.get("listingCount",0),"lastGoodAt":s.get("lastGoodAt"),"lastAttemptStatus":s.get("lastAttemptStatus")})
+                  sid=s.get("id")
+                  expected_category="Kamu" if sid=="esube-kamu" else "Büyük özel"
+                  actual_category=s.get("category")
+                  if actual_category != expected_category:
+                      category_errors.append({"id":sid,"expected":expected_category,"actual":actual_category})
+                  sources.append({
+                      "id":sid,"name":s.get("name"),"category":actual_category,
+                      "expectedCategory":expected_category,
+                      "state":"STALE" if s.get("stale") else "FRESH",
+                      "status":s.get("status"),"robots":(s.get("robots") or {}).get("result"),
+                      "httpStatus":s.get("httpStatus"),"rawCount":s.get("rawCount",0),
+                      "listingCount":s.get("listingCount",0),
+                      "collectedAt":s.get("collectedAt"),"lastGoodAt":s.get("lastGoodAt"),
+                      "lastAttemptAt":s.get("lastAttemptAt"),
+                      "lastAttemptStatus":s.get("lastAttemptStatus"),
+                      "lastError":s.get("lastError") or s.get("error")
+                  })
           keys=("collectedAt","sourceCount","freshSourceCount","staleSourceCount","successfulSourceCount","totalCount","freshListingCount","verifiedListingCount","activeDeadlineCount","pastDeadlineCount","unknownDeadlineCount","publicSourceCount","publicListingCount","threshold")
           metrics={k:feed.get(k) for k in keys} if isinstance(feed,dict) else {}
-          d={"qa":"live-source-audit","command":"node scripts/career-feed-live.mjs","exitCode":rc,"status":"PASS" if rc==0 and isinstance(feed,dict) else "FAIL","metrics":metrics,"sources":sources,"parseError":error,"productionPublish":"NOT_RUN; no Worker URL/token passed"}
+          d={"qa":"live-source-audit","command":"node scripts/career-feed-live.mjs","exitCode":rc,
+             "status":"PASS" if rc==0 and isinstance(feed,dict) and not category_errors else "FAIL",
+             "metrics":metrics,"sources":sources,"categoryErrors":category_errors,
+             "parseError":error,"productionPublish":"NOT_RUN; no Worker URL/token passed"}
           json.dump(d,open("qa-results/live-source-audit.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
           print(json.dumps(d,ensure_ascii=False))
           PY
@@ -360,7 +379,8 @@ jobs:
             ["missing_auth","tests/career-feed-route.test.mjs","GET /kariyer-feed requires bearer authentication"],
             ["general_token_denied","tests/career-feed-route.test.mjs","general Worker token cannot read the career feed"],
             ["raw_json_roundtrip","tests/career-feed-route.test.mjs","authenticated POST stores the raw feed and GET returns the JSON"],
-            ["esube_stale_12h","tests/esube-input.test.mjs","e-Şube input older than 12 hours is stale"]
+            ["esube_stale_12h","tests/esube-input.test.mjs","e-Şube input older than 12 hours is stale"],
+            ["source_category_preserved","tests/career-feed.test.mjs",'source.category === "Büyük özel"']
           ];
           const cache=new Map(),results=[];
           for(const [key,file,needle] of specs){
@@ -412,7 +432,7 @@ jobs:
           cd ..
           python3 - <<'PY'
           import json,os,pathlib,re
-          allowed={".github/workflows/validate.yml","src/career-feed-store.js","src/esube-input.js","tests/career-feed-state.test.mjs","tests/esube-input.test.mjs"}
+          allowed={"src/career-feed.js","tests/career-feed.test.mjs"}
           files=[x for x in pathlib.Path("qa-results/changed-files.txt").read_text().splitlines() if x]
           diff=pathlib.Path("qa-results/private.diff").read_text(encoding="utf-8",errors="replace")
           added=[x[1:] for x in diff.splitlines() if x.startswith("+") and not x.startswith("+++")]
