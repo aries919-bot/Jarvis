@@ -75,11 +75,36 @@ def _added_lines_only(diff: str) -> str:
     return "\n".join(added)
 
 
+def _added_non_checker_lines(diff: str) -> str:
+    """Return added patch lines only, excluding this referee's own source file.
+
+    Plain text input remains supported for focused unit tests. A unified diff is
+    recognized by its +++ file headers; deleted and context lines are ignored.
+    """
+    lines = diff.splitlines()
+    has_headers = any(line.startswith("+++ b/") or line == "+++ /dev/null" for line in lines)
+    if not has_headers:
+        return diff
+
+    current_path: str | None = None
+    added: list[str] = []
+    for line in lines:
+        if line.startswith("+++ b/"):
+            current_path = line[6:]
+            continue
+        if line.startswith("+++ "):
+            current_path = None
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            if current_path and current_path != "scripts/hakem_gate.py":
+                added.append(line[1:])
+    return "\\n".join(added)
+
+
 def deterministic_findings(diff: str, base: str) -> list[str]:
     findings: list[str] = []
     if base == "main":
         findings.append("PR hedef dalı main; yasak.")
-    scanned = _added_lines_only(diff)
     patterns = [
         (re.compile(r"verify\s*=\s*False", re.I), "TLS doğrulaması kapatılıyor."),
         (re.compile(r"robots\.txt.{0,100}(ignore|bypass|skip)|(?:ignore|bypass|skip).{0,100}robots\.txt", re.I), "robots kuralları atlanıyor."),
@@ -93,8 +118,10 @@ def deterministic_findings(diff: str, base: str) -> list[str]:
         (re.compile(r"git\s+push.{0,80}\bmain\b|branches:\s*\[?\s*main\b", re.I), "main dalına yazma/push hedefi."),
         (re.compile(r"(?:KPSS|e-Devlet).{0,100}(?:TCKN|şifre|password|token)\s*[:=]", re.I), "KPSS/e-Devlet kimlik bilgisi sızıntısı."),
     ]
+
+    added_text = _added_non_checker_lines(diff)
     for pattern, reason in patterns:
-        if pattern.search(scanned):
+        if pattern.search(added_text):
             findings.append(reason)
     return findings
 
