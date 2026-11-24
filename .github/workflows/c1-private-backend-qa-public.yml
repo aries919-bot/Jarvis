@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Public-runner QA for private C1 HEAD c19133965b136f1ca54ee5fb0d34c49131c2d750; verifies exact H1 enum, provider-ID dedupe, empty public-input last-good protection, current e-Şube snapshot, 36+ tests and local D1 smoke.
+# Public-runner QA for private C1 HEAD d78df6104265cca25de67617ccb5031ba3d3bfdb; verifies exact H1 enum, provider-ID dedupe, empty public-input last-good protection, current e-Şube snapshot, 36+ tests and local D1 smoke.
 
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
         working-directory: private-c1
         env:
-          EXPECTED_PRIVATE_SHA: c19133965b136f1ca54ee5fb0d34c49131c2d750
+          EXPECTED_PRIVATE_SHA: d78df6104265cca25de67617ccb5031ba3d3bfdb
         shell: bash
         run: |
           private_sha="$(git rev-parse HEAD)"
