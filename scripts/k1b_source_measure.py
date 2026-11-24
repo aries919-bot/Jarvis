@@ -97,10 +97,10 @@ def _request_once(url: str, limit: int) -> tuple[int | None, Message | None, byt
             return response.status, response.headers, body[:limit], ("BODY_LIMIT" if len(body) > limit else None)
     except urllib.error.HTTPError as exc:
         try:
-            body = exc.read(min(limit, 64 * 1024))
+            body = exc.read(limit + 1)
         except Exception:
             body = b""
-        return exc.code, exc.headers, body, None
+        return exc.code, exc.headers, body[:limit], ("BODY_LIMIT" if len(body) > limit else None)
     except ssl.SSLCertVerificationError as exc:
         return None, None, b"", f"TLS_CERTIFICATE: {exc}"
     except ssl.SSLError as exc:
@@ -128,35 +128,50 @@ def _robots_for(url: str) -> dict[str, Any]:
 
     for _ in range(MAX_REDIRECTS + 1):
         status, headers, body, error = _request_once(current, MAX_ROBOTS_BYTES)
+        if error == "BODY_LIMIT":
+            return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": status,
+                    "error": "robots.txt 512 KiB sınırını aştı", "parser": None}
         if status in REDIRECT_CODES and headers:
             location = headers.get("Location")
             if not location:
-                return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": status, "error": "robots redirect konumu yok"}
+                return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": status,
+                        "error": "robots redirect konumu yok", "parser": None}
             next_url = urllib.parse.urljoin(current, location)
             if urllib.parse.urlsplit(next_url).scheme != "https":
-                return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": status, "error": "robots HTTPS dışına yönlendi"}
+                return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": status,
+                        "error": "robots HTTPS dışına yönlendi", "parser": None}
             current = next_url
             continue
         break
 
     if error:
-        return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": None, "error": error}
+        return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": None, "error": error, "parser": None}
     if status in (404, 410):
-        return {"permission": "ALLOW", "label": f"İZİN VAR (robots HTTP {status})", "status": status, "error": None}
+        return {"permission": "ALLOW", "label": f"İZİN VAR (robots HTTP {status})",
+                "status": status, "error": None, "parser": None}
     if status != 200:
-        return {"permission": "UNKNOWN", "label": f"BİLİNMİYOR (robots HTTP {status})", "status": status, "error": None}
+        return {"permission": "UNKNOWN", "label": f"BİLİNMİYOR (robots HTTP {status})",
+                "status": status, "error": None, "parser": None}
 
-    message = headers.get_content_charset() if headers else None
-    charset = message or "utf-8"
-    text = body.decode(charset, errors="replace")
+    charset = headers.get_content_charset() if headers else None
+    text = body.decode(charset or "utf-8", errors="replace")
     parser = RobotFileParser()
     parser.set_url(robots_url)
     parser.parse(text.splitlines())
-    allowed = parser.can_fetch(USER_AGENT, url)
+    return {"permission": "RULES", "label": "robots HTTP 200", "status": status,
+            "error": None, "parser": parser}
+
+
+def _robots_decision(base: dict[str, Any], url: str) -> dict[str, Any]:
+    if base["permission"] == "UNKNOWN":
+        return {"permission": "UNKNOWN", "label": base["label"], "status": base["status"],
+                "error": base.get("error")}
+    parser = base.get("parser")
+    allowed = True if parser is None else parser.can_fetch(USER_AGENT, url)
     return {
         "permission": "ALLOW" if allowed else "DISALLOW",
-        "label": f"{'İZİN VAR' if allowed else 'YASAK'} (robots HTTP 200)",
-        "status": status,
+        "label": f"{'İZİN VAR' if allowed else 'YASAK'} (robots HTTP {base['status']})",
+        "status": base["status"],
         "error": None,
     }
 
@@ -221,6 +236,7 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
     error: str | None = None
     permission = "UNKNOWN"
     robots_label = "BİLİNMİYOR"
+    robots_http: int | None = None
     auth_detected = False
     body_limited = False
     final_url = current
@@ -234,9 +250,10 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
         origin = f"{parsed.scheme}://{parsed.netloc}"
         if origin not in cache:
             cache[origin] = _robots_for(current)
-        robots = cache[origin]
+        robots = _robots_decision(cache[origin], current)
         permission = robots["permission"]
         robots_label = robots["label"]
+        robots_http = robots["status"]
         if permission != "ALLOW":
             error = robots.get("error") or "robots izni yok/belirsiz; istek yapılmadı"
             break
@@ -290,7 +307,7 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
         "finalUrl": final_url,
         "robots": robots_label,
         "robotsPermission": permission,
-        "robotsHttp": (cache.get(f"{urllib.parse.urlsplit(final_url).scheme}://{urllib.parse.urlsplit(final_url).netloc}") or {}).get("status"),
+        "robotsHttp": robots_http,
         "http": status,
         "bytes": len(body),
         "datedAnnouncement": dated,
