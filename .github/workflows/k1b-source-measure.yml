@@ -1,0 +1,48 @@
+name: K1-B Official Source Access Measurement
+
+on:
+  push:
+    branches:
+      - is/K1-B-clean-20261124
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: k1b-source-measure-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PDF text parser
+        run: python -m pip install --disable-pip-version-check pypdf==5.4.0
+
+      - name: Test robots, TLS policy, date detection and status classification
+        run: python -m unittest discover -s scripts -p 'test_k1b_source_measure.py' -v
+
+      - name: Measure all H1 candidates and requested extra endpoints
+        run: |
+          python scripts/k1b_source_measure.py \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            --json reports/k1b-source-measure.json
+
+      - name: Upload machine-readable measurement
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k1b-source-measure-${{ github.run_number }}
+          path: reports/k1b-source-measure.json
+          if-no-files-found: warn
+          retention-days: 14
