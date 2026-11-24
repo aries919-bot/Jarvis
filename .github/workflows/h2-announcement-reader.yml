@@ -5,6 +5,7 @@ on:
     branches:
       - is/H2-final-20261124
       - cline/K1
+      - review/h2-public-sources-20261125
     paths:
       - 'career/h2_sources.json'
       - 'career/h2_last_good_seed.json'
