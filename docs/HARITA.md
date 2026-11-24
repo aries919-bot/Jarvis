@@ -281,3 +281,12 @@
 - Kamu ayrı: e-Şube 1 kaynak /43 benzersiz raw /42 açık /1 süresi geçmiş; snapshot `2026-11-24T11:57:55Z`, audit sırasında 10,9 saat yaşında. `publishedAt=null`, `deadline` kaynaktan.
 - Source category bug düzeltildi; private `Büyük özel`, e-Şube `Kamu`; hata/robots/son deneme alanları QA raporunda görünüyor. Üretim Worker URL/token ayarı olmadığından production GET BLOCKED; deploy yapılmadı.
 - PR #6 ve stacked PR #8 açık/taslak; PR #7 eski taban nedeniyle kapatıldı. Hiçbiri merge edilmedi.
+
+
+## C1 toplu hakem güncellemesi — 25.11.2026
+- En son iç denetim notu: [gorevler/C1-toplu-hakem-25-11.md](../gorevler/C1-toplu-hakem-25-11.md). GitHub PR #8'e yorum ID `7147163607` ile toplu inceleme notu eklendi; bu ChatGPT iç denetimidir, bağımsız Claude/insan hakem onayı değildir.
+- PR #6 + PR #8 birleşik compare: 7 commit / 7 dosya. PR #6 timestamp alanlarını ayırıyor; PR #8 üç kaynak dönüş yolunda kategori alanını koruyor. PR #6/#8 açık/taslak.
+- C1 exact-head QA #45504819883: 38/38 test, 11/11 local D1, 12/12 hata senaryosu PASS. Hakem RED: son ölçüm 1 kaynak/42 ilan; 10/100 eşiği karşılanmadı; üretim authenticated GET BLOCKED.
+- Son e-Şube snapshot `2026-11-24T11:57:55Z`; 25.11.2026 itibarıyla 12 saat freshness penceresini aşmıştır. Taze çekim yokken kamu güncel sayımı 0 kabul edilir; önceki 42 açık ilan geçmiş ölçümdür, güncel kanıt değildir.
+- H2 okuyucu run #45489853859 attempt 2 yeniden başlatıldı; reader job `138848189009` son kontrolde resmî sayfaları okuma adımında çalışıyordu. Yeni sayımlar tamamlanmadı.
+- **Merge yok.** Sonraki iş: H2 ve e-Şube taze çekimini doğrula; ardından kamu kaynağı ve ilanlarını yeniden say. Unknown deadline kayıtları sayılmaz.
