@@ -1,5 +1,4 @@
-name: C1 Private Backend QA (public runner)
-# Public-runner QA for private C1 HEAD d78df6104265cca25de67617ccb5031ba3d3bfdb; verifies exact H1 enum, provider-ID dedupe, empty public-input last-good protection, current e-Şube snapshot, 36+ tests and local D1 smoke.
+name: C1 parallel QA and Hakem
 
 on:
   push:
@@ -7,100 +6,596 @@ on:
     paths:
       - '.github/workflows/c1-private-backend-qa-public.yml'
   workflow_dispatch:
+    inputs:
+      private_sha:
+        description: Exact jarvis-cloud commit SHA
+        required: true
+        type: string
+        default: 74816f3954c3fa8164ef0266b848b0b9e9a897d4
+      base_sha:
+        description: Exact private C1 base SHA for diff review
+        required: true
+        type: string
+        default: d78df6104265cca25de67617ccb5031ba3d3bfdb
 
 permissions:
-  contents: read
+  contents: write
+  actions: read
+
+concurrency:
+  group: c1-parallel-qa-durum-report
+  cancel-in-progress: false
+
+env:
+  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '74816f3954c3fa8164ef0266b848b0b9e9a897d4' }}
+  PRIVATE_C1_BASE_SHA: ${{ github.event.inputs.base_sha || 'd78df6104265cca25de67617ccb5031ba3d3bfdb' }}
 
 jobs:
-  c1-backend-tests:
+  preflight:
+    name: QA 0 — exact private revision and read-only access
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - name: Validate read-only credential and exact SHA inputs
+        id: inputs
+        shell: bash
+        run: |
+          mkdir -p qa-results
+          python3 - <<'PY'
+          import json, os, re
+          reasons=[]
+          if not os.environ.get("C1_READ_TOKEN"): reasons.append("Private read-only checkout secret missing.")
+          for key in ("PRIVATE_C1_SHA","PRIVATE_C1_BASE_SHA"):
+              if not re.fullmatch(r"[0-9a-f]{40}",os.environ.get(key,"")):
+                  reasons.append(key+" must be a full 40-character SHA.")
+          data={"qa":"preflight","privateSha":os.environ["PRIVATE_C1_SHA"],"baseSha":os.environ["PRIVATE_C1_BASE_SHA"],"status":"PASS" if not reasons else "FAIL","reasons":reasons}
+          json.dump(data,open("qa-results/preflight.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write("ok="+("true" if not reasons else "false")+"\n")
+          print(json.dumps(data,ensure_ascii=False))
+          if reasons: raise SystemExit(1)
+          PY
+      - name: Check out exact private commit
+        id: checkout
+        if: steps.inputs.outputs.ok == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_C1_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify checked-out SHA and finalize result
+        if: always()
+        env:
+          INPUT_OUTCOME: ${{ steps.inputs.outcome }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json,os
+          p="qa-results/preflight.json"
+          try: data=json.load(open(p,encoding="utf-8"))
+          except Exception: data={"qa":"preflight","reasons":[]}
+          ok=os.environ.get("INPUT_OUTCOME")=="success" and os.environ.get("CHECKOUT_OUTCOME")=="success"
+          if ok:
+              import subprocess
+              actual=subprocess.check_output(["git","-C","private-c1","rev-parse","HEAD"],text=True).strip()
+              ok=actual==os.environ["PRIVATE_C1_SHA"]
+              data["checkedOutSha"]=actual
+          data["status"]="PASS" if ok else "FAIL"
+          if not ok: data.setdefault("reasons",[]).append("Exact private commit checkout/SHA verification failed.")
+          json.dump(data,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          print(json.dumps(data,ensure_ascii=False))
+          if not ok: raise SystemExit(1)
+          PY
+      - name: Upload preflight JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-preflight
+          path: qa-results/preflight.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  unit-tests:
+    name: QA 1 — C1 unit and regression tests
+    needs: preflight
+    if: needs.preflight.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
     steps:
-      - name: Check out QA workflow repository
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Detect private read credential without printing it
-        id: credentials
-        shell: bash
-        run: |
-          if [ -n "$C1_READ_TOKEN" ]; then
-            echo "has_token=true" >> "$GITHUB_OUTPUT"
-            echo "A private-repository credential is configured."
-          else
-            echo "has_token=false" >> "$GITHUB_OUTPUT"
-            echo "::error::No read-only credential is configured for aries919-bot/jarvis-cloud."
-            exit 1
-          fi
-
-      - name: Check out private C1 backend source
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           repository: aries919-bot/jarvis-cloud
-          ref: is/c1-career-feed
+          ref: ${{ env.PRIVATE_C1_SHA }}
           path: private-c1
           token: ${{ env.C1_READ_TOKEN }}
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run npm run test:c1 and capture TAP result
+        run: |
+          mkdir -p qa-results
+          set +e
+          (cd private-c1 && npm run test:c1) > "$RUNNER_TEMP/unit.log" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/unit.log"
+          python3 - "$rc" "$RUNNER_TEMP/unit.log" <<'PY'
+          import json,re,sys
+          rc=int(sys.argv[1]); log=open(sys.argv[2],encoding="utf-8",errors="replace").read()
+          def n(k):
+              m=re.search(r"^# "+re.escape(k)+r" (\d+)\s*$",log,re.M)
+              return int(m.group(1)) if m else None
+          d={"qa":"unit-tests","command":"npm run test:c1","exitCode":rc,"tests":n("tests"),"passed":n("pass"),"failed":n("fail"),"skipped":n("skipped"),"status":"PASS" if rc==0 and n("tests") and n("fail")==0 else "FAIL"}
+          json.dump(d,open("qa-results/unit-tests.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          print(json.dumps(d,ensure_ascii=False))
+          PY
+          exit "$rc"
+      - name: Upload unit-test JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-unit-tests
+          path: qa-results/unit-tests.json
+          if-no-files-found: warn
+          retention-days: 30
 
-      - name: Load latest public e-Şube JSON from durum branch
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        uses: actions/checkout@v7
+  worker-d1-smoke:
+    name: QA 2 — local Worker and D1 integration
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_C1_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run local Wrangler Worker and D1 smoke
+        run: |
+          mkdir -p qa-results
+          set +e
+          (cd private-c1 && node scripts/c1-worker-d1-smoke.mjs) > "$RUNNER_TEMP/d1.log" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/d1.log"
+          python3 - "$rc" "$RUNNER_TEMP/d1.log" <<'PY'
+          import json,re,sys
+          rc=int(sys.argv[1]); log=open(sys.argv[2],encoding="utf-8",errors="replace").read()
+          m=re.search(r"C1_LOCAL_D1_SMOKE PASS (\d+) checks",log)
+          count=int(m.group(1)) if m else len(re.findall(r"^PASS ",log,re.M))
+          d={"qa":"worker-d1-smoke","command":"node scripts/c1-worker-d1-smoke.mjs","exitCode":rc,"checksPassed":count if rc==0 else None,"environment":"local Wrangler + local D1; not production","status":"PASS" if rc==0 and count>0 else "FAIL"}
+          json.dump(d,open("qa-results/worker-d1-smoke.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          print(json.dumps(d,ensure_ascii=False))
+          PY
+          exit "$rc"
+      - name: Upload Worker/D1 JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-worker-d1-smoke
+          path: qa-results/worker-d1-smoke.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  live-source-audit:
+    name: QA 3 — robots-aware live source audit and per-source counts
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_C1_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
         with:
           repository: aries919-bot/Jarvis
           ref: durum
           path: private-c1/public-input/upstream
           persist-credentials: false
-
-      - name: Record and pin exact private C1 backend revision
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        working-directory: private-c1
-        env:
-          EXPECTED_PRIVATE_SHA: d78df6104265cca25de67617ccb5031ba3d3bfdb
-        shell: bash
-        run: |
-          private_sha="$(git rev-parse HEAD)"
-          private_branch="$(git branch --show-current)"
-          echo "Private backend ref: ${private_branch}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Private backend SHA: ${private_sha}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Private backend SHA: ${private_sha}"
-          if [ "$private_sha" != "$EXPECTED_PRIVATE_SHA" ]; then
-            echo "::error::Private C1 branch moved; expected audited SHA $EXPECTED_PRIVATE_SHA."
-            exit 1
-          fi
-          echo "PRIVATE_C1_SHA=${private_sha}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Node 22
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Run C1 backend regression suite
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        working-directory: private-c1
-        run: npm run test:c1
-
-      - name: Run live C1 source audit with full-text deadline parsing
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        working-directory: private-c1
-        run: node scripts/career-feed-live.mjs | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - name: Archive public C1 source-count report
-        if: ${{ steps.credentials.outputs.has_token == 'true' && always() }}
+      - name: Run collector without production write credentials
+        run: |
+          mkdir -p qa-results
+          set +e
+          (cd private-c1 && node scripts/career-feed-live.mjs) > "$RUNNER_TEMP/live.log" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/live.log"
+          python3 - "$rc" private-c1/career-feed-live.json <<'PY'
+          import json,sys
+          rc=int(sys.argv[1]); path=sys.argv[2]; feed=None; error=None
+          try: feed=json.load(open(path,encoding="utf-8"))
+          except Exception as e: error=type(e).__name__
+          sources=[]
+          if isinstance(feed,dict):
+              for s in feed.get("sources",[]):
+                  sources.append({"id":s.get("id"),"name":s.get("name"),"category":s.get("category"),"state":"STALE" if s.get("stale") else "FRESH","status":s.get("status"),"robots":(s.get("robots") or {}).get("result"),"httpStatus":s.get("httpStatus"),"rawCount":s.get("rawCount",0),"listingCount":s.get("listingCount",0),"lastGoodAt":s.get("lastGoodAt"),"lastAttemptStatus":s.get("lastAttemptStatus")})
+          keys=("collectedAt","sourceCount","freshSourceCount","staleSourceCount","successfulSourceCount","totalCount","freshListingCount","verifiedListingCount","activeDeadlineCount","pastDeadlineCount","unknownDeadlineCount","publicSourceCount","publicListingCount","threshold")
+          metrics={k:feed.get(k) for k in keys} if isinstance(feed,dict) else {}
+          d={"qa":"live-source-audit","command":"node scripts/career-feed-live.mjs","exitCode":rc,"status":"PASS" if rc==0 and isinstance(feed,dict) else "FAIL","metrics":metrics,"sources":sources,"parseError":error,"productionPublish":"NOT_RUN; no Worker URL/token passed"}
+          json.dump(d,open("qa-results/live-source-audit.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          print(json.dumps(d,ensure_ascii=False))
+          PY
+          test "$rc" -eq 0
+      - name: Upload live-source JSON
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: c1-live-source-report
-          path: |
-            private-c1/career-feed-live.json
-            private-c1/career-feed-live.txt
+          name: c1-qa-result-live-source-audit
+          path: qa-results/live-source-audit.json
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Run local Worker and D1 integration smoke (bounded process shutdown)
-        if: ${{ steps.credentials.outputs.has_token == 'true' }}
-        working-directory: private-c1
-        run: node scripts/c1-worker-d1-smoke.mjs
+  public-data-contract:
+    name: QA 4 — public source dates, freshness and deduplication
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_C1_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: durum
+          path: private-c1/public-input/upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate actual e-Şube JSON contract
+        run: |
+          mkdir -p qa-results
+          set +e
+          (cd private-c1 && node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          import { mapEsubePublicJson } from "./src/esube-input.js";
+          const input=JSON.parse(await readFile("public-input/upstream/career/esube_kamu_ilanlari.json","utf8"));
+          const now=new Date();
+          const mapped=mapEsubePublicJson(input,now);
+          const ids=(input.ilanlar||[]).map(x=>String(x.ilan_no||"")).filter(Boolean);
+          const unique=new Set(ids);
+          const snap=Date.parse(input.cekim_zamani);
+          const ageHours=Number.isFinite(snap)?(now.getTime()-snap)/3600000:null;
+          const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Istanbul",year:"numeric",month:"2-digit",day:"2-digit"}).format(now);
+          const errors=[];
+          if(!Number.isFinite(snap)) errors.push("invalid source snapshot timestamp");
+          if(unique.size!==ids.length) errors.push("duplicate announcement IDs");
+          if(mapped.source.collectedAt!==new Date(snap).toISOString()) errors.push("source snapshot time not preserved");
+          if(!mapped.listings.every(x=>x.publishedAt===null)) errors.push("e-Şube publishedAt must be null");
+          if(!mapped.listings.every(x=>/^\d{4}-\d{2}-\d{2}$/.test(x.deadline||""))) errors.push("missing deadline");
+          if(!mapped.listings.every(x=>x.deadline>=today)) errors.push("expired listing remains current");
+          if(ageHours>12&&(mapped.source.status!=="stale-input"||mapped.listings.length!==0)) errors.push("old snapshot was not excluded");
+          if(ageHours<=12&&mapped.source.status==="stale-input") errors.push("fresh snapshot marked stale");
+          const d={qa:"public-data-contract",status:errors.length?"FAIL":"PASS",snapshotAt:input.cekim_zamani,ageHours:ageHours===null?null:Number(ageHours.toFixed(2)),rawRows:ids.length,uniqueRows:unique.size,freshPublicSources:mapped.source.stale?0:(mapped.source.listingCount>0?1:0),verifiedOpenPublicListings:mapped.listings.filter(x=>x.deadlineStatus==="open").length,expiredRows:mapped.source.expiredDeadlineCount||0,mappedRows:mapped.listings.length,mapperStatus:mapped.source.status,errors};
+          console.log(JSON.stringify(d));
+          if(errors.length) process.exitCode=1;
+          NODE
+          ) > "$RUNNER_TEMP/public-contract.log" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/public-contract.log"
+          python3 - "$rc" "$RUNNER_TEMP/public-contract.log" <<'PY'
+          import json,sys
+          rc=int(sys.argv[1]); lines=[x.strip() for x in open(sys.argv[2],encoding="utf-8",errors="replace") if x.strip().startswith("{")]
+          d=json.loads(lines[-1]) if lines else {"qa":"public-data-contract","status":"FAIL","errors":["No JSON result"]}
+          if rc: d["status"]="FAIL"
+          json.dump(d,open("qa-results/public-data-contract.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          print(json.dumps(d,ensure_ascii=False))
+          PY
+          exit "$rc"
+      - name: Upload public contract JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-public-data-contract
+          path: qa-results/public-data-contract.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  failure-matrix:
+    name: QA 5 — required regression scenario coverage
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_C1_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify each required test scenario exists
+        run: |
+          mkdir -p qa-results
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from "node:fs/promises";
+          const specs=[
+            ["real_official_listing","tests/career-feed.test.mjs","collects current public board entries and keeps source dates separate"],
+            ["broken_internet","tests/career-feed.test.mjs","broken internet yields per-source errors and an empty feed, not a crash"],
+            ["empty_response","tests/career-feed.test.mjs","empty responses are recorded as empty and do not create fake listings"],
+            ["http_403_500_timeout","tests/career-feed.test.mjs","HTTP 403, HTTP 500 and source timeout are isolated per source"],
+            ["robots_denied","tests/career-feed.test.mjs","robots.txt deny stops API requests"],
+            ["source_last_good","tests/career-feed-state.test.mjs","per-source last-good data is preserved independently"],
+            ["expired_stale_data","tests/career-feed-state.test.mjs","expired entries from a stale source are not retained"],
+            ["missing_auth","tests/career-feed-route.test.mjs","GET /kariyer-feed requires bearer authentication"],
+            ["general_token_denied","tests/career-feed-route.test.mjs","general Worker token cannot read the career feed"],
+            ["raw_json_roundtrip","tests/career-feed-route.test.mjs","authenticated POST stores the raw feed and GET returns the JSON"],
+            ["esube_stale_12h","tests/esube-input.test.mjs","e-Şube input older than 12 hours is stale"]
+          ];
+          const cache=new Map(),results=[];
+          for(const [key,file,needle] of specs){
+            if(!cache.has(file)) cache.set(file,await readFile("private-c1/"+file,"utf8"));
+            results.push({key,file,covered:cache.get(file).includes(needle)});
+          }
+          const missing=results.filter(x=>!x.covered).map(x=>x.key);
+          const d={qa:"failure-matrix",status:missing.length?"FAIL":"PASS",cases:results.length,covered:results.filter(x=>x.covered).length,missing,results};
+          await writeFile("qa-results/failure-matrix.json",JSON.stringify(d,null,2));
+          console.log(JSON.stringify(d));
+          if(missing.length) process.exitCode=1;
+          NODE
+      - name: Upload regression matrix JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-failure-matrix
+          path: qa-results/failure-matrix.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  security-diff:
+    name: QA 6 — allowed diff and forbidden-pattern scan
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_C1_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Diff exact base/head and scan added content
+        run: |
+          mkdir -p qa-results
+          cd private-c1
+          git cat-file -e "$PRIVATE_C1_BASE_SHA^{commit}"
+          git cat-file -e "$PRIVATE_C1_SHA^{commit}"
+          git diff --check "$PRIVATE_C1_BASE_SHA" "$PRIVATE_C1_SHA" > ../qa-results/diff-check.txt
+          git diff --name-only "$PRIVATE_C1_BASE_SHA" "$PRIVATE_C1_SHA" > ../qa-results/changed-files.txt
+          git diff --numstat "$PRIVATE_C1_BASE_SHA" "$PRIVATE_C1_SHA" > ../qa-results/numstat.txt
+          git diff --unified=0 "$PRIVATE_C1_BASE_SHA" "$PRIVATE_C1_SHA" > ../qa-results/private.diff
+          cd ..
+          python3 - <<'PY'
+          import json,os,pathlib,re
+          allowed={".github/workflows/validate.yml","src/career-feed-store.js","src/esube-input.js","tests/career-feed-state.test.mjs","tests/esube-input.test.mjs"}
+          files=[x for x in pathlib.Path("qa-results/changed-files.txt").read_text().splitlines() if x]
+          diff=pathlib.Path("qa-results/private.diff").read_text(encoding="utf-8",errors="replace")
+          added=[x[1:] for x in diff.splitlines() if x.startswith("+") and not x.startswith("+++")]
+          rules={
+            "token_or_private_key":r"(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)",
+            "tls_disabled":r"(?:verify\s*=\s*false|rejectUnauthorized\s*:\s*false|curl\s+[^\n]*\s-k(?:\s|$))",
+            "robots_bypass":r"(?:ignore|bypass|skip)[^\n]{0,100}robots\.txt|robots\.txt[^\n]{0,100}(?:ignore|bypass|skip)",
+            "browser_impersonation":r"(?:Mozilla/5\.0|Chrome/[0-9]|Firefox/[0-9]|Safari/[0-9])",
+            "forbidden_job_sites":r"\b(?:LinkedIn|Indeed)\b",
+            "personal_exam_data":r"(?:TCKN|TC\s*Kimlik|e-Devlet.{0,60}(?:password|şifre|token)|KPSS.{0,60}(?:password|şifre|token)|CV.{0,80}(?:telefon|e-?posta|adres))"
+          }
+          matches={k:[{"line":i+1,"text":line[:160]} for i,line in enumerate(added) if re.search(p,line,re.I)] for k,p in rules.items()}
+          matches={k:v for k,v in matches.items() if v}
+          b=len(diff.encode("utf-8"))
+          clean=not pathlib.Path("qa-results/diff-check.txt").read_text().strip()
+          ua='const USER_AGENT = "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)";'
+          ua_ok=ua in pathlib.Path("private-c1/src/career-feed.js").read_text(encoding="utf-8")
+          ok=bool(files) and set(files)==allowed and not matches and b<=60000 and clean and ua_ok
+          d={"qa":"security-diff","status":"PASS" if ok else "FAIL","changedFileCount":len(files),"changedFiles":files,"allowedFilesExactMatch":set(files)==allowed,"diffBytes":b,"diffLimitBytes":60000,"numstat":pathlib.Path("qa-results/numstat.txt").read_text().splitlines(),"addedLineFindings":matches,"diffCheckClean":clean,"userAgentExact":ua_ok}
+          json.dump(d,open("qa-results/security-diff.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          print(json.dumps(d,ensure_ascii=False))
+          if not ok: raise SystemExit(1)
+          PY
+      - name: Upload security/diff JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-security-diff
+          path: qa-results/security-diff.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  production-readonly:
+    name: QA 7 — production authenticated read-only probe
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JARVIS_WORKER_URL: ${{ vars.JARVIS_WORKER_URL }}
+      JARVIS_WORKER_TOKEN: ${{ secrets.JARVIS_WORKER_TOKEN }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: GET production feed only; never POST or deploy
+        run: |
+          mkdir -p qa-results
+          node --input-type=module <<'NODE'
+          import {writeFile} from "node:fs/promises";
+          const url=process.env.JARVIS_WORKER_URL||"", token=process.env.JARVIS_WORKER_TOKEN||"";
+          const d={qa:"production-readonly",method:"authenticated GET only; no POST or deployment"};
+          if(!url||!token){d.status="BLOCKED";d.reason="JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN pair is not configured.";}
+          else{
+            try{
+              const base=new URL(url);
+              if(base.protocol!=="https:") throw new Error("Worker endpoint must use HTTPS.");
+              const response=await fetch(new URL("/kariyer-feed",base),{headers:{Authorization:"Bearer "+token,Accept:"application/json"},signal:AbortSignal.timeout(12000)});
+              d.httpStatus=response.status; d.staleHeader=response.headers.get("X-Career-Feed-Stale");
+              if(!response.ok) throw new Error("Authenticated GET returned HTTP "+response.status);
+              const feed=await response.json();
+              if(!Array.isArray(feed.sources)||!Array.isArray(feed.listings)) throw new Error("Worker raw-feed JSON contract invalid.");
+              d.status="PASS";d.sourceCount=feed.sourceCount??feed.sources.length;d.listingCount=feed.totalCount??feed.listings.length;d.generatedAt=feed.generatedAt??null;d.publicSourceCount=feed.publicSourceCount??null;d.publicListingCount=feed.publicListingCount??null;
+            }catch(e){d.status="FAIL";d.reason=String(e.message||e).slice(0,200);}
+          }
+          await writeFile("qa-results/production-readonly.json",JSON.stringify(d,null,2));
+          console.log(JSON.stringify(d));
+          NODE
+      - name: Upload production JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-qa-result-production-readonly
+          path: qa-results/production-readonly.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  hakem:
+    name: HAKEM — collect JSON, recount, decide ONAY/RED
+    needs: [preflight, unit-tests, worker-d1-smoke, live-source-audit, public-data-contract, failure-matrix, security-diff, production-readonly]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download all QA result JSON artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: c1-qa-result-*
+          merge-multiple: true
+          path: qa-results
+      - name: Check out report branch
+        uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: durum
+          path: report-repo
+          token: ${{ github.token }}
+          persist-credentials: true
+      - name: Aggregate all QA outputs and enforce hard gates
+        id: decision
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: https://github.com/aries919-bot/Jarvis/actions/runs/${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import datetime,json,os,pathlib
+          root=pathlib.Path("qa-results")
+          names=["preflight","unit-tests","worker-d1-smoke","live-source-audit","public-data-contract","failure-matrix","security-diff","production-readonly"]
+          files={x:x+".json" for x in names}
+          needs=json.loads(os.environ["NEEDS_JSON"])
+          jobs={}
+          for name in names:
+              p=root/files[name]
+              if p.exists():
+                  try: jobs[name]=json.loads(p.read_text(encoding="utf-8"))
+                  except Exception as e: jobs[name]={"qa":name,"status":"FAIL","reason":"Invalid result JSON: "+type(e).__name__}
+              else:
+                  jobs[name]={"qa":name,"status":"BLOCKED","reason":"Result artifact missing; Actions job="+str((needs.get(name) or {}).get("result","missing"))}
+          live=jobs["live-source-audit"]; metrics=live.get("metrics") or {}; public=jobs["public-data-contract"]
+          verified_sources=int(metrics.get("successfulSourceCount") or 0)
+          verified_listings=int(metrics.get("verifiedListingCount") or metrics.get("activeDeadlineCount") or 0)
+          public_sources=int(metrics.get("publicSourceCount") or public.get("freshPublicSources") or 0)
+          public_listings=int(metrics.get("publicListingCount") or public.get("verifiedOpenPublicListings") or 0)
+          threshold={"requiredSources":10,"actualSources":verified_sources,"requiredListings":100,"actualListings":verified_listings,"met":verified_sources>=10 and verified_listings>=100}
+          public_gate={"freshSources":public_sources,"verifiedOpenListings":public_listings,"met":public_sources>0 and public_listings>0}
+          code_jobs=["preflight","unit-tests","worker-d1-smoke","live-source-audit","public-data-contract","failure-matrix","security-diff"]
+          code_pass=all(jobs[x].get("status")=="PASS" for x in code_jobs)
+          production_pass=jobs["production-readonly"].get("status")=="PASS"
+          reasons=[]
+          for name in names:
+              if jobs[name].get("status")!="PASS": reasons.append(name+": "+jobs[name].get("status","MISSING")+" — "+str(jobs[name].get("reason") or jobs[name].get("errors") or "not passed"))
+          if not public_gate["met"]: reasons.append("Kamu fresh/doğrulanmış kaynak ve ilan yok; kamu kapısı RED.")
+          if not threshold["met"]: reasons.append("10 kaynak / 100 doğrulanmış ilan eşiği karşılanmadı.")
+          decision="ONAY" if code_pass and production_pass and threshold["met"] and public_gate["met"] else "RED"
+          report={
+            "schemaVersion":1,"area":"C1 İş ve Kariyer kaynak doğrulama","decision":decision,
+            "privateSha":os.environ["PRIVATE_C1_SHA"],"baseSha":os.environ["PRIVATE_C1_BASE_SHA"],
+            "runId":os.environ["RUN_ID"],"runUrl":os.environ["RUN_URL"],
+            "collectedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "gates":{"codeQaPass":code_pass,"productionAuthenticatedReadPass":production_pass,"publicEvidence":public_gate,"sourceAndListingThreshold":threshold},
+            "metrics":{"sourceCount":metrics.get("sourceCount"),"freshSources":metrics.get("freshSourceCount"),"staleSources":metrics.get("staleSourceCount"),"verifiedSources":verified_sources,"verifiedListings":verified_listings,"publicSources":public_sources,"publicVerifiedListings":public_listings,"unknownDeadlineListings":metrics.get("unknownDeadlineCount"),"expiredListings":metrics.get("pastDeadlineCount"),"publicSnapshotAt":public.get("snapshotAt"),"publicSnapshotAgeHours":public.get("ageHours"),"publicRawRows":public.get("rawRows"),"publicUniqueRows":public.get("uniqueRows")},
+            "jobs":jobs,"reasons":reasons
+          }
+          out=pathlib.Path("report-repo/qa-reports/c1")
+          run_dir=out/os.environ["PRIVATE_C1_SHA"]
+          run_dir.mkdir(parents=True,exist_ok=True)
+          payload=json.dumps(report,ensure_ascii=False,indent=2)+"\n"
+          (run_dir/(os.environ["RUN_ID"]+".json")).write_text(payload,encoding="utf-8")
+          out.mkdir(parents=True,exist_ok=True)
+          (out/"latest.json").write_text(payload,encoding="utf-8")
+          pathlib.Path("qa-results/hakem-report.json").write_text(payload,encoding="utf-8")
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write("decision="+decision+"\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("# C1 HAKEM: "+decision+"\n\n")
+              f.write("- Verified sources/listings: "+str(verified_sources)+" / "+str(verified_listings)+" (required 10 / 100)\n")
+              f.write("- Public fresh sources/listings: "+str(public_sources)+" / "+str(public_listings)+" (public zero = RED)\n")
+              f.write("- Production authenticated GET: "+jobs["production-readonly"].get("status","MISSING")+"\n\n")
+              f.write("## Reasons\n"+("\n".join("- "+x for x in reasons) if reasons else "- None"))
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit report JSON to durum
+        run: |
+          cd report-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add qa-reports/c1
+          if ! git diff --cached --quiet; then
+            git commit -m "qa(c1): record parallel Hakem report"
+            git push origin HEAD:durum
+          fi
+      - name: Upload combined Hakem JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-hakem-report-${{ github.run_id }}
+          path: qa-results/hakem-report.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Return final Hakem decision
+        if: always()
+        env:
+          DECISION: ${{ steps.decision.outputs.decision }}
+        run: |
+          echo "Hakem decision: ${DECISION:-RED}"
+          test "${DECISION:-RED}" = "ONAY"
