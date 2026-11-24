@@ -62,7 +62,7 @@ class K1BSourceMeasureTests(unittest.TestCase):
                 measure, "_request_once",
                 side_effect=[
                     (None, None, b"", "TIMEOUT: first read timed out"),
-                    (200, success_headers, b"Personel alım ilanı 24.11.2026", None),
+                    (200, success_headers, "Personel alım ilanı 24.11.2026".encode("utf-8"), None),
                 ],
             ) as request_once:
                 with mock.patch.object(measure.time, "sleep"):
