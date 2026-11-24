@@ -19,28 +19,28 @@ User-Agent: AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)
 
 ## Kaynak bazında yeniden sayım
 
-| # | Kategori | URL | Durum | Robots / HTTP / bayt | Yorum |
+| # | sourceId | Kategori | URL | Durum | Robots / HTTP / bayt | Yorum |
 |---:|---|---|---|---|---|
-| 1 | Kamu | https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx | ÇALIŞIYOR | İzin var / 200 / 79.115 | K1-E1: 3 sayfa, 43 benzersiz kamu ilanı, 8 kurum. Gerçek kamu ilanı sayımına giren tek kaynak. |
-| 2 | Kamu | https://www.ilan.gov.tr/ | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS_ERROR: CERTIFICATE_VERIFY_FAILED, unable to get local issuer certificate. |
-| 3 | Kamu | https://www.resmigazete.gov.tr/ilanlar | ENGELLİ | İzin var / timeout / 0 | Hedef okuma TIMEOUT. Sonraki Actions tekrarları aşağıdaki denetim notunda. |
-| 4 | Kura | https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html | ÇALIŞIYOR | İzin var / 200 / 89.063 | Kura/sonuç haberi; yeni iş ilanı sayılmaz. |
-| 5 | Kura | https://www.tuseb.gov.tr/public/tr/duyurular | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS issuer doğrulama hatası. |
-| 6 | Kura | https://www.tuseb.gov.tr/kurumsal/insan-kaynaklari | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS issuer doğrulama hatası. |
-| 7 | KPSS | https://osym.gov.tr/SinavGrubu/Menu/338 | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | robots.txt 512 KiB sınırını aştı; hedef sayfaya istek yapılmadı. |
-| 8 | KPSS | https://www.osym.gov.tr/Duyurular/Index | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | robots.txt 512 KiB sınırını aştı; hedef sayfaya istek yapılmadı. |
-| 9 | KPSS | https://kariyerkapisi.gov.tr/isealim | ÇALIŞIYOR | robots HTTP 404 (izinli sayıldı) / 200 / 18.791 | Erişim başarılı, tarihli ilan kanıtı yok; otomatik ilan kaynağı veya ilan sayısı değildir. |
-| 10 | KPSS'siz adayı | https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim | ÇALIŞIYOR | İzin var / 200 / 16.283 | e-Devlet kimlik doğrulaması gerekir; içerik kazınmaz, Custom Tabs. KPSS'siz etiketi kaynakta varsayılmaz. |
-| 11 | KPSS'siz adayı | https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim | ÇALIŞIYOR | İzin var / 200 / 15.953 | e-Devlet kimlik doğrulaması gerekir; içerik kazınmaz, Custom Tabs. KPSS'siz etiketi kaynakta varsayılmaz. |
-| 12 | Büyük özel | https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay | ÇALIŞIYOR | İzin var / 200 / 132.486 | Erişim başarılı; tarihli ilan sinyali yok. |
-| 13 | Büyük özel | https://www.sisecam.com/tr/kariyer | ENGELLİ | İzin var / 403 / 5.595 | HTTP 403; tekrar denenmeyecek. |
-| 14 | Büyük özel | https://careers.sisecam.com/?locale=tr_TR | ENGELLİ | İzin var / 403 / 5.623 | HTTP 403; tekrar denenmeyecek. |
-| 15 | Büyük özel | https://www.kockariyerim.com/jobAd/list | ÇALIŞIYOR | İzin var / 200 / 707.465 | Erişim başarılı; tarihli ilan sinyali yok. |
-| 16 | Kamu bağlı şirket | https://www.ptt.gov.tr/duyurular | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS issuer doğrulama hatası. |
-| 17 | Kamu bağlı şirket | https://www.botas.gov.tr/Kategori/duyurular/2 | ÇALIŞIYOR | İzin var / 200 / 55.753 | Erişim başarılı; 2025 personel alımı sonuç duyurusu Süresi geçti. |
-| 18 | Kamu bağlı şirket | https://www.tpao.gov.tr/file/2512/sinav-ilani-33-personel-alimi-29-12-2025-37736953d2e834d07.pdf | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | Robots sonucu belirsiz; PDF hedefine GET yapılmadı. Timeout robots kontrolünde oluştu. |
-| 19 | Kamu | https://ilan.gov.tr/ | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS_ERROR: CERTIFICATE_VERIFY_FAILED, unable to get local issuer certificate. |
-| 20 | Kamu | https://www.resmigazete.gov.tr/ | ENGELLİ | İzin var / timeout / 0 | Hedef okuma TIMEOUT. Sonraki Actions tekrarları aşağıdaki denetim notunda. |
+| 1 | esube-kamu-acik-ilan | Kamu | https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx | ÇALIŞIYOR | İzin var / 200 / 79.115 | K1-E1: 3 sayfa, 43 benzersiz kamu ilanı, 8 kurum. Gerçek kamu ilanı sayımına giren tek kaynak. |
+| 2 | ilan-gov-www | Kamu | https://www.ilan.gov.tr/ | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS_ERROR: CERTIFICATE_VERIFY_FAILED, unable to get local issuer certificate. |
+| 3 | resmigazete-ilanlar | Kamu | https://www.resmigazete.gov.tr/ilanlar | ENGELLİ | İzin var / timeout / 0 | Hedef okuma TIMEOUT. Sonraki Actions tekrarları aşağıdaki denetim notunda. |
+| 4 | yhgm-kura-2764 | Kura | https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html | ÇALIŞIYOR | İzin var / 200 / 89.063 | Kura/sonuç haberi; yeni iş ilanı sayılmaz. |
+| 5 | tuseb-duyurular | Kura | https://www.tuseb.gov.tr/public/tr/duyurular | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS issuer doğrulama hatası. |
+| 6 | tuseb-insan-kaynaklari | Kura | https://www.tuseb.gov.tr/kurumsal/insan-kaynaklari | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS issuer doğrulama hatası. |
+| 7 | osym-kpss-grup | KPSS | https://osym.gov.tr/SinavGrubu/Menu/338 | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | robots.txt 512 KiB sınırını aştı; hedef sayfaya istek yapılmadı. |
+| 8 | osym-duyurular | KPSS | https://www.osym.gov.tr/Duyurular/Index | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | robots.txt 512 KiB sınırını aştı; hedef sayfaya istek yapılmadı. |
+| 9 | kariyerkapisi-isealim | KPSS | https://kariyerkapisi.gov.tr/isealim | ÇALIŞIYOR | robots HTTP 404 (izinli sayıldı) / 200 / 18.791 | Erişim başarılı, tarihli ilan kanıtı yok; otomatik ilan kaynağı veya ilan sayısı değildir. |
+| 10 | msvk-kariyer-kapisi | KPSS'siz adayı | https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim | ÇALIŞIYOR | İzin var / 200 / 16.283 | e-Devlet kimlik doğrulaması gerekir; içerik kazınmaz, Custom Tabs. KPSS'siz etiketi kaynakta varsayılmaz. |
+| 11 | izmirbb-kariyer-kapisi | KPSS'siz adayı | https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim | ÇALIŞIYOR | İzin var / 200 / 15.953 | e-Devlet kimlik doğrulaması gerekir; içerik kazınmaz, Custom Tabs. KPSS'siz etiketi kaynakta varsayılmaz. |
+| 12 | turkcell-kariyer | Büyük özel | https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay | ÇALIŞIYOR | İzin var / 200 / 132.486 | Erişim başarılı; tarihli ilan sinyali yok. |
+| 13 | sisecam-kariyer | Büyük özel | https://www.sisecam.com/tr/kariyer | ENGELLİ | İzin var / 403 / 5.595 | HTTP 403; tekrar denenmeyecek. |
+| 14 | sisecam-careers | Büyük özel | https://careers.sisecam.com/?locale=tr_TR | ENGELLİ | İzin var / 403 / 5.623 | HTTP 403; tekrar denenmeyecek. |
+| 15 | koc-kariyerim | Büyük özel | https://www.kockariyerim.com/jobAd/list | ÇALIŞIYOR | İzin var / 200 / 707.465 | Erişim başarılı; tarihli ilan sinyali yok. |
+| 16 | ptt-duyurular | Kamu bağlı şirket | https://www.ptt.gov.tr/duyurular | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS issuer doğrulama hatası. |
+| 17 | botas-duyurular | Kamu bağlı şirket | https://www.botas.gov.tr/Kategori/duyurular/2 | ÇALIŞIYOR | İzin var / 200 / 55.753 | Erişim başarılı; 2025 personel alımı sonuç duyurusu Süresi geçti. |
+| 18 | tpao-personel-pdf | Kamu bağlı şirket | https://www.tpao.gov.tr/file/2512/sinav-ilani-33-personel-alimi-29-12-2025-37736953d2e834d07.pdf | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | Robots sonucu belirsiz; PDF hedefine GET yapılmadı. Timeout robots kontrolünde oluştu. |
+| 19 | ilan-gov-apex | Kamu | https://ilan.gov.tr/ | ENGELLİ | Robots bilinmiyor / HTTP yok / 0 | TLS_ERROR: CERTIFICATE_VERIFY_FAILED, unable to get local issuer certificate. |
+| 20 | resmigazete-root | Kamu | https://www.resmigazete.gov.tr/ | ENGELLİ | İzin var / timeout / 0 | Hedef okuma TIMEOUT. Sonraki Actions tekrarları aşağıdaki denetim notunda. |
 
 ## TLS hata nedeni — 5 URL
 
