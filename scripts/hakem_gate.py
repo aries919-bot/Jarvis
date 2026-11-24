@@ -67,9 +67,8 @@ def _added_diff_text(diff: str) -> str:
         if line.startswith("diff --git "):
             current_path = None
             in_hunk = False
-        elif line.startswith("+++ b/"):
+        elif not in_hunk and line.startswith("+++ b/"):
             current_path = line[6:]
-            in_hunk = False
         elif line.startswith("@@ "):
             in_hunk = True
         elif line.startswith(("diff --cc ", "Binary files ", "GIT binary patch")):
