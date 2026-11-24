@@ -178,11 +178,14 @@ class K1BSourceMeasureTests(unittest.TestCase):
     def test_robots_disallow_prevents_target_page_request(self):
         source = {"id": "blocked", "category": "Kamu", "name": "Örnek",
                   "url": "https://example.gov.tr/private"}
-        robots = {"permission": "DISALLOW", "label": "YASAK", "status": 200,
-                  "error": None, "parser": None}
-        with mock.patch.object(measure, "_robots_for", return_value=robots):
-            with mock.patch.object(measure, "_request_once") as request_once:
-                row = measure.measure_one(source)
+        robots_base = {"permission": "RULES", "label": "robots HTTP 200", "status": 200,
+                       "error": None, "parser": None}
+        denied = {"permission": "DISALLOW", "label": "YASAK", "status": 200,
+                  "error": None}
+        with mock.patch.object(measure, "_robots_for", return_value=robots_base):
+            with mock.patch.object(measure, "_robots_decision", return_value=denied):
+                with mock.patch.object(measure, "_request_once") as request_once:
+                    row = measure.measure_one(source)
         request_once.assert_not_called()
         self.assertEqual(0, row["attempts"])
         self.assertEqual("ENGELLİ", row["status"])
