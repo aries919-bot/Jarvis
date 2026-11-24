@@ -26,12 +26,12 @@ MAX_ROBOTS_BYTES = 512 * 1024
 MAX_REDIRECTS = 5
 
 DATE_RE = re.compile(
-    r"(?<!\\d)(?:"
-    r"(?:[0-3]?\\d)[./-](?:0?[1-9]|1[0-2])[./-](?:19|20)\\d{2}"
-    r"|(?:19|20)\\d{2}[./-](?:0?[1-9]|1[0-2])[./-](?:0?[1-9]|[12]\\d|3[01])"
-    r"|(?:0?[1-9]|[12]\\d|3[01])\\s+"
+    r"(?<!\d)(?:"
+    r"(?:[0-3]?\d)[./-](?:0?[1-9]|1[0-2])[./-](?:19|20)\d{2}"
+    r"|(?:19|20)\d{2}[./-](?:0?[1-9]|1[0-2])[./-](?:0?[1-9]|[12]\d|3[01])"
+    r"|(?:0?[1-9]|[12]\d|3[01])\s+"
     r"(?:Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|"
-    r"Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\\s+(?:19|20)\\d{2}"
+    r"Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\s+(?:19|20)\d{2}"
     r")",
     re.IGNORECASE,
 )
@@ -183,9 +183,9 @@ def _decode_body(body: bytes, headers: Message | None, url: str) -> str:
 
 
 def has_dated_announcement(text: str) -> bool:
-    plain = re.sub(r"<(script|style)\\b[^>]*>.*?</\\1>", " ", text, flags=re.I | re.S)
+    plain = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", text, flags=re.I | re.S)
     plain = re.sub(r"<[^>]+>", " ", plain)
-    plain = re.sub(r"\\s+", " ", plain)
+    plain = re.sub(r"\s+", " ", plain)
     for match in DATE_RE.finditer(plain):
         window = plain[max(0, match.start() - 180): min(len(plain), match.end() + 180)]
         if ANNOUNCEMENT_RE.search(window):
