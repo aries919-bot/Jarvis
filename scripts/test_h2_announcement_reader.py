@@ -470,16 +470,17 @@ class H2ReaderTests(unittest.TestCase):
         found_path = h2.urllib.parse.unquote(h2.urllib.parse.urlsplit(found).path)
         self.assertEqual(expected_path.casefold(),found_path.casefold())
 
-    def test_config_includes_only_k1b_measured_reader_sources(self):
+    def test_config_includes_only_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(10,len(cfg["sources"]))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
         self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
+        self.assertTrue({"marmara-ogretim-gorevlisi-2026","comu-akademik-ilanlar-2026","zafer-uzman-personel-2026","bilecik-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
 
     def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(10,len(cfg["sources"]))
 
 
     def test_source_categories_match_h1_allowed_enum(self):
