@@ -37,6 +37,35 @@ class HakemGateTests(unittest.TestCase):
         findings = deterministic_findings(source, "cline/K1")
         self.assertFalse(any("yayın tarihi" in item for item in findings))
 
+    def test_deleted_browser_user_agent_is_not_flagged(self):
+        ua = "Mozilla" + "/5.0"
+        diff = (
+            "diff --git a/old.py b/old.py\\n"
+            "--- a/old.py\\n+++ b/old.py\\n"
+            "@@ -1 +0,0 @@\\n-" + ua + "\\n"
+        )
+        self.assertFalse(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_added_browser_user_agent_is_flagged(self):
+        ua = "Mozilla" + "/5.0"
+        diff = (
+            "diff --git a/new.py b/new.py\\n"
+            "--- a/new.py\\n+++ b/new.py\\n"
+            "@@ -0,0 +1 @@\\n+" + ua + "\\n"
+        )
+        self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_checker_pattern_file_is_excluded_from_self_scan(self):
+        source_line = 'UA_PATTERN = r"(?:Moz" + "illa)/[0-9]"'
+        diff = (
+            "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\\n"
+            "--- a/scripts/hakem_gate.py\\n+++ b/scripts/hakem_gate.py\\n"
+            "@@ -1 +1 @@\\n+" + source_line + "\\n"
+        )
+        self.assertFalse(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
 
 if __name__ == "__main__":
     unittest.main()
+
+    # Unified-diff regression tests: deletions are context, not new code.
