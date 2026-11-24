@@ -54,6 +54,14 @@ jobs:
           mkdir -p private-c1/public-input/upstream/career
           cp source-durum/career/esube_kamu_ilanlari.json private-c1/public-input/upstream/career/esube_kamu_ilanlari.json
 
+      - name: Load latest public e-Şube JSON from durum branch
+        uses: actions/checkout@v7
+        with:
+          repository: aries919-bot/Jarvis
+          ref: durum
+          path: private-c1/public-input/upstream
+          persist-credentials: false
+
       - name: Record exact private C1 backend revision
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
         working-directory: private-c1
