@@ -215,34 +215,11 @@ Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını kar�
 ## 8. H1 kabul ölçütleri
 
 - Şema alanları zorunlu/nullable ayrımıyla doğrulanır; geçersiz kategori ve içerik türü reddedilir.
-- `publishedAt=null`, `deadline=null`, geçmiş deadline, sınav/kura başlık tarihi, boş yanıt ve bozuk tarih için test bulunur.
+- \`publishedAt=null\`, \`deadline=null\`, geçmiş deadline, başvuru başlangıç saati, boş liste ve bozuk tarih için test bulunur.
 - Kura/sonuç/staj kayıtları yeni iş ilanı sayacına girmez.
-- `firstSeenAt` aynı kaynak ilan kimliği için güncellemelerde değişmez.
+- \`firstSeenAt\` aynı kaynak ilan kimliği için güncellemelerde değişmez.
 - Kaynaklardan biri stale olduğunda yalnız onun kayıtları stale işaretlenir.
+- Uygulama doğrulayıcısı: \`scripts/h1_schema.py\`; test: \`scripts/test_h1_schema.py\`; Actions: \`.github/workflows/h1-schema.yml\`.
+- H1 doğrulayıcısı yalnız JSON sözleşmesini/yardımcı veri işlemlerini sınar; canlı okuyucu veya Android/Worker entegrasyonu değildir.
 - İlk taramada her kategori için 2–3 aday araştırıldı; geniş K1-B ölçümünde aktif URL listesi 11 ÇALIŞIYOR adresle güncellendi. Bazı kategorilerde tek veya iki kaynak kaldığından kaynak çeşitliliği hedefi henüz karşılanmış sayılmaz. Girişli sayfalar yalnız yönlendirmedir; tarihli duyuru/ilan içeriği ve otomasyon uygunluğu H2/K1-C'de ayrıca doğrulanır.
 
-
-## 7B. 24.11.2026 genişletilmiş resmî kaynak ölçümü
-
-- Actions: [K1-B run #45473805274](https://github.com/aries919-bot/Jarvis/actions/runs/45473805274), branch `is/K1-B-wide`, ölçülen commit `7fcee2257e4dfd92bde994e4b6437de1a9f796c4`.
-- Tekrar sayım: **28 benzersiz URL; 11 ÇALIŞIYOR / 17 ENGELLİ / 0 ÖLÜ**. Testler **16/16 SUCCESS**. Robots unknown/disallow durumlarında hedef sayfaya istek gönderilmedi; TLS doğrulaması kapatılmadı.
-- ÇALIŞIYOR URL'ler:
-  1. e-Şube: robots 200 / HTTP 200 / 79.089 bayt / tarihli duyuru EVET.
-  2. YHGM kura: robots 200 / HTTP 200 / 89.063 bayt / EVET.
-  3. Turkcell kariyer: robots 200 / HTTP 200 / 132.490 bayt / tarihli duyuru HAYIR.
-  4. Koç Kariyerim: robots 200 / HTTP 200 / 707.465 bayt / HAYIR.
-  5. BOTAŞ duyurular: robots 200 / HTTP 200 / 55.753 bayt / EVET.
-  6. Adli Tıp Kurumu 2026-2 duyurusu: robots 404 (robots dosyası yok) / HTTP 200 / 8.598 bayt / EVET.
-  7. Adli Tıp Ek-1 PDF: robots 404 / HTTP 200 / 217.209 bayt / EVET.
-  8. Anadolu Üniversitesi sözleşmeli personel duyurusu: robots 200 / HTTP 200 / 36.462 bayt / EVET.
-  9. Düzce Üniversitesi öğretim elemanı PDF: robots 404 / HTTP 200 / 434.992 bayt / EVET.
-  10. Tarsus Üniversitesi öğretim elemanı duyurusu: robots 200 / HTTP 200 / 26.000 bayt / EVET.
-  11. Tarsus Üniversitesi resmî ilan PDF: robots 200 / HTTP 200 / 771.374 bayt / EVET.
-- Aynı kurumun resmî HTML sayfası + bağlı PDF'si ayrı URL olabilir; kaynak sayımında kurum/işveren tek kaynak sayılır. Yeni aktif kurumlar: Adli Tıp Kurumu, Anadolu Üniversitesi, Düzce Üniversitesi, Tarsus Üniversitesi. PDF ekleri kaynak sayısını artırmaz.
-- ENGELLİ örnekleri: Anadolu PDF doğrudan uç noktası ağ hatası; TÜRKAK sayfası HTTP 200 dönmesine rağmen erişim sınıflandırıcısında engelli (otomatik okuyucuya alınmadı); Şişecam 403; İlan.gov.tr TLS doğrulama hatası; Resmî Gazete robots timeout/önceden ölçülmüş kapalı; ÖSYM robots bilinmiyor; Kariyer Kapısı ve e-Devlet linkleri yalnız yönlendirme. Ayrıntı için Actions job özeti ve artifact.
-- **Sınır:** ÇALIŞIYOR yalnız robots/TLS/HTTP erişimini gösterir; iş ilanı, başvuru şartı, açık deadline veya otomatik okuyucu kanıtı değildir. H2'ye yalnız ölçülmüş ve metni ayrıştırılabilen resmî adresler eklenir.
-
-
-## 7C. Başvuru başlangıcı ile son başvuru ayrımı
-- Bazı duyurular başvuru ekranının açılacağı saati ayrıca verir. Bu bilgi `applicationOpensAt` alanında tutulur; `deadline` yalnız son başvuru anıdır.
-- 24.11.2026 H2 ölçümünde Adli Tıp 2026-2 başvurusu 30.11.2026 09:00 Türkiye saatinde açılacağından, bugünkü kart `freshnessStatus=Doğrulanamadı` olarak kalır. 30.11.2026 09:00'dan sonraki başarılı kaynak okuması, diğer şartlar devam ediyorsa `Doğrulandı` yapabilir.
