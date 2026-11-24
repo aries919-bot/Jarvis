@@ -86,3 +86,11 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - **YHGM:** 2.764 sürekli işçi kura/sonuç duyurusu; güncel iş ilanı değil, Haber sekmesinde **Kura** olarak sınıflanır.
 - TLS beş hedefinde hata CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; hata süresi dolmuş sertifikayı kanıtlamaz. SSL doğrulaması açık kalır.
 - Resmî Gazete'de robots izinli iki timeout hedefi birer kez yeniden denendi; tekrar timeout. TPAO PDF için robots izni belirsiz olduğundan tekrar istek yok.
+
+
+## 8. Birleştirme yetkisi güncellemesi — 25.11.2026
+
+- `cline/K1` hedefli PR'larda onay sorulmaz: testler yeşil, Hakem sonucu açıkça `ONAY`, diff yalnız ilgili görev kapsamındaki dosyalar ve bağımsız incelemede blocker yoksa ChatGPT PR'ı kendisi birleştirir ve sıradaki işe geçer.
+- Bu koşullardan biri eksikse birleştirme yapılmaz; eksik koşul kısa ve açık yazılır, mümkünse düzeltilir.
+- `main` hedefli PR'lar için Cem'in açık onayı zorunludur. Hiçbir koşul doğrudan `main` yazımına izin vermez.
+- 10 kaynak /100 doğrulanmış ilan eşiği, backend kodunun CI birleştirmesinden ayrıdır; eşik RED ise haber/kariyer UI entegrasyonu açılmaz.
