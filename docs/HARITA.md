@@ -197,3 +197,6 @@
 - Yerel Node v22.16.0; özel repo içeriğini container'a indirme DNS/egress ile başarısız (`Could not resolve host: github.com`; raw IP bağlantısı da başarısız). Yerel gerçek test koşusu yok.
 - Kamu: 1 e-Şube / 43 benzersiz ilan (snapshot `2026-11-24T11:57:55+00:00`). 15 Lever/Ashby kaynak adayında canlı ilan adedi ölçülmedi. 10 kaynak/100 doğrulanmış ilan eşiği RED.
 - PR #5 açık/taslak/birleştirilmedi. Cem izin verdi; zorunlu QA/eşik geçilmediği için güvenli merge yok. C1-2, Worker dağıtımı ve Android entegrasyonu bekliyor.
+
+
+- PR olayı da aynı alternatifte başarısız: [PR CI #45454224453](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45454224453), job [138659214985](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45454224453/job/138659214985), `ubuntu-slim`, `runner_id=0`, `steps=[]`. Hem push hem pull_request denemesi runner almadan durdu.
