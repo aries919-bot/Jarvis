@@ -14,7 +14,7 @@ import k1b_source_measure as measure
 class K1BSourceMeasureTests(unittest.TestCase):
     def test_manifest_contains_twenty_unique_https_targets(self):
         sources = measure.read_manifest()
-        self.assertEqual(20, len(sources))
+        self.assertEqual(28, len(sources))
         self.assertEqual(20, len({item["url"] for item in sources}))
         self.assertTrue(all(item["url"].startswith("https://") for item in sources))
 
@@ -104,7 +104,19 @@ class K1BSourceMeasureTests(unittest.TestCase):
         self.assertEqual(20, len(sources))
         self.assertEqual(8, sum(x.get("collectionMode") == "TEMPORARILY_CLOSED" for x in sources))
         self.assertEqual(3, sum(x.get("collectionMode") == "REDIRECT_ONLY" for x in sources))
-        self.assertEqual(9, sum(x.get("collectionMode") == "MEASURE" for x in sources))
+        self.assertEqual(17, sum(x.get("collectionMode") == "MEASURE" for x in sources))
+
+    def test_new_official_2026_notices_are_candidates_for_robots_first_measurement(self):
+        sources = {item["id"]: item for item in measure.read_manifest()}
+        expected = {
+            "atk-duyuru-2026-2", "atk-ek1-2026-2",
+            "anadolu-sozlesmeli-2026", "anadolu-sozlesmeli-pdf-2026",
+            "turkak-guvenlik-2026", "duzce-ogretim-elemani-2026",
+            "tarsus-ogretim-elemani-2026", "tarsus-ogretim-elemani-pdf-2026",
+        }
+        self.assertTrue(expected.issubset(sources))
+        self.assertTrue(all(sources[item]["collectionMode"] == "MEASURE" for item in expected))
+        self.assertEqual(28, len({item["url"] for item in sources.values()}))
 
     def test_temporarily_closed_source_makes_no_network_request(self):
         source = {
