@@ -16,6 +16,9 @@ on:
       - 'scripts/test_h2_announcement_reader.py'
       - '.github/workflows/h2-announcement-reader.yml'
   workflow_dispatch:
+  # Runs every six hours after this workflow reaches the repository default branch.
+  schedule:
+    - cron: "17 */6 * * *"
 
 permissions:
   contents: read
