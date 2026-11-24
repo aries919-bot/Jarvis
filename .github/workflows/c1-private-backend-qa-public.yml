@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Public-runner QA refresh for private C1 HEAD 3f58123cfbb9d8ee420050337e57f708aa45fdf5; records exact checkout SHA, regression tests, live counts and local D1 smoke.
+# Public-runner QA refresh for private C1 HEAD a1c516d636d368ac23215fc44c9b9d2276a234c3; includes Ashby provider ID normalization, regression tests, live counts and local D1 smoke.
 
 on:
   push:
