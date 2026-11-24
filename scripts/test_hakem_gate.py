@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from hakem_gate import deterministic_findings
+from hakem_gate import deterministic_findings, deterministic_only_fallback
 
 
 class HakemGateTests(unittest.TestCase):
@@ -36,6 +36,19 @@ class HakemGateTests(unittest.TestCase):
         source = (ROOT / "scripts" / "hakem_gate.py").read_text(encoding="utf-8")
         findings = deterministic_findings(source, "cline/K1")
         self.assertFalse(any("yayın tarihi" in item for item in findings))
+
+    def test_missing_cloudflare_credentials_use_deterministic_manual_fallback(self):
+        decision, message = deterministic_only_fallback("", "")
+        self.assertEqual(decision, "ONAY")
+        self.assertIn("insan hakem incelemesinin yerine geçmez", message)
+
+    def test_partial_cloudflare_credentials_also_use_manual_fallback(self):
+        decision, message = deterministic_only_fallback("account-only", "")
+        self.assertEqual(decision, "ONAY")
+        self.assertIn("Opsiyonel Cloudflare AI", message)
+
+    def test_complete_cloudflare_credentials_keep_optional_ai_review(self):
+        self.assertIsNone(deterministic_only_fallback("account", "token"))
 
     def test_deleted_browser_user_agent_is_not_flagged(self):
         ua = "Mozilla" + "/5.0"
