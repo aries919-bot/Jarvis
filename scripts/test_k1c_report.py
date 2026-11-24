@@ -19,20 +19,20 @@ def rows():
 
 
 class K1CAuditReportTests(unittest.TestCase):
-    def test_exactly_twenty_unique_source_rows(self):
+    def test_exactly_twenty_eight_unique_source_rows(self):
         entries = rows()
-        self.assertEqual(20, len(entries))
-        self.assertEqual(20, len({entry[1] for entry in entries}))
-        self.assertEqual(20, len({entry[3] for entry in entries}))
+        self.assertEqual(28, len(entries))
+        self.assertEqual(28, len({entry[1] for entry in entries}))
+        self.assertEqual(28, len({entry[3] for entry in entries}))
 
-    def test_modes_recount_to_nine_eight_three(self):
+    def test_modes_recount_to_eleven_six_eight_three(self):
         entries = rows()
         modes = [entry[0] for entry in entries]
-        self.assertEqual(5, modes.count("ÇALIŞIYOR"))
-        self.assertEqual(4, modes.count("ENGELLİ"))
+        self.assertEqual(11, modes.count("ÇALIŞIYOR"))
+        self.assertEqual(6, modes.count("ENGELLİ"))
         self.assertEqual(8, modes.count("KAPALI_GEÇİCİ"))
         self.assertEqual(3, modes.count("YALNIZ_YÖNLENDİRME"))
-        self.assertEqual(20, len(modes))
+        self.assertEqual(28, len(modes))
 
     def test_kariyer_kapisi_is_redirect_only(self):
         entries = {entry[1]: entry for entry in rows()}
@@ -51,9 +51,24 @@ class K1CAuditReportTests(unittest.TestCase):
         self.assertIn("Timeout — 3 URL", REPORT)
 
     def test_latest_ci_and_counts_are_in_report(self):
-        self.assertIn("45429536647", REPORT)
-        self.assertIn("5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ", REPORT)
+        self.assertIn("45473805274", REPORT)
+        self.assertIn("11 ÇALIŞIYOR / 17 ENGELLİ / 0 ÖLÜ", REPORT)
+        self.assertIn("28 benzersiz URL", REPORT)
         self.assertIn("1 (e-Şube) / 43 doğrulanmış ilan", REPORT)
+
+
+    def test_four_new_institution_sources_match_the_28_url_measurement(self):
+        entries = {entry[1]: entry for entry in rows()}
+        for source_id in (
+            "atk-duyuru-2026-2", "atk-ek1-2026-2",
+            "anadolu-sozlesmeli-2026", "duzce-ogretim-elemani-2026",
+            "tarsus-ogretim-elemani-2026", "tarsus-ogretim-elemani-pdf-2026",
+        ):
+            self.assertEqual("ÇALIŞIYOR", entries[source_id][0])
+        self.assertEqual("ENGELLİ", entries["anadolu-sozlesmeli-pdf-2026"][0])
+        self.assertEqual("ENGELLİ", entries["turkak-guvenlik-2026"][0])
+        self.assertIn("6 kaynak, 5 fresh /1 stale", REPORT)
+        self.assertIn("4 aktif kaynak / 46 doğrulanmış açık kart", REPORT)
 
     def test_expired_yhgm_and_botas_job_are_not_current_jobs(self):
         self.assertIn("publishedAt=2025-11-12", REPORT)
