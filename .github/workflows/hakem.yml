@@ -36,7 +36,11 @@ jobs:
           set -o pipefail
           python -m unittest discover -s scripts -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hakem-tests.log"
 
+      - name: Compile referee
+        run: python -m py_compile scripts/hakem_gate.py
+
       - name: Deterministic checks and Cloudflare AI review
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
