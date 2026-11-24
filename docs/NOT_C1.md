@@ -86,3 +86,14 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - **YHGM:** 2.764 sürekli işçi kura/sonuç duyurusu; güncel iş ilanı değil, Haber sekmesinde **Kura** olarak sınıflanır.
 - TLS beş hedefinde hata CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; hata süresi dolmuş sertifikayı kanıtlamaz. SSL doğrulaması açık kalır.
 - Resmî Gazete'de robots izinli iki timeout hedefi birer kez yeniden denendi; tekrar timeout. TPAO PDF için robots izni belirsiz olduğundan tekrar istek yok.
+
+
+## 8. PR #33 Hakem tekrar koşusu — 24.11.2026
+
+- İstenen işlem yapıldı: yalnız başarısız job yeniden çalıştırıldı. GitHub API sonucu success=true, run #45413014756, attempt 2.
+- Yeni attempt job: tests SUCCESS, hakem FAILURE. Gerçek test logu: Ran 53 tests in 0.093s, OK (53/53).
+- Actions ortamında secret adları CF_ACCOUNT_ID: *** ve CF_API_TOKEN: *** olarak mevcut. Maskelenmiş değerler incelenmedi. Hakem deterministik kontrolde RED verdiği için Cloudflare API çağrısına gelinmedi; secret geçerliliği doğrulanmış değildir.
+- RED nedeni: Tarayıcı taklidi User-Agent. PR #33 diff'inde yalnız iki dosyanın silinmesi var; silinen eski render_probe.py içinde Mozilla/Chrome UA satırları bulunuyor. Taban cline/K1 hakemi silinen satırları da taradığı için false-positive üretir.
+- Ayrı Hakem düzeltme PR #39: eklenen satırları tarama + gerçek test logu doğrulaması + isteğe bağlı Workers AI / açık manuel inceleme fallback'i. Actions #45477635801 ve #45477635690 SUCCESS; 66/66 test. #39'un otomatik diff kontrolü bootstrap sırasında bilerek SKIPPED; Step Summary insan incelemesi gerektiğini yazar. Bağımsız kod incelemesi KABUL, fakat merge edilmedi.
+- Cem'in açık “birleştir” onayı olmadan #39 birleştirilmez. #39 tabana girdikten sonra #33'ün Hakem'i tekrar çalıştırılmalı; test+Hakem tamamen yeşil olmadan #33 kabul edilmez.
+- Secret süresi yaklaşık 24.12.2026 (Cem'in bildirimi; kesin expiry GitHub'dan bağımsız doğrulanmadı). Secret değerleri log/rapora yazılmaz.
