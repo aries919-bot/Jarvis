@@ -14,36 +14,38 @@ jobs:
   c1-backend-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
     steps:
       - name: Checkout QA workflow repository
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Check for private-repository read credential without exposing it
-        if: ${{ secrets.JARVIS_CLOUD_READ_TOKEN == '' && secrets.JARVIS_SOURCE_READ_TOKEN == '' }}
+      - name: Check private-repository read credential without exposing it
+        if: ${{ env.C1_READ_TOKEN == '' }}
         run: |
           echo "::error::No read-only credential is configured in this repository for aries919-bot/jarvis-cloud."
-          echo "No credential value was requested or printed. Configure a fine-grained read-only token only if the owner chooses to do so."
+          echo "No credential value was requested or printed."
           exit 1
 
       - name: Checkout private C1 backend source
-        if: ${{ secrets.JARVIS_CLOUD_READ_TOKEN != '' || secrets.JARVIS_SOURCE_READ_TOKEN != '' }}
+        if: ${{ env.C1_READ_TOKEN != '' }}
         uses: actions/checkout@v7
         with:
           repository: aries919-bot/jarvis-cloud
           ref: is/c1-career-feed
           path: private-c1
-          token: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+          token: ${{ env.C1_READ_TOKEN }}
           persist-credentials: false
 
       - name: Set up Node 22
-        if: ${{ secrets.JARVIS_CLOUD_READ_TOKEN != '' || secrets.JARVIS_SOURCE_READ_TOKEN != '' }}
+        if: ${{ env.C1_READ_TOKEN != '' }}
         uses: actions/setup-node@v7
         with:
           node-version: '22'
 
       - name: Run C1 backend regression suite
-        if: ${{ secrets.JARVIS_CLOUD_READ_TOKEN != '' || secrets.JARVIS_SOURCE_READ_TOKEN != '' }}
+        if: ${{ env.C1_READ_TOKEN != '' }}
         working-directory: private-c1
         run: npm run test:c1
