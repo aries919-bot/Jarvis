@@ -86,3 +86,22 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - **YHGM:** 2.764 sürekli işçi kura/sonuç duyurusu; güncel iş ilanı değil, Haber sekmesinde **Kura** olarak sınıflanır.
 - TLS beş hedefinde hata CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; hata süresi dolmuş sertifikayı kanıtlamaz. SSL doğrulaması açık kalır.
 - Resmî Gazete'de robots izinli iki timeout hedefi birer kez yeniden denendi; tekrar timeout. TPAO PDF için robots izni belirsiz olduğundan tekrar istek yok.
+
+
+## 8. Hakem düzeltmesi ve K1-F2 yeniden denemesi — 24.11.2026
+
+### PR #33 K1-F2
+- Diff yeniden sayımı: 2 dosya, 0 ekleme, 606 silme. Yalnız `.github/workflows/iskur-render.yml` ve `scripts/render_probe.py`.
+- Test job SUCCESS: `Ran 53 tests in 0.093s`, `OK` (53/53).
+- Başarısız Hakem job yeniden çalıştırıldı: [Actions #45413014756](https://github.com/aries919-bot/Jarvis/actions/runs/45413014756), attempt 2. GitHub API yeniden çalıştırma cevabı `success=true`; tests SUCCESS, hakem `138746764701` FAILURE / RED.
+- Actions logunda secret alanları maskeli (`CF_ACCOUNT_ID: ***`, `CF_API_TOKEN: ***`). Hakem silinen eski render_probe.py içindeki Mozilla/Chrome User-Agent satırlarını taradığı için RED verdi. Deterministik kontrolde durduğundan Cloudflare API çağrısına ulaşmadı; secret geçerliliği kanıtlanmış değildir.
+
+### PR #39 HAKEM-DIFF
+- PR: [#39](https://github.com/aries919-bot/Jarvis/pull/39), `fix/hakem-added-diff-only` → `cline/K1`.
+- Kapsam: `.github/workflows/hakem.yml`, `scripts/hakem_gate.py`, `scripts/test_hakem_gate.py`. Diff'te yalnız eklenen hunk satırları denetlenir; silinen UA yanlış pozitif olmaz. Test logunda pozitif test sayısı, OK ve test job success zorunludur. Cloudflare AI opsiyoneldir; AI yoksa bunun bir insan onayı olmadığı açıkça belirtilir.
+- Kod hakem incelemesi: KABUL. Diff'te yasak desen tekrar sayımı 0.
+- Actions [#45477635801](https://github.com/aries919-bot/Jarvis/actions/runs/45477635801): Python Script Tests SUCCESS; `Ran 66 tests`, `OK` (66/66).
+- Actions [#45477635690](https://github.com/aries919-bot/Jarvis/actions/runs/45477635690): tests SUCCESS, 66/66; hakem job SUCCESS; otomatik diff/AI adımı bootstrap PR #39 için SKIPPED, manual-review Step Summary SUCCESS. Bu bir bağımsız insan PR onayı değildir.
+- PR #39 açık, merge yok. Cem'in açık “birleştir” izni bekleniyor. Bu izin verilmeden PR birleştirilmeyecek.
+- #39 tabana girdikten sonra PR #33 Hakem job'ı yeniden çalıştırılır. #33 ancak test ve Hakem tümüyle SUCCESS olduktan, sonra Cem'in ayrı birleştirme onayı geldikten sonra birleşebilir.
+- Secret sona erme tarihi yaklaşık 24.12.2026 olarak Cem tarafından bildirilmiştir; GitHub tarafında kesin expiry doğrulanmadı. Secret değerleri raporlanmaz.
