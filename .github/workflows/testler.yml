@@ -29,12 +29,12 @@ jobs:
           import re
           from pathlib import Path
           log = Path('/tmp/scripts-tests.log').read_text(encoding='utf-8', errors='replace')
-          match = re.search(r'^Ran (\\d+) tests? in ', log, re.MULTILINE)
+          match = re.search(r'^Ran (\d+) tests? in ', log, re.MULTILINE)
           total = int(match.group(1)) if match else 0
           failed_match = re.search(r'FAILED \\((.*?)\\)', log)
           failed = 0
           if failed_match:
-              for key, value in re.findall(r'(failures|errors)=(\\d+)', failed_match.group(1)):
+              for key, value in re.findall(r'(failures|errors)=(\d+)', failed_match.group(1)):
                   failed += int(value)
           status = int(os.environ['TEST_STATUS'])
           passed = max(0, total - failed)
@@ -51,8 +51,8 @@ jobs:
               "Çalıştırılan komut: `python3 -m unittest discover -s scripts -p 'test_*.py' -v`",
           ]
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as out:
-              out.write('\\n'.join(lines) + '\\n')
-          print('\\n'.join(lines))
+              out.write('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
           if status != 0 or total == 0:
               raise SystemExit(1)
           PY
