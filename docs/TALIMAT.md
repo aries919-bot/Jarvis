@@ -1,5 +1,16 @@
 # Aries Geliştirme Talimatı — Kalıcı İşletim Kuralları
 
+## C1 SERT KABUL KRİTERLERİ (24.11.2026)
+1. Tek iş C1; A, D, E ve tema/film değişikliklerine dokunma.
+2. Bitti iddiası için gerçek komut çıktısı, kaynak başına gerçek ilan sayısı ve yeşil CI bağlantısı zorunlu.
+3. Başarı eşiği JSON içinde en az 10 çalışan kaynaktan 100+ gerçek ilan. Altındaysa gerçek sayı yazılır; Android UI entegrasyonuna geçilmez.
+4. Yayın ve son başvuru tarihleri ilanın metni/kaynak alanından çıkarılır. Çekim zamanı ayrı alandır; son tarihi geçen ilan geçmiş olarak işaretlenir.
+5. İlanlar, Haber, Takip ve Sonuç kendi verilerini gösterir; sekmeler arasında otomatik yönlendirme yoktur.
+6. Dış bağlantı Android Custom Tabs ile açılır; Aries'e geri dönüşte beyaz ekran olmadığı gerçek telefonda denenir.
+7. Her PR'da gerçek ilan/tarih örneği, bozuk internet, boş yanıt ve eski veri testleri bulunur.
+8. Her yanıt sonunda Kanıt: ... ve Telefonda denenecek: ... yazılır.
+
+
 Bu dosya Aries Android sesli asistan projesinin kalıcı çalışma talimatıdır.
 Repo: `aries919-bot/Jarvis`. Cem'le Türkçe, kısa ve net konuş. Bütçe **0 TL**; ücretli API/servis veya abonelik ekleme.
 
@@ -76,7 +87,7 @@ Bu talimatın devam tetikleyicisi sohbet belleği değil, `docs/HARITA.md` ve `d
 ## CLINE KURALI (23.11.2026)
 İkinci bir ajan olan Cline, Cem'in telefonundan paralel çalışır. Modeli ücretsiz ve zayıf olduğu için ona küçük, net işler verilir.
 
-1. HARITA'da her işe `sahip: cline` ya da `sahip: chatgpt` yaz. Sunucu ve veri işleri (K1, C1, E1 veri tarafı) Cline'a; arayüz ve yapay zekâ işleri (A1, A2, B1) ChatGPT'ye verilir.
+1. HARITA'da her işe `sahip: cline` ya da `sahip: chatgpt` yaz. K1 ve E1 veri tarafı Cline'a; C1 toplayıcı bu görev turunda ChatGPT'ye; arayüz ve yapay zekâ işleri (A1, A2, B1) ChatGPT'ye verilir.
 2. `sahip: cline` olan işe ChatGPT kod değişikliği yapmaz, mevcut Cline dalını/çalışmasını değiştirmez. Cline işe başlarken `DEVAM: <iş-id>` yazar.
 3. Cline işi `cline/<iş-id>` dalında yapar ve PR açar. PR açıklamasında/yorumunda ne değişti, hangi testleri yaptığı, test sonucu ve telefonda denenecekler açıkça bulunur.
 4. Cline PR'larının hakemi ChatGPT'dir. Sıfırdan ve şüpheci inceleme yapılır; sayılar ve kaynak iddiaları ölçülerek doğrulanır. Rapor/test sonucu yoksa birleştirilmez; PR'a eksikler yazılır.
@@ -85,5 +96,5 @@ Bu talimatın devam tetikleyicisi sohbet belleği değil, `docs/HARITA.md` ve `d
 7. E1 işi bölünür: veri kaynağı/toplama/sağlık/JSON tarafı Cline'a; Aries ekranı, grafikler ve Xiaomi ayar yönlendirmesi ChatGPT'ye aittir. Kod dosyaları ayrılır; aynı dosyada eşzamanlı değişiklik yapılmaz.
 
 ## Sahiplik tablosu
-- K1: cline. C1: cline. E1-Veri: cline.
+- K1: cline. C1: chatgpt. E1-Veri: cline.
 - A1, A2, B1, C2, C3, C4, C5, D1, E1-UI, Z1: chatgpt.
