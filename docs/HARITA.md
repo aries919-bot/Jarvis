@@ -5,6 +5,24 @@
 > Bu dal yalnızca proje notları içindir; Android kodu burada geliştirilmez.
 > **C1 özel ve öncelikli kurallar:** [docs/NOT_C1.md](NOT_C1.md). TALIMAT.md ile çelişirse NOT_C1.md geçerlidir.
 
+## H/K1/C1 v3 aktif sıra — 24.11.2026
+
+> Bu blok, eski görev/sahiplik kayıtlarından önce geçerlidir. Cline kullanılmaz. Yalnız İş & Kariyer/Haber doğrulama işi yürütülür. Ayrıntı: [NOT_C1.md](NOT_C1.md).
+
+| Kimlik | Durum | Kanıt / Sonraki adım |
+|---|---|---|
+| K1-E1 | KABUL | Actions #45388925995 SUCCESS; 3 sayfa/43 benzersiz kamu ilanı/8 kurum; Cem 3 kaydı e-Şube'de doğruladı. Sayım: 1 kamu kaynağı/43 ilan. |
+| K1-F | İPTAL | v3 gereği iptal; K1-F2 ile değiştirildi. |
+| K1-F2 | TEST KABUL — MERGE BEKLİYOR | PR #33; Actions #45403456464 SUCCESS; 46/46 geçti, 0 hata. PR diff'i yalnız 2 dosya silme. Test workflow PR #34 ve hedef dalı `is/K1-test-workflow`. |
+| H1 | PR HAZIRLANIYOR | `docs/HABER_SEMA.md`; H1 JSON sözleşmesi ve her kategoriye 2–3 resmî sayfa adayı. Adayların robots/erişim ölçümü yapılmadı. |
+| K1-B | YAPILMADI | ilan.gov.tr ve Resmî Gazete HTTP/TLS/robots ölçümü. |
+| K1-C | YAPILMADI | Ölçülen kaynak denetimi ve aday listesi. |
+| H2 | YAPILMADI | Ölçülmüş sayfalardan H1 JSON okuyucu. |
+| C1-1 | YAPILMADI | jarvis-cloud PR #5 düzeltmesi; kimlik doğrulamalı feed, kalıcı firstSeenAt, kaynak bazlı son iyi veri ve testler. |
+| C1-2 | YAPILMADI | Canlı ilan sayımı; kamu ayrı. 10 kaynak/100 doğrulanmış ilan yoksa RED. |
+| K1-M | YAPILMADI | Temiz workflow/betik PR'si; film commitleri hariç. |
+| U1 | YAPILMADI | Uygulama H1 JSON entegrasyonu; yalnız eşik sağlanınca. |
+
 ## Repo gerçeği
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a` (2026-11-21); bu SHA için PR tetiklemeli workflow run listesi boş.
 - Notlar `durum` dalında; GitHub okuma/yazma erişimi doğrulandı.
