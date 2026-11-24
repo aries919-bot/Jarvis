@@ -29,7 +29,7 @@ MAX_PDF_BYTES = 20 * 1024 * 1024
 MAX_ROBOTS_BYTES = 512 * 1024
 TIMEOUT_SECONDS = 15
 MAX_REDIRECTS = 3
-ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr"}
+ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr"}
 
 NUMERIC_DATE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 RANGE_DATE = re.compile(
@@ -151,6 +151,14 @@ def origin(url: str) -> str:
     return f"https://{parsed.netloc}"
 
 
+def same_official_host(left: str, right: str) -> bool:
+    a = (urllib.parse.urlsplit(left).hostname or "").lower()
+    b = (urllib.parse.urlsplit(right).hostname or "").lower()
+    if a == b:
+        return True
+    return {a, b}.issubset({"www.botas.gov.tr", "botas.gov.tr"})
+
+
 def header(headers: Any, name: str) -> str | None:
     if headers is None or not hasattr(headers,"get"):
         return None
@@ -170,17 +178,31 @@ def fetch_public_url(
         host_origin = origin(current)
         if host_origin not in cache:
             robots_url = host_origin + "/robots.txt"
-            robots = requester(robots_url,MAX_ROBOTS_BYTES)
-            if robots.error:
-                raise SourceError(f"robots UNKNOWN: {robots.error}")
-            if robots.status == 404:
-                parser = RobotFileParser()
-                parser.parse([])
-            elif robots.status is not None and 200 <= robots.status < 300 and robots.body:
-                parser = RobotFileParser()
-                parser.parse(robots.body.decode("utf-8","replace").splitlines())
-            else:
+            for robots_redirect in range(MAX_REDIRECTS + 1):
+                robots = requester(robots_url,MAX_ROBOTS_BYTES)
+                if robots.error:
+                    raise SourceError(f"robots UNKNOWN: {robots.error}")
+                if robots.status in {301,302,303,307,308}:
+                    location = header(robots.headers,"Location")
+                    if not location:
+                        raise SourceError(f"robots UNKNOWN: HTTP {robots.status}; Location yok")
+                    target = urllib.parse.urljoin(robots_url,location)
+                    target_origin = origin(target)
+                    if not same_official_host(host_origin,target_origin):
+                        raise SourceError("robots yönlendirmesi farklı/izin verilmeyen hosta gidiyor")
+                    robots_url = target
+                    continue
+                if robots.status == 404:
+                    parser = RobotFileParser()
+                    parser.parse([])
+                    break
+                if robots.status is not None and 200 <= robots.status < 300 and robots.body:
+                    parser = RobotFileParser()
+                    parser.parse(robots.body.decode("utf-8","replace").splitlines())
+                    break
                 raise SourceError(f"robots UNKNOWN: HTTP {robots.status}; hedef istenmedi")
+            else:
+                raise SourceError("robots yönlendirme sınırı aşıldı; hedef istenmedi")
             cache[host_origin] = parser
         if not cache[host_origin].can_fetch(USER_AGENT,current):
             raise SourceError("robots DISALLOW; hedef sayfaya istek gönderilmedi")
@@ -192,8 +214,9 @@ def fetch_public_url(
             if not location:
                 raise SourceError(f"HTTP {response.status}; Location yok")
             target = urllib.parse.urljoin(current,location)
-            if origin(target) != host_origin:
-                raise SourceError("Farklı hosta yönlendirme reddedildi")
+            target_origin = origin(target)
+            if not same_official_host(host_origin,target_origin):
+                raise SourceError("Farklı/izin verilmeyen hosta yönlendirme reddedildi")
             if redirect_number >= MAX_REDIRECTS:
                 raise SourceError("Yönlendirme sınırı aşıldı")
             current = target
@@ -251,11 +274,16 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None) -> 
 
 
 def application_deadline(text: str, context: str) -> str | None:
-    lower = text.lower()
-    pos = lower.find(context.lower())
-    excerpt = text[pos:pos+900] if pos >= 0 else text
-    match = RANGE_DATE.search(excerpt)
-    return parse_date(match.group(2)) if match else None
+    lowered_context = context.lower()
+    # The source may place the application term after the date range (YHGM does).
+    # Match only when the application term is close to the range, on either side.
+    for match in RANGE_DATE.finditer(text):
+        start = max(0,match.start()-260)
+        end = min(len(text),match.end()+260)
+        nearby = text[start:end].lower()
+        if lowered_context in nearby:
+            return parse_date(match.group(2))
+    return None
 
 
 def status_for(deadline: str | None, published: str | None, content_type: str, today: date) -> str:
