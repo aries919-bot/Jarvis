@@ -76,7 +76,7 @@ def _added_lines_only(diff: str) -> str:
         if line.startswith("+") and not line.startswith("+++"):
             if current_path and current_path != "scripts/hakem_gate.py":
                 added.append(line[1:])
-    return "\\n".join(added)
+    return "\n".join(added)
 
 def deterministic_findings(diff: str, base: str) -> list[str]:
     findings: list[str] = []
