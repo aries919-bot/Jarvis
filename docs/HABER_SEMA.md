@@ -1,6 +1,6 @@
 # HABER KARTI ŞEMASI (H1)
 
-Durum: H1 taslağı — resmî kaynak adayları listelendi; robots/erişim ve otomasyon uygunluğu ayrıca K1-B/K1-C ile ölçülür.
+Durum: PR AÇIK, ölçüm bekliyor. H1 bağımsız olarak kabul edilmiş değildir; resmî kaynak listesi K1-B ölçüm tablosundan sonra yalnız ÇALIŞIYOR adreslerle daraltılır.
 Kapsam: İş & Kariyer haberleri. Kaynak adayı olmak, kazıma izni veya canlı ilan kanıtı değildir.
 
 ## 1. Filtreler ve kategori sınıflandırması
