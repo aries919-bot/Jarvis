@@ -43,3 +43,37 @@ H1 şeması: institution, title, category, contentType, officialSourceUrl, howTo
 - 1 fresh haber kartı da yeni kamu işi değildir. Kamu ilanı hâlâ **1 kaynak / 43 doğrulanmış ilan** (e-Şube); **10 kaynak / 100 ilan** hedefi karşılanmadı.
 - Branch-scoped Actions cache başarılı kaynakların JSON/firstSeenAt değerlerini sonraki çalıştırmaya taşır; bu geçici çözümdür. Kalıcı saklama C1-1 Worker veri deposunda tamamlanır.
 
+
+
+## Genişletilmiş okuyucu — 24.11.2026 20:00 UTC
+
+H2 kaynak listesi K1-B geniş ölçümünde 28 URL içinden yalnız izinli ve erişilebilir resmî kaynaklara göre genişletildi. Kaynak sayısı 6 kurum:
+- YHGM kura kaydı
+- BOTAŞ duyuruları (bu denemede stale)
+- Adli Tıp Kurumu 2026-2 personel alımı (HTML + aynı host Ek-1 PDF)
+- Anadolu Üniversitesi 4/B duyurusu (HTML; PDF uç noktası K1-B'de ağ hatası olduğundan ek PDF kazınmaz)
+- Düzce Üniversitesi 23.11.2026 öğretim elemanı PDF'si
+- Tarsus Üniversitesi öğretim elemanı duyurusu (HTML + K1-B'de ayrı ölçülmüş aynı-host PDF)
+
+H2 okuyucu için yeni genel parser:
+- Türkçe ay adları ile tarih ve başvuru aralığı algılar.
+- Yayın tarihi yalnız açık meta/etiket veya kaynağa özel sabitlenmiş başlık alanından; başlık sınav/kura tarihi ve dosya adı yayın tarihi sayılmaz.
+- Başvuru aralığındaki bitiş tarihi deadline olur; collection timestamp asla bunun yerine geçmez.
+- Başvuru açılış zamanı ilan metninde ayrı veriliyorsa `applicationOpensAt` alanında tutulur; açılış gelmeden `Doğrulandı` etiketi verilmez.
+- PDF ekleri robots/TLS kontrolünden geçmeden alınmaz. Bir HTML sayfasında bağlantı bulunması beklenir; sayfa linki boşluk/URL-encoding farkı gösterse de önceden K1-B ile ölçülmüş aynı-host PDF URL'si kullanılabilir. Başka host reddedilir.
+- Kaynak bazında stale ve Actions cache last-good davranışı korunur.
+
+İlk geniş live run [#45475126894](https://github.com/aries919-bot/Jarvis/actions/runs/45475126894): 6 kaynak, 4 fresh /2 stale, 4 kart (YHGM 1, ATK 1, Anadolu 1, Düzce 1; BOTAŞ timeout, Tarsus PDF URL mismatch). Tarsus bağlantı düzeltmesinden sonra live run [#45476181267](https://github.com/aries919-bot/Jarvis/actions/runs/45476181267): **6 kaynak, 5 fresh /1 stale, 5 kart** (YHGM 1, ATK 1, Anadolu 1, Düzce 1, Tarsus 1; BOTAŞ timeout). Aynı koşuda 30 tests / 30 PASS.
+- Tarsus PDF link düzeltmesi: K1-B ile önceden ölçülmüş percent-encoded aynı-host URL'si çağrılır; kaynak HTML'inden bulunan href'in decode edilmiş path'iyle eşleştirilir. Bu, robots izinlerini atlamaz.
+- YHGM kartı kura (lottery) ve geçmiş tarihlidir; güncel iş ilanına eklenmez.
+- ATK kartı 181 pozisyonu temsil eden tek duyuru kartıdır; 181 ayrı haber sayılmaz. `applicationOpensAt=2026-11-30T09:00:00+03:00`, deadline 2026-12-06; 24 Kasım ölçümünde henüz açılmadığı için `Doğrulanamadı` olması gerekir.
+- Anadolu kartı tek personel duyurusudur, 30 Kasım deadline; KPSS(B) puan sıralaması. İlan PDF uç noktası erişilemediği için kart yalnız HTML'den kanıtlanabilen genel şartları içerir.
+- Düzce kartı 5 öğretim elemanı kadrolu bir duyuru; 7 Aralık deadline.
+- Tarsus kartı 3 öğretim görevlisi kadrolu bir duyuru; 7 Aralık deadline.
+- BOTAŞ detay sayfası timeout + tek retry timeout; stale; son iyi veri korunur.
+
+### Zamanlama ve canlı çalışma sınırı
+- H2 workflow'a `17 */6 * * *` UTC cron eklendi. GitHub Actions schedule yalnız workflow varsayılan branch'e ulaştığında çalışır. PR #40 şu an `durum` tabanına açık/taslak olduğundan **cron henüz otomatik çalışmıyor**. Manual run ve push ile branch'te canlı ölçüm yapılabilir.
+- Workflow yalnız JSON kaynak artefaktlarını üretir ve Actions cache'de kaynak bazlı last-good/firstSeenAt korur. Cache ve 14 günlük artifact production database değildir.
+- Aries uygulamasındaki Android Haber ekranı bu artefaktı henüz çekmiyor. Worker'da H2 public feed route/publish yok; C1 `/kariyer-feed` production publish de secret çifti olmadığı için SKIPPED. Android uygulama network fetch/refresh bağlı değil. Dolayısıyla **haber okuyucu canlı kaynak çekebiliyor; telefon ekranında canlı haber akışı henüz yok**.
+- Üretim canlı akışı için: default branch'e onaylı schedule workflow; kaynak başına last-good ve firstSeenAt kalıcılığı Worker/D1; güvenli public/read authenticated feed; Android haber ekranı JSON refresh; per-source stale; dış site Custom Tabs. Bu iş C1 kabul/threshold öncesinde UI'ya taşınmaz.
