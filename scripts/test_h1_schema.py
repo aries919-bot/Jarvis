@@ -129,6 +129,17 @@ class H1SchemaTests(unittest.TestCase):
         self.assertEqual([], validate_feed(feed([]), TODAY))
         self.assertTrue(validate_feed("", TODAY))
 
+    def test_malformed_dates_and_non_https_links_are_rejected(self):
+        record = item(
+            deadline="2026-13-40",
+            publishedAt="2026-02-30",
+            officialSourceUrl="http://example.gov.tr/ilan/1",
+        )
+        errors = validate_feed(feed([record]), TODAY)
+        self.assertTrue(any(".deadline:" in error for error in errors))
+        self.assertTrue(any(".publishedAt:" in error for error in errors))
+        self.assertTrue(any("officialSourceUrl: HTTPS" in error for error in errors))
+
     def test_missing_timezone_and_duplicate_ids_are_rejected(self):
         bad = item(firstSeenAt="2026-11-25T10:00:00")
         errors = validate_feed(feed([bad, item()]), TODAY)
