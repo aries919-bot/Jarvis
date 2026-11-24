@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Public-runner QA refresh for private C1 HEAD dc3b0e72bd27fbd71420b3456d8aa40e537a5ffa; includes public-branch e-Şube input, regression tests, live counts and local D1 smoke.
+# Public-runner QA refresh for private C1 HEAD 30c196e5fffa760cde87f806d3ce426ecc742815; includes exact H1 source categories, current public e-Şube input, tests and local D1 smoke.
 
 on:
   push:
