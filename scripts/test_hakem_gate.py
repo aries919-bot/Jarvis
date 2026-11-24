@@ -55,6 +55,33 @@ class HakemGateTests(unittest.TestCase):
         )
         self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
 
+    def test_added_verify_false_in_checker_is_flagged(self):
+        diff = (
+            "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
+            "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
+            "@@ -1,0 +2 @@\n"
+            "+requests.get(url, verify=False)\n"
+        )
+        self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_added_browser_ua_in_checker_is_flagged(self):
+        diff = (
+            "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
+            "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
+            "@@ -1,0 +2 @@\n"
+            "+headers['User-Agent'] = 'Mozilla/5.0'\n"
+        )
+        self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_hunk_added_content_starting_with_plus_plus_plus_is_scanned(self):
+        diff = (
+            "diff --git a/config.txt b/config.txt\n"
+            "--- a/config.txt\n+++ b/config.txt\n"
+            "@@ -1,0 +2 @@\n"
+            "+++ verify=False\n"
+        )
+        self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
+
     def test_checker_pattern_file_is_excluded_from_self_scan(self):
         source_line = 'UA_PATTERN = r"(?:Moz" + "illa)/[0-9]"'
         diff = (
