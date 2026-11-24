@@ -409,6 +409,13 @@ class H2ReaderTests(unittest.TestCase):
         with self.assertRaisesRegex(h2.SourceError,"farklı resmî host"):
             h2.collect_official(source,requester,"2026-11-24T19:00:00Z",None,date(2026,11,24))
 
+
+    def test_pdf_href_with_spaces_uses_measured_url_encoded_target(self):
+        page = h2.PageParser()
+        page.feed('<a href="/Files/Resmi Gazete İlan 23.11.2026.pdf">İlan metni</a>')
+        expected = "https://personel.tarsus.edu.tr/Files/Resmi%20Gazete%20%C4%B0lan%2023.11.2026.pdf"
+        self.assertEqual(expected,h2.official_link_target(page,"https://personel.tarsus.edu.tr/tr/news/notice",expected))
+
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual(6,len(cfg["sources"]))
