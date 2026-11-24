@@ -36,7 +36,7 @@
 | A1 İki ekran taslağı | ONAYLANDI | sahip: chatgpt; ana ekran + İş & Kariyer Cem tarafından onaylandı |
 | A2 Tüm uygulama tema sistemi | PR AÇIK | sahip: chatgpt; #25/#27/#28 CI yeşil; bağımsız inceleme ve telefon testi |
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt; #26 CI yeşil; canlı API, bağımsız inceleme ve telefon testi |
-| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak; statik QA'da GET rota/ilk görülme/son iyi veri koruma eksikleri; canlı ilan sayısı bilinmiyor |
+| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM — CI RUNNER ENGELİ | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak, HEAD `197295813`; 31 test yazılı, son PR koşusu `runner_id=0`, `steps=[]`; canlı ilan sayımı yok |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt; #22 + #31; son HEAD `4ec0158`; CI #671/#116 sürüyor, gerçek telefon testi bekliyor |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29/#30 açık taslak; #30 APK #638 + Full QA #84 yeşil; gerçek cihaz ve bağımsız insan incelemesi bekliyor |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt; kişisel profil telefonda kalır |
@@ -71,7 +71,7 @@
 | K1-B | ÖLÇÜM VAR — PR AÇIK / KISMİ RED | PR #36: https://github.com/aries919-bot/Jarvis/pull/36; son ölçüm #45429536647: 20 benzersiz URL, 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ. Modlar: 9 aktif ölçüm / 8 geçici kapalı / 3 yalnız yönlendirme. 8 kapalı adres = 5 TLS + 3 timeout; 3 Kariyer Kapısı/e-Devlet linkinde ağ isteği yok. Testler 15/15. Gerçek kamu ilanı: 1 kaynak (e-Şube) / 43 doğrulanmış ilan. |
 | K1-C | PR AÇIK — GÜNCEL RAPOR + TEST | PR #38: https://github.com/aries919-bot/Jarvis/pull/38, is/K1-C → durum; 4 dosya: rapor, aday listesi, rapor testi, workflow. K1-B #45429536647'ye göre 20 URL: 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ; rapor 20/20 benzersiz kaynağı gösterir. CI #45430917966: 6/6 SUCCESS. Kamu 1 kaynak / 43 doğrulanmış ilan; PR birleştirilmedi. |
 | H2 | PR AÇIK — KISMİ / BOTAŞ STALE | PR #40: https://github.com/aries919-bot/Jarvis/pull/40, is/H2-verified-reader → durum, taslak. Test CI #45437948449: 19/19 SUCCESS. Canlı reader #45437928827 SUCCESS; 2 kaynakta 1 fresh / 1 stale / 1 kart. YHGM kura kartı doğru tarih ayrımıyla üretildi; BOTAŞ detay URL'si TIMEOUT + tek retry TIMEOUT oldu. Artefakt #14942950569. H2 yeni kamu işi sayısına katkı sağlamadı; merge yok. |
-| C1-1 | YAPILMADI | jarvis-cloud PR #5 düzeltmesi; kimlik doğrulamalı GET /kariyer-feed, kalıcı firstSeenAt, kaynak bazlı son iyi veri, kamu JSON'u ve hata testleri. |
+| C1-1 | DEVAM — CI RUNNER ENGELİ | jarvis-cloud PR #5 açık/taslak; HEAD `197295813`; 12 dosya +2.270/-5; 31 test tanımlı ama CI çalıştırmadı; en son #45449449913 `runner_id=0`, `steps=[]`. Kamu 1/43; canlı özel kaynak sayımı yok. |
 | C1-2 | YAPILMADI | Canlı kaynak/ilan sayımı, kamu ayrı; eşik sağlanmıyorsa RED ve gerçek sayı. |
 | K1-M | YAPILMADI | Gerekli workflow/betiklerin temiz PR ile main'e taşınması; film commitleri hariç, cron yalnız main'de. |
 | U1 | YAPILMADI | Uygulama entegrasyonu; arama motoru kazıması kapalı, H1 Haber kartları ve Custom Tabs. Telefon doğrulaması Cem'de. |
@@ -155,3 +155,17 @@
 - GitHub Community'de 18.11.2026 tarihli özel depo tartışmasında aynı belirti var: `runner_id=0`, boş `steps`, kullanılabilir günlük yok. Topluluk yanıtı; başarısız koşunun açıklama/annotation alanını, Actions kullanım-bütçe sınırını, Settings → Actions → General izinlerini kontrol etmeyi; sebep görünmüyorsa GitHub Support'a run ID'leri iletmeyi öneriyor. Bu bir topluluk önerisidir, kesin kök neden değildir.
 - Bu depo için Actions izin endpoint'i bu denetim aracından okunamadı. Faturaya, hesap kısıtına veya depo ayarına dair varsayım yapılmıyor.
 - Telefonda GitHub depo Settings → Actions → General altında GitHub-hosted runner kullanımının açık olduğu; Billing → Actions kullanım/bütçe sınırının dolmadığı; başarısız koşu sayfasında üst annotation bulunup bulunmadığı kontrol edilmeli. Annotation/ayar sorunu görünmüyorsa Support'a şu run ID'ler gönderilmeli: `45447411669`, `45447399299`.
+
+
+### C1-1 düzeltme ve son CI kanıtı — 24.11.2026
+- PR #5 güncel HEAD: `197295813ed0ac5cc5ec49d8df7d95b677d77322`; açık/taslak, main'e birleşmedi.
+- PR diff yeniden sayımı: 12 dosya, +2.270 / -5. PR açıklaması güncel HEAD ve kanıtlarla eşitlendi.
+- Statik QA düzeltmesi: robots.txt politikası origin başına bir kez alınır, karar her ilan panosu API yolu için ayrı hesaplanır. `fetchText` içinde `redirect: "manual"`; 3xx otomatik izlenmez.
+- Yeni iki regresyon testi: aynı API hostundaki farklı yol için farklı robots kararı; HTTP yönlendirmesinin otomatik takip edilmemesi.
+- Test sayımı yeniden yapıldı: `career-feed` 16 + `career-feed-state` 6 + `career-feed-route` 3 + `esube-input` 6 = **31 yazılı test**. Çalıştırıldıkları kanıtlanmadı.
+- PR patch yeniden sayımı: 12 dosya ve 2.270 eklenen satır. Eklenen satırlarda token/secret/özel anahtar/CV/KPSS/e-Devlet/TCKN desenleri: **0 eşleşme**.
+- Son PR koşusu [#45449449913](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45449449913), güncel HEAD ile eşleşiyor, conclusion failure. Job `138642181122` `syntax-and-unit`: GitHub API ham job kaydı `runner_id=0`, `runner_name=""`, `steps=[]`. Log endpoint 404 BlobNotFound; syntax ve test komutu başlamadı.
+- Kamu: son ölçülmüş snapshot 1 e-Şube kaynağı / 43 benzersiz kayıt; çekim zamanı `2026-11-24T11:57:55+00:00`. 15 Lever/Ashby panosu adaydır; canlı ilan sayıları ölçülmedi.
+- Eşik 10 kaynak / 100 doğrulanmış ilan sağlanmadı. C1-1 RED; C1-2 ve UI entegrasyonu yok. Worker deploy ve uçtan uca D1 kalıcılık testi yok.
+- Depo metadata okuması `admin=true`, `push=true` gösteriyor; bu Actions runner/billing ayarlarını kanıtlamaz. Actions permissions endpoint'i entegrasyondan okunamadı. Kök neden kesin değil.
+**SONRAKİ ADIM:** runner atanmama sorununun Actions annotation/billing/repo settings tarafında çözülmesi; ardından güncel HEAD için 31 testli PR CI yeşile dönmeli. Merge ve deploy yok.
