@@ -60,7 +60,7 @@ class HakemGateTests(unittest.TestCase):
             "--- a/scripts/hakem_gate.py\n"
             "+++ b/scripts/hakem_gate.py\n"
             "@@ -1 +1 @@\n"
-            "+publishedAt = collectedAt\n"
+            "+publishedAt = " + "collectedAt\n"
             "+Mozilla/5.0\n"
         )
         findings = deterministic_findings(patch, "cline/K1")
