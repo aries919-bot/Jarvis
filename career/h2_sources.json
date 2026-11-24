@@ -57,7 +57,8 @@
         "KPSS P93",
         "lisans",
         "KPSS P3"
-      ]
+      ],
+      "pdfUrlPremeasured": true
     },
     {
       "id": "anadolu-sozlesmeli-2026",
@@ -152,7 +153,8 @@
       "tags": [
         "ALES",
         "KPSS'siz"
-      ]
+      ],
+      "pdfUrlPremeasured": true
     }
   ]
 }
