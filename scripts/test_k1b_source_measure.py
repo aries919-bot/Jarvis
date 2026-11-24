@@ -12,10 +12,10 @@ import k1b_source_measure as measure
 
 
 class K1BSourceMeasureTests(unittest.TestCase):
-    def test_manifest_contains_twenty_unique_https_targets(self):
+    def test_manifest_contains_twenty_eight_unique_https_targets(self):
         sources = measure.read_manifest()
         self.assertEqual(28, len(sources))
-        self.assertEqual(20, len({item["url"] for item in sources}))
+        self.assertEqual(28, len({item["url"] for item in sources}))
         self.assertTrue(all(item["url"].startswith("https://") for item in sources))
 
     def test_robots_disallow_prevents_fetch_permission(self):
@@ -99,9 +99,9 @@ class K1BSourceMeasureTests(unittest.TestCase):
         self.assertEqual(0, row["attempts"])
         self.assertEqual("ENGELLİ", row["status"])
 
-    def test_manifest_modes_are_8_closed_3_redirect_9_measure(self):
+    def test_manifest_modes_are_8_closed_3_redirect_17_measure(self):
         sources = measure.read_manifest()
-        self.assertEqual(20, len(sources))
+        self.assertEqual(28, len(sources))
         self.assertEqual(8, sum(x.get("collectionMode") == "TEMPORARILY_CLOSED" for x in sources))
         self.assertEqual(3, sum(x.get("collectionMode") == "REDIRECT_ONLY" for x in sources))
         self.assertEqual(17, sum(x.get("collectionMode") == "MEASURE" for x in sources))
