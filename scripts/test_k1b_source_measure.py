@@ -25,6 +25,11 @@ class K1BSourceMeasureTests(unittest.TestCase):
         robots = "User-agent: *\nDisallow: /"
         self.assertFalse(measure.robots_permission_from_text(robots, "https://example.gov.tr/duyurular"))
 
+    def test_same_host_paths_are_checked_independently(self):
+        robots = "User-agent: *\nDisallow: /ilanlar"
+        self.assertFalse(measure.robots_permission_from_text(robots, "https://example.gov.tr/ilanlar"))
+        self.assertTrue(measure.robots_permission_from_text(robots, "https://example.gov.tr/"))
+
     def test_dated_announcement_requires_date_near_announcement_context(self):
         self.assertTrue(measure.has_dated_announcement("Personel alım ilanı 25.11.2026 tarihinde yayımlandı."))
         self.assertTrue(measure.has_dated_announcement("Kura duyurusu: 24 Kasım 2026"))
