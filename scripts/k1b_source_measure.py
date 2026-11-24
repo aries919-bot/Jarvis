@@ -63,8 +63,8 @@ def read_manifest(path: Path = MANIFEST) -> list[dict[str, str]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     items = data["sources"]
     urls = [item["url"] for item in items]
-    if len(items) != 20:
-        raise ValueError(f"Manifestte 20 hedef bekleniyordu, bulunan: {len(items)}")
+    if len(items) != 28:
+        raise ValueError(f"Manifestte 28 hedef bekleniyordu, bulunan: {len(items)}")
     if len(urls) != len(set(urls)):
         raise ValueError("Manifestte tekrarlanan URL var; tekrarlar kaynak diye sayılmaz.")
     for item in items:
@@ -424,8 +424,8 @@ def main() -> int:
 
     sources = read_manifest()
     # The URL list is re-counted before the network loop; duplicate URLs are a hard error.
-    if len({item["url"] for item in sources}) != 20:
-        raise SystemExit("Beklenen 20 farklı URL doğrulanamadı.")
+    if len({item["url"] for item in sources}) != 28:
+        raise SystemExit("Beklenen 28 farklı URL doğrulanamadı.")
 
     collected_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     cache: dict[str, dict[str, Any]] = {}
@@ -439,8 +439,8 @@ def main() -> int:
         )
 
     # Independent recount from generated rows.
-    if len(rows) != 20 or len({row["url"] for row in rows}) != 20:
-        raise SystemExit(f"Ölçüm sayısı beklenenden farklı: {len(rows)} satır.")
+    if len(rows) != 28 or len({row["url"] for row in rows}) != 28:
+        raise SystemExit(f"Ölçüm sayısı beklenenden farklı: {len(rows)} satır (28 bekleniyordu).")
     report = {"collectedAt": collected_at, "userAgent": USER_AGENT, "total": len(rows), "sources": rows}
     output = ROOT / args.json
     output.parent.mkdir(parents=True, exist_ok=True)
