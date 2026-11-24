@@ -35,7 +35,7 @@
 | A1 İki ekran taslağı | ONAYLANDI | sahip: chatgpt; ana ekran + İş & Kariyer Cem tarafından onaylandı |
 | A2 Tüm uygulama tema sistemi | PR AÇIK | sahip: chatgpt; #25/#27/#28 CI yeşil; bağımsız inceleme ve telefon testi |
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt; #26 CI yeşil; canlı API, bağımsız inceleme ve telefon testi |
-| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM | sahip: chatgpt; ayrı repo aries919-bot/jarvis-cloud, PR #5 açık/taslak; CI iş adımı başlamadan başarısız, canlı ilan sayıları henüz yok |
+| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak; statik QA'da GET rota/ilk görülme/son iyi veri koruma eksikleri; canlı ilan sayısı bilinmiyor |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt; #22 + #31; son HEAD `4ec0158`; CI #671/#116 sürüyor, gerçek telefon testi bekliyor |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29/#30 açık taslak; #30 APK #638 + Full QA #84 yeşil; gerçek cihaz ve bağımsız insan incelemesi bekliyor |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt; kişisel profil telefonda kalır |
@@ -63,9 +63,11 @@
 - Bitiş: her kaynak gerçek sayfa denetimi; PR başına en az 3 ilan örneği veya yokluk nedeni; test sonucu; `cline/K1` PR ve yeşil CI.
 
 **C1 — sahip: chatgpt / DEVAM**
-- Gerçek Worker deposu aries919-bot/jarvis-cloud; dal is/c1-career-feed, PR #5 → main.
-- Lever/Ashby aday kaynak okuyucuları, D1 JSON feed, /kariyer-feed, 06:00/18:00 UTC cron, tarih/provenans/tekilleştirme ve hata/eski veri testleri eklendi.
-- 15 kaynak adayı tanımlı; gerçek çalışan kaynak ve ilan sayısı CI canlı raporu olmadan bilinmiyor. CI run #45381602885 failure, runner/job adımları boş; eşik sağlandı sayılmaz. İlerleme için yeşil CI ve JSON'da 10 kaynak/100 gerçek ilan kanıtı şart.
+- Worker: aries919-bot/jarvis-cloud, dal is/c1-career-feed, PR #5 → main; HEAD `b034e8c`.
+- 15 aday (9 Lever, 6 Ashby); canlı çalışan kaynak sayısı bilinmiyor. Testlerdeki 15 kayıt sentetik fixture, canlı ilan kanıtı değil.
+- Statik QA: `getCareerFeed` import edilmiş ama çağrılmıyor; kimlik doğrulamalı GET `/kariyer-feed` rotası yok. Zamanlayıcı toplama çağrısı var.
+- İlk görülme zamanı geçmiş çalışmalardan korunmuyor; `collectedAt` yenileniyor. Kısmi (1–9 kaynak veya <100 ilan) sonuç da son iyi feed'in üstüne yazılabiliyor.
+- CI #45382012869 ve yeniden deneme #45382024807 başarısız; iş adımları boş, log/artefakt yok. Runner sebebi bilinmiyor. Canlı kaynak raporu ve 10 kaynak/100 ilan eşiği kanıtlanmadı.
 
 **E1-Veri — sahip: cline**
 - Dosyalar: `market/sources.json`, `worker/src/market-data.ts`, `.github/workflows/market-data.yml`, `worker/test/market-data.test.ts`.
@@ -79,8 +81,7 @@
 - `sahip: cline` işlerinin kaynak koduna ve dallarına ChatGPT müdahale etmez.
 
 ## Son 10 kayıt
-1. TGA detay okuyucusu eklendi; reader ve indeks sayıları ayrıştırıldı.
-2. K1 legacy PR #24 20 kaynak envanteri; güncel Cline K1 denetimi bekleniyor.
+1. K1 legacy PR #24 20 kaynak envanteri; güncel Cline K1 denetimi bekleniyor.
 3. A1 iki ekran tasarımı onaylandı.
 4. A2 #25 ilk CI NPE; ikinci deneme test+APK SUCCESS, kök neden bilinmiyor.
 5. B1 #26 bellek/streaming; CI yeşil, bağımsız inceleme ve telefon testi bekliyor.
@@ -89,4 +90,6 @@
 8. Sahiplik güncellemesi: K1 ve E1-Veri Cline; C1 ChatGPT (jarvis-cloud PR #5); diğer uygulama işleri ChatGPT.
 9. C2 #22 kategoriler ve Haber/Süreç/Program ayrımı; APK + API29/33/34/35 Full QA SUCCESS.
 10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
-**SONRAKİ ADIM:** C1 PR #5 CI koşusunun neden runner/step başlatmadığını çöz; yeşil test ve canlı kaynak raporu al. Kaynak başına gerçek ilan sayısı, JSON toplamı ve 10 kaynak/100 ilan eşiği doğrulanmadan Android entegrasyonuna geçme. C1 yalnız is/c1-career-feed dalında sürdürülür.
+**SONRAKİ ADIM:** C1 PR #5'te kimlik doğrulamalı GET /kariyer-feed rotası, kalıcı firstSeenAt ve eşik altı koşulda son iyi feed korumasını tamamla; sonra CI'ı yeşil çalıştırıp gerçek canlı kaynak başına sayıları ve JSON'da 10 kaynak/100 ilanı doğrula. Android entegrasyonuna geçme.
+
+11. C1 bağımsız statik QA: GET feed rotası yok; kalıcı ilk görülme alanı yok; eşik altı feed son iyi veriyi ezebilir. CI retry de step/log/artefakt üretmedi; canlı sayılar bilinmiyor.
