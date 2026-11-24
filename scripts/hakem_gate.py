@@ -54,8 +54,29 @@ def get_diff(repo: str, number: int, token: str) -> str:
         raise RuntimeError("PR diff 60 KB sınırını aştı")
     return raw.decode("utf-8", errors="replace")
 
+def _added_diff_text(diff: str) -> str:
+    """Return only added hunk lines; ignore this checker's own pattern source."""
+    lines = diff.splitlines()
+    if not any(line.startswith("diff --git ") for line in lines):
+        # Unit callers may pass one raw snippet rather than a unified Git diff.
+        return diff
+
+    added: list[str] = []
+    current_path: str | None = None
+    for line in lines:
+        if line.startswith("diff --git "):
+            current_path = None
+        elif line.startswith("+++ b/"):
+            current_path = line[6:].replace("\\\\", "/")
+        elif line.startswith("+") and not line.startswith("+++ "):
+            if current_path != "scripts/hakem_gate.py":
+                added.append(line[1:])
+    return "\\n".join(added)
+
+
 def deterministic_findings(diff: str, base: str) -> list[str]:
     findings: list[str] = []
+    scan_text = _added_diff_text(diff)
     if base == "main":
         findings.append("PR hedef dalı main; yasak.")
     patterns = [
@@ -72,7 +93,7 @@ def deterministic_findings(diff: str, base: str) -> list[str]:
         (re.compile(r"(?:KPSS|e-Devlet).{0,100}(?:TCKN|şifre|password|token)\s*[:=]", re.I), "KPSS/e-Devlet kimlik bilgisi sızıntısı."),
     ]
     for pattern, reason in patterns:
-        if pattern.search(diff):
+        if pattern.search(scan_text):
             findings.append(reason)
     return findings
 
