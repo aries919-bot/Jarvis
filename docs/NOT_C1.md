@@ -26,7 +26,7 @@
 
 ## 2. Haber kartı (H1)
 
-Kategoriler: Tümü, Kamu, Kura, KPSS, KPSS'siz, Büyük özel şirket, Kamu bağlı büyük şirket.
+Kategoriler: Tümü, Kamu, Kura, KPSS, KPSS'siz, Büyük özel, Kamu bağlı şirket.
 
 Her kartta: kurum, başlık, kategori, resmî kaynak linki, nasıl başvurulur (nereden), şartlar, `deadline`, `publishedAt` (yoksa null), `collectedAt`, `firstSeenAt`, güncellik etiketi.
 
