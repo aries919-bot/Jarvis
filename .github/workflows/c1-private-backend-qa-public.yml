@@ -62,7 +62,7 @@ jobs:
         working-directory: private-c1
         run: node scripts/career-feed-live.mjs | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Run local Worker and D1 integration smoke
+      - name: Run local Worker and D1 integration smoke (bounded process shutdown)
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
         working-directory: private-c1
         run: node scripts/c1-worker-d1-smoke.mjs
