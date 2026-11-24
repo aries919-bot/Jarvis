@@ -61,8 +61,8 @@
 | Kimlik | Durum | Sahip / Bitiş kanıtı |
 |---|---|---|
 | K1 | DEVAM | Cline; K1 kaynak hattı üst başlığı |
-| K1-E1 | CI YEŞİL (3 ilan elle doğrulaması bekliyor) | Cline; run #45388925995 SUCCESS; durum JSON 43 benzersiz ilan / 8 kurum; 3 ilan kaynakta elle doğrulanmalı |
-| K1-F | YAPILMADI | Cline; User-Agent düzeltmesi, Actions yeşil |
+| K1-E1 | KABUL | Cline; Actions #45388925995 SUCCESS; 43 benzersiz kamu ilanı / 8 kurum; Cem 3 ilanı e-Şube'de girişsiz elle doğruladı |
+| K1-F | DEVAM | Cline; [gorevler/K1-F.md](../gorevler/K1-F.md); yalnız iki dosyada User-Agent değişikliği + yeşil Actions bekleniyor |
 | K1-B | YAPILMADI | Cline; [gorevler/K1-B.md](../gorevler/K1-B.md), yalnız workflow, ölçüm özeti |
 | K1-C | YAPILMADI | ChatGPT; yalnız ölçülmüş kaynaklarla kaynak denetimi + aday listesi |
 | C1-1 | YAPILMADI | Cline; jarvis-cloud PR #5, `npm run test:c1` + yeşil CI |
@@ -73,7 +73,14 @@
 - Commit: [efd1aaea](https://github.com/aries919-bot/Jarvis/commit/efd1aaea25f4e7554241c68b88c7ffe72a121d99); workflow: [kamu-ilan-cek #45388925995](https://github.com/aries919-bot/Jarvis/actions/runs/45388925995) — push, completed / success; tüm 7 ana adım SUCCESS.
 - JSON `durum` dalında tekrar okundu: [career/esube_kamu_ilanlari.json](../career/esube_kamu_ilanlari.json), 3 sayfa, 43 satır, 43 benzersiz ilan, 0 tekrar, 8 kurum. İlk 3 örnek ilan no: 00009905681, 00009905684, 00009905686; JSON'da MSB ve son başvuru 27.11.2026.
 - Kaynak sayımı: 1 kamu kaynağı / 43 ilan. 10 kaynak / 100 ilan toplam eşiği henüz sağlanmadı.
-- Sınır: e-Şube sayfası web doğrulamasında açılıyor ve Kamu filtresi görünür; ancak üç ilan numarası arama sonucu olarak bağımsız elle doğrulanamadı. Bu nedenle K1-E1 tamamlandı sayılmaz; durum doğrulama bekliyor. Sonraki K1-F'e geçişten önce 3 ilan kaynağında doğrulanmalı.
+- Cem'in 24.11.2026 tarihli telefon doğrulaması: e-Şube > Açık İş İlanları > Kamu, giriş gerektirmeden; 00009905681 Muğla Merkez / 6 pozisyon / MSB Personel GM / 27.11.2026; 00009905686 İzmir Merkez / 10 pozisyon / aynı kurum / 27.11.2026; 00009905689 İstanbul Merkez / 24 pozisyon / aynı kurum / 27.11.2026. Sayfa altı `3 / 3, Toplam Kayıt: 43`; JSON 43 ile eşleşiyor. Kullanıcı teyidine göre 8 kurumla uyumlu. Satırlarda yayın tarihi yok; `publishedAt=null` doğru.
+- Ek sınır testi örneği: 00009908955, Karayolları 9. Bölge / Diyarbakır / son başvuru 24.11.2026 / “8 Saat Kaldı”. 24.11 sonrası güncel listeden çıkarılıp geçmişe taşınmalı; bu otomatik tarih filtresinin ayrıca test edilmesi gerekir.
+- K1-E1 kabulü: CI + JSON bağımsız sayımı + Cem'in üç ilanı kaynakta elle doğrulaması sağlandı. Kabul, 10 kaynak/100 ilan toplam hedefinin sağlandığı anlamına gelmez; mevcut ölçüm 1 kamu kaynağı / 43 ilan.
+
+### K1-F görev kaydı — 24.11.2026
+- K1-E1 kullanıcı tarafından kaynakta elle doğrulandı ve KABUL edildi. Sıradaki iş K1-F olarak DEVAM'a alındı.
+- Görev dosyası: [gorevler/K1-F.md](../gorevler/K1-F.md). Yalnız `scripts/render_probe.py` ve `.github/workflows/iskur-render.yml` içindeki Chrome/tarayıcı taklidi User-Agent açık kimlikli `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)` ile değiştirilecek; başka değişiklik yok.
+- Cline'a verilecek tek satır: `git fetch origin durum; git show origin/durum:gorevler/K1-F.md oku, görevi aynen uygula, o dosyayı commit etme.`
 
 ## Cline'a ayrılmış net işler
 **K1 — ilk iş / sahip: cline**
