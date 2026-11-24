@@ -57,6 +57,18 @@
 - C2 APK #673 artefaktı `14856755454`: 14,905,051 bayt; SHA-256 `4c017118fa000eded5403f1d540785a975c9bb5e760d65cc6d6495cca178bb0b`. PR #31 test derlemesi; ana dala birleşmedi.
 - 23.11.2026 resmî alım örneği: İçişleri 1.170 + Jandarma 9.000 = 10.170; İçişleri Malatya tablosunda 3 P3 lisans yeri ve Yeşilyurt'ta 1 P94 temizlik görevlisi yeri var. P94 başvurusu yalnız uygun unvan/şartlarla değerlendirilmeli.
 
+## C1/K1 v2 görev kuyruğu
+| Kimlik | Durum | Sahip / Bitiş kanıtı |
+|---|---|---|
+| K1 | DEVAM | Cline; K1 kaynak hattı üst başlığı |
+| K1-E1 | DEVAM | Cline; e-Şube okuyucu, Actions özeti + JSON + 3 elle doğrulama |
+| K1-F | YAPILMADI | Cline; User-Agent düzeltmesi, Actions yeşil |
+| K1-B | YAPILMADI | Cline; [gorevler/K1-B.md](../gorevler/K1-B.md), yalnız workflow, ölçüm özeti |
+| K1-C | YAPILMADI | ChatGPT; yalnız ölçülmüş kaynaklarla kaynak denetimi + aday listesi |
+| C1-1 | YAPILMADI | Cline; jarvis-cloud PR #5, `npm run test:c1` + yeşil CI |
+| C1-2 | YAPILMADI | Cline; canlı rapor, kamu ayrı, 10 kaynak/100 ilan veya gerçek RED sayısı |
+| K1-M | YAPILMADI | Cline; temiz cherry-pick PR main'e, CI yeşil |
+
 ## Cline'a ayrılmış net işler
 **K1 — ilk iş / sahip: cline**
 - Dosyalar: `.github/workflows/career-source-audit.yml`, `career/sources.json`, `docs/KARIYER_KAYNAK_DENETIMI.md`, `scripts/career_source_audit.py`, `scripts/test_career_source_audit.py`.
