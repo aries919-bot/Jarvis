@@ -3,6 +3,7 @@
 > Tek gerçek durum dosyası. Önce bu dosya ve docs/TALIMAT.md okunur.
 > Son kontrol: 24.11.2026. Repo: `aries919-bot/Jarvis`.
 > Bu dal yalnızca proje notları içindir; Android kodu burada geliştirilmez.
+> **C1 özel ve öncelikli kurallar:** [docs/NOT_C1.md](NOT_C1.md). TALIMAT.md ile çelişirse NOT_C1.md geçerlidir.
 
 ## Repo gerçeği
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a` (2026-11-21); bu SHA için PR tetiklemeli workflow run listesi boş.
@@ -63,7 +64,7 @@
 - Bitiş: her kaynak gerçek sayfa denetimi; PR başına en az 3 ilan örneği veya yokluk nedeni; test sonucu; `cline/K1` PR ve yeşil CI.
 
 **C1 — sahip: chatgpt / DEVAM**
-- Worker: aries919-bot/jarvis-cloud, dal is/c1-career-feed, PR #5 → main; HEAD `b034e8c`.
+- C1 özel kabul/kanıt/kamu/firstSeenAt/kaynak-bazlı stale ve Cline bekleme kuralları: [NOT_C1.md](NOT_C1.md). Worker PR #5 ayrıntıları aşağıdadır.
 - 15 aday (9 Lever, 6 Ashby); canlı çalışan kaynak sayısı bilinmiyor. Testlerdeki 15 kayıt sentetik fixture, canlı ilan kanıtı değil.
 - Statik QA: `getCareerFeed` import edilmiş ama çağrılmıyor; kimlik doğrulamalı GET `/kariyer-feed` rotası yok. Zamanlayıcı toplama çağrısı var.
 - İlk görülme zamanı geçmiş çalışmalardan korunmuyor; `collectedAt` yenileniyor. Kısmi (1–9 kaynak veya <100 ilan) sonuç da son iyi feed'in üstüne yazılabiliyor.
