@@ -78,7 +78,7 @@ class HakemGateTests(unittest.TestCase):
             "diff --git a/config.txt b/config.txt\n"
             "--- a/config.txt\n+++ b/config.txt\n"
             "@@ -1,0 +2 @@\n"
-            "+++ verify=False\n"
+            "+++ b/verify=False\n"
         )
         self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
 
