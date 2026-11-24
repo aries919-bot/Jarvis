@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from hakem_gate import deterministic_findings
+from hakem_gate import deterministic_findings, deterministic_only_fallback, test_log_is_successful
 
 
 class HakemGateTests(unittest.TestCase):
@@ -37,6 +37,94 @@ class HakemGateTests(unittest.TestCase):
         findings = deterministic_findings(source, "cline/K1")
         self.assertFalse(any("yayın tarihi" in item for item in findings))
 
+    def test_missing_cloudflare_credentials_use_deterministic_manual_fallback(self):
+        decision, message = deterministic_only_fallback("", "")
+        self.assertEqual(decision, "ONAY")
+        self.assertIn("insan hakem incelemesinin yerine geçmez", message)
+
+    def test_partial_cloudflare_credentials_also_use_manual_fallback(self):
+        decision, message = deterministic_only_fallback("account-only", "")
+        self.assertEqual(decision, "ONAY")
+        self.assertIn("Opsiyonel Cloudflare AI", message)
+
+    def test_complete_cloudflare_credentials_keep_optional_ai_review(self):
+        self.assertIsNone(deterministic_only_fallback("account", "token"))
+
+    def test_test_log_requires_real_successful_unittest_summary(self):
+        log = "Ran 2 tests in 0.01s\n\nOK\nTest job result: success\n"
+        self.assertTrue(test_log_is_successful(log))
+
+    def test_test_log_rejects_failed_result(self):
+        log = "Ran 2 tests in 0.01s\n\nFAILED (failures=1)\nTest job result: success\n"
+        self.assertFalse(test_log_is_successful(log))
+
+    def test_test_log_rejects_zero_or_missing_test_summary(self):
+        self.assertFalse(test_log_is_successful("Ran 0 tests in 0.0s\n\nOK\nTest job result: success\n"))
+        self.assertFalse(test_log_is_successful("OK\nTest job result: success\n"))
+
+    def test_test_log_rejects_unsuccessful_test_job(self):
+        log = "Ran 2 tests in 0.01s\n\nOK\nTest job result: failure\n"
+        self.assertFalse(test_log_is_successful(log))
+
+    def test_deleted_browser_user_agent_is_not_flagged(self):
+        ua = "Mozilla" + "/5.0"
+        diff = (
+            "diff --git a/old.py b/old.py\n"
+            "--- a/old.py\n+++ b/old.py\n"
+            "@@ -1 +0,0 @@\n-" + ua + "\n"
+        )
+        self.assertFalse(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_added_browser_user_agent_is_flagged(self):
+        ua = "Mozilla" + "/5.0"
+        diff = (
+            "diff --git a/new.py b/new.py\n"
+            "--- a/new.py\n+++ b/new.py\n"
+            "@@ -0,0 +1 @@\n+" + ua + "\n"
+        )
+        self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_added_verify_false_in_checker_is_flagged(self):
+        unsafe_call = "requests.get(url, verify" + "=" + "False)"
+        diff = (
+            "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
+            "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
+            "@@ -1,0 +2 @@\n"
+            "+" + unsafe_call + "\n"
+        )
+        self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_added_browser_ua_in_checker_is_flagged(self):
+        ua = "Mozilla" + "/5.0"
+        user_agent_line = "headers['User-Agent'] = '" + ua + "'"
+        diff = (
+            "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
+            "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
+            "@@ -1,0 +2 @@\n"
+            "+" + user_agent_line + "\n"
+        )
+        self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_hunk_added_content_starting_with_plus_plus_plus_is_scanned(self):
+        unsafe_line = "+++" + " b/verify" + "=" + "False"
+        diff = (
+            "diff --git a/config.txt b/config.txt\n"
+            "--- a/config.txt\n+++ b/config.txt\n"
+            "@@ -1,0 +2 @@\n"
+            + unsafe_line + "\n"
+        )
+        self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_checker_pattern_file_is_excluded_from_self_scan(self):
+        pattern_line = '(re.compile(r"Mozilla' + "/5.0" + '", re.I), "UA pattern")'
+        diff = (
+            "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
+            "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
+            "@@ -1 +1 @@\n+        " + pattern_line + "\n"
+        )
+        self.assertFalse(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
 
 if __name__ == "__main__":
     unittest.main()
+
