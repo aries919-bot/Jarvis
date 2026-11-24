@@ -128,6 +128,9 @@ def _robots_for(url: str) -> dict[str, Any]:
 
     for _ in range(MAX_REDIRECTS + 1):
         status, headers, body, error = _request_once(current, MAX_ROBOTS_BYTES)
+        if error and error.startswith("TIMEOUT:"):
+            time.sleep(1)
+            status, headers, body, error = _request_once(current, MAX_ROBOTS_BYTES)
         if error == "BODY_LIMIT":
             return {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": status,
                     "error": "robots.txt 512 KiB sınırını aştı", "parser": None}
