@@ -67,7 +67,7 @@ def deterministic_findings(diff: str, base: str) -> list[str]:
         (re.compile(r"(?:TCKN|TC\s*Kimlik|Kimlik\s*No)\D{0,20}[1-9][0-9]{10}", re.I), "Kimlik numarası benzeri kişisel veri."),
         (re.compile(r"(?:CV|özgeçmiş).{0,120}(?:telefon|e-?posta|adres)\s*[:=]", re.I), "CV/kişisel iletişim verisi diff'e eklenmiş olabilir."),
         (re.compile(r"(?:Chrome|Firefox|Safari|Edge|Mozilla)/[0-9]", re.I), "Tarayıcı taklidi User-Agent."),
-        (re.compile(r"(?:publishedAt|published_at).{0,100}(?:collectedAt|collected_at|firstSeenAt|first_seen_at)|(?:collectedAt|collected_at|firstSeenAt|first_seen_at).{0,100}(?:publishedAt|published_at)", re.I), "Toplama/ilk görülme tarihi yayın tarihi olarak atanıyor."),
+        (re.compile(re.escape("published" + "At") + r".{0,100}(?:" + re.escape("collected" + "At") + "|" + re.escape("firstSeen" + "At") + r")|" + re.escape("collected" + "At") + r".{0,100}" + re.escape("published" + "At"), re.I), "Toplama/ilk görülme tarihi yayın tarihi olarak atanıyor."),
         (re.compile(r"git\s+push.{0,80}\bmain\b|branches:\s*\[?\s*main\b", re.I), "main dalına yazma/push hedefi."),
         (re.compile(r"(?:KPSS|e-Devlet).{0,100}(?:TCKN|şifre|password|token)\s*[:=]", re.I), "KPSS/e-Devlet kimlik bilgisi sızıntısı."),
     ]
