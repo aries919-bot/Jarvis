@@ -1,0 +1,92 @@
+name: PR Hakem (deterministik + Cloudflare Workers AI)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - is/K1-test-workflow
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: hakem-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run PR test suite
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s scripts -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hakem-tests.log"
+      - name: Preserve test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hakem-test-log-${{ github.run_id }}
+          path: ${{ runner.temp }}/hakem-tests.log
+          if-no-files-found: warn
+          retention-days: 3
+
+  hakem:
+    needs: tests
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      # PR olayında yalnız hedef dalın güvenilir sürümünü çalıştır.
+      # İlk bootstrap push'unda yalnız bu özel dalın kendi commit'i kullanılır.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.number == 34 && 'fc11ef8ad6a96aca20806f96353c973ee617838a' || github.event.pull_request.base.sha || github.sha }}
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download test result (untrusted data, no secrets in test job)
+        uses: actions/download-artifact@v4
+        with:
+          name: hakem-test-log-${{ github.run_id }}
+          path: ${{ runner.temp }}
+        continue-on-error: true
+
+      - name: Compile trusted referee
+        run: python -m py_compile scripts/hakem_gate.py
+
+      - name: Deterministic checks and Cloudflare AI review
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          EVENT_PATH: ${{ github.event_path }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
+          TEST_RESULT: ${{ needs.tests.result }}
+        run: |
+          printf 'Test job result: %s\n' "$TEST_RESULT" > "$RUNNER_TEMP/test-job-result.txt"
+          if [ -f "$RUNNER_TEMP/hakem-tests.log" ]; then
+            cat "$RUNNER_TEMP/test-job-result.txt" >> "$RUNNER_TEMP/hakem-tests.log"
+          else
+            cp "$RUNNER_TEMP/test-job-result.txt" "$RUNNER_TEMP/hakem-tests.log"
+          fi
+          python scripts/hakem_gate.py \
+            --test-log "$RUNNER_TEMP/hakem-tests.log" \
+            --event "$EVENT_PATH" \
+            --event-name "$EVENT_NAME" \
+            --repository "$REPOSITORY" \
+            --ref-name "$REF_NAME"
