@@ -55,24 +55,43 @@ def get_diff(repo: str, number: int, token: str) -> str:
     return raw.decode("utf-8", errors="replace")
 
 def _added_diff_text(diff: str) -> str:
-    """Return only added hunk lines; ignore this checker's own pattern source."""
+    """Return added hunk content, excluding only this file's pattern declarations."""
     lines = diff.splitlines()
     if not any(line.startswith("diff --git ") for line in lines):
-        # Unit callers may pass one raw snippet rather than a unified Git diff.
         return diff
 
     added: list[str] = []
     current_path: str | None = None
+    in_hunk = False
     for line in lines:
         if line.startswith("diff --git "):
             current_path = None
+            in_hunk = False
         elif line.startswith("+++ b/"):
-            current_path = line[6:].replace("\\\\", "/")
-        elif line.startswith("+") and not line.startswith("+++ "):
-            if current_path != "scripts/hakem_gate.py":
-                added.append(line[1:])
+            current_path = line[6:]
+            in_hunk = False
+        elif line.startswith("@@ "):
+            in_hunk = True
+        elif line.startswith(("diff --cc ", "Binary files ", "GIT binary patch")):
+            in_hunk = False
+        elif in_hunk and line.startswith("+"):
+            content = line[1:]
+            is_pattern_declaration = (
+                current_path == "scripts/hakem_gate.py"
+                and (
+                    content.lstrip().startswith("(re.compile(")
+                    or content.lstrip().startswith("(re.escape(")
+                )
+            )
+            if not is_pattern_declaration:
+                added.append(content)
+        elif in_hunk and line.startswith(" "):
+            continue
+        elif in_hunk and line.startswith("-"):
+            continue
+        elif in_hunk and line.startswith("\\"):
+            continue
     return "\n".join(added)
-
 
 def deterministic_findings(diff: str, base: str) -> list[str]:
     findings: list[str] = []
