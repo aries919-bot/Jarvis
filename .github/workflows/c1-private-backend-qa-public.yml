@@ -46,6 +46,14 @@ jobs:
           token: ${{ env.C1_READ_TOKEN }}
           persist-credentials: false
 
+      - name: Load latest measured e-Şube JSON from durum
+        if: ${{ steps.credentials.outputs.has_token == 'true' }}
+        shell: bash
+        run: |
+          git clone --depth 1 --branch durum https://github.com/aries919-bot/Jarvis.git source-durum
+          mkdir -p private-c1/public-input/upstream/career
+          cp source-durum/career/esube_kamu_ilanlari.json private-c1/public-input/upstream/career/esube_kamu_ilanlari.json
+
       - name: Record exact private C1 backend revision
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
         working-directory: private-c1
