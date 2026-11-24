@@ -71,7 +71,7 @@ def _added_diff_text(diff: str) -> str:
         elif line.startswith("+") and not line.startswith("+++ "):
             if current_path != "scripts/hakem_gate.py":
                 added.append(line[1:])
-    return "\\n".join(added)
+    return "\n".join(added)
 
 
 def deterministic_findings(diff: str, base: str) -> list[str]:
