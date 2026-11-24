@@ -165,6 +165,40 @@ Her `items[]` kaydı:
 
 K1-B'de **ENGELLİ** çıkan 12 URL aktif kaynak listesine alınmadı: İlan.gov.tr (www ve apex TLS doğrulama hatası), Resmî Gazete `/ilanlar` ve kök sayfa (timeout), iki TÜSEB adresi (TLS doğrulama hatası), iki ÖSYM adresi (robots sonucu belirsiz olduğu için hedef sayfa isteği yapılmadı), Şişecam iki adresi (HTTP 403), PTT (TLS doğrulama hatası), TPAO PDF (timeout). Bunlar `ÖLÜ` ilan edilmedi; bu ölçümde **0 ÖLÜ** sonucu var. Sonradan tekrar ölçüm ayrı PR/Actions koşusudur; TLS doğrulaması kapatılmaz ve robots belirsizliği izin sayılmaz.
 
+## 7A. Kategori bazlı resmî kaynak adayları
+
+Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını karşılayan aday kayıtlarıdır. Bu liste, otomatik kazıma izni veya gerçek ilan kanıtı değildir. K1-B'de ölçülmeyen yeni adresler robots/TLS/HTTP ölçümü tamamlanana kadar otomasyona alınmaz. Girişli sayfalar yalnız Custom Tabs yönlendirmesidir. Her ilanın KPSS/KPSS'siz niteliği yalnız o ilanın resmî şartlarından belirlenir; kaynak adı veya geçmiş ilanlardan varsayılmaz.
+
+### Kamu
+1. İŞKUR e-Şube Açık İş İlanı Arama — https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx — K1-B/K1-E1 ölçüldü: robots izinli, 200; 43 kamu kaydı. publishedAt=null, satır tarihi deadline.
+2. İlan.gov.tr — https://www.ilan.gov.tr/ — K1-B ölçüldü: TLS CERTIFICATE_VERIFY_FAILED / unable to get local issuer certificate; engelli, tekrar denenmeyecek.
+3. Resmî Gazete İlanlar — https://www.resmigazete.gov.tr/ilanlar — K1-B ölçüldü: robots izni olan hedefte timeout; tekrarlı workflow istekleri ayrıca K1-B denetim notuna işlendi.
+
+### Kura
+1. Sağlık Bakanlığı YHGM — 2.764 sürekli işçi kura duyurusu — https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html — K1-B ölçüldü: robots izinli, 200. Kura/sonuç kaydıdır; yeni iş ilanı sayılmaz.
+2. TÜSEB — TÜSEB-2026-4 noter kura çekilişi duyurusu — https://www.tuseb.gov.tr/public/kurumsal/insan-kaynaklari/personel-alim-ilani-tuseb-2026-4-hizmetli-personel-alimi-noter-kura-cekilisi-ilani-20260918 — Resmî duyuru adayı; doğrudan bu URL K1-B'de ölçülmedi. Aynı kurumun iki genel sayfasında TLS issuer doğrulama hatası görüldüğünden robots/TLS ölçülmeden otomasyon yok. 2026 başvuru ve kura tarihleri geçmiş arşiv kaydıdır.
+3. MSB Personel Temin — sürekli işçi kura sonuç duyurusu — https://personeltemin.msb.gov.tr/AnaSayfa/DuyuruDetay/?id=cc3204cc-f222-4895-ab78-1aca4fd65120 — Resmî kura sonucu örneği; doğrudan URL K1-B'de ölçülmedi. Sadece aday kaydı, robots/TLS ölçümü bekler; sonuç haberi yeni ilan sayılmaz.
+
+### KPSS
+1. ÖSYM KPSS duyuru arşivi — https://www.osym.gov.tr/SinavGrubu/Index/3 — Resmî KPSS haber/duyuru sayfası; bu tam URL K1-B'de ölçülmedi, robots/TLS ölçümü bekler.
+2. ÖSYM Sınav Takvimi — https://osym.gov.tr/Sayfa/SinavTakvimi — Resmî takvim; KPSS-2026/2 tercih dönemini 17–24.12.2026 olarak listeliyor. Takvimdeki sınav/tercih tarihleri publishedAt değildir.
+3. ÖSYM KPSS-2026/1 tercih duyurusu — https://www.osym.gov.tr/kpss20261-bazi-kamu-kurum-ve-kuruluslarinin-kadro-ve-pozisyonlarina-yerlestirme-yapmak-icin-adaylardan-tercih-alinmasi — Resmî tarihli duyuru örneği; 2026/1 dönemi kapanmıştır, güncel ilan gibi gösterilmez.
+
+### KPSS'siz
+1. KariyerİBB — İstanbul Büyükşehir Belediyesi ve iştirakleri işe alım portalı — https://kariyer.ibb.istanbul/ — Resmî belediye portalı adayı; bu tam URL K1-B'de ölçülmedi. İlan şartı açıkça KPSS istemiyorsa ancak o ilan KPSS'siz olur.
+2. Malatya Su ve Kanalizasyon İdaresi Kariyer Kapısı — https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim — K1-B'de HTTP 200, fakat kimlik doğrulama gerektiren e-Devlet yönlendirmesi; içerik kazınmaz, Custom Tabs.
+3. İzmir Büyükşehir Belediyesi Kariyer Kapısı — https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim — K1-B'de HTTP 200, fakat kimlik doğrulama gerektiren e-Devlet yönlendirmesi; içerik kazınmaz, Custom Tabs.
+
+### Büyük özel şirket
+1. Turkcell Kariyer Fırsatları — https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay — K1-B'de robots izinli, HTTP 200; tarihli ilan sinyali yok.
+2. Koç Kariyerim ilan listesi — https://www.kockariyerim.com/jobAd/list — K1-B'de robots izinli, HTTP 200; tarihli ilan sinyali yok.
+3. Alarko Kariyer Fırsatları — https://alarko.com.tr/kariyer-ve-yasam/kariyer-firsatlari/ — Resmî şirket kariyer sayfası adayı; K1-B'de ölçülmedi, robots/TLS ölçümü bekler.
+
+### Kamu bağlı büyük şirket
+1. BOTAŞ Personel Alımı — https://www.botas.gov.tr/Sayfa/personel-alimi/124 — Resmî personel alım süreci sayfası adayı; K1-B'de bu özel URL ölçülmedi. İŞKUR'a yönlendirdiği ilanlar kazınmaz; resmî İŞKUR sayfasına yönlendirme yapılır.
+2. PTT Personel Alımı Hakkında Duyuru — https://www.ptt.gov.tr/duyurular/sirketimiz-personel-alimi-hakkinda-duyuru-9c2abed7a9a6486a97a474e9f73286c3 — Resmî duyuru örneği; ilan geçici ertelenmiştir, güncel açık iş olarak gösterilmez. Bu tam URL K1-B'de ölçülmedi; PTT duyuru ana sayfasında TLS issuer hatası görüldüğü için yeni istek öncesi ölçüm gerekir.
+3. TPAO 33 personel alımı PDF — https://www.tpao.gov.tr/file/2512/sinav-ilani-33-personel-alimi-29-12-2025-37736953d2e834d07.pdf — K1-B'de timeout/robots belirsiz; PDF'ye erişim yapılmadı ve yeniden denenmeyecek.
+
 ## 8. H1 kabul ölçütleri
 
 - Şema alanları zorunlu/nullable ayrımıyla doğrulanır; geçersiz kategori ve içerik türü reddedilir.
