@@ -160,6 +160,21 @@ def same_official_host(left: str, right: str) -> bool:
     return {a, b}.issubset({"www.botas.gov.tr", "botas.gov.tr"}) or {a, b}.issubset({"atk.gov.tr", "www.atk.gov.tr"})
 
 
+def official_link_target(page: PageParser, base_url: str, expected_url: str) -> str | None:
+    """Match a configured attachment to a link on the same official host, allowing URL-encoding variants."""
+    expected = urllib.parse.urlsplit(expected_url)
+    expected_path = urllib.parse.unquote(expected.path).casefold().rstrip("/")
+    expected_query = expected.query
+    for candidate in official_link_map(page,base_url):
+        parsed = urllib.parse.urlsplit(candidate)
+        if not same_official_host(base_url,candidate):
+            continue
+        candidate_path = urllib.parse.unquote(parsed.path).casefold().rstrip("/")
+        if candidate_path == expected_path and parsed.query == expected_query:
+            return candidate
+    return None
+
+
 def header(headers: Any, name: str) -> str | None:
     if headers is None or not hasattr(headers,"get"):
         return None
@@ -554,10 +569,10 @@ def collect_official(source: dict[str,Any], requester: Callable[[str,int],FetchR
         page_text = page.text
         pdf_url = source.get("pdfUrl")
         if pdf_url:
-            links = official_link_map(page,source["url"])
-            if pdf_url not in links:
-                raise SourceError("Ek PDF resmî HTML sayfasında bağlantı olarak bulunamadı")
-            pdf_body,_,_ = fetch_public_url(pdf_url,requester,robots_cache,MAX_PDF_BYTES)
+            linked_pdf = official_link_target(page,source["url"],pdf_url)
+            if not linked_pdf:
+                raise SourceError("Ek PDF aynı resmî HTML sayfasında/hostunda bağlantı olarak bulunamadı")
+            pdf_body,_,_ = fetch_public_url(linked_pdf,requester,robots_cache,MAX_PDF_BYTES)
             attachment_text = extract_pdf_text(pdf_body)
     else:
         raise SourceError(f"Desteklenmeyen resmî duyuru biçimi: {fmt}")
