@@ -71,8 +71,8 @@
 | K1-B | ÖLÇÜM VAR — PR AÇIK / KISMİ RED | PR #36; geniş ölçüm [#45473805274](https://github.com/aries919-bot/Jarvis/actions/runs/45473805274): 28 URL /11 ÇALIŞIYOR /17 ENGELLİ /0 ÖLÜ; testler 16/16. Adli Tıp, Anadolu, Düzce, Tarsus resmî sayfaları ve PDF'leri ölçüldü. Robots unknown/401/TLS kapalı hedeflere istek yok. Erişim sinyali ilan sayısı kanıtı değildir. |
 | K1-C | PR AÇIK — GÜNCEL RAPOR + TEST | PR #38: https://github.com/aries919-bot/Jarvis/pull/38, is/K1-C → durum; 4 dosya: rapor, aday listesi, rapor testi, workflow. K1-B #45429536647'ye göre 20 URL: 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ; rapor 20/20 benzersiz kaynağı gösterir. CI #45430917966: 6/6 SUCCESS. Kamu 1 kaynak / 43 doğrulanmış ilan; PR birleştirilmedi. |
 | H2 | PR AÇIK — 6 KAYNAKTA CANLI OKUMA PASS | PR #40: [H2 reader](https://github.com/aries919-bot/Jarvis/pull/40), `is/H2-verified-reader` → `durum`, açık/taslak. Test [#45476832673](https://github.com/aries919-bot/Jarvis/actions/runs/45476832673): 32/32 PASS. Live [#45476818354](https://github.com/aries919-bot/Jarvis/actions/runs/45476818354): 6 kaynak, 5 fresh/1 stale, 5 kart; 3 açık iş kartı (Anadolu/Düzce/Tarsus), ATK 30.11.2026 09:00 açılacak (şimdilik Doğrulanamadı), YHGM eski kura, BOTAŞ timeout stale. Artefakt #14961200293. 6 saatlik schedule var ama PR default branch'te değil, cron henüz devrede. Android H2 JSON'u çekmiyor. |
-| C1-1 | DEVAM — 33/33 TEST + 8/8 D1 LOCAL PASS; ÜRETİM/KAYNAK EŞİĞİ RED | Private jarvis-cloud PR #5 açık/taslak; HEAD `0ec0fdd`; 33 test PASS, local D1 8/8 PASS. C1 feed baseline: 112 özel aday deadline unknown + e-Şube 1/43. Production publish SKIPPED. H2 artefaktı ayrı; Worker'a bağlanmadı. |
-| C1-2 | RAPOR HAZIR — RED | [gorevler/C1-2.md](../gorevler/C1-2.md); C1 Worker e-Şube 1/43 + H2 bağımsız reader 3 açık kaynaktan 3 kart = birleşik **4 kamu kaynağı /46 açık kayıt**. 112 özel ATS adayı deadline unknown; ATK henüz başlamadı, YHGM geçmiş kura, BOTAŞ stale. Toplam **4/10 kaynak, 46/100 doğrulanmış kart: RED**. Android H2 entegrasyonu yok. |
+| C1-1 | DEVAM — 36/36 TEST + 10/10 D1 LOCAL PASS; ÜRETİM/KAYNAK EŞİĞİ RED | Private [PR #5](https://github.com/aries919-bot/jarvis-cloud/pull/5), HEAD `dc3b0e7`, 13 dosya (+2.667/-6), açık/taslak. QA [#45493658642](https://github.com/aries919-bot/Jarvis/actions/runs/45493658642): 36/36 PASS, local D1 10/10. Son audit 24.11 21:41Z: 16 kaynak, 9 fresh/7 stale; özel 101 deadline-unknown; kamu e-Şube 1/42 açık (snapshot artık 12 saatten eski). Production publish SKIPPED; 10/100 RED. |
+| C1-2 | RAPOR GÜNCELLENDİ — RED | [gorevler/C1-2.md](../gorevler/C1-2.md): C1 son ölçüm 1 kamu kaynağı/42 açık kayıt (24.11 snapshot; 25.11 itibarıyla stale), 101 özel aday deadline unknown. H2 aynı gün 2 ek açık kamu kartı; tarihsel birleşik **3 kaynak/44 açık kart**. Güncel taze veri yeniden çekilmeden bu tarihsel sayılar güncel ilan diye sunulmaz. 10/100 RED. |
 | K1-M | YAPILMADI | Gerekli workflow/betiklerin temiz PR ile main'e taşınması; film commitleri hariç, cron yalnız main'de. |
 | U1 | YAPILMADI | Uygulama entegrasyonu; arama motoru kazıması kapalı, H1 Haber kartları ve Custom Tabs. Telefon doğrulaması Cem'de. |
 
@@ -111,7 +111,7 @@
 8. Sahiplik güncellemesi: K1 ve E1-Veri Cline; C1 ChatGPT (jarvis-cloud PR #5); diğer uygulama işleri ChatGPT.
 9. C2 #22 kategoriler ve Haber/Süreç/Program ayrımı; APK + API29/33/34/35 Full QA SUCCESS.
 10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
-**SONRAKİ ADIM:** C1 PR #5'te kimlik doğrulamalı GET /kariyer-feed rotası, kalıcı firstSeenAt ve eşik altı koşulda son iyi feed korumasını tamamla; sonra CI'ı yeşil çalıştırıp gerçek canlı kaynak başına sayıları ve JSON'da 10 kaynak/100 ilanı doğrula. Android entegrasyonuna geçme.
+**SONRAKİ ADIM:** C1-2 raporunu son QA kanıtıyla güncel tut; e-Şube durum snapshot'ını 12 saat sınırına uygun yenile ve 10 kaynak/100 doğrulanmış ilan eşiğini tekrar ölç. Production Worker/D1 kanıtı ve eşik gelmeden U1/Android entegrasyonu yok.
 
 11. 24.11 C1 bağımsız QA: PR #5'te GET feed rotası/firstSeenAt yok; kısmi feed son iyiyi ezebilir; Worker ağır toplama yapıyor. #45382024807 failure (step/log yok). Kariyer Kapısı JS kabuğu, e-Şube formu, ilan.gov.tr 502; ÇSGB örneği süresi geçmiş. Cline K1 dalı mevcut; işine dokunulmadı.
 
@@ -271,3 +271,12 @@
 - Android `MainActivity.kt` lines 694–699 displays a “Haberleri yenile” button; lines 1386–1388 “haberleri getir/oku/göster” command also fetches. `Ai.kt` `Net.newsTitles()` reads Google News RSS and returns up to 8 titles; UI displays first 5, without article URL/date. This on-demand general RSS is separate from H2 official notice cards.
 - H2 `schedule: 17 */6 * * *` UTC added; since PR #40 targets `durum` rather than default branch, schedule isn't live. No Worker publication or Android H2 JSON refresh yet.
 - Combined public evidence: e-Şube 43 + H2's three currently open notices (Anadolu, Düzce, Tarsus) = **4 distinct public sources /46 verified open job cards**. ATK opening is future and not counted; YHGM is expired lottery; BOTAŞ is stale. 112 private ATS records still deadline unknown and not counted. The mandatory 10 sources/100 verified listings threshold is RED.
+
+
+### C1-1 / C1-2 son QA ve canlı sayım — 25.11.2026
+- Private PR #5 HEAD `dc3b0e72bd27fbd71420b3456d8aa40e537a5ffa`; 13 dosya / +2.667 / -6. PR açık/taslak/birleşmedi.
+- Public runner [#45493658642](https://github.com/aries919-bot/Jarvis/actions/runs/45493658642): 36/36 test PASS, local Worker+D1 smoke 10/10 PASS. Production publish SKIPPED; Worker URL/token çifti yok.
+- Audit zamanı `2026-11-24T21:41:56.114Z`: 16 kaynak /9 fresh /7 stale; Trendyol 35, Midas 16, Commencis 5, Dream Games 17, Aleph 5, Insider One 22, Picus 1, Binance 0; Ajax Systems timeout stale; 6 Ashby robots HTTP 401 stale. Özel toplam 101, hepsinin deadline'ı unknown.
+- Kamu ayrı: e-Şube 1 kaynak /43 ham benzersiz; 1 geçmiş kayıt çıkarılınca audit anında 42 açık. Snapshot `2026-11-24T11:57:55Z`, audit anında 12 saat içindeydi; 25.11 itibarıyla 12 saat sınırı aşıldı, güncel kabul edilmez.
+- Aynı gün H2 [#45488834084](https://github.com/aries919-bot/Jarvis/actions/runs/45488834084) iki ek açık kamu kartı gösterdi (Anadolu, Düzce). Tarihsel birleşik sayı 3 kaynak /44 açık karttır; iki veri hattı tek Worker feed'inde birleşmiş değildir ve şimdi taze kabul edilmez.
+- 101 özel deadline-unknown aday doğrulanmış ilan sayılmaz. Eşik 10 kaynak /100 doğrulanmış ilan **RED**. U1 engelli.

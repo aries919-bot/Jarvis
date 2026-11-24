@@ -86,3 +86,15 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - **YHGM:** 2.764 sürekli işçi kura/sonuç duyurusu; güncel iş ilanı değil, Haber sekmesinde **Kura** olarak sınıflanır.
 - TLS beş hedefinde hata CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; hata süresi dolmuş sertifikayı kanıtlamaz. SSL doğrulaması açık kalır.
 - Resmî Gazete'de robots izinli iki timeout hedefi birer kez yeniden denendi; tekrar timeout. TPAO PDF için robots izni belirsiz olduğundan tekrar istek yok.
+
+
+## 8. C1-1 / C1-2 son doğrulama eki — 25.11.2026
+
+- Private jarvis-cloud PR #5 HEAD `dc3b0e72bd27fbd71420b3456d8aa40e537a5ffa`; 13 dosya / +2.667 / -6; açık/taslak/birleşmedi.
+- Public runner [Actions #45493658642](https://github.com/aries919-bot/Jarvis/actions/runs/45493658642): 36/36 test PASS, local Worker+D1 smoke 10/10 PASS. Production publish SKIPPED; Worker URL/token çifti yok.
+- Worker `/kariyer-feed` kimlik doğrulamalı GET/POST rotasına sahip; payload ham metin olarak ayrıştırılmadan saklanır. Kaynak bazlı son iyi veri, boş e-Şube girdisinde stale koruması, kalıcı firstSeenAt merge'i ve provider ID + sourceId tekilleştirmesi test edilir.
+- Audit `collectedAt=2026-11-24T21:41:56.114Z`: 16 kaynak, 9 fresh/7 stale; özel Trendyol 35, Midas 16, Commencis 5, Dream Games 17, Aleph 5, Insider One 22, Picus 1, Binance 0; Ajax Systems timeout stale; altı Ashby kaynağı robots HTTP 401 stale. Özel aday toplamı 101, tamamında deadline unknown.
+- Kamu ayrı: e-Şube 1 kaynak /43 ham benzersiz kayıt; 1 deadline geçmiş, audit anında 42 açık. Snapshot `2026-11-24T11:57:55Z`; 25.11 itibarıyla 12 saatten eski, güncel ilan diye sunulmaz. `publishedAt=null`.
+- H2'nin aynı günkü ayrı ölçümü 2 ek açık kamu duyurusu gösterdi; tarihsel birleşik kanıt 3 kaynak/44 açık kart. İki feed tek Worker'da birleşmedi ve 25.11 itibarıyla yeniden ölçüm gerekir.
+- 101 özel deadline-unknown aday doğrulanmış sayılmaz. Eşik 10 kaynak/100 doğrulanmış ilan RED. Production Worker/D1 davranışı kanıtlanmadı; U1/Android entegrasyonu yok.
+- Diff 60.000 bayt Hakem sınırını aşıyor; bağımsız Hakem ONAY yok. PR #5 merge edilmedi.
