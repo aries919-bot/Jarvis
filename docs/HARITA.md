@@ -134,3 +134,17 @@
 - H2 PR #40: YHGM 1 fresh kura/haber kaydı; BOTAŞ detay sayfası iki timeout denemesi sonrası stale kaldı. CI #45437928827 başarılı; test #45437948449 19/19. Artefakt #14942950569 kontrol edildi. H2 iki kaynağın ikisini de canlı doğrulamadı; tam kabul yok.
 - H2 firstSeenAt branch cache'i geçici korur; kalıcı veri deposu C1-1 Worker görevidir.
 - Gerçek kamu ilan kaynağı ve ilan sayısı değişmedi: 1 kaynak / 43 doğrulanmış ilan. 10/100 hedefi RED; C1-2/arayüz entegrasyonuna geçiş yok.
+
+
+### C1-1 Worker PR #5 devam denetimi — 24.11.2026
+
+- PR: https://github.com/aries919-bot/jarvis-cloud/pull/5 — hedef `main`, taslak/açık, birleştirilmedi. HEAD `61c05e818a7844ef5a2ea23476e68fc0acf50032`; diff yeniden sayımı 12 dosya, +2.209 / -5.
+- Worker tarafı: kimlik doğrulamalı GET/POST `/kariyer-feed`; JSON D1'de ham metin olarak tutulur ve GET'te ham döner. Eski `career_feed(id, generated_at, payload)` şeması korunur; stale metadata ayrı `career_feed_meta` tablosunda D1 batch ile birlikte yazılır. Ağır toplama Worker zamanlayıcısından çıkarılıp Actions betiğine taşındı.
+- Kaynak birleştirme: başarıyla okunan kaynak yalnız kendi ilanlarını yeniler; hata veren kaynak kendi son iyi kayıtlarını stale tutar. `firstSeenAt` önceki feed'den korunur. Türkiye yerel takviminde süresi geçen yeni/eski kayıtlar güncel listeden çıkarılır.
+- Kart alanları: kategori, resmî ATS başvuru bağlantısı, nasıl başvurulur, şart açıklaması, publishedAt/deadline/collectedAt/firstSeenAt ve güncellik etiketi. ATS URL'leri yalnız Lever/Ashby resmî hostlarına izin verir. User-Agent: `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)`.
+- Test dosyalarında 29 vaka tanımlı: kariyer okuyucu 14, kaynak/kalıcılık 6, Worker HTTP rotası 3, e-Şube girdisi 6. **Çalıştırıldığı kanıtlanmadı**: son PR CI #45447411669 ve push CI #45447399299 ikisi de `runner_id=0`, `steps=[]`; komut/test adımı hiç başlamadı.
+- PR eklenen satırları `main` ile karşılaştırmalı tarandı: 2.209 eklenen satır, token/özel anahtar/CV/KPSS/e-Devlet deseninde 0 eşleşme.
+- Kamu kaynağı hâlâ yalnız e-Şube: girdinin çekim zamanı `2026-11-24T11:57:55+00:00`; 43 satır / 43 benzersiz ilan. 24.11.2026 referans gününde 43'ünün son tarihi geçmemişti (1 ilan 24.11, 42 ilan 27.11). 15 özel işveren panosu yalnız adaydır; Actions başlamadığı için kaynak başına canlı sayıları ölçülemedi.
+- Sonuç: C1-1 **RED / kısmi kod hazır**. CI yeşil değil, canlı Actions çıktısı yok, Worker'ın dağıtılmış uçtan uca kalıcılığı doğrulanmadı. Kamu 1 kaynak / 43 ilan; 10 kaynak / 100 doğrulanmış ilan eşiği RED. Arayüz işi yok, PR birleştirilmez.
+
+**SONRAKİ ADIM:** jarvis-cloud Actions runner sorunu çözülüp PR/push CI gerçek runner'da çalışmalı; ardından canlı kaynak raporu ve Worker dağıtımı sonrası kalıcı feed doğrulanmalı.
