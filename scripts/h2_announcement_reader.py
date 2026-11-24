@@ -30,7 +30,7 @@ MAX_PDF_BYTES = 20 * 1024 * 1024
 MAX_ROBOTS_BYTES = 512 * 1024
 TIMEOUT_SECONDS = 15
 MAX_REDIRECTS = 3
-ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr"}
+ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr", "atk.gov.tr", "www.atk.gov.tr", "anadolu.edu.tr", "cdn.duzce.edu.tr", "personel.tarsus.edu.tr"}
 
 NUMERIC_DATE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 RANGE_DATE = re.compile(
@@ -157,7 +157,7 @@ def same_official_host(left: str, right: str) -> bool:
     b = (urllib.parse.urlsplit(right).hostname or "").lower()
     if a == b:
         return True
-    return {a, b}.issubset({"www.botas.gov.tr", "botas.gov.tr"})
+    return {a, b}.issubset({"www.botas.gov.tr", "botas.gov.tr"}) or {a, b}.issubset({"atk.gov.tr", "www.atk.gov.tr"})
 
 
 def header(headers: Any, name: str) -> str | None:
@@ -264,30 +264,71 @@ def official_link_map(page: PageParser, base_url: str) -> dict[str,str]:
     return links
 
 
+MONTHS_TR = {
+    "ocak":1, "şubat":2, "subat":2, "mart":3, "nisan":4, "mayıs":5, "mayis":5,
+    "haziran":6, "temmuz":7, "ağustos":8, "agustos":8, "eylül":9, "eylul":9,
+    "ekim":10, "kasım":11, "kasim":11, "aralık":12, "aralik":12,
+}
+WORD_DATE = re.compile(
+    r"(\d{1,2})\s+(Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\s+(20\d{2})",
+    re.I,
+)
+WORD_RANGE = re.compile(
+    r"(\d{1,2}\s+(?:Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\s+20\d{2})"
+    r".{0,260}?(\d{1,2}\s+(?:Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\s+20\d{2})",
+    re.I | re.S,
+)
+
+
 def parse_date(value: str | None) -> str | None:
     if not value:
         return None
     match = NUMERIC_DATE.search(value)
-    if not match:
-        return None
-    day,month,year = map(int,match.groups())
-    try:
-        return date(year,month,day).isoformat()
-    except ValueError:
-        return None
+    if match:
+        day,month,year = map(int,match.groups())
+        try:
+            return date(year,month,day).isoformat()
+        except ValueError:
+            return None
+    word = WORD_DATE.search(value)
+    if word:
+        day,month_name,year = word.groups()
+        month = MONTHS_TR.get(month_name.lower())
+        try:
+            return date(int(year),month,int(day)).isoformat() if month else None
+        except ValueError:
+            return None
+    return None
 
 
-def explicit_published_at(page_text: str, meta: dict[str,str] | None = None) -> str | None:
+def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
+                          mode: str | None = None) -> str | None:
     meta = meta or {}
     for key in ("article:published_time","datepublished","publishdate","dc.date","date"):
         if key in meta:
             parsed = parse_date(meta[key])
             if parsed:
                 return parsed
+    if mode == "leading-date":
+        first = next((line.strip() for line in page_text.splitlines() if line.strip()), "")
+        parsed = parse_date(first)
+        if parsed:
+            return parsed
+    if mode == "duzce-title":
+        match = re.search(r"DÜZCE ÜNİVERSİTESİ\s+(\d{1,2}[./-]\d{1,2}[./-]\d{4})\s+TARİHLİ",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "tarsus-gazette":
+        match = re.search(r"İlanın Yayımlandığı Resmî Gazete Tarih ve Sayısı\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
     # A named publication field is stronger evidence than a date in a title.
     labelled = re.search(r"(?:Yayın Tarihi|Yayımlanma Tarihi|Tarih)\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
     if labelled:
         return parse_date(labelled.group(1))
+    added = re.search(r"Eklenme Tarihi\s*:\s*(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})",page_text,re.I)
+    if added:
+        return parse_date(added.group(1))
     # YHGM explicitly dates the notice; this is not the kura date in the title.
     notice = re.search(r"(\d{1,2}[./-]\d{1,2}[./-]\d{4})\s*Tarihli\s+Duyuru",page_text,re.I)
     if notice:
@@ -297,13 +338,16 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None) -> 
 
 def application_deadline(text: str, context: str) -> str | None:
     lowered_context = context.lower()
-    # The source may place the application term after the date range (YHGM does).
-    # Match only when the application term is close to the range, on either side.
+    # Numeric or Turkish month-name date ranges; never substitute publication/collection dates.
     for match in RANGE_DATE.finditer(text):
         start = max(0,match.start()-260)
         end = min(len(text),match.end()+260)
-        nearby = text[start:end].lower()
-        if lowered_context in nearby:
+        if lowered_context in text[start:end].lower():
+            return parse_date(match.group(2))
+    for match in WORD_RANGE.finditer(text):
+        start = max(0,match.start()-260)
+        end = min(len(text),match.end()+260)
+        if lowered_context in text[start:end].lower():
             return parse_date(match.group(2))
     return None
 
