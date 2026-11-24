@@ -71,7 +71,7 @@
 | K1-B | ÖLÇÜM VAR — PR AÇIK / KISMİ RED | PR #36: https://github.com/aries919-bot/Jarvis/pull/36; son ölçüm #45429536647: 20 benzersiz URL, 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ. Modlar: 9 aktif ölçüm / 8 geçici kapalı / 3 yalnız yönlendirme. 8 kapalı adres = 5 TLS + 3 timeout; 3 Kariyer Kapısı/e-Devlet linkinde ağ isteği yok. Testler 15/15. Gerçek kamu ilanı: 1 kaynak (e-Şube) / 43 doğrulanmış ilan. |
 | K1-C | PR AÇIK — GÜNCEL RAPOR + TEST | PR #38: https://github.com/aries919-bot/Jarvis/pull/38, is/K1-C → durum; 4 dosya: rapor, aday listesi, rapor testi, workflow. K1-B #45429536647'ye göre 20 URL: 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ; rapor 20/20 benzersiz kaynağı gösterir. CI #45430917966: 6/6 SUCCESS. Kamu 1 kaynak / 43 doğrulanmış ilan; PR birleştirilmedi. |
 | H2 | PR AÇIK — KISMİ / BOTAŞ STALE | PR #40: https://github.com/aries919-bot/Jarvis/pull/40, is/H2-verified-reader → durum, taslak. Test CI #45437948449: 19/19 SUCCESS. Canlı reader #45437928827 SUCCESS; 2 kaynakta 1 fresh / 1 stale / 1 kart. YHGM kura kartı doğru tarih ayrımıyla üretildi; BOTAŞ detay URL'si TIMEOUT + tek retry TIMEOUT oldu. Artefakt #14942950569. H2 yeni kamu işi sayısına katkı sağlamadı; merge yok. |
-| C1-1 | DEVAM — CI RUNNER ENGELİ | jarvis-cloud PR #5 açık/taslak; HEAD `197295813`; 12 dosya +2.270/-5; 31 test tanımlı ama CI çalıştırmadı; en son #45449449913 `runner_id=0`, `steps=[]`. Kamu 1/43; canlı özel kaynak sayımı yok. |
+| C1-1 | DEVAM — 31/31 TEST PASS; KAYNAK + D1 BEKLEMEDE | jarvis-cloud PR #5 açık/taslak; HEAD `66c2734`; 13 dosya +2.439/-6. QA #45461343191 31/31 PASS. Canlı audit #45461843163: 16 kaynak, fresh 10/stale 6; 114 özel adayın deadline'ı unknown; kamu 1/43; 10/100 doğrulanmış ilan eşiği RED. Yerel Wrangler/D1 smoke #45462136030 hâlâ sürüyor; production publish SKIPPED. |
 | C1-2 | YAPILMADI | Canlı kaynak/ilan sayımı, kamu ayrı; eşik sağlanmıyorsa RED ve gerçek sayı. |
 | K1-M | YAPILMADI | Gerekli workflow/betiklerin temiz PR ile main'e taşınması; film commitleri hariç, cron yalnız main'de. |
 | U1 | YAPILMADI | Uygulama entegrasyonu; arama motoru kazıması kapalı, H1 Haber kartları ve Custom Tabs. Telefon doğrulaması Cem'de. |
@@ -226,3 +226,13 @@
 - Node TAP sonucu: **31 tests / 31 pass / 0 fail / 0 cancelled / 0 skipped**. CI conclusion SUCCESS.
 - İlk gerçek test çalışması [#45461164106](https://github.com/aries919-bot/Jarvis/actions/runs/45461164106) 29 PASS / 2 FAIL buldu. İki hata fixture beklentisiydi: mock, 9 Lever board'ın her birine birer geçmiş ilan veriyordu; toplam beklenen 1/15 idi. Testler sağlayıcıya göre düzeltildi: 9 Lever x 1 expired, 6 Ashby x 0; toplam expired 9. Üretim kodu ve source catalog sayısı değiştirilmedi. Private branch head `8fca11674762cfd63bdc6b8412df3374d36a6d83`.
 - C1 test kapısı artık **PASS**; ancak genel C1-1 **RED / kabul bekliyor**: kamu kanıtı 1 e-Şube kaynağı/43 snapshot; 15 özel ATS adayının canlı sayımı yok; 10 kaynak/100 doğrulanmış ilan eşiği sağlanmadı. Worker production deployment ve gerçek D1 QA'sı da kanıtlanmadı. PR #5 açık/taslak/birleştirilmedi.
+
+
+### C1-1 canlı ölçüm ve D1 kontrolü — 24.11.2026
+- Ücretsiz runner [#45461343191](https://github.com/aries919-bot/Jarvis/actions/runs/45461343191): 31/31 backend regresyon testi SUCCESS.
+- [Canlı audit #45461843163](https://github.com/aries919-bot/Jarvis/actions/runs/45461843163), 18:39:24 UTC: özel kaynaklar Trendyol 35, Midas 16, Commencis 7, Dream Games 17, Aleph 5, Ajax Systems 11, Insider One 22, Binance 0 Türkiye, Picus 1 = **114 özel iş adayı**. Hepsinin deadline unknown; doğrulanmış güncel ilan değil.
+- 6 Ashby panosu robots.txt HTTP 401 nedeniyle stale/ölçülemedi; API çağrısı yok; 0 ilan varsayılmadı.
+- Kamu ayrı: **1 e-Şube / 43 benzersiz ilan**. Snapshot 11:57:55 UTC, 12 saat sınırının altında ama live HTTP refresh değil. Kamu verisi özel adaylarla birleştirilmedi.
+- Toplam 16 kaynak; fresh 10, stale 6; 114 unknown deadline; 43 public open deadline; doğrulanmış açık ilan veren kaynak 1; threshold 10/100 NOT_MET.
+- Yerel Wrangler + D1 smoke [#45462136030](https://github.com/aries919-bot/Jarvis/actions/runs/45462136030) sürüyor: 31 test ve live audit geçti; smoke job halen in_progress idi. D1 sonucu henüz yok. Production publish SKIPPED; Worker URL/token çifti mevcut değil.
+- PR #5 güncel HEAD `66c2734371190025617f6b678fd64382f18ddf15`, 13 dosya (+2.439/-6), açık/taslak. C1-1 genel kabul RED; 10/100 eşiği sağlanmadan C1-2/UI yok.
