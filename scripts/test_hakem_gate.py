@@ -36,7 +36,7 @@ class HakemGateTests(unittest.TestCase):
         patch = (
             "diff --git a/scripts/render_probe.py b/scripts/render_probe.py\n"
             "--- a/scripts/render_probe.py\n"
-            "+++ b/scripts/render_probe.py\n"
+            "+++ /dev/null\n"
             "@@ -1 +0,0 @@\n"
             "-Mozilla" + "/5.0 Chrome" + "/120.0\n"
         )
