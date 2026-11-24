@@ -8,7 +8,7 @@ name: Kamu Isci Ilan Cekimi (e-sube)
 on:
   workflow_dispatch:
   push:
-    branches: [cline/K1]
+    branches: [cline/K1, review/c1-esube-refresh-20261125]
     paths:
       - "scripts/esube_kamu_okuyucu.py"
       - ".github/workflows/kamu-ilan-cek.yml"
