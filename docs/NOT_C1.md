@@ -93,3 +93,13 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - Hakem **RED**: production authenticated GET BLOCKED ve 10 kaynak/100 doğrulanmış ilan eşiği karşılanmadı (1 kaynak/42 ilan). Eşik, kamu kapısı ve tarih kuralları değiştirilmedi.
 - Robots HTTP 401 veren Ashby kaynaklarına API isteği gönderilmez; stale kalırlar. Deadline unknown özel adaylar 100 doğrulanmış ilan sayısına eklenmez.
 - Workflow şu an `qa/c1-private-runner` dalında push ve `workflow_dispatch` ile çalışır; varsayılan `main` dalına taşınmadığı için zamanlanmış sürekli çalışma iddiası yoktur.
+
+
+## 9. Toplu Hakem ve tazelik güncellemesi — 25.11.2026
+- Toplu iç denetim dosyası: `gorevler/C1-toplu-hakem-25-11.md`; PR #8 yorum ID `7147163607`. Bu, ChatGPT'nin iç denetimidir; bağımsız Claude/insan hakem incelemesi yapılmış sayılmaz.
+- PR #6 ve PR #8 birleşik değişiklik karşılaştırması: 7 commit / 7 dosya. #6 snapshot zamanı ile feed deneme zamanını ayırır; #8 kategori alanını success/robots/error sonuçlarında saklar. Son exact-head CI: 38/38 test, 11/11 local D1, 12/12 hata senaryosu PASS.
+- **C1 kararı RED.** Ölçülmüş son sayım 1 kaynak/42 ilan; zorunlu eşik 10 kaynak/100 doğrulanmış, son başvuru tarihi geçmemiş ilan. 114 özel aday deadline unknown olduğu için sayılmaz. Üretim authenticated GET, `JARVIS_WORKER_URL`/`JARVIS_WORKER_TOKEN` ayarları eksik olduğundan BLOCKED.
+- e-Şube snapshot zamanı `2026-11-24T11:57:55Z`; 25.11.2026 itibarıyla 12 saatlik tazelik penceresinin dışındadır. Önceki 42 açık ilan artık güncel kanıt olarak sayılamaz; yeni çekim olmadan güncel kamu sayımı 0 / RED.
+- H2 workflow `45489853859` attempt 2 ile yeniden çalıştırıldı. Reader job `138848189009`, son kontrolde `Read measured official announcements` adımında in_progress; yeni sayılar henüz kanıtlanmadı.
+- PR #5/#6/#8 birleştirilmedi. 10/100 eşiği, kamu sıfır RED şartı, robots ve deadline kuralları değişmedi.
+- Sonraki adım: H2 ve e-Şube taze kaynak çekimini bitir; kaynak başına ilan sayısını ve her deadline'ı yeniden doğrula; ardından yeni toplu Hakem çalıştır. Üretim GET doğrulanmadan ONAY yok.
