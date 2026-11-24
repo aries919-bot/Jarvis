@@ -1,6 +1,8 @@
 import json
 import sys
 import unittest
+from email.message import Message
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,14 +52,44 @@ class K1BSourceMeasureTests(unittest.TestCase):
     def test_tls_failure_is_not_bypassed_or_called_dead(self):
         self.assertEqual("ENGELLİ", measure.classify_result("ALLOW", None, 0, error="TLS_CERTIFICATE: test"))
 
+    def test_allowed_page_timeout_is_retried_once(self):
+        source = {"id": "x", "category": "Kamu", "name": "Örnek", "url": "https://example.gov.tr/"}
+        robots = {"permission": "ALLOW", "label": "İZİN VAR", "status": 200, "error": None, "parser": None}
+        success_headers = Message()
+        success_headers["Content-Type"] = "text/html; charset=utf-8"
+        with mock.patch.object(measure, "_robots_for", return_value=robots):
+            with mock.patch.object(
+                measure, "_request_once",
+                side_effect=[
+                    (None, None, b"", "TIMEOUT: first read timed out"),
+                    (200, success_headers, b"Personel alım ilanı 24.11.2026", None),
+                ],
+            ) as request_once:
+                with mock.patch.object(measure.time, "sleep"):
+                    row = measure.measure_one(source)
+        self.assertEqual(2, request_once.call_count)
+        self.assertEqual(2, row["attempts"])
+        self.assertEqual("ÇALIŞIYOR", row["status"])
+
+    def test_unknown_robots_timeout_is_not_retried_or_fetched(self):
+        source = {"id": "x", "category": "Kamu", "name": "Örnek", "url": "https://example.gov.tr/"}
+        robots = {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": None,
+                  "error": "TIMEOUT: robots read timed out", "parser": None}
+        with mock.patch.object(measure, "_robots_for", return_value=robots):
+            with mock.patch.object(measure, "_request_once") as request_once:
+                row = measure.measure_one(source)
+        request_once.assert_not_called()
+        self.assertEqual(0, row["attempts"])
+        self.assertEqual("ENGELLİ", row["status"])
+
     def test_summary_has_required_columns(self):
         sample = [{
             "id":"x","category":"Kamu","name":"Örnek","url":"https://example.gov.tr/",
             "robots":"İZİN VAR","robotsPermission":"ALLOW","robotsHttp":404,
-            "http":200,"bytes":1,"datedAnnouncement":False,"status":"ÇALIŞIYOR","error":None
+            "http":200,"bytes":1,"attempts":1,"datedAnnouncement":False,"status":"ÇALIŞIYOR","error":None
         }]
         rendered = measure.make_markdown(sample, "2026-11-24T00:00:00Z")
-        for title in ("Adres", "Robots", "HTTP", "Bayt", "Tarihli duyuru var mı?", "Durum"):
+        for title in ("Adres", "Robots", "HTTP", "Bayt", "Deneme", "Tarihli duyuru var mı?", "Durum"):
             self.assertIn(title, rendered)
         self.assertIn("ÇALIŞIYOR 1 / ENGELLİ 0 / ÖLÜ 0", rendered)
 
