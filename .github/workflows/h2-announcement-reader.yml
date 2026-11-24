@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   reader:
@@ -44,6 +45,40 @@ jobs:
           key: h2-last-good-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             h2-last-good-${{ github.ref_name }}-
+
+      - name: Check whether branch cache contains last-good feeds
+        if: github.event_name != 'pull_request'
+        id: last_good_cache
+        shell: bash
+        run: |
+          mkdir -p reports/h2-last-good
+          if find reports/h2-last-good -maxdepth 1 -type f -name '*.json' -print -quit | grep -q .; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bootstrap last-good feeds from previous verified H2 run
+        if: github.event_name != 'pull_request' && steps.last_good_cache.outputs.present == 'false'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: h2-official-feeds-44
+          path: reports/h2-last-good
+          repository: ${{ github.repository }}
+          run-id: 45476818354
+          github-token: ${{ github.token }}
+
+      - name: Report last-good bootstrap result
+        if: github.event_name != 'pull_request' && steps.last_good_cache.outputs.present == 'false'
+        shell: bash
+        run: |
+          if find reports/h2-last-good -maxdepth 1 -type f -name '*.json' -print -quit | grep -q .; then
+            echo "Previous verified source feeds restored." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::No prior H2 artifact was available; failed sources cannot display a last-good card until a fresh run."
+            echo "No historical last-good artifact available." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Read measured official announcements
         if: github.event_name != 'pull_request'
