@@ -255,10 +255,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         window.decorView.systemUiVisibility = flags
     }
 
-    private fun toggleTheme() {
-        val nextLight = !Pal.lightMode
-        store.put("theme", if (nextLight) "light" else "dark")
-        Pal.lightMode = nextLight
+    private fun setTheme(light: Boolean) {
+        if (Pal.lightMode == light) return
+        store.put("theme", if (light) "light" else "dark")
+        Pal.lightMode = light
         recreate()
     }
 
@@ -855,8 +855,21 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "Ayarlar", 20f, Pal.WHITE))
 
         add(col, Ui.section(this, "Görünüm"))
-        add(col, Ui.card(this, if (Pal.lightMode) "Açık tema etkin. Daha aydınlık yüzeyler ve koyu metinler kullanılıyor." else "Koyu tema etkin. Daha düşük ışıklı yüzeyler kullanılıyor."))
-        add(col, Ui.button(this, if (Pal.lightMode) "Koyu temaya geç" else "Açık temaya geç") { toggleTheme() })
+        add(col, Ui.card(this, if (Pal.lightMode) "Açık tema seçili. Metinler ve kartlar aydınlık yüzeylere göre ayarlandı." else "Koyu tema seçili. Daha düşük ışıklı yüzeyler ve yumuşak kontrastlar kullanılıyor."))
+        val themeChoices = Ui.row(this)
+        val lightChoice = Ui.chip(this, "Açık", Pal.lightMode) { setTheme(true) }
+        val darkChoice = Ui.chip(this, "Koyu", !Pal.lightMode) { setTheme(false) }
+        (lightChoice.layoutParams as LinearLayout.LayoutParams).apply {
+            width = 0
+            weight = 1f
+        }
+        (darkChoice.layoutParams as LinearLayout.LayoutParams).apply {
+            width = 0
+            weight = 1f
+        }
+        themeChoices.addView(lightChoice)
+        themeChoices.addView(darkChoice)
+        add(col, themeChoices)
 
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
