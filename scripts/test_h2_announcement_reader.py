@@ -1,0 +1,241 @@
+import json
+import sys
+import tempfile
+import unittest
+from datetime import date
+from email.message import Message
+from pathlib import Path
+from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/"scripts"))
+import h2_announcement_reader as h2
+
+
+def ok(body=b"ok", status=200, headers=None):
+    return h2.FetchResponse(status,headers or Message(),body)
+
+
+class H2ReaderTests(unittest.TestCase):
+
+    def test_yhgm_publication_and_deadline_are_separate(self):
+        source = (
+            "<h1>Taşra Teşkilatı 2.764 Sürekli İşçi Alım Kurası</h1>"
+            "<p>12.11.2025 Tarihli Duyuru:</p><p>Kura 12 Kasım 2025 tarihinde çekilmiştir.</p>"
+            "<p>Başvurular 08/10/2025 – 13/10/2025 tarihleri arasında alınmıştır.</p>"
+        ).encode()
+        item = h2.parse_yhgm(source,Message(),"2026-11-24T10:00:00Z","2026-11-24T10:00:00Z",date(2026,11,24))
+        self.assertEqual("2025-11-12",item["publishedAt"])
+        self.assertEqual("2025-10-13",item["deadline"])
+        self.assertEqual("lottery",item["contentType"])
+        self.assertEqual("Süresi geçti",item["freshnessStatus"])
+
+
+    def test_botas_publication_is_not_title_exam_date(self):
+        text = "223 Kişilik Personel Alım Duyurusu Tarih: 5/11/2025"
+        self.assertEqual("2025-11-05",h2.explicit_published_at(text))
+
+
+    def test_yhgm_actual_word_order_extracts_deadline_after_date_range(self):
+        text = (
+            "2.764 sürekli işçi alımı için 08/10/2025 – 13/10/2025 tarihleri "
+            "arasında İŞKUR tarafından alınan başvurular Bakanlığımıza bildirilmiştir."
+        )
+        self.assertEqual("2025-10-13",h2.application_deadline(text,"başvurular"))
+
+
+    def test_robots_redirect_to_unapproved_host_is_rejected(self):
+        def requester(url,limit):
+            if url.endswith("/robots.txt"):
+                headers=Message()
+                headers["Location"]="https://evil.example/robots.txt"
+                return ok(b"",302,headers)
+            raise AssertionError("Target request must not be made")
+        with self.assertRaises(h2.SourceError):
+            h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+
+
+    def test_botas_pdf_deadline_is_end_of_iskur_range(self):
+        pdf = (
+            "223 Kişilik Personel Alım Duyurusu İlgili ilanda istenilen KPSS puan türünden "
+            "en az 60 puan almış olmaları gerekmektedir. İlanlar, "
+            "10.11.2025-14.11.2025 tarihleri arasında yayımlanacaktır."
+        )
+        self.assertEqual("2025-11-14",h2.application_deadline(pdf,"İlanlar"))
+
+
+    def test_botas_result_publication_is_not_title_exam_date(self):
+        text = (
+            "10 Kasım 2025 / 14 Kasım 2025 Tarihli Müfettiş Yardımcılığı Alımına "
+            "Yönelik Sonuç Duyurusu Tarih: 21/1/2026"
+        )
+        item = h2.parse_botas_result(
+            text.encode(),Message(),"2026-11-24T10:00:00Z","2026-11-24T10:00:00Z",date(2026,11,24)
+        )
+        self.assertEqual("2026-01-21",item["publishedAt"])
+        self.assertIsNone(item["deadline"])
+        self.assertEqual("result",item["contentType"])
+        self.assertEqual("Süresi geçti",item["freshnessStatus"])
+
+
+    def test_robots_disallow_prevents_target_request(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\nDisallow: /private")
+            return ok(b"page")
+        with self.assertRaises(h2.SourceError):
+            h2.fetch_public_url("https://www.botas.gov.tr/private/page",requester)
+        self.assertEqual(["https://www.botas.gov.tr/robots.txt"],calls)
+
+
+    def test_robots_timeout_never_fetches_target(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            return h2.FetchResponse(None,None,b"","TIMEOUT: robots")
+        with self.assertRaises(h2.SourceError):
+            h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+        self.assertEqual(1,len(calls))
+        self.assertTrue(calls[0].endswith("/robots.txt"))
+
+
+    def test_403_500_empty_and_timeout_fail_closed(self):
+        for status,body,error in ((403,b"blocked",None),(500,b"failed",None),(200,b"",None)):
+            calls=[]
+            def requester(url,limit,status=status,body=body,error=error):
+                calls.append(url)
+                if url.endswith("/robots.txt"):
+                    return ok(b"User-agent: *\nAllow: /")
+                return h2.FetchResponse(status,Message(),body,error)
+            with self.assertRaises(h2.SourceError):
+                h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+            self.assertEqual(2,len(calls))
+
+
+    def test_page_timeout_retries_only_once_then_fails_closed(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\\nAllow: /")
+            return h2.FetchResponse(None,None,b"","TIMEOUT: page")
+        with mock.patch.object(h2.time,"sleep"):
+            with self.assertRaisesRegex(h2.SourceError,"TIMEOUT_RETRY_FAILED"):
+                h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+        self.assertEqual(2,len([x for x in calls if not x.endswith("/robots.txt")]))
+
+
+    def test_fresh_feed_updates_last_good_but_stale_feed_does_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            out=root/"out"
+            last=root/"last-good"
+            fresh={"schemaVersion":1,"sourceId":"yhgm-kura","sourceStatus":"fresh","collectedAt":"2026-11-24T10:00:00Z","items":[{"id":"x","firstSeenAt":"2026-11-01T00:00:00Z"}]}
+            stale={"schemaVersion":1,"sourceId":"yhgm-kura","sourceStatus":"stale","collectedAt":"2026-11-24T10:00:00Z","items":[]}
+            h2.write_feed(fresh,out,last)
+            h2.write_feed(stale,out,last)
+            saved=json.loads((last/"yhgm-kura.json").read_text(encoding="utf-8"))
+            rendered=json.loads((out/"yhgm-kura.json").read_text(encoding="utf-8"))
+            self.assertEqual("fresh",saved["sourceStatus"])
+            self.assertEqual("x",saved["items"][0]["id"])
+            self.assertEqual("stale",rendered["sourceStatus"])
+
+
+    def test_first_seen_is_preserved_for_known_ids(self):
+        old={"items":[{"id":"same","firstSeenAt":"2026-10-01T00:00:00Z"}]}
+        items=[{"id":"same"},{"id":"new"}]
+        h2.assign_first_seen(items,old,"2026-11-24T10:00:00Z")
+        self.assertEqual("2026-10-01T00:00:00Z",items[0]["firstSeenAt"])
+        self.assertEqual("2026-11-24T10:00:00Z",items[1]["firstSeenAt"])
+
+
+    def test_source_failure_preserves_only_that_source_last_good(self):
+        old={"schemaVersion":1,"sourceId":"botas-duyurular",
+             "collectedAt":"2026-11-20T00:00:00Z","sourceStatus":"fresh",
+             "items":[{"id":"old","firstSeenAt":"2026-11-01T00:00:00Z","sourceStatus":"fresh"}]}
+        stale=h2.stale_feed("botas-duyurular","2026-11-24T10:00:00Z","offline",old)
+        self.assertEqual("2026-11-20T00:00:00Z",stale["collectedAt"])
+        self.assertEqual("stale",stale["sourceStatus"])
+        self.assertEqual("stale",stale["items"][0]["sourceStatus"])
+        self.assertEqual("old",stale["items"][0]["id"])
+
+
+    def test_tls_context_does_not_disable_verification(self):
+        with mock.patch.object(h2.urllib.request,"build_opener") as build:
+            h2.request_once("https://www.botas.gov.tr/test",100)
+        handler=build.call_args.args[0]
+        self.assertTrue(handler._context.verify_mode == 2)  # ssl.CERT_REQUIRED
+        self.assertTrue(handler._context.check_hostname)
+
+
+
+    def test_turkish_month_name_deadline_range_is_parsed(self):
+        text = "Başvurular 30 Kasım 2026 Pazartesi başlayıp 06 Aralık 2026 Pazar günü sona erecektir."
+        self.assertEqual("2026-12-06", h2.application_deadline(text, "başvurular"))
+
+
+    def test_atk_notice_separates_published_and_deadline(self):
+        source = {
+            "itemId":"atk-2026-2-181-pozisyon",
+            "institution":"Adli Tıp Kurumu Başkanlığı",
+            "title":"2026-2 sözleşmeli personel alımı — 181 pozisyon",
+            "category":"Kamu","contentType":"job",
+            "url":"https://atk.gov.tr/haber20.11.26.html",
+            "publicationMode":"leading-date",
+            "deadlineContext":"başvurular",
+            "applicationOpensAt":"2026-11-30T09:00:00+03:00",
+            "expectedText":["Adli Tıp Kurumu Başkanlığı","181 pozisyon"],
+            "howToApply":{"method":"Kariyer Kapısı","url":"https://kariyerkapisi.gov.tr/isealim","instructions":"Okuyucu giriş yapmaz."},
+            "conditions":["2026 KPSS puan türünden en az 70."]
+        }
+        page = (
+            "20/11/2026 DUYURU Adli Tıp Kurumu Başkanlığı 181 pozisyon için "
+            "2026 KPSS ilgili puan türünden en az 70. Başvurular "
+            "30 Kasım 2026 Pazartesi başlayıp 06 Aralık 2026 Pazar günü sona erer."
+        )
+        item = h2.parse_official_notice(source,page,"Ek-1 pozisyon tablosu",
+            "2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+        self.assertEqual("2026-11-20",item["publishedAt"])
+        self.assertEqual("2026-12-06",item["deadline"])
+        self.assertEqual("Doğrulanamadı",item["freshnessStatus"])
+        self.assertEqual("2026-11-30T09:00:00+03:00",item["applicationOpensAt"])
+        self.assertEqual("job",item["contentType"])
+        self.assertEqual("https://kariyerkapisi.gov.tr/isealim",item["howToApply"]["url"])
+
+
+
+    def test_atk_upcoming_application_is_not_marked_open_before_start(self):
+        status = h2.status_for(
+            "2026-12-06","2026-11-20","job",date(2026,11,24),
+            "2026-11-30T09:00:00+03:00","2026-11-24T20:00:39Z"
+        )
+        self.assertEqual("Doğrulanamadı",status)
+
+
+    def test_official_parser_fails_closed_without_explicit_publication_or_deadline(self):
+        source = {
+            "itemId":"incomplete","institution":"Örnek Kurum","title":"Personel duyurusu",
+            "category":"Kamu","contentType":"job","url":"https://example.gov.tr/duyuru",
+            "publicationMode":"labelled","deadlineContext":"başvuru",
+            "expectedText":["Personel duyurusu"],
+            "howToApply":{"method":"Resmî duyuru","url":"https://example.gov.tr/duyuru","instructions":"Kontrol edin."},
+            "conditions":[]
+        }
+        with self.assertRaisesRegex(h2.SourceError,"yayın tarihi"):
+            h2.parse_official_notice(source,"Personel duyurusu; başvuru dönemi yakında.",
+                "","2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+
+
+    def test_source_categories_match_h1_allowed_enum(self):
+        cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
+        allowed = {"Kamu", "Kura", "KPSS", "KPSS'siz", "Büyük özel", "Kamu bağlı şirket"}
+        self.assertTrue(all(source.get("category") in allowed for source in cfg["sources"]))
+        botas = next(source for source in cfg["sources"] if source["id"] == "botas-duyurular")
+        self.assertEqual("Kamu bağlı şirket", botas["category"])
+
+
+
+if __name__ == "__main__":
+    unittest.main()
