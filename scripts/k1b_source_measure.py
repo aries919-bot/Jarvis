@@ -240,6 +240,7 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
     auth_detected = False
     body_limited = False
     final_url = current
+    attempts = 0
 
     for redirect_count in range(MAX_REDIRECTS + 1):
         parsed = urllib.parse.urlsplit(current)
@@ -259,6 +260,14 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
             break
 
         status, headers, body, error = _request_once(current, MAX_BODY_BYTES)
+        attempts += 1
+        if error and error.startswith("TIMEOUT:") and permission == "ALLOW":
+            first_timeout = error
+            time.sleep(1)
+            status, headers, body, error = _request_once(current, MAX_BODY_BYTES)
+            attempts += 1
+            if error:
+                error = f"TIMEOUT_RETRY_FAILED: ilk={first_timeout}; tekrar={error}"
         final_url = current
         if error == "BODY_LIMIT":
             body_limited = True
@@ -310,6 +319,7 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
         "robotsHttp": robots_http,
         "http": status,
         "bytes": len(body),
+        "attempts": attempts,
         "datedAnnouncement": dated,
         "status": state,
         "error": error,
@@ -352,12 +362,12 @@ def make_markdown(rows: list[dict[str, Any]], collected_at: str) -> str:
         f"- Hedef: **{len(rows)} benzersiz URL** (H1 listesi + 2 açık ek adres).",
         f"- Sonuç: **ÇALIŞIYOR {counts['ÇALIŞIYOR']} / ENGELLİ {counts['ENGELLİ']} / ÖLÜ {counts['ÖLÜ']}**",
         "",
-        "| Adres | Robots | HTTP | Bayt | Tarihli duyuru var mı? | Durum |",
-        "|---|---|---:|---:|---|---|",
+        "| Adres | Robots | HTTP | Bayt | Deneme | Tarihli duyuru var mı? | Durum |",
+        "|---|---|---:|---:|---:|---|---|",
     ]
     for row in rows:
         lines.append(
-            f"| {row['url']} | {row['robots']} | {fmt_http(row)} | {row['bytes']} | "
+            f"| {row['url']} | {row['robots']} | {fmt_http(row)} | {row['bytes']} | {row.get('attempts', 1)} | "
             f"{fmt_dated(row['datedAnnouncement'])} | **{row['status']}** |"
         )
     if counts["ÇALIŞIYOR"] == 0:
