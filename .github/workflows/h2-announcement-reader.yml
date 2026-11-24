@@ -1,0 +1,70 @@
+name: H2 Verified Official Announcement Reader
+
+on:
+  push:
+    branches:
+      - is/H2-final-20261124
+    paths:
+      - 'career/h2_sources.json'
+      - 'scripts/h2_announcement_reader.py'
+      - 'scripts/test_h2_announcement_reader.py'
+      - '.github/workflows/h2-announcement-reader.yml'
+  pull_request:
+    paths:
+      - 'career/h2_sources.json'
+      - 'scripts/h2_announcement_reader.py'
+      - 'scripts/test_h2_announcement_reader.py'
+      - '.github/workflows/h2-announcement-reader.yml'
+  workflow_dispatch:
+  # Runs every six hours after this workflow reaches the repository default branch.
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned PDF parser
+        run: python -m pip install --disable-pip-version-check pypdf==5.4.0
+      - name: Test H2 parser, robots, failures, stale isolation and TLS
+        run: python -m unittest scripts/test_h2_announcement_reader.py -v
+      - name: Restore source-specific last-good feeds
+        if: github.event_name != 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: reports/h2-last-good
+          key: h2-last-good-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            h2-last-good-${{ github.ref_name }}-
+
+      - name: Read measured official announcements
+        if: github.event_name != 'pull_request'
+        run: |
+          python scripts/h2_announcement_reader.py \
+            --out-dir reports/h2 \
+            --previous-dir reports/h2-last-good \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Save fresh source feeds as last-good
+        if: always() && github.event_name != 'pull_request'
+        uses: actions/cache/save@v4
+        with:
+          path: reports/h2-last-good
+          key: h2-last-good-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload source feeds
+        if: always() && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: h2-official-feeds-${{ github.run_number }}
+          path: reports/h2/*.json
+          if-no-files-found: warn
+          retention-days: 14
