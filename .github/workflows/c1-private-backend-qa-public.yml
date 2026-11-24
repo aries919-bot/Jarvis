@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Retry after correcting JS word-boundary and robots fixture escapes in the programme filter test.
+# Public-runner QA for private C1. Includes exact private HEAD in summary, 33+ unit checks, live per-source counts and local D1 round-trip.
 
 on:
   push:
@@ -45,6 +45,17 @@ jobs:
           path: private-c1
           token: ${{ env.C1_READ_TOKEN }}
           persist-credentials: false
+
+      - name: Record exact private C1 backend revision
+        if: ${{ steps.credentials.outputs.has_token == 'true' }}
+        working-directory: private-c1
+        shell: bash
+        run: |
+          private_sha="$(git rev-parse HEAD)"
+          private_branch="$(git branch --show-current)"
+          echo "Private backend ref: ${private_branch}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Private backend SHA: ${private_sha}" >> "$GITHUB_STEP_SUMMARY"
+          echo "PRIVATE_C1_SHA=${private_sha}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node 22
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
