@@ -216,10 +216,161 @@ class H2ReaderTests(unittest.TestCase):
         self.assertTrue(handler._context.verify_mode == 2)  # ssl.CERT_REQUIRED
         self.assertTrue(handler._context.check_hostname)
 
-    def test_config_is_limited_to_two_measured_official_sources(self):
+
+    def test_turkish_month_name_deadline_range_is_parsed(self):
+        text = "Başvurular 30 Kasım 2026 Pazartesi başlayıp 06 Aralık 2026 Pazar günü sona erecektir."
+        self.assertEqual("2026-12-06", h2.application_deadline(text, "başvurular"))
+
+    def test_atk_notice_separates_published_and_deadline(self):
+        source = {
+            "itemId":"atk-2026-2-181-pozisyon",
+            "institution":"Adli Tıp Kurumu Başkanlığı",
+            "title":"2026-2 sözleşmeli personel alımı — 181 pozisyon",
+            "category":"Kamu","contentType":"job",
+            "url":"https://atk.gov.tr/haber20.11.26.html",
+            "publicationMode":"leading-date",
+            "deadlineContext":"başvurular",
+            "expectedText":["Adli Tıp Kurumu Başkanlığı","181 pozisyon"],
+            "howToApply":{"method":"Kariyer Kapısı","url":"https://kariyerkapisi.gov.tr/isealim","instructions":"Okuyucu giriş yapmaz."},
+            "conditions":["2026 KPSS puan türünden en az 70."]
+        }
+        page = (
+            "20/11/2026 DUYURU Adli Tıp Kurumu Başkanlığı 181 pozisyon için "
+            "2026 KPSS ilgili puan türünden en az 70. Başvurular "
+            "30 Kasım 2026 Pazartesi başlayıp 06 Aralık 2026 Pazar günü sona erer."
+        )
+        item = h2.parse_official_notice(source,page,"Ek-1 pozisyon tablosu",
+            "2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+        self.assertEqual("2026-11-20",item["publishedAt"])
+        self.assertEqual("2026-12-06",item["deadline"])
+        self.assertEqual("Doğrulandı",item["freshnessStatus"])
+        self.assertEqual("job",item["contentType"])
+        self.assertEqual("https://kariyerkapisi.gov.tr/isealim",item["howToApply"]["url"])
+
+    def test_anadolu_added_date_and_deadline_are_separate(self):
+        source = {
+            "itemId":"anadolu-2026-4b-1-personel",
+            "institution":"Anadolu Üniversitesi",
+            "title":"Sözleşmeli personel alımı ilanı — 1 pozisyon",
+            "category":"Kamu","contentType":"job",
+            "url":"https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+            "publicationMode":"anadolu-added-date",
+            "deadlineContext":"başvurular",
+            "expectedText":["Sözleşmeli Personel Alımı İlanı","1 (bir) sözleşmeli personel"],
+            "howToApply":{"method":"Kariyer Kapısı","url":"https://kariyerkapisi.gov.tr/isealim","instructions":"e-Devlet üzerinden."},
+            "conditions":["657 4/B; KPSS(B) puan sıralaması."]
+        }
+        page = (
+            "Sözleşmeli Personel Alımı İlanı Eklenme Tarihi: 13 Kasım 2026 "
+            "657 4/B kapsamında 1 (bir) sözleşmeli personel alınacaktır. "
+            "Başvurular 16.11.2026 - 30.11.2026 tarihleri arasında alınır."
+        )
+        item = h2.parse_official_notice(source,page,"",
+            "2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+        self.assertEqual("2026-11-13",item["publishedAt"])
+        self.assertEqual("2026-11-30",item["deadline"])
+        self.assertEqual("Doğrulandı",item["freshnessStatus"])
+
+    def test_duzce_pdf_title_date_and_deadline_are_separate(self):
+        source = {
+            "itemId":"duzce-2026-11-23-ogretim-elemani-5-kadro",
+            "institution":"Düzce Üniversitesi",
+            "title":"23.11.2026 tarihli öğretim elemanı alımı — 5 kadro",
+            "category":"Kamu","contentType":"job",
+            "url":"https://cdn.duzce.edu.tr/File/GetFile/4455f177-5bf2-414d-a4c6-9de77131bf51",
+            "publicationMode":"duzce-title",
+            "deadlineContext":"başvuru",
+            "expectedText":["DÜZCE ÜNİVERSİTESİ","ÖĞRETİM ELEMANI ALIMI İLANI","Başvuru Tarihleri"],
+            "howToApply":{"method":"Akademik ilan sistemi","url":"http://abas.duzce.edu.tr","instructions":"Tek kadro."},
+            "conditions":["ALES en az 70; kadroya göre lisans ve dil şartı."]
+        }
+        pdf = (
+            "DÜZCE ÜNİVERSİTESİ 23.11.2026 TARİHLİ ÖĞRETİM ELEMANI ALIMI İLANI "
+            "Başvuru Tarihleri: 23.11.2026 - 07.12.2026. ALES 70."
+        )
+        item = h2.parse_official_notice(source,pdf,"",
+            "2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+        self.assertEqual("2026-11-23",item["publishedAt"])
+        self.assertEqual("2026-12-07",item["deadline"])
+
+    def test_tarsus_notice_uses_official_gazette_date_not_other_dates(self):
+        source = {
+            "itemId":"tarsus-2026-11-23-ogretim-gorevlisi-3-kadro",
+            "institution":"Tarsus Üniversitesi",
+            "title":"23.11.2026 öğretim görevlisi alımı — 3 kadro",
+            "category":"Kamu","contentType":"job",
+            "url":"https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895",
+            "publicationMode":"tarsus-gazette",
+            "deadlineContext":"başvuru tarihleri",
+            "expectedText":["Öğretim Elemanı İlanı","23.11.2026","07.12.2026"],
+            "howToApply":{"method":"Şahsen/posta","url":"https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895","instructions":"İlan metnindeki birime."},
+            "conditions":["3 öğretim görevlisi kadrosu; ALES 70."]
+        }
+        page = (
+            "Öğretim Elemanı İlanı 23 Kasım 2026. İlanın Yayımlandığı Resmî Gazete Tarih ve Sayısı: "
+            "23.11.2026 / 33439. İlana Başvuru Tarihleri: 23.11.2026 - 07.12.2026 (Mesai Bitimi)."
+        )
+        item = h2.parse_official_notice(source,page,
+            "Başvuru Tarihi 23.11.2026 Son Başvuru Tarihi 07.12.2026",
+            "2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+        self.assertEqual("2026-11-23",item["publishedAt"])
+        self.assertEqual("2026-12-07",item["deadline"])
+
+    def test_official_parser_fails_closed_without_explicit_publication_or_deadline(self):
+        source = {
+            "itemId":"incomplete","institution":"Örnek Kurum","title":"Personel duyurusu",
+            "category":"Kamu","contentType":"job","url":"https://example.gov.tr/duyuru",
+            "publicationMode":"labelled","deadlineContext":"başvuru",
+            "expectedText":["Personel duyurusu"],
+            "howToApply":{"method":"Resmî duyuru","url":"https://example.gov.tr/duyuru","instructions":"Kontrol edin."},
+            "conditions":[]
+        }
+        with self.assertRaisesRegex(h2.SourceError,"yayın tarihi"):
+            h2.parse_official_notice(source,"Personel duyurusu; başvuru dönemi yakında.",
+                "","2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
+
+    def test_official_collector_checks_linked_pdf_only_on_same_official_host(self):
+        source = {
+            "id":"tarsus-test","reader":"official","format":"html",
+            "url":"https://personel.tarsus.edu.tr/test",
+            "pdfUrl":"https://personel.tarsus.edu.tr/test.pdf"
+        }
+        calls = []
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\\nAllow: /")
+            if url == source["url"]:
+                return ok(b'<h1>Notice</h1><a href="/test.pdf">Official PDF</a>',headers=Message())
+            if url == source["pdfUrl"]:
+                return ok(b"%PDF-fake")
+            raise AssertionError("Unexpected target request: "+url)
+        source.update({
+            "itemId":"tarsus-test-item","institution":"Tarsus Üniversitesi","title":"Öğretim elemanı",
+            "category":"Kamu","contentType":"job","publicationMode":"tarsus-gazette",
+            "deadlineContext":"başvuru tarihleri","expectedText":["Notice"],
+            "howToApply":{"method":"Resmî","url":source["url"],"instructions":"İlan metni."},
+            "conditions":[]
+        })
+        pdf_text = "Öğretim Elemanı İlanı İlanın Yayımlandığı Resmî Gazete Tarih ve Sayısı: 23.11.2026 İlana Başvuru Tarihleri: 23.11.2026 - 07.12.2026"
+        with mock.patch.object(h2,"extract_pdf_text",return_value=pdf_text):
+            feed = h2.collect_official(source,requester,"2026-11-24T19:00:00Z",None,date(2026,11,24))
+        self.assertEqual("fresh",feed["sourceStatus"])
+        self.assertEqual("2026-12-07",feed["items"][0]["deadline"])
+        self.assertEqual("2026-11-23",feed["items"][0]["publishedAt"])
+        self.assertEqual("https://personel.tarsus.edu.tr/test.pdf",calls[-1])
+        self.assertFalse(any("kariyerkapisi" in call for call in calls))
+
+    def test_config_includes_only_k1b_measured_reader_sources(self):
+        cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
+        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
+        self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
+
+    def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual({"yhgm","botas"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(2,len(cfg["sources"]))
+        self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
+        self.assertEqual(6,len(cfg["sources"]))
 
 
 if __name__ == "__main__":
