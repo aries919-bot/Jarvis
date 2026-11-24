@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "userAgent": "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)",
+  "sources": [
+    {
+      "id": "yhgm-kura",
+      "reader": "yhgm",
+      "institution": "T.C. Sağlık Bakanlığı — Yönetim Hizmetleri Genel Müdürlüğü",
+      "category": "Kura",
+      "url": "https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html"
+    },
+    {
+      "id": "botas-duyurular",
+      "reader": "botas",
+      "institution": "Boru Hatları ile Petrol Taşıma A.Ş. (BOTAŞ)",
+      "category": "Kamu bağlı büyük şirket",
+      "listingUrl": "https://www.botas.gov.tr/Kategori/duyurular/2",
+      "jobUrl": "https://www.botas.gov.tr/Icerik/223-kisilik-personel-alim-duyu/1203",
+      "jobPdfUrl": "https://www.botas.gov.tr/uploads/dosyaYoneticisi/559215-lan-tablo.pdf",
+      "resultUrl": "https://www.botas.gov.tr/Icerik/10-kasim-2025-14-kasim-2025/1233"
+    }
+  ]
+}
