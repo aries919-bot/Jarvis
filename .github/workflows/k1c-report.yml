@@ -3,7 +3,7 @@ name: K1-C Audit Report Validation
 on:
   push:
     branches:
-      - is/K1-C-clean-20261124
+      - is/K1-C-final-20261124
     paths:
       - 'KARIYER_KAYNAK_DENETIMI.md'
       - 'career/adaylar.txt'
