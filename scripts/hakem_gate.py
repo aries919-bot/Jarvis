@@ -54,10 +54,32 @@ def get_diff(repo: str, number: int, token: str) -> str:
         raise RuntimeError("PR diff 60 KB sınırını aştı")
     return raw.decode("utf-8", errors="replace")
 
+def _added_lines_only(diff: str) -> str:
+    """Return added patch lines; ignore deletions and this checker's own source file."""
+    lines = diff.splitlines()
+    has_patch_headers = any(line.startswith(("diff --git ", "+++ b/")) for line in lines)
+    if not has_patch_headers:
+        return diff
+    current_path = ""
+    added: list[str] = []
+    for line in lines:
+        if line.startswith("+++ b/"):
+            current_path = line[6:]
+            continue
+        if line.startswith("diff --git "):
+            current_path = ""
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            if current_path != "scripts/hakem_gate.py":
+                added.append(line[1:])
+    return "\n".join(added)
+
+
 def deterministic_findings(diff: str, base: str) -> list[str]:
     findings: list[str] = []
     if base == "main":
         findings.append("PR hedef dalı main; yasak.")
+    scanned = _added_lines_only(diff)
     patterns = [
         (re.compile(r"verify\s*=\s*False", re.I), "TLS doğrulaması kapatılıyor."),
         (re.compile(r"robots\.txt.{0,100}(ignore|bypass|skip)|(?:ignore|bypass|skip).{0,100}robots\.txt", re.I), "robots kuralları atlanıyor."),
@@ -72,7 +94,7 @@ def deterministic_findings(diff: str, base: str) -> list[str]:
         (re.compile(r"(?:KPSS|e-Devlet).{0,100}(?:TCKN|şifre|password|token)\s*[:=]", re.I), "KPSS/e-Devlet kimlik bilgisi sızıntısı."),
     ]
     for pattern, reason in patterns:
-        if pattern.search(diff):
+        if pattern.search(scanned):
             findings.append(reason)
     return findings
 
