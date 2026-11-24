@@ -49,7 +49,7 @@ jobs:
       # İlk bootstrap push'unda yalnız bu özel dalın kendi commit'i kullanılır.
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          ref: ${{ github.event.pull_request.number == 34 && 'fc11ef8ad6a96aca20806f96353c973ee617838a' || github.event.pull_request.base.sha || github.sha }}
           fetch-depth: 1
 
       - uses: actions/setup-python@v5
