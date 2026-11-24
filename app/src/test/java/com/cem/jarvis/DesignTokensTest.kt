@@ -42,6 +42,24 @@ class DesignTokensTest {
         }
     }
 
+    @Test fun textAndMutedTokensStayReadableAcrossEverySurfaceInBothThemes() {
+        val original = Pal.lightMode
+        try {
+            for (light in listOf(false, true)) {
+                Pal.lightMode = light
+                val surfaces = listOf(Pal.BG, Pal.CARD, Pal.CARD2, Pal.RAISED)
+                surfaces.forEach { surface ->
+                    assertTrue("Primary text contrast failed on $surface (light=$light)", contrast(Pal.TEXT, surface) >= 4.5)
+                    assertTrue("Muted text contrast failed on $surface (light=$light)", contrast(Pal.MUTED, surface) >= 4.5)
+                }
+                assertTrue("Selected control label contrast failed (light=$light)", contrast(Pal.ON_ACCENT, Pal.ACCENT) >= 4.5)
+                assertTrue("User bubble text contrast failed (light=$light)", contrast(Pal.TEXT, Pal.BUBBLE_ME) >= 4.5)
+            }
+        } finally {
+            Pal.lightMode = original
+        }
+    }
+
     @Test fun lightAndDarkModesUseDifferentSurfaces() {
         val original = Pal.lightMode
         try {
