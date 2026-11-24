@@ -1,0 +1,420 @@
+{
+  "schemaVersion": 1,
+  "area": "C1 İş ve Kariyer kaynak doğrulama",
+  "decision": "RED",
+  "privateSha": "74816f3954c3fa8164ef0266b848b0b9e9a897d4",
+  "baseSha": "d78df6104265cca25de67617ccb5031ba3d3bfdb",
+  "runId": "45503911811",
+  "runUrl": "https://github.com/aries919-bot/Jarvis/actions/runs/45503911811",
+  "collectedAt": "2026-11-24T22:46:22.181083+00:00",
+  "gates": {
+    "codeQaPass": true,
+    "productionAuthenticatedReadPass": false,
+    "publicEvidence": {
+      "freshSources": 1,
+      "verifiedOpenListings": 42,
+      "met": true
+    },
+    "sourceAndListingThreshold": {
+      "requiredSources": 10,
+      "actualSources": 1,
+      "requiredListings": 100,
+      "actualListings": 42,
+      "met": false
+    }
+  },
+  "metrics": {
+    "sourceCount": 16,
+    "freshSources": 9,
+    "staleSources": 7,
+    "verifiedSources": 1,
+    "verifiedListings": 42,
+    "publicSources": 1,
+    "publicVerifiedListings": 42,
+    "unknownDeadlineListings": 92,
+    "expiredListings": 1,
+    "publicSnapshotAt": "2026-11-24T11:57:55+00:00",
+    "publicSnapshotAgeHours": 10.8,
+    "publicRawRows": 43,
+    "publicUniqueRows": 43
+  },
+  "jobs": {
+    "preflight": {
+      "qa": "preflight",
+      "privateSha": "74816f3954c3fa8164ef0266b848b0b9e9a897d4",
+      "baseSha": "d78df6104265cca25de67617ccb5031ba3d3bfdb",
+      "status": "PASS",
+      "reasons": [],
+      "checkedOutSha": "74816f3954c3fa8164ef0266b848b0b9e9a897d4"
+    },
+    "unit-tests": {
+      "qa": "unit-tests",
+      "command": "npm run test:c1",
+      "exitCode": 0,
+      "tests": 38,
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    "worker-d1-smoke": {
+      "qa": "worker-d1-smoke",
+      "command": "node scripts/c1-worker-d1-smoke.mjs",
+      "exitCode": 0,
+      "checksPassed": 11,
+      "environment": "local Wrangler + local D1; not production",
+      "status": "PASS"
+    },
+    "live-source-audit": {
+      "qa": "live-source-audit",
+      "command": "node scripts/career-feed-live.mjs",
+      "exitCode": 0,
+      "status": "PASS",
+      "metrics": {
+        "collectedAt": "2026-11-24T22:46:02.020Z",
+        "sourceCount": 16,
+        "freshSourceCount": 9,
+        "staleSourceCount": 7,
+        "successfulSourceCount": 1,
+        "totalCount": 134,
+        "freshListingCount": 134,
+        "verifiedListingCount": 42,
+        "activeDeadlineCount": 42,
+        "pastDeadlineCount": 1,
+        "unknownDeadlineCount": 92,
+        "publicSourceCount": 1,
+        "publicListingCount": 42,
+        "threshold": {
+          "requiredSources": 10,
+          "requiredListings": 100,
+          "met": false
+        }
+      },
+      "sources": [
+        {
+          "id": "trendyol",
+          "name": "Trendyol",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 44,
+          "listingCount": 35,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "midas",
+          "name": "Midas",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 17,
+          "listingCount": 16,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "commencis",
+          "name": "Commencis",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 7,
+          "listingCount": 5,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "dream-games",
+          "name": "Dream Games",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 17,
+          "listingCount": 17,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "aleph",
+          "name": "Aleph",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 171,
+          "listingCount": 5,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "ajax-systems",
+          "name": "Ajax Systems",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 176,
+          "listingCount": 13,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "insider-one",
+          "name": "Insider One",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "izinli",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "error"
+        },
+        {
+          "id": "binance",
+          "name": "Binance",
+          "category": null,
+          "state": "FRESH",
+          "status": "no-turkey-openings",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 4,
+          "listingCount": 0,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "no-turkey-openings"
+        },
+        {
+          "id": "picus",
+          "name": "Picus Security",
+          "category": null,
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 15,
+          "listingCount": 1,
+          "lastGoodAt": "2026-11-24T22:46:02.020Z",
+          "lastAttemptStatus": "ok"
+        },
+        {
+          "id": "bold-games",
+          "name": "Bold Games",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "robots-erisilemedi"
+        },
+        {
+          "id": "fal-ai",
+          "name": "fal",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "robots-erisilemedi"
+        },
+        {
+          "id": "global-talent-co",
+          "name": "The Global Talent Co.",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "robots-erisilemedi"
+        },
+        {
+          "id": "sensor-tower",
+          "name": "Sensor Tower",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "robots-erisilemedi"
+        },
+        {
+          "id": "xds",
+          "name": "XDS",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "robots-erisilemedi"
+        },
+        {
+          "id": "cambly",
+          "name": "Cambly",
+          "category": null,
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "lastGoodAt": null,
+          "lastAttemptStatus": "robots-erisilemedi"
+        },
+        {
+          "id": "esube-kamu",
+          "name": "İŞKUR e-Şube",
+          "category": "Kamu",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": null,
+          "rawCount": 43,
+          "listingCount": 42,
+          "lastGoodAt": "2026-11-24T11:57:55.000Z",
+          "lastAttemptStatus": "ok"
+        }
+      ],
+      "parseError": null,
+      "productionPublish": "NOT_RUN; no Worker URL/token passed"
+    },
+    "public-data-contract": {
+      "qa": "public-data-contract",
+      "status": "PASS",
+      "snapshotAt": "2026-11-24T11:57:55+00:00",
+      "ageHours": 10.8,
+      "rawRows": 43,
+      "uniqueRows": 43,
+      "freshPublicSources": 1,
+      "verifiedOpenPublicListings": 42,
+      "expiredRows": 1,
+      "mappedRows": 42,
+      "mapperStatus": "ok",
+      "errors": []
+    },
+    "failure-matrix": {
+      "qa": "failure-matrix",
+      "status": "PASS",
+      "cases": 11,
+      "covered": 11,
+      "missing": [],
+      "results": [
+        {
+          "key": "real_official_listing",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "broken_internet",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "empty_response",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "http_403_500_timeout",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "robots_denied",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "source_last_good",
+          "file": "tests/career-feed-state.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "expired_stale_data",
+          "file": "tests/career-feed-state.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "missing_auth",
+          "file": "tests/career-feed-route.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "general_token_denied",
+          "file": "tests/career-feed-route.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "raw_json_roundtrip",
+          "file": "tests/career-feed-route.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "esube_stale_12h",
+          "file": "tests/esube-input.test.mjs",
+          "covered": true
+        }
+      ]
+    },
+    "security-diff": {
+      "qa": "security-diff",
+      "status": "PASS",
+      "changedFileCount": 5,
+      "changedFiles": [
+        ".github/workflows/validate.yml",
+        "src/career-feed-store.js",
+        "src/esube-input.js",
+        "tests/career-feed-state.test.mjs",
+        "tests/esube-input.test.mjs"
+      ],
+      "allowedFilesExactMatch": true,
+      "diffBytes": 2350,
+      "diffLimitBytes": 60000,
+      "numstat": [
+        "1\t1\t.github/workflows/validate.yml",
+        "1\t1\tsrc/career-feed-store.js",
+        "1\t0\tsrc/esube-input.js",
+        "18\t0\ttests/career-feed-state.test.mjs",
+        "1\t0\ttests/esube-input.test.mjs"
+      ],
+      "addedLineFindings": {},
+      "diffCheckClean": true,
+      "userAgentExact": true
+    },
+    "production-readonly": {
+      "qa": "production-readonly",
+      "method": "authenticated GET only; no POST or deployment",
+      "status": "BLOCKED",
+      "reason": "JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN pair is not configured."
+    }
+  },
+  "reasons": [
+    "production-readonly: BLOCKED — JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN pair is not configured.",
+    "10 kaynak / 100 doğrulanmış ilan eşiği karşılanmadı."
+  ]
+}
