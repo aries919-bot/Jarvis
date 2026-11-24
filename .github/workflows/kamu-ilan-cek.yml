@@ -1,0 +1,84 @@
+name: Kamu Isci Ilan Cekimi (e-sube)
+
+# K1-E1: e-sube (ISKUR) kamu isci ilanlari Actions'ta cekilir.
+# - Betik once robots.txt'e bakar; izin yoksa 3 koduyla cikar ve bir sey yazmaz.
+# - Giris/captcha yok; tek oturum, istekler arasi 2 sn bekleme, en fazla 40 sayfa.
+# - User-Agent tarayici taklidi yapmaz. Anahtar/token kullanilmaz.
+# - Kayit (ilk_gorulme korumasi icin) durum dalindan alinir, oraya geri yazilir.
+on:
+  workflow_dispatch:
+  push:
+    branches: [cline/K1]
+    paths:
+      - "scripts/esube_kamu_okuyucu.py"
+      - ".github/workflows/kamu-ilan-cek.yml"
+  schedule:
+    - cron: "17 5,14 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kamu-ilan-cek
+  cancel-in-progress: false
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Onceki kaydi durum dalindan al
+        run: |
+          git fetch origin durum || true
+          if git rev-parse --verify origin/durum >/dev/null 2>&1; then
+            git show origin/durum:career/esube_kamu_ilanlari.json > career/esube_kamu_ilanlari.json || rm -f career/esube_kamu_ilanlari.json
+          fi
+
+      - name: Kamu ilanlarini cek
+        run: |
+          set -o pipefail
+          python3 scripts/esube_kamu_okuyucu.py | tee esube_ozet.txt
+
+      - name: Sonucu durum dalina yaz
+        run: |
+          mkdir -p /tmp/durum
+          cp career/esube_kamu_ilanlari.json /tmp/durum/
+          git config user.name "kaynak-bot"
+          git config user.email "kaynak-bot@users.noreply.github.com"
+          if git rev-parse --verify origin/durum >/dev/null 2>&1; then
+            git checkout -f -B durum origin/durum
+          else
+            git checkout --orphan durum
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+          mkdir -p career
+          cp /tmp/durum/esube_kamu_ilanlari.json career/
+          git add career/esube_kamu_ilanlari.json
+          if git diff --cached --quiet; then
+            echo "degisiklik yok"
+          else
+            git commit -m "esube kamu ilanlari $(date -u +%Y-%m-%dT%H:%MZ)"
+          fi
+          git push origin durum
+
+      - name: Ozeti is ozetine ekle
+        if: always()
+        run: |
+          {
+            echo "## e-sube kamu isci ilanlari"
+            echo
+            echo "- Is: ${{ github.workflow }} (ref: ${{ github.ref_name }})"
+            echo "- robots once, tek oturum, 2 sn bekleme, en fazla 40 sayfa."
+            echo
+            echo '```'
+            sed -n '1,80p' esube_ozet.txt 2>/dev/null || echo "ozet ciktil yok"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
