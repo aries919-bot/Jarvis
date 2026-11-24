@@ -51,19 +51,19 @@ class HakemGateTests(unittest.TestCase):
         self.assertIsNone(deterministic_only_fallback("account", "token"))
 
     def test_test_log_requires_real_successful_unittest_summary(self):
-        log = "Ran 2 tests in 0.01s\\n\\nOK\\nTest job result: success\\n"
+        log = "Ran 2 tests in 0.01s\n\nOK\nTest job result: success\n"
         self.assertTrue(test_log_is_successful(log))
 
     def test_test_log_rejects_failed_result(self):
-        log = "Ran 2 tests in 0.01s\\n\\nFAILED (failures=1)\\nTest job result: success\\n"
+        log = "Ran 2 tests in 0.01s\n\nFAILED (failures=1)\nTest job result: success\n"
         self.assertFalse(test_log_is_successful(log))
 
     def test_test_log_rejects_zero_or_missing_test_summary(self):
-        self.assertFalse(test_log_is_successful("Ran 0 tests in 0.0s\\n\\nOK\\nTest job result: success\\n"))
-        self.assertFalse(test_log_is_successful("OK\\nTest job result: success\\n"))
+        self.assertFalse(test_log_is_successful("Ran 0 tests in 0.0s\n\nOK\nTest job result: success\n"))
+        self.assertFalse(test_log_is_successful("OK\nTest job result: success\n"))
 
     def test_test_log_rejects_unsuccessful_test_job(self):
-        log = "Ran 2 tests in 0.01s\\n\\nOK\\nTest job result: failure\\n"
+        log = "Ran 2 tests in 0.01s\n\nOK\nTest job result: failure\n"
         self.assertFalse(test_log_is_successful(log))
 
     def test_deleted_browser_user_agent_is_not_flagged(self):
