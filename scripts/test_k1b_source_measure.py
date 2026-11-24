@@ -99,6 +99,42 @@ class K1BSourceMeasureTests(unittest.TestCase):
         self.assertEqual(0, row["attempts"])
         self.assertEqual("ENGELLİ", row["status"])
 
+    def test_manifest_modes_are_8_closed_3_redirect_9_measure(self):
+        sources = measure.read_manifest()
+        self.assertEqual(20, len(sources))
+        self.assertEqual(8, sum(x.get("collectionMode") == "TEMPORARILY_CLOSED" for x in sources))
+        self.assertEqual(3, sum(x.get("collectionMode") == "REDIRECT_ONLY" for x in sources))
+        self.assertEqual(9, sum(x.get("collectionMode") == "MEASURE" for x in sources))
+
+    def test_temporarily_closed_source_makes_no_network_request(self):
+        source = {
+            "id": "paused", "category": "Kamu", "name": "Kapalı",
+            "url": "https://example.gov.tr/", "collectionMode": "TEMPORARILY_CLOSED",
+            "closeReason": "TLS doğrulama hatası",
+        }
+        with mock.patch.object(measure, "_robots_for") as robots_for:
+            with mock.patch.object(measure, "_request_once") as request_once:
+                row = measure.measure_one(source)
+        robots_for.assert_not_called()
+        request_once.assert_not_called()
+        self.assertEqual(0, row["attempts"])
+        self.assertEqual("ENGELLİ", row["status"])
+        self.assertEqual("TEMPORARILY_CLOSED", row["collectionMode"])
+
+    def test_redirect_only_source_makes_no_network_request(self):
+        source = {
+            "id": "redirect", "category": "KPSS", "name": "Yönlendirme",
+            "url": "https://example.gov.tr/", "collectionMode": "REDIRECT_ONLY",
+            "policyNote": "Yalnız Custom Tabs",
+        }
+        with mock.patch.object(measure, "_robots_for") as robots_for:
+            with mock.patch.object(measure, "_request_once") as request_once:
+                row = measure.measure_one(source)
+        robots_for.assert_not_called()
+        request_once.assert_not_called()
+        self.assertEqual(0, row["attempts"])
+        self.assertEqual("REDIRECT_ONLY", row["collectionMode"])
+
     def test_summary_has_required_columns(self):
         sample = [{
             "id":"x","category":"Kamu","name":"Örnek","url":"https://example.gov.tr/",

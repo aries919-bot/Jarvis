@@ -71,6 +71,9 @@ def read_manifest(path: Path = MANIFEST) -> list[dict[str, str]]:
         parsed = urllib.parse.urlsplit(item["url"])
         if parsed.scheme != "https" or not parsed.hostname:
             raise ValueError(f"HTTPS olmayan/hedefsiz URL reddedildi: {item['url']}")
+        mode = item.get("collectionMode", "MEASURE")
+        if mode not in {"MEASURE", "TEMPORARILY_CLOSED", "REDIRECT_ONLY"}:
+            raise ValueError(f"Geçersiz collectionMode: {mode}")
     return items
 
 
@@ -231,8 +234,30 @@ def classify_result(permission: str, status: int | None, body_bytes: int, error:
 
 
 def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
-    cache = robots_cache if robots_cache is not None else {}
     current = source["url"]
+    mode = source.get("collectionMode", "MEASURE")
+    if mode in {"TEMPORARILY_CLOSED", "REDIRECT_ONLY"}:
+        note = source.get("closeReason") if mode == "TEMPORARILY_CLOSED" else source.get("policyNote")
+        label = "KAPALI_GEÇİCİ" if mode == "TEMPORARILY_CLOSED" else "YALNIZ YÖNLENDİRME"
+        return {
+            "id": source["id"],
+            "category": source["category"],
+            "name": source["name"],
+            "url": current,
+            "finalUrl": current,
+            "robots": f"{label} (ağ isteği yapılmadı)",
+            "robotsPermission": "UNKNOWN",
+            "robotsHttp": None,
+            "http": None,
+            "bytes": 0,
+            "attempts": 0,
+            "datedAnnouncement": None,
+            "status": "ENGELLİ",
+            "error": note,
+            "collectionMode": mode,
+        }
+
+    cache = robots_cache if robots_cache is not None else {}
     body = b""
     headers: Message | None = None
     status: int | None = None
@@ -326,10 +351,15 @@ def measure_one(source: dict[str, str], robots_cache: dict[str, dict[str, Any]] 
         "datedAnnouncement": dated,
         "status": state,
         "error": error,
+        "collectionMode": mode,
     }
 
 
 def fmt_http(row: dict[str, Any]) -> str:
+    if row.get("collectionMode") == "TEMPORARILY_CLOSED":
+        return "— (geçici kapalı; tekrar istek yok)"
+    if row.get("collectionMode") == "REDIRECT_ONLY":
+        return "— (yalnız yönlendirme; istek yok)"
     if row["http"] is not None:
         return str(row["http"])
     error = row.get("error") or "HTTP yok"
@@ -354,6 +384,8 @@ def fmt_dated(value: bool | None) -> str:
 
 def make_markdown(rows: list[dict[str, Any]], collected_at: str) -> str:
     counts = {label: sum(1 for row in rows if row["status"] == label) for label in ("ÇALIŞIYOR", "ENGELLİ", "ÖLÜ")}
+    mode_counts = {mode: sum(1 for row in rows if row.get("collectionMode", "MEASURE") == mode)
+                   for mode in ("MEASURE", "TEMPORARILY_CLOSED", "REDIRECT_ONLY")}
     lines = [
         "## K1-B — canlı kaynak erişim ölçümü",
         "",
@@ -362,16 +394,16 @@ def make_markdown(rows: list[dict[str, Any]], collected_at: str) -> str:
         "- TLS: varsayılan Python SSL doğrulaması açık; sertifika doğrulama kapatılmadı.",
         "- Robots: her adresin robots.txt dosyası önce okundu; yasak/belirsiz olanlarda sayfa isteği yapılmadı.",
         "- İstek: yalnız GET; giriş, CAPTCHA veya form gönderme denenmedi.",
-        f"- Hedef: **{len(rows)} benzersiz URL** (H1 listesi + 2 açık ek adres).",
+        f"- Hedef: **{len(rows)} benzersiz URL**; aktif ölçüm **{mode_counts['MEASURE']}**, geçici kapalı **{mode_counts['TEMPORARILY_CLOSED']}**, yalnız yönlendirme **{mode_counts['REDIRECT_ONLY']}**.",
         f"- Sonuç: **ÇALIŞIYOR {counts['ÇALIŞIYOR']} / ENGELLİ {counts['ENGELLİ']} / ÖLÜ {counts['ÖLÜ']}**",
         "",
-        "| Adres | Robots | HTTP | Bayt | Deneme | Tarihli duyuru var mı? | Durum |",
-        "|---|---|---:|---:|---:|---|---|",
+        "| Adres | Mod | Robots | HTTP | Bayt | Deneme | Tarihli duyuru var mı? | Durum | Not |",
+        "|---|---|---|---:|---:|---:|---|---|---|",
     ]
     for row in rows:
         lines.append(
-            f"| {row['url']} | {row['robots']} | {fmt_http(row)} | {row['bytes']} | {row.get('attempts', 1)} | "
-            f"{fmt_dated(row['datedAnnouncement'])} | **{row['status']}** |"
+            f"| {row['url']} | {row.get('collectionMode', 'MEASURE')} | {row['robots']} | {fmt_http(row)} | {row['bytes']} | {row.get('attempts', 1)} | "
+            f"{fmt_dated(row['datedAnnouncement'])} | **{row['status']}** | {(row.get('error') or '')[:180]} |"
         )
     if counts["ÇALIŞIYOR"] == 0:
         lines.extend(["", "> **RED:** ÇALIŞIYOR sınıfında kaynak yok."])
