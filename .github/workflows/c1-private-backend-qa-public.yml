@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Public-runner QA for the latest parser-free raw-JSON Worker HEAD, including raw payload round-trip and expanded D1 source-failure persistence smoke. Records exact private HEAD, unit tests and live source counts.
+# Public-runner QA refresh for private C1 HEAD 3f58123cfbb9d8ee420050337e57f708aa45fdf5; records exact checkout SHA, regression tests, live counts and local D1 smoke.
 
 on:
   push:
