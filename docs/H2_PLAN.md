@@ -113,3 +113,11 @@ H2 okuyucu için yeni genel parser:
 - Bu son dilim kalan 14 testin tamamını geri getirir (toplam 33 H2 testi), altı saatlik Actions workflow'unu ve H2 raporunu ekler.
 - Cron `main` varsayılan dalına birleştirilene kadar otomatik tetiklenmez. H2 PR'ları `cline/K1` hedeflidir; telefona/Android Haber sekmesine veri bağlanmaz.
 - Canlı ölçüm sonucu ve exact HEAD CI kanıtları PR kontrolü tamamlandıktan sonra bu bölüme işlenecektir.
+
+## H2 last-good / firstSeen cache düzeltmesi — 25.11.2026
+
+- 21:00:47Z canlı koşusunda branch cache bulunmadı; `firstSeenAt` dört kaynağa yeniden verildi ve Tarsus eski kartı cache'de yokken stale/0 çıktı. İlk cache kaydı bu nedenle tarihçe için yeterli değildi.
+- Önceki doğrulanmış H2 artefaktı [run #45476818354](https://github.com/aries919-bot/Jarvis/actions/runs/45476818354), artifact #14961200293; beş fresh kaynak beslemesi ve bunların `firstSeenAt` değerleri `career/h2_last_good_seed.json` olarak sabit başlangıç verisi yapıldı. Geçmiş BOTAŞ kaydı stale/boş olduğu için seed'e alınmadı.
+- `scripts/h2_last_good_seed.py` eksik veya stale/boş son-iyi dosyayı yalnız tarihsel fresh seed ile doldurur; geçerli güncel cache'in diğer alanlarını değiştirmez, eşleşen ilanlarda yalnız daha eski `firstSeenAt` değerini birleştirir. Sonraki kaynak hatası mevcut kartı `sourceStatus=stale` olarak korur.
+- Aynı dalın iki canlı okuması cache'i paralel tüketmesin diye workflow concurrency grubu eklendi; `cline/K1` push tetikleyicisi de tanımlandı. Bu dalda cron yine aktif değil; cron yalnız varsayılan `main` dalına girdiğinde başlar.
+- Yeni seed testleri bootstrap, stale/boş cache geri kazanımı, güncel içerik koruması, firstSeen geriye gitmeme, bilinmeyen ilan kimliği ve seed manifest doğrulamasını kapsar.
