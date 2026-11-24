@@ -36,7 +36,7 @@
 | A1 İki ekran taslağı | ONAYLANDI | sahip: chatgpt; ana ekran + İş & Kariyer Cem tarafından onaylandı |
 | A2 Tüm uygulama tema sistemi | PR AÇIK | sahip: chatgpt; #25/#27/#28 CI yeşil; bağımsız inceleme ve telefon testi |
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt; #26 CI yeşil; canlı API, bağımsız inceleme ve telefon testi |
-| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM — TEST + LOCAL D1 PASS; KAYNAK/PROD EŞİĞİ RED | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak, HEAD `86318bac`; 32 test PASS; live audit 114 private deadline-unknown + kamu 1/43; 6 Ashby robots HTTP 401 stale; local D1 8/8 PASS; production publish SKIPPED; 10/100 sağlanmadı. |
+| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM — TEST + LOCAL D1 PASS; KAYNAK/PROD EŞİĞİ RED | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak, HEAD `0ec0fdd`; 33 test PASS; canlı audit 112 private deadline-unknown + kamu 1/43; 6 Ashby robots HTTP 401 stale; local D1 8/8 PASS; production publish SKIPPED; 10/100 sağlanmadı. |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt; #22 + #31; son HEAD `4ec0158`; CI #671/#116 sürüyor, gerçek telefon testi bekliyor |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29/#30 açık taslak; #30 APK #638 + Full QA #84 yeşil; gerçek cihaz ve bağımsız insan incelemesi bekliyor |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt; kişisel profil telefonda kalır |
@@ -71,8 +71,8 @@
 | K1-B | ÖLÇÜM VAR — PR AÇIK / KISMİ RED | PR #36: https://github.com/aries919-bot/Jarvis/pull/36; son ölçüm #45429536647: 20 benzersiz URL, 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ. Modlar: 9 aktif ölçüm / 8 geçici kapalı / 3 yalnız yönlendirme. 8 kapalı adres = 5 TLS + 3 timeout; 3 Kariyer Kapısı/e-Devlet linkinde ağ isteği yok. Testler 15/15. Gerçek kamu ilanı: 1 kaynak (e-Şube) / 43 doğrulanmış ilan. |
 | K1-C | PR AÇIK — GÜNCEL RAPOR + TEST | PR #38: https://github.com/aries919-bot/Jarvis/pull/38, is/K1-C → durum; 4 dosya: rapor, aday listesi, rapor testi, workflow. K1-B #45429536647'ye göre 20 URL: 5 ÇALIŞIYOR / 15 ENGELLİ / 0 ÖLÜ; rapor 20/20 benzersiz kaynağı gösterir. CI #45430917966: 6/6 SUCCESS. Kamu 1 kaynak / 43 doğrulanmış ilan; PR birleştirilmedi. |
 | H2 | PR AÇIK — KISMİ / BOTAŞ STALE | PR #40: https://github.com/aries919-bot/Jarvis/pull/40, is/H2-verified-reader → durum, taslak. Test CI #45437948449: 19/19 SUCCESS. Canlı reader #45437928827 SUCCESS; 2 kaynakta 1 fresh / 1 stale / 1 kart. YHGM kura kartı doğru tarih ayrımıyla üretildi; BOTAŞ detay URL'si TIMEOUT + tek retry TIMEOUT oldu. Artefakt #14942950569. H2 yeni kamu işi sayısına katkı sağlamadı; merge yok. |
-| C1-1 | DEVAM — 32/32 TEST + 8/8 D1 LOCAL PASS; KAYNAK EŞİĞİ RED | jarvis-cloud PR #5 açık/taslak; HEAD `86318bac`; 13 dosya +2.484/-6. Ücretsiz QA #45463284336: 32/32 PASS, local Wrangler/D1 8/8 PASS. Canlı audit: 16 kaynak, 10 fresh/6 stale; 114 özel aday deadline unknown; kamu 1/43; doğrulanmış eşik 1 kaynak/43 ilan, 10/100 RED. Production Worker publish SKIPPED. |
-| C1-2 | YAPILMADI | Canlı kaynak/ilan sayımı, kamu ayrı; eşik sağlanmıyorsa RED ve gerçek sayı. |
+| C1-1 | DEVAM — 33/33 TEST + 8/8 D1 LOCAL PASS; KAYNAK/PROD EŞİĞİ RED | jarvis-cloud PR #5 açık/taslak; HEAD `0ec0fdd`; 13 dosya +2.529/-6. QA #45464977542: 33/33 PASS, local Wrangler/D1 8/8 PASS. Canlı audit: 16 kaynak, 10 fresh/6 stale; 112 özel aday deadline unknown; kamu 1/43; yalnız 1 kaynakta 43 açık deadline, 10/100 RED. Production Worker publish SKIPPED. |
+| C1-2 | RAPOR HAZIR — RED | [gorevler/C1-2.md](../gorevler/C1-2.md); live report artefakt [#14954582973](https://github.com/aries919-bot/Jarvis/actions/runs/45464977542/artifacts/14954582973). 9/15 özel kaynak fresh, 6 stale; 112 private deadline unknown; kamu 1/43; doğrulanmış eşik 1 kaynak/43 ilan, 10/100 NOT_MET. UI yok. |
 | K1-M | YAPILMADI | Gerekli workflow/betiklerin temiz PR ile main'e taşınması; film commitleri hariç, cron yalnız main'de. |
 | U1 | YAPILMADI | Uygulama entegrasyonu; arama motoru kazıması kapalı, H1 Haber kartları ve Custom Tabs. Telefon doğrulaması Cem'de. |
 
@@ -250,3 +250,15 @@
 - Worker production publish hâlâ SKIPPED: `JARVIS_WORKER_URL` / `JARVIS_WORKER_TOKEN` çifti public QA workflow'unda yok. Production Worker ve Cloudflare D1 davranışı kanıtlanmadı; deploy yapılmadı.
 - PR diff tam yeniden incelendi: 13 dosya, +2.484/-6; eklenen satırlarda token/secret/private-key, CV, KPSS, e-Devlet eşleşmesi 0. 11 haneli regex 49 eşleşme verdi; 47 benzersiz değer, bunların tamamı e-Şube JSON'undaki `ilan_no` ilan numaralarıdır, TCKN değildir.
 - Sonuç: backend birim test ve local D1 smoke kapıları PASS; genel C1-1 RED. Kaynak eşiği ve production Worker/D1 QA tamamlanmadan merge, C1-2 veya UI yok.
+
+
+### C1-1 / C1-2 güncel son ölçüm — 24.11.2026 18:57 UTC
+- Son public QA [#45464977542](https://github.com/aries919-bot/Jarvis/actions/runs/45464977542), job `138697350676`: 33/33 test SUCCESS; Wrangler local Worker + D1 smoke 8/8 PASS; live source audit SUCCESS; JSON/TXT artifact [#14954582973](https://github.com/aries919-bot/Jarvis/actions/runs/45464977542/artifacts/14954582973).
+- Current private PR #5 HEAD `0ec0fdd5050ac75f17153341d27685dbfb4061d4`, 13 files +2,529/-6; open/draft/unmerged. Main SHA `fb291c0ce06b05c61f988e71c3d6587ffc945e93`; untouched.
+- Latest live audit `collectedAt=2026-11-24T18:57:08.386Z`: Trendyol 44 raw/35 Türkiye candidate; Midas 17/16; Commencis 7/5; Dream Games 17/17; Aleph 171/5; Ajax Systems 176/11; Insider One 112/22; Binance 4/0; Picus 15/1. Private candidate sum re-count: `35+16+5+17+5+11+22+0+1=112`.
+- Commencis internship and Cloud Camp entries were excluded as non-vacancy programmes; `International Accountant` regression remains included. New test validates this rule.
+- 6 Ashby: Bold Games, fal, The Global Talent Co., Sensor Tower, XDS, Cambly. robots.txt HTTP 401, stale/unmeasured; no API requests were sent.
+- Public separately: 1 e-Şube / 43 unique IDs, snapshot `2026-11-24T11:57:55+00:00` (approx 6h59 age, within 12h); not a new HTTP refresh; `publishedAt=null`, deadline from source.
+- Totals from artifact: 16 sources, fresh 10/stale 6; 155 unique records = 112 private deadline unknown +43 public deadline open. Open deadline entries 43 from only 1 source. Threshold NOT_MET.
+- QA workflow has read-only private checkout and does not expose secret value. Production publish skipped; no Cloudflare Worker/D1 deploy.
+- C1-2 report created/updated at `gorevler/C1-2.md`; decision RED, actual numbers retained. UI/C1-2 app integration remains blocked by 10 sources/100 verified listings.
