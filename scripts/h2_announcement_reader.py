@@ -367,11 +367,18 @@ def application_deadline(text: str, context: str) -> str | None:
     return None
 
 
-def status_for(deadline: str | None, published: str | None, content_type: str, today: date) -> str:
+def status_for(deadline: str | None, published: str | None, content_type: str, today: date,
+                application_opens_at: str | None = None, collected_at: str | None = None) -> str:
     if deadline:
         end = date.fromisoformat(deadline)
         if end < today:
             return "Süresi geçti"
+        # A known future application start is not an open application yet.
+        if application_opens_at:
+            opening = datetime.fromisoformat(application_opens_at.replace("Z","+00:00"))
+            observed = datetime.fromisoformat((collected_at or utc_now()).replace("Z","+00:00"))
+            if observed < opening:
+                return "Doğrulanamadı"
         if published and date.fromisoformat(published) <= today:
             return "Doğrulandı"
         return "Doğrulanamadı"
@@ -385,6 +392,7 @@ def make_item(
     content_type: str, official_url: str, how_to_apply: dict[str,str],
     conditions: list[str], deadline: str | None, published_at: str | None,
     collected_at: str, first_seen_at: str, today: date, tags: list[str] | None = None,
+    application_opens_at: str | None = None,
 ) -> dict[str,Any]:
     return {
         "id":item_id,
@@ -396,10 +404,12 @@ def make_item(
         "howToApply":how_to_apply,
         "conditions":conditions,
         "deadline":deadline,
+        "applicationOpensAt":application_opens_at,
         "publishedAt":published_at,
         "collectedAt":collected_at,
         "firstSeenAt":first_seen_at,
-        "freshnessStatus":status_for(deadline,published_at,content_type,today),
+        "freshnessStatus":status_for(deadline,published_at,content_type,today,
+                                     application_opens_at,collected_at),
         "tags":tags or [],
         "sourceStatus":"fresh",
     }
@@ -552,6 +562,7 @@ def parse_official_notice(source: dict[str,Any], page_text: str, attachment_text
         first_seen_at=first_seen_at,
         today=today,
         tags=[str(x) for x in source.get("tags", [])],
+        application_opens_at=source.get("applicationOpensAt"),
     )
 
 
