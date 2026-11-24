@@ -61,13 +61,19 @@
 | Kimlik | Durum | Sahip / Bitiş kanıtı |
 |---|---|---|
 | K1 | DEVAM | Cline; K1 kaynak hattı üst başlığı |
-| K1-E1 | DEVAM | Cline; e-Şube okuyucu, Actions özeti + JSON + 3 elle doğrulama |
+| K1-E1 | CI YEŞİL (3 ilan elle doğrulaması bekliyor) | Cline; run #45388925995 SUCCESS; durum JSON 43 benzersiz ilan / 8 kurum; 3 ilan kaynakta elle doğrulanmalı |
 | K1-F | YAPILMADI | Cline; User-Agent düzeltmesi, Actions yeşil |
 | K1-B | YAPILMADI | Cline; [gorevler/K1-B.md](../gorevler/K1-B.md), yalnız workflow, ölçüm özeti |
 | K1-C | YAPILMADI | ChatGPT; yalnız ölçülmüş kaynaklarla kaynak denetimi + aday listesi |
 | C1-1 | YAPILMADI | Cline; jarvis-cloud PR #5, `npm run test:c1` + yeşil CI |
 | C1-2 | YAPILMADI | Cline; canlı rapor, kamu ayrı, 10 kaynak/100 ilan veya gerçek RED sayısı |
 | K1-M | YAPILMADI | Cline; temiz cherry-pick PR main'e, CI yeşil |
+
+### K1-E1 doğrulama kaydı — 24.11.2026
+- Commit: [efd1aaea](https://github.com/aries919-bot/Jarvis/commit/efd1aaea25f4e7554241c68b88c7ffe72a121d99); workflow: [kamu-ilan-cek #45388925995](https://github.com/aries919-bot/Jarvis/actions/runs/45388925995) — push, completed / success; tüm 7 ana adım SUCCESS.
+- JSON `durum` dalında tekrar okundu: [career/esube_kamu_ilanlari.json](../career/esube_kamu_ilanlari.json), 3 sayfa, 43 satır, 43 benzersiz ilan, 0 tekrar, 8 kurum. İlk 3 örnek ilan no: 00009905681, 00009905684, 00009905686; JSON'da MSB ve son başvuru 27.11.2026.
+- Kaynak sayımı: 1 kamu kaynağı / 43 ilan. 10 kaynak / 100 ilan toplam eşiği henüz sağlanmadı.
+- Sınır: e-Şube sayfası web doğrulamasında açılıyor ve Kamu filtresi görünür; ancak üç ilan numarası arama sonucu olarak bağımsız elle doğrulanamadı. Bu nedenle K1-E1 tamamlandı sayılmaz; durum doğrulama bekliyor. Sonraki K1-F'e geçişten önce 3 ilan kaynağında doğrulanmalı.
 
 ## Cline'a ayrılmış net işler
 **K1 — ilk iş / sahip: cline**
