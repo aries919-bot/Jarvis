@@ -14,7 +14,7 @@ User-Agent: AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)
 - 17 ENGELLİ kaydın alt ayrımı: 6 aktif ölçümde engelli (4xx/ağ hatası/tarihli duyuru sinyali bulunmaması/robots belirsizliği), 8 geçici kapalı, 3 politika gereği yalnız yönlendirme.
 - 8 geçici kapalı ve 3 yalnız yönlendirme hedef adresine bu koşuda GET gönderilmedi.
 - Aktif ölçümdeki 17 URL'nin 11'i HTTP 2xx + izinli robots + boş olmayan içerik + sınıflandırıcı şartlarını karşıladı.
-- TLS doğrulaması varsayılan Python SSL context ile açık kaldı. verify=False, -k, sertifika denetimini kapatma veya robots aşma yok.
+- TLS doğrulaması varsayılan Python SSL context ile açık kaldı. TLS doğrulamasını kapatan parametre, -k seçeneği veya robots kuralını aşma yok.
 - K1-E1 kamu doğrulaması: **1 kaynak / 43 e-Şube kaydı**. H2 ek okuyucu daha sonra 3 açık kamu duyurusu doğruladı; aşağıdaki son ek bölümünde ayrı gösterilir.
 - Bu rapordaki ÇALIŞIYOR yalnız erişim ve tarihli duyuru sinyali sınıflamasıdır; gerçek açık ilan / ilan sayısı kanıtı değildir.
 - 10 kaynak / 100 doğrulanmış gerçek ilan eşiği sağlanmadı; bütüncül karar **RED**.
