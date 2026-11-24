@@ -11,9 +11,6 @@
 - `main` üzerinde docs/HARITA.md ve docs/TALIMAT.md yok; doğru kopyalar `durum` dalında.
 - `cline/K1` dalı mevcut; Cem Cline'ın K1 üzerinde çalıştığını bildirdi. Dalına/dosyalarına müdahale yok; PR/bitirme kanıtı bekleniyor. K1 sahipliği Cline'da.
 - K1 eski PR #24 ChatGPT koludur; Cline K1 tamamlayana kadar #24'e dokunma.
-- K1-B geniş ölçüm PR #36: `is/K1-B-wide` → `durum`, PR AÇIK; Actions [#45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813) job SUCCESS, 20 benzersiz URL: 8 ÇALIŞIYOR / 12 ENGELLİ / 0 ÖLÜ; 9/9 özel test. H1 `is/H1` kaynak listesi yalnız 8 ÇALIŞIYOR adresle güncellendi; PR #35 AÇIK, KABUL değil.
-- PR #32 ve #34 için kullanıcı birleştirdiğini bildirdi; ancak son GitHub API kontrolünde ikisi de `open` ve `closed_at=null` görünüyor. Ayrıca `.github/workflows/testler.yml` `cline/K1` dalında bulunamadı. Bu nedenle PR #33 hedefi henüz `cline/K1` yapılmadı; değişiklikten önce merge durumu repo üzerinde doğrulanmalı.
-
 - A2 PR #25 açık/taslak, `is/a2-expressive-theme` → `main`; ikinci CI denemesi test+APK SUCCESS, ilk Gradle metadata NPE'nin kök nedeni bilinmiyor.
 - A2 tanılama PR #27 açık/taslak, `fix/a2-gradle-metadata-stacktrace` → A2; workflow-only, PR/push CI SUCCESS.
 - A2 devam PR #28 açık/taslak, `is/a2-theme-completion` → A2; önceki 7 commit CI #45180833170/#45180819864 SUCCESS. Yeni commitler `c9c65a0` (Açık/Koyu iki seçenekli ayar kontrolü) ve `850c530` (tüm yüzeylerde kontrast testi). Güncel HEAD CI #45387508292: birim test SUCCESS, APK derlemesi son kontrolde sürüyordu. Bağımsız inceleme/telefon testi bekliyor.
@@ -60,68 +57,48 @@
 - C2 APK #673 artefaktı `14856755454`: 14,905,051 bayt; SHA-256 `4c017118fa000eded5403f1d540785a975c9bb5e760d65cc6d6495cca178bb0b`. PR #31 test derlemesi; ana dala birleşmedi.
 - 23.11.2026 resmî alım örneği: İçişleri 1.170 + Jandarma 9.000 = 10.170; İçişleri Malatya tablosunda 3 P3 lisans yeri ve Yeşilyurt'ta 1 P94 temizlik görevlisi yeri var. P94 başvurusu yalnız uygun unvan/şartlarla değerlendirilmeli.
 
-## C1/K1 v2 görev kuyruğu
-| Kimlik | Durum | Sahip / Bitiş kanıtı |
+## H/K1/C1 v3 görev kuyruğu — 24.11.2026
+
+> Aktif kapsam yalnız İş & Kariyer/Haber doğrulamasıdır. Cline kullanılmaz; bütün işler ChatGPT tarafından ayrı dallarda PR ile yapılır. Cem yalnız telefon doğrulaması ve birleştirme onayı verir. Ayrıntılı kurallar: [NOT_C1.md](NOT_C1.md).
+
+| Kimlik | Durum | Sahip / Kanıt / Sonraki adım |
 |---|---|---|
-| K1 | DEVAM | Cline; K1 kaynak hattı üst başlığı |
-| K1-E1 | KABUL | Cline; Actions #45388925995 SUCCESS; 43 benzersiz kamu ilanı / 8 kurum; Cem 3 ilanı e-Şube'de girişsiz elle doğruladı |
-| K1-F | DEVAM | Cline; [gorevler/K1-F.md](../gorevler/K1-F.md); yalnız iki dosyada User-Agent değişikliği + yeşil Actions bekleniyor |
-| K1-B | PR AÇIK / ÖLÇÜM TAMAM | ChatGPT genişletmesi; PR #36; 20 URL / 8 ÇALIŞIYOR / 12 ENGELLİ / 0 ÖLÜ; Actions #45405558813; gerçek ilan okuyucusu kanıtı değil |
-| H1 | PR AÇIK, ÖLÇÜM BEKLİYOR | PR #35; kaynak listesi 8 ÇALIŞIYOR URL ile güncellendi; 3 sayfada tarihli duyuru sinyali; gerçek ilan / `publishedAt` / reader denetimi bekliyor |
-| K1-C | BEKLİYOR | ChatGPT; yalnız K1-B'de ölçülmüş ve içerik/robots uygunluğu ayrıca doğrulanmış kaynaklarla aday listesi |
-| C1-1 | YAPILMADI | Cline; jarvis-cloud PR #5, `npm run test:c1` + yeşil CI |
-| C1-2 | YAPILMADI | Cline; canlı rapor, kamu ayrı, 10 kaynak/100 ilan veya gerçek RED sayısı |
-| K1-M | YAPILMADI | Cline; temiz cherry-pick PR main'e, CI yeşil |
-
-### K1-B genişletilmiş erişim ölçümü — 24.11.2026
-
-- PR: [#36 K1-B genişletilmiş ölçüm](https://github.com/aries919-bot/Jarvis/pull/36), `is/K1-B-wide` → `durum`, AÇIK; yalnız ölçüm aracı/manifest/test/workflow değişti.
-- Actions: [run #45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813), job `measure` SUCCESS; özel testler **9/9** geçti; [JSON artefakt #14926070923](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813/artifacts/14926070923).
-- Çalıştırılan kapsam: H1'deki 18 benzersiz aday URL/alt sayfa + `https://ilan.gov.tr/` + `https://www.resmigazete.gov.tr/` = **20 benzersiz URL**. Satırlar yeniden sayıldı: 20.
-- Sonuç: **8 ÇALIŞIYOR / 12 ENGELLİ / 0 ÖLÜ**. 3 sayfada yakın duyuru bağlamında tarih sinyali (e-Şube, YHGM, BOTAŞ); bu `publishedAt` veya iş ilanı sayısı değildir.
-- User-Agent `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)`; TLS doğrulaması açık; önce robots; belirsiz/yasak kaynaklara sayfa isteği yok; login/CAPTCHA/form yok.
-- H1 [docs/HABER_SEMA.md](../docs/HABER_SEMA.md) aktif kaynak listesi yalnız 8 ÇALIŞIYOR URL ile güncellendi. Girişli Kariyer Kapısı/e-Devlet adresleri yalnız Custom Tabs yönlendirmesi. H1 PR #35 AÇIK, ölçüm/onay bekliyor; KABUL edilmedi.
-- C1 kamu sayımı değişmedi: K1-E1 **1 kamu kaynak / 43 doğrulanmış ilan**; 10 kaynak / 100 doğrulanmış ilan hedefi henüz sağlanmadı.
-- PR #32/#34 API durumları son kontrolde `open`; `testler.yml` cline/K1'de görünmüyor. Bu nedenle #33 tabanı `cline/K1` yapılmadı; merge kanıtı repo üzerinde görünür hale gelince değiştirilecek.
+| K1-E1 | KABUL | ChatGPT hakem kararı; Actions #45388925995 SUCCESS, 3 sayfa/43 benzersiz ilan/8 kurum; Cem 3 ilanı e-Şube'de elle doğruladı. 1 kamu kaynağı/43 ilan; 10/100 eşiği henüz sağlanmadı. |
+| K1-F | İPTAL | v3 ile iptal; yerine K1-F2 geldi. |
+| K1-F2 | PR AÇIK — TEST BEKLİYOR | PR #33: [K1-F2](https://github.com/aries919-bot/Jarvis/pull/33), `is/K1-F2` → `cline/K1`. Diff tam iki dosyanın silinmesi; Actions sonucu yok, 46 testin yeşil olduğu kanıtlanmadı. |
+| H1 | YAPILMADI | `docs/HABER_SEMA.md`; H1 şeması ve kategori başına resmî duyuru adayları. |
+| K1-B | YAPILMADI | Yalnız ölçülen ilan.gov.tr ve Resmî Gazete yoklama workflow'u; TLS doğrulaması açık, robots kuralları zorunlu. |
+| K1-C | YAPILMADI | Ölçülen adreslerle `KARIYER_KAYNAK_DENETIMI.md` ve `career/adaylar.txt`; en az bir kamu kaynağı ÇALIŞIYOR. |
+| H2 | YAPILMADI | Ölçülen duyuru sayfalarından H1 şemasına uygun JSON okuyucu. |
+| C1-1 | YAPILMADI | jarvis-cloud PR #5 düzeltmesi; kimlik doğrulamalı GET /kariyer-feed, kalıcı firstSeenAt, kaynak bazlı son iyi veri, kamu JSON'u ve hata testleri. |
+| C1-2 | YAPILMADI | Canlı kaynak/ilan sayımı, kamu ayrı; eşik sağlanmıyorsa RED ve gerçek sayı. |
+| K1-M | YAPILMADI | Gerekli workflow/betiklerin temiz PR ile main'e taşınması; film commitleri hariç, cron yalnız main'de. |
+| U1 | YAPILMADI | Uygulama entegrasyonu; arama motoru kazıması kapalı, H1 Haber kartları ve Custom Tabs. Telefon doğrulaması Cem'de. |
 
 ### K1-E1 doğrulama kaydı — 24.11.2026
-- Commit: [efd1aaea](https://github.com/aries919-bot/Jarvis/commit/efd1aaea25f4e7554241c68b88c7ffe72a121d99); workflow: [kamu-ilan-cek #45388925995](https://github.com/aries919-bot/Jarvis/actions/runs/45388925995) — push, completed / success; tüm 7 ana adım SUCCESS.
-- JSON `durum` dalında tekrar okundu: [career/esube_kamu_ilanlari.json](../career/esube_kamu_ilanlari.json), 3 sayfa, 43 satır, 43 benzersiz ilan, 0 tekrar, 8 kurum. İlk 3 örnek ilan no: 00009905681, 00009905684, 00009905686; JSON'da MSB ve son başvuru 27.11.2026.
-- Kaynak sayımı: 1 kamu kaynağı / 43 ilan. 10 kaynak / 100 ilan toplam eşiği henüz sağlanmadı.
-- Cem'in 24.11.2026 tarihli telefon doğrulaması: e-Şube > Açık İş İlanları > Kamu, giriş gerektirmeden; 00009905681 Muğla Merkez / 6 pozisyon / MSB Personel GM / 27.11.2026; 00009905686 İzmir Merkez / 10 pozisyon / aynı kurum / 27.11.2026; 00009905689 İstanbul Merkez / 24 pozisyon / aynı kurum / 27.11.2026. Sayfa altı `3 / 3, Toplam Kayıt: 43`; JSON 43 ile eşleşiyor. Kullanıcı teyidine göre 8 kurumla uyumlu. Satırlarda yayın tarihi yok; `publishedAt=null` doğru.
-- Ek sınır testi örneği: 00009908955, Karayolları 9. Bölge / Diyarbakır / son başvuru 24.11.2026 / “8 Saat Kaldı”. 24.11 sonrası güncel listeden çıkarılıp geçmişe taşınmalı; bu otomatik tarih filtresinin ayrıca test edilmesi gerekir.
-- K1-E1 kabulü: CI + JSON bağımsız sayımı + Cem'in üç ilanı kaynakta elle doğrulaması sağlandı. Kabul, 10 kaynak/100 ilan toplam hedefinin sağlandığı anlamına gelmez; mevcut ölçüm 1 kamu kaynağı / 43 ilan.
+- Commit: [efd1aaea](https://github.com/aries919-bot/Jarvis/commit/efd1aaea25f4e7554241c68b88c7ffe72a121d99); workflow: [kamu-ilan-cek #45388925995](https://github.com/aries919-bot/Jarvis/actions/runs/45388925995) — push, completed/success; tüm 7 ana adım SUCCESS.
+- JSON `durum` dalında tekrar okundu: [career/esube_kamu_ilanlari.json](../career/esube_kamu_ilanlari.json), 3 sayfa, 43 satır, 43 benzersiz ilan, 0 tekrar, 8 kurum.
+- Cem'in telefon doğrulaması: 00009905681 Muğla Merkez / 6 pozisyon; 00009905686 İzmir Merkez / 10 pozisyon; 00009905689 İstanbul Merkez / 24 pozisyon. Üçü de MSB Personel GM ve son başvuru 27.11.2026. Sayfa altı “3 / 3, Toplam Kayıt: 43”.
+- Satırlarda yayın tarihi yok; `publishedAt=null`. e-Şube satır tarihi son başvurudur.
+- Kaynak sayımı: 1 kamu kaynağı / 43 ilan. 10 kaynak / 100 ilan eşiği sağlanmadı; bu yüzden yalnız K1-E1 veri hattı KABUL, bütün C1 hedefi değil.
+- Tarih sınırı örneği: 00009908955, Karayolları 9. Bölge / Diyarbakır / son başvuru 24.11.2026. 24.11 sonrasında güncel listeden çıkarılmalıdır.
 
-### K1-F görev kaydı — 24.11.2026
-- K1-E1 kullanıcı tarafından kaynakta elle doğrulandı ve KABUL edildi. Sıradaki iş K1-F olarak DEVAM'a alındı.
-- Görev dosyası: [gorevler/K1-F.md](../gorevler/K1-F.md). Yalnız `scripts/render_probe.py` ve `.github/workflows/iskur-render.yml` içindeki Chrome/tarayıcı taklidi User-Agent açık kimlikli `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)` ile değiştirilecek; başka değişiklik yok.
-- Cline'a verilecek tek satır: `git fetch origin durum; git show origin/durum:gorevler/K1-F.md oku, görevi aynen uygula, o dosyayı commit etme.`
+### K1-F2 denetimi — 24.11.2026
+- `cline/K1` tabanından `is/K1-F2` dalı açıldı.
+- Yalnız `.github/workflows/iskur-render.yml` ve `scripts/render_probe.py` silindi. Compare çıktısı: 2 dosya removed, 0 ekleme; toplam 606 satır silindi.
+- PR #33 açık. Actions commit-run listesi boş ve birleşik commit durumları boş; 46 test yeşil kanıtı henüz yok. Yerel `git clone` denemesi DNS çözümlemesinde başarısız oldu. Test kanıtı gelene kadar K1-F2 tamamlanmış sayılmaz.
 
-## Cline'a ayrılmış net işler
-**K1 — ilk iş / sahip: cline**
-- Dosyalar: `.github/workflows/career-source-audit.yml`, `career/sources.json`, `docs/KARIYER_KAYNAK_DENETIMI.md`, `scripts/career_source_audit.py`, `scripts/test_career_source_audit.py`.
-- Kaynak başına erişim/giriş/CAPTCHA, çekim zamanı, ilan sayısı ve hatayı ölç; yalnız açık ve girişsiz sayfaları otomasyon adayı yap.
-- Bitiş: her kaynak gerçek sayfa denetimi; PR başına en az 3 ilan örneği veya yokluk nedeni; test sonucu; `cline/K1` PR ve yeşil CI.
+### C1-1 başlangıç denetimi — 24.11.2026
+- jarvis-cloud PR #5 RED: 15 adayın tamamı özel sektör Lever/Ashby; kamu kaynağı yok; CI #45382024807 başarısız.
+- Statik QA: GET `/kariyer-feed` yok; `firstSeenAt` kalıcı değil; kısmi kaynak hatasında son iyi veri ezilebilir; Worker zamanlanmış işte ağır toplama yapıyor. Ağır toplama Actions'a taşınmalı.
+- Test açığı: 403 ve timeout senaryoları eksik; canlı gerçek ilan kanıtı yok. 15 kayıt sentetik fixture'dır.
+- Başlangıç kaynak ölçümü: Kariyer Kapısı `/isealim` JS kabuğu; e-Şube arama formu statik GET'te ilan döndürmüyor; ilan.gov.tr önceki ölçümde 502 verdi; ÇSGB örneği 11.10.2026'da sona ermişti. Bu bulgular 10 kaynak/100 ilan sayımına eklenmez.
 
-**C1 — sahip: chatgpt / DEVAM**
-- C1 özel kabul/kanıt/kamu/firstSeenAt/kaynak-bazlı stale ve Cline bekleme kuralları: [NOT_C1.md](NOT_C1.md). Worker PR #5 ayrıntıları aşağıdadır.
-- 15 aday (9 Lever, 6 Ashby); canlı çalışan kaynak ve ilan sayısı kanıtlanmadı. Testlerdeki 15 kayıt sentetik fixture'dır.
-- 24.11 bağımsız PR #5 statik QA: GET `/kariyer-feed` rotası yok; `getCareerFeed` kullanılmıyor; `firstSeenAt` yok. Son iyi veri yalnız 0 başarılı kaynakta korunuyor; 1–9 kaynak veya 100 altı ilanla ezilebilir.
-- Mimari ihlal: Worker `scheduled` içinde `runCareerFeed` çağırıp kaynak/robots/pagination topluyor; ağır toplama Actions'a taşınmalı, Worker yalnız JSON sunmalı.
-- Test açığı: 403 ve timeout senaryosu yok; 503/boş/bozuk/robots ve sentetik ilan fixture'ları var. Gerçek ilan kanıtı yok.
-- CI run #45382024807 failure; tek job `syntax-and-unit` failure, adımlar/loglar dönmedi. [CI #45382024807](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45382024807). Yeşil CI, canlı kaynak sayımı ve 10/100 eşiği kanıtlanmadı.
-- Kaynak adayı ölçümü: Kariyer Kapısı `/isealim` HTML'de filtre başlıkları var ama ilan satırları yok (JS içerik yükleme adayı; reader başarısı sayılmaz); e-Şube formu açılıyor ama statik sayfada sonuç ilanları yok (POST arama sonucu bekleniyor); ilan.gov.tr web erişimi 502 verdi (TLS doğrulaması kapatılmayacak); ÇSGB BTGM sayfasında 04.10.2026 tarihli gerçek 5 kişilik ilan doğrulandı fakat başvuru 11.10.2026'da bitti, güncel ilan değil. Bu adaylar C1'in 10 kaynak/100 ilan sayımına eklenmedi.
-
-**E1-Veri — sahip: cline**
-- Dosyalar: `market/sources.json`, `worker/src/market-data.ts`, `.github/workflows/market-data.yml`, `worker/test/market-data.test.ts`.
-- Ücretsiz altın/BIST/kur kaynaklarını erişim, lisans ve zaman damgasıyla ölç; zaman damgalı JSON, yedek kaynak ve eski veri uyarısı üret. Anahtarları koda koyma.
-- Bitiş: kaynak başına son güncelleme/yaş/hata; bozuk/eksik/eskimiş veri ve timeout testleri; `cline/E1` PR ve yeşil CI.
-
-## Cline PR hakem akışı
-- Cline yalnız `DEVAM: <iş-id>` ile başlar, `cline/<iş-id>` dalında PR açar.
-- PR açıklamasında değişiklik, test, gerçek test sonucu ve telefon denemeleri olmalı; eksikse onay/merge yok.
-- ChatGPT PR'ı sıfırdan inceler; kaynak/sayı iddialarını tekrar ölçer. Cem'in onayladığı yeni düzende merge yetkisi ChatGPT'dedir: yalnız hedefi `cline/K1` olan PR, testler yeşil ve Cloudflare hakem yorumu ilk satırda `ONAY` ise birleştirilir. `main`e asla dokunulmaz; cron değişikliği ayrıca Cem'e sorulur.
-- `sahip: cline` işlerinin kaynak koduna ve dallarına ChatGPT müdahale etmez.
+## PR hakem ve birleştirme akışı (v3)
+- Her iş kendi dalında geliştirilir ve doğru tabana PR açılır; `main`'e doğrudan yazılmaz.
+- ChatGPT PR'ı sıfırdan şüpheci inceler; diff dosya sayısını yeniden sayar, komut/test çıktısı ve Actions bağlantısını doğrular.
+- CI/test kanıtı yoksa iş tamamlandı/KABUL sayılmaz. Kaynak ve ilan sayıları bağımsız yeniden sayılır.
+- PR birleştirilmeden önce Cem'in açık “birleştir” onayı beklenir. Cline görev sahibi değildir ve kullanılmaz.
 
 ## Son 10 kayıt
 1. K1 legacy PR #24 20 kaynak envanteri; güncel Cline K1 denetimi bekleniyor.
@@ -133,19 +110,14 @@
 8. Sahiplik güncellemesi: K1 ve E1-Veri Cline; C1 ChatGPT (jarvis-cloud PR #5); diğer uygulama işleri ChatGPT.
 9. C2 #22 kategoriler ve Haber/Süreç/Program ayrımı; APK + API29/33/34/35 Full QA SUCCESS.
 10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
-**SONRAKİ ADIM:** PR #34'ün merge durumu ve `.github/workflows/testler.yml` dosyasının `cline/K1` tabanında görünmesi doğrulandıktan sonra PR #33 tabanını `cline/K1` yap ve yeni yeşil CI'ı kontrol et. H1 #35 açık kalır; K1-C/H2 ancak onay ve gerçek içerik/ilan denetimi için ayrı görevle ilerler. C1 genel 10 kaynak / 100 doğrulanmış ilan eşiği sağlanmadan Android entegrasyonuna geçme.
+**SONRAKİ ADIM:** C1 PR #5'te kimlik doğrulamalı GET /kariyer-feed rotası, kalıcı firstSeenAt ve eşik altı koşulda son iyi feed korumasını tamamla; sonra CI'ı yeşil çalıştırıp gerçek canlı kaynak başına sayıları ve JSON'da 10 kaynak/100 ilanı doğrula. Android entegrasyonuna geçme.
 
 11. 24.11 C1 bağımsız QA: PR #5'te GET feed rotası/firstSeenAt yok; kısmi feed son iyiyi ezebilir; Worker ağır toplama yapıyor. #45382024807 failure (step/log yok). Kariyer Kapısı JS kabuğu, e-Şube formu, ilan.gov.tr 502; ÇSGB örneği süresi geçmiş. Cline K1 dalı mevcut; işine dokunulmadı.
 
-## 24.11.2026 — Hakem ve merge politikası
 
-- PR #34 hedefi **cline/K1**, dalı `is/K1-test-workflow`; PR açık, merge edilmedi. Son head `ae2303f4b85c056d8ea27cfebe1422ed28a0cd1b`. Dört dosya: `.github/workflows/testler.yml`, `.github/workflows/hakem.yml`, `scripts/hakem_gate.py`, `scripts/test_hakem_gate.py`.
-- [Actions #45410380341](https://github.com/aries919-bot/Jarvis/actions/runs/45410380341) Python test job SUCCESS; [Actions #45410380308](https://github.com/aries919-bot/Jarvis/actions/runs/45410380308) hakem workflow'unda test job SUCCESS, **53/53 test geçti, 0 hata**. Hakem job'u compile aşamasını geçti ancak Cloudflare Secrets eksikliği nedeniyle fail-closed RED; AI çağrısı yapılamadı.
-- Hakem: diff 60 KB sınırı; deterministik kontroller TLS doğrulaması kapatma, robots atlama, token/özel anahtar/kimlik verisi, tarayıcı UA taklidi, `collectedAt/firstSeenAt → publishedAt` ataması ve main push. Ardından Cloudflare Workers AI REST API. Diff/test özeti güvenilmeyen veri; prompt injection talimatı sayılmaz. İlk satır yalnız Cloudflare cevabından ONAY olabilir.
-- Güvenlik: PR testleri secretsiz ayrı job'da; PR hakem işi hedef dalın güvenilir commit'inden kod çalıştırır. Bootstrap PR #34 için hakem kodu sabit commit'e pinlendi. Secret değerleri loglanmaz.
-- `CF_ACCOUNT_ID` ve `CF_API_TOKEN` GitHub Secrets henüz yok; son hakem yorumu RED. PR #34'te ONAY veya APPROVE review yok. Merge edilmedi.
-- PR #32 gerçek hedefi `durum`, head `is/not-c1-v3`; açık, merge edilmedi. Politika yalnız `cline/K1` hedefli PR'ların merge edilmesine izin verir; #32'nin hedefi değiştirilmedi.
-- PR #33 hedefi `is/K1-test-workflow`; `testler.yml` `cline/K1` içinde yok. #34 merge edilmediği için #33 hedefi değiştirilmedi.
-- `main` dalına hiçbir işlem yapılmadı. [PR #34](https://github.com/aries919-bot/Jarvis/pull/34) · [PR #32](https://github.com/aries919-bot/Jarvis/pull/32) · [PR #33](https://github.com/aries919-bot/Jarvis/pull/33).
-
-**SONRAKİ ADIM:** Cem GitHub Secrets'a `CF_ACCOUNT_ID` ve `CF_API_TOKEN` ekler; değerler paylaşılmaz. Sonra #34 hakem koşusu ONAY + testler yeşil olursa ChatGPT #34'ü `cline/K1`'e merge eder. Ardından #32 tabanı ve #33 için `testler.yml` görünürlüğü tekrar GitHub'dan doğrulanır.
+### K1-B düzeltme notu — 24.11.2026
+- Kamu gerçek ilan kaynağı: **1 (e-Şube) / 43 doğrulanmış ilan**. 10 kaynak / 100 ilan eşiği sağlanmadı.
+- BOTAŞ'ın 2025 personel alımına ilişkin sonuç duyurusu yeni ilan değil; kart etiketi **Süresi geçti**.
+- Sağlık Bakanlığı YHGM 2.764 sürekli işçi kura/sonuç duyurusu yeni ilan değil; kategori **Haber / Kura**.
+- TLS ölçümündeki beş adresin tümünde doğrulama kodu CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; sertifika süresi doldu sonucu yok. Hata zincir/CA doğrulama hatası olarak işaretlendi.
+- Resmî Gazete iki timeout adresi bir kez daha denendi ve yine timeout oldu. TPAO PDF robots izni belirsiz olduğu için yeniden istek yapılmadı.
