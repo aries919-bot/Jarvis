@@ -276,3 +276,13 @@
 - Kaynaklar: özel sektör 9 ölçülen panoda aday toplam 112; 112'sinde kapanış tarihi yok, doğrulanmış güncel ilan sayılmaz. Altı robots-401 Ashby stale, sıfır kabul edilmedi. Kamu ayrı: e-Şube 1 kaynak /43 benzersiz satır; snapshot `2026-11-24T11:57:55Z`, canlı HTTP yenilemesi değil. Kamu şartı sıfır değil; 10 kaynak/100 doğrulanmış ilan eşiği hâlâ RED.
 - PR #41 için bu HEAD'de PR-triggered Actions run listesi boş döndü; `durum` tabanında docs workflow tetiklendiğine dair CI kanıtı yok. Bu nedenle #41 açık ve birleştirilmemiş; CI/mergeable yeşil varsayılmıyor.
 - Sonuç: üç yetki (dal+dosya yazma, PR açma, Actions okuma) API çıktılarıyla ayrı ayrı başarılı. #33 merge/accept yok; K1-F2 engeli çözülmeden H1 PR #35'e ilerleme yok.
+
+
+### K1-F2 tekrar deneme — 24.11.2026 20:16 UTC
+- Cem'in GitHub Secrets ekranından CF_ACCOUNT_ID ve CF_API_TOKEN adlarını gördüğünü bildirmesinden sonra PR #33'te yalnız başarısız iş yeniden çalıştırıldı. GitHub API: rerun_failed_workflow_run_jobs(run_id=45413014756) → success=true.
+- Yeniden deneme run #45413014756, attempt 2. Job listesi: tests SUCCESS, hakem FAILURE. Test logu önceki başarılı job'dan korundu: Ran 53 tests in 0.093s, OK (53/53).
+- Yeni Hakem job 138746764701 FAILURE; log ortamında CF_ACCOUNT_ID: *** ve CF_API_TOKEN: *** görünür. Secret değerleri okunmadı ve geçerlilikleri Cloudflare API çağrısıyla sınanmadı; eski taban hakemi deterministik kontrolde RED verip AI çağrısına ulaşmıyor.
+- PR #33 güncel diff yeniden sayımı: 2 dosya, 0 ekleme, 606 silme; yalnız .github/workflows/iskur-render.yml ve scripts/render_probe.py. Silinen diff satırlarında eski Mozilla/5.0 Chrome/... UA geçiyor; yeni eklenen UA satırı yok. Son yorum: RED — Tarayıcı taklidi User-Agent. Yanlış pozitifin kök nedeni taban cline/K1 hakeminin tüm diff'i taraması.
+- Hakem düzeltmesi PR #39 kod incelemesinden KABUL aldı; Actions #45477635801 ve #45477635690 SUCCESS; iki test job'ında Ran 66 tests, OK (66/66). #39 bootstrap PR'ında eski Hakem otomatik kontrolü SKIPPED; manuel inceleme şartını açıklayan Step Summary SUCCESS. #39 henüz birleştirilmedi.
+- Karar: #33 RED; merge yok. #39 için Cem'in açık “birleştir” onayı olmadan taban cline/K1 güncellenemez. #39 birleşip #33 yeni taban hakemiyle yeniden test edilmeden H1'e geçilmez.
+- Secret süresi Cem'in beyanına göre yaklaşık 24.12.2026; kesin expiry alanı bu incelemede doğrulanmadı. Değerler asla rapora yazılmaz.
