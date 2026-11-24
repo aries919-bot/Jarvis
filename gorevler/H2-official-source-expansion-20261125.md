@@ -29,3 +29,27 @@ Yeni ölçülmüş aday kurumlar:
 - ÇOMÜ: https://ilan.comu.edu.tr/
 - Zafer: https://www.zafer.gov.tr/duyurular/227
 - Bilecik: https://www.bilecik.edu.tr/personel/Icerik/19-11-2026-tarihli-ve-33435-sayili-resmi-gazete-de-yayimlanan-ogretim-uyesi-disindaki-ogretim-elemani-lani
+
+## Canlı ölçüm — 25.11.2026
+
+- H2 push koşusu: https://github.com/aries919-bot/Jarvis/actions/runs/45512710235 — SUCCESS; artifact `h2-official-feeds-71`, 10 JSON dosyası.
+- H2 parser + last-good test paketi: 45/45 PASS. PR genel script testi: https://github.com/aries919-bot/Jarvis/actions/runs/45512723185 — `Ran 146 tests`, `OK`. PR Hakem otomatik job: https://github.com/aries919-bot/Jarvis/actions/runs/45512722835 — ONAY; bu sonuç insan/harici incelemesi değildir.
+- `collectedAt`: `2026-11-24T23:46:14Z`.
+
+| Kaynak | Kaynak durumu | Duyuru kaydı | Açık doğrulanmış |
+|---|---|---:|---:|
+| Anadolu Üniversitesi | fresh | 1 | 1 |
+| Adli Tıp Kurumu | fresh | 1 | 0 — başvuru 30.11.2026 09:00'da açılır |
+| Düzce Üniversitesi | fresh | 1 | 1 |
+| Tarsus Üniversitesi | fresh | 1 | 1 |
+| Marmara Üniversitesi | fresh | 1 | 1 |
+| Zafer Kalkınma Ajansı | fresh | 1 | 1 |
+| YHGM | fresh | 1 kura/sonuç | 0 — deadline 13.10.2025 geçmiş |
+| BOTAŞ | stale | 0 | 0 — iki timeout denemesi |
+| ÇOMÜ | stale | 0 | 0 — robots HTTP 200 fakat içerik güvenli çözümlenemedi; hedef istenmedi |
+| Bilecik Şeyh Edebali Üniversitesi | stale | 0 | 0 — Resmî Gazete robots isteği timeout; hedef PDF istenmedi |
+
+- Yeniden sayım: 10 kaynak tanımı; 7 fresh; 3 stale; 5 açık doğrulanmış duyuru; 1 başvuru başlangıcını bekleyen; 1 süresi geçmiş kura/sonuç.
+- H2 JSON'u C1 Worker'a entegre değildir. C1 kamu sayımıyla birleştirilip eşik geçti diye sunulamaz.
+- K1-B erişim ölçümü: https://github.com/aries919-bot/Jarvis/actions/runs/45512722928 — SUCCESS; 28 uç noktanın 12'si ÇALIŞIYOR, 16'sı ENGELLİ. e-Şube robots ALLOW + HTTP 200; bu yalnız erişim ölçümüdür, ilan satırı sayısının yerine geçmez.
+- PR #57 açık/taslak; bağımsız insan/harici review kaydı yok; birleştirilmedi.
