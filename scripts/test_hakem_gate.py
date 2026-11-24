@@ -49,7 +49,7 @@ class HakemGateTests(unittest.TestCase):
             "--- a/example.py\n"
             "+++ b/example.py\n"
             "@@ -0,0 +1 @@\n"
-            "+Mozilla" + "/5.0 Chrome/120.0\n"
+            "+Mozilla" + "/5.0 Chrome" + "/120.0\n"
         )
         findings = deterministic_findings(patch, "cline/K1")
         self.assertTrue(any("Tarayıcı" in item for item in findings))
