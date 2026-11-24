@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Retry after source-level test expectation fixes; checkout tracks the latest C1 branch.
+# Latest rerun includes the bounded Wrangler shutdown and full-description deadline regression coverage.
 
 on:
   push:
