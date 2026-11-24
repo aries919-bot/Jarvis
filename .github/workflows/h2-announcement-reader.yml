@@ -7,14 +7,20 @@ on:
       - cline/K1
     paths:
       - 'career/h2_sources.json'
+      - 'career/h2_last_good_seed.json'
       - 'scripts/h2_announcement_reader.py'
       - 'scripts/test_h2_announcement_reader.py'
+      - 'scripts/h2_last_good_seed.py'
+      - 'scripts/test_h2_last_good_seed.py'
       - '.github/workflows/h2-announcement-reader.yml'
   pull_request:
     paths:
       - 'career/h2_sources.json'
+      - 'career/h2_last_good_seed.json'
       - 'scripts/h2_announcement_reader.py'
       - 'scripts/test_h2_announcement_reader.py'
+      - 'scripts/h2_last_good_seed.py'
+      - 'scripts/test_h2_last_good_seed.py'
       - '.github/workflows/h2-announcement-reader.yml'
   workflow_dispatch:
   # Runs every six hours after this workflow reaches the repository default branch.
@@ -53,8 +59,8 @@ jobs:
       - name: Seed verified last-good feeds and merge original first-seen timestamps
         if: github.event_name != 'pull_request'
         run: |
-          python scripts/h2_last_good_seed.py \\
-            --seed career/h2_last_good_seed.json \\
+          python scripts/h2_last_good_seed.py \
+            --seed career/h2_last_good_seed.json \
             --previous-dir reports/h2-last-good
 
       - name: Read measured official announcements
