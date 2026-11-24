@@ -65,9 +65,10 @@
 |---|---|---|
 | K1-E1 | KABUL | ChatGPT hakem kararı; Actions #45388925995 SUCCESS, 3 sayfa/43 benzersiz ilan/8 kurum; Cem 3 ilanı e-Şube'de elle doğruladı. 1 kamu kaynağı/43 ilan; 10/100 eşiği henüz sağlanmadı. |
 | K1-F | İPTAL | v3 ile iptal; yerine K1-F2 geldi. |
-| K1-F2 | PR AÇIK — TEST BEKLİYOR | PR #33: [K1-F2](https://github.com/aries919-bot/Jarvis/pull/33), `is/K1-F2` → `cline/K1`. Diff tam iki dosyanın silinmesi; Actions sonucu yok, 46 testin yeşil olduğu kanıtlanmadı. |
-| H1 | YAPILMADI | `docs/HABER_SEMA.md`; H1 şeması ve kategori başına resmî duyuru adayları. |
-| K1-B | YAPILMADI | Yalnız ölçülen ilan.gov.tr ve Resmî Gazete yoklama workflow'u; TLS doğrulaması açık, robots kuralları zorunlu. |
+| K1-F2 | PR AÇIK — HAKEM ENGELİ | PR #33: [K1-F2](https://github.com/aries919-bot/Jarvis/pull/33), `is/K1-F2` → `cline/K1`; diff yalnız 2 silme dosyası. Actions [#45413014752](https://github.com/aries919-bot/Jarvis/actions/runs/45413014752) testleri 53/53 SUCCESS; [#45413014756](https://github.com/aries919-bot/Jarvis/actions/runs/45413014756) Hakem RED: silinen `scripts/render_probe.py` satırındaki tarayıcı UA kalıbı tarandı. Ayrı düzeltme PR #37 Claude onayı bekliyor; #33 birleştirilmedi. |
+| HAKEM-DIFF | PR AÇIK — CLAUDE ONAYI BEKLENİYOR | [PR #37](https://github.com/aries919-bot/Jarvis/pull/37), fix/hakem-diff-lines → cline/K1; yalnız scripts/hakem_gate.py + scripts/test_hakem_gate.py. Güncel test [#45415984321](https://github.com/aries919-bot/Jarvis/actions/runs/45415984321) 55/55 SUCCESS; [Hakem #45415984470](https://github.com/aries919-bot/Jarvis/actions/runs/45415984470) Cloudflare Secrets eksikliğiyle RED. Merge yok; Claude incelemesi bekleniyor. |
+| H1 | PR AÇIK — ADAYLAR EKLENDİ | [PR #35](https://github.com/aries919-bot/Jarvis/pull/35), `is/H1` → `durum`; HABER_SEMA.md'de 6 kategori x 3 = 18 resmî aday kaydı var. K1-B ölçümüne göre yalnız 8 adres erişilebilir; kalan adaylar ölçüm/robots/TLS bekler. H1 henüz kabul değil. |
+| K1-B | ÖLÇÜM VAR — PR AÇIK / KISMİ RED | [PR #36](https://github.com/aries919-bot/Jarvis/pull/36); [Actions #45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813), 20/20 URL: 8 ÇALIŞIYOR, 12 ENGELLİ, 0 ÖLÜ. Gerçek kamu ilan kaynağı 1 (e-Şube)/43 doğrulanmış ilan. TLS: 5 URL issuer doğrulama hatası. Resmî Gazete timeout adresleri tekrarlı Actions çağrılarında 3 kez istendi; tek retry sınırı aşıldı, daha fazla istek yok. |
 | K1-C | YAPILMADI | Ölçülen adreslerle `KARIYER_KAYNAK_DENETIMI.md` ve `career/adaylar.txt`; en az bir kamu kaynağı ÇALIŞIYOR. |
 | H2 | YAPILMADI | Ölçülen duyuru sayfalarından H1 şemasına uygun JSON okuyucu. |
 | C1-1 | YAPILMADI | jarvis-cloud PR #5 düzeltmesi; kimlik doğrulamalı GET /kariyer-feed, kalıcı firstSeenAt, kaynak bazlı son iyi veri, kamu JSON'u ve hata testleri. |
@@ -116,8 +117,11 @@
 
 
 ### K1-B düzeltme notu — 24.11.2026
+
 - Kamu gerçek ilan kaynağı: **1 (e-Şube) / 43 doğrulanmış ilan**. 10 kaynak / 100 ilan eşiği sağlanmadı.
 - BOTAŞ'ın 2025 personel alımına ilişkin sonuç duyurusu yeni ilan değil; kart etiketi **Süresi geçti**.
 - Sağlık Bakanlığı YHGM 2.764 sürekli işçi kura/sonuç duyurusu yeni ilan değil; kategori **Haber / Kura**.
-- TLS ölçümündeki beş adresin tümünde doğrulama kodu CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; sertifika süresi doldu sonucu yok. Hata zincir/CA doğrulama hatası olarak işaretlendi.
-- Resmî Gazete iki timeout adresi bir kez daha denendi ve yine timeout oldu. TPAO PDF robots izni belirsiz olduğu için yeniden istek yapılmadı.
+- TLS hatalı 5 URL: https://www.ilan.gov.tr/ ; https://www.tuseb.gov.tr/public/tr/duyurular ; https://www.tuseb.gov.tr/kurumsal/insan-kaynaklari ; https://www.ptt.gov.tr/duyurular ; https://ilan.gov.tr/ . Beşinde aynı hata: CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate. Issuer zinciri/runner CA doğrulaması tamamlanamadı; expired hatası yok. Sunucu ara sertifikası ile runner CA deposu farkı bu logdan ayrıştırılamadı. SSL doğrulaması kapatılmadı.
+- Timeout adresleri: Resmî Gazete /ilanlar ve / kök sayfası. [#45405355596](https://github.com/aries919-bot/Jarvis/actions/runs/45405355596), [#45405516646](https://github.com/aries919-bot/Jarvis/actions/runs/45405516646), [#45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813) loglarında robots izinli + TIMEOUT olarak üç çağrı var; tek retry sınırı aşıldı. TPAO PDF robots BİLİNMİYOR kaldı; hedef PDF'ye erişilmedi. Artık yeni istek yapılmayacak.
+- #32 docs-only PR birleştirildi: commit 23d2a0877169c16e5bd2c99a1f2076cc5f36bd6d; iki doküman dosyası. PR eklemelerinde token/secret, CV-iletişim, TCKN ve KPSS/e-Devlet kimlik desen taraması: 5/5 NO MATCH.
+- İlk yetki testi: dal açma/dosya yazma EVET (PR #37 dalındaki iki dosya); PR açma EVET (#37); Actions okuma EVET (#45415984321 ve #45415984470). docs/NOT_C1.md v3 FINAL içerik durum dalında doğrulandı. main'e yazılmadı.
