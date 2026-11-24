@@ -2,81 +2,81 @@
  "https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
   "basarili": 0,
-  "basarisiz": 1,
+  "basarisiz": 2,
   "yontem": null,
   "son_basarili": null,
   "ilan": 0,
   "neden": "hicbir yontem 3 gercek ilan bulamadi",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://www.iskur.gov.tr/duyurular": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
-  "basarili": 1,
+  "basarili": 2,
   "basarisiz": 0,
   "yontem": "sitemap",
-  "son_basarili": "2026-11-23T20:41:53+00:00",
+  "son_basarili": "2026-11-24T20:48:21+00:00",
   "ilan": 159,
   "neden": "",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://www.resmigazete.gov.tr/": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
   "basarili": 0,
-  "basarisiz": 1,
+  "basarisiz": 2,
   "yontem": null,
   "son_basarili": null,
   "ilan": 0,
   "neden": "hicbir yontem 3 gercek ilan bulamadi",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://www.csb.gov.tr/duyurular": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
   "basarili": 0,
-  "basarisiz": 1,
+  "basarisiz": 2,
   "yontem": null,
   "son_basarili": null,
   "ilan": 0,
   "neden": "robots-belirsiz",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://www.osym.gov.tr/Duyurular": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
   "basarili": 0,
-  "basarisiz": 1,
+  "basarisiz": 2,
   "yontem": null,
   "son_basarili": null,
   "ilan": 0,
   "neden": "robots-belirsiz",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://euraxess.ec.europa.eu/jobs/search": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
-  "basarili": 1,
+  "basarili": 2,
   "basarisiz": 0,
   "yontem": "html",
-  "son_basarili": "2026-11-23T20:41:53+00:00",
-  "ilan": 7,
+  "son_basarili": "2026-11-24T20:48:21+00:00",
+  "ilan": 3,
   "neden": "",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://www.eures.europa.eu/find-a-job_en": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
   "basarili": 0,
-  "basarisiz": 1,
+  "basarisiz": 2,
   "yontem": null,
   "son_basarili": null,
   "ilan": 0,
   "neden": "robots-belirsiz",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  },
  "https://unjobs.org/": {
   "ilk_gorulme": "2026-11-23T20:41:53+00:00",
   "basarili": 0,
-  "basarisiz": 1,
+  "basarisiz": 2,
   "yontem": null,
   "son_basarili": null,
   "ilan": 0,
   "neden": "robots-engel",
-  "son_kontrol": "2026-11-23T20:41:53+00:00"
+  "son_kontrol": "2026-11-24T20:48:21+00:00"
  }
 }

@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-11-23T20:41:53+00:00",
+ "checked_at": "2026-11-24T20:48:21+00:00",
  "calisan": [
   {
    "url": "https://www.iskur.gov.tr/duyurular",
@@ -37,34 +37,26 @@
   {
    "url": "https://euraxess.ec.europa.eu/jobs/search",
    "yontem": "html",
-   "ilan": 7,
+   "ilan": 3,
    "ornekler": [
     {
-     "title": "University teacher in the functional position of Professor",
-     "url": "https://euraxess.ec.europa.eu/jobs/482356"
-    },
-    {
-     "title": "One (1) Laboratory Animal (mouse) Caretaker Position [Ref # ORZ-0950]",
-     "url": "https://euraxess.ec.europa.eu/jobs/482355"
-    },
-    {
      "title": "Call for a public offer for the recruitment of Researching staff linked to Universitat Politècnica de València (UPV)",
-     "url": "https://euraxess.ec.europa.eu/jobs/482353"
+     "url": "https://euraxess.ec.europa.eu/jobs/482591"
     },
     {
-     "title": "Call for a public offer for the recruitment of Researching staff linked to Universitat Politècnica de València (UPV)",
-     "url": "https://euraxess.ec.europa.eu/jobs/482349"
+     "title": "International competition for the recruitment of two positions of Assistant Professor (Professor Adjunto) in the field of field of Management Information Systems",
+     "url": "https://euraxess.ec.europa.eu/jobs/482588"
     },
     {
-     "title": "Call for a public offer for the recruitment of Researching staff linked to Universitat Politècnica de València (UPV)",
-     "url": "https://euraxess.ec.europa.eu/jobs/482348"
+     "title": "Search for Jobs",
+     "url": "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=offer_type%3Ajob_offer"
     }
    ],
    "denemeler": {
     "jsonld": 0,
     "rss": 0,
     "sitemap": 0,
-    "html": 7
+    "html": 3
    },
    "neden": ""
   }
