@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Latest rerun also excludes internships and training-camp programmes from vacancy counts.
+# Retry after correcting JS word-boundary and robots fixture escapes in the programme filter test.
 
 on:
   push:
