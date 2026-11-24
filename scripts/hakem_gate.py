@@ -128,12 +128,12 @@ def deterministic_only_fallback(account: str, cf_token: str) -> tuple[str, str] 
 
 def test_log_is_successful(test_log: str) -> bool:
     """Require a real non-empty unittest summary, OK marker, and successful CI job."""
-    summary = re.search(r"^Ran (\\d+) tests? in ", test_log, re.MULTILINE)
+    summary = re.search(r"^Ran (\d+) tests? in ", test_log, re.MULTILINE)
     if not summary or int(summary.group(1)) < 1:
         return False
     if not re.search(r"^OK$", test_log, re.MULTILINE):
         return False
-    if re.search(r"^(?:FAILED\\b|ERROR:)", test_log, re.MULTILINE):
+    if re.search(r"^(?:FAILED\b|ERROR:)", test_log, re.MULTILINE):
         return False
     return "Test job result: success" in test_log
 
