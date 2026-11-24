@@ -187,6 +187,70 @@
       "closeReason": "TIMEOUT: robots.txt erişimi zaman aşımına uğradı; robots izni UNKNOWN olduğundan hedef sayfa istenmedi; yeniden istek yapılmayacak.",
       "lastMeasurementRunId": 45425771149,
       "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "atk-duyuru-2026-2",
+      "category": "Kamu",
+      "name": "Adli Tıp Kurumu 2026-2 personel alım duyurusu",
+      "url": "https://atk.gov.tr/haber20.11.26.html",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "atk-ek1-2026-2",
+      "category": "Kamu",
+      "name": "Adli Tıp Kurumu 2026-2 pozisyon ve nitelik tablosu",
+      "url": "https://www.atk.gov.tr/Pdf/2026-2/ek-1.pdf",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "anadolu-sozlesmeli-2026",
+      "category": "Kamu",
+      "name": "Anadolu Üniversitesi sözleşmeli personel alım duyurusu",
+      "url": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "anadolu-sozlesmeli-pdf-2026",
+      "category": "Kamu",
+      "name": "Anadolu Üniversitesi 2026 sözleşmeli personel ilan PDF",
+      "url": "https://anadolu.edu.tr/uploads/anadolu/ckfinder/personel/files/S%C3%B6zle%C5%9Fmeli%20Personel%20Al%C4%B1m%20%C4%B0lan%C4%B1%20-%202026.pdf",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "turkak-guvenlik-2026",
+      "category": "Kamu",
+      "name": "TÜRKAK 3 koruma ve güvenlik görevlisi sınav duyurusu",
+      "url": "https://www.turkak.org.tr/basvuru-ilanlari/turk-akreditasyon-kurumu-sozlesmeli-koruma-ve-guvenlik-gorevlisi-giris-sinavi-duyurusu",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "duzce-ogretim-elemani-2026",
+      "category": "Kamu",
+      "name": "Düzce Üniversitesi 23.11.2026 öğretim elemanı ilan PDF",
+      "url": "https://cdn.duzce.edu.tr/File/GetFile/4455f177-5bf2-414d-a4c6-9de77131bf51",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "tarsus-ogretim-elemani-2026",
+      "category": "Kamu",
+      "name": "Tarsus Üniversitesi öğretim elemanı alım duyurusu",
+      "url": "https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "tarsus-ogretim-elemani-pdf-2026",
+      "category": "Kamu",
+      "name": "Tarsus Üniversitesi 23.11.2026 öğretim görevlisi ilan PDF",
+      "url": "https://personel.tarsus.edu.tr/Files/ckFiles/personel-tarsus-edu-tr/Resmi%20Gazete%20%C4%B0lan%2023.11.2026.pdf",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
     }
   ]
 }
