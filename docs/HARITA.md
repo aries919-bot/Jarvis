@@ -36,7 +36,7 @@
 | A1 İki ekran taslağı | ONAYLANDI | sahip: chatgpt; ana ekran + İş & Kariyer Cem tarafından onaylandı |
 | A2 Tüm uygulama tema sistemi | PR AÇIK | sahip: chatgpt; #25/#27/#28 CI yeşil; bağımsız inceleme ve telefon testi |
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt; #26 CI yeşil; canlı API, bağımsız inceleme ve telefon testi |
-| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM — TEST + LOCAL D1 PASS; KAYNAK/PROD EŞİĞİ RED | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak, HEAD `0ec0fdd`; 33 test PASS; canlı audit 112 private deadline-unknown + kamu 1/43; 6 Ashby robots HTTP 401 stale; local D1 8/8 PASS; production publish SKIPPED; 10/100 sağlanmadı. |
+| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM — 35/35 TEST + 10/10 LOCAL D1 PASS; EŞİK/HAKEM/PROD RED | sahip: chatgpt; jarvis-cloud PR #5 açık/taslak/main hedefli; HEAD `a454ba5f`; 13 dosya, +2.656/-6, 114.293 bayt (Hakem 60 KB sınırı aşıldı); QA #45491865535 SUCCESS; 90 private aday deadline-unknown; kamu 1 kaynak/42 açık; 7 kaynak stale/ölçülemedi; PUBLISH SKIPPED; 10/100 RED; production D1 kanıtı yok. |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt; #22 + #31; son HEAD `4ec0158`; CI #671/#116 sürüyor, gerçek telefon testi bekliyor |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29/#30 açık taslak; #30 APK #638 + Full QA #84 yeşil; gerçek cihaz ve bağımsız insan incelemesi bekliyor |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt; kişisel profil telefonda kalır |
