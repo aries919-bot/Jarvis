@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "userAgent": "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)",
+  "sources": [
+    {
+      "id": "yhgm-kura",
+      "reader": "yhgm",
+      "institution": "T.C. Sağlık Bakanlığı — Yönetim Hizmetleri Genel Müdürlüğü",
+      "category": "Kura",
+      "url": "https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html"
+    },
+    {
+      "id": "botas-duyurular",
+      "reader": "botas",
+      "institution": "Boru Hatları ile Petrol Taşıma A.Ş. (BOTAŞ)",
+      "category": "Kamu bağlı şirket",
+      "listingUrl": "https://www.botas.gov.tr/Kategori/duyurular/2",
+      "jobUrl": "https://www.botas.gov.tr/Icerik/223-kisilik-personel-alim-duyu/1203",
+      "jobPdfUrl": "https://www.botas.gov.tr/uploads/dosyaYoneticisi/559215-lan-tablo.pdf",
+      "resultUrl": "https://www.botas.gov.tr/Icerik/10-kasim-2025-14-kasim-2025/1233"
+    },
+    {
+      "id": "atk-personel-2026-2",
+      "reader": "official",
+      "format": "html",
+      "institution": "Adli Tıp Kurumu Başkanlığı",
+      "category": "Kamu",
+      "url": "https://atk.gov.tr/haber20.11.26.html",
+      "pdfUrl": "https://www.atk.gov.tr/Pdf/2026-2/ek-1.pdf",
+      "itemId": "atk-2026-2-181-pozisyon",
+      "title": "2026-2 sözleşmeli personel alımı — 181 pozisyon",
+      "contentType": "job",
+      "expectedText": [
+        "Adli Tıp Kurumu Başkanlığı",
+        "181 pozisyon"
+      ],
+      "publicationMode": "leading-date",
+      "deadlineContext": "başvurular",
+      "howToApply": {
+        "method": "30.11.2026 günü 09:00'da Kariyer Kapısı üzerinden başvuru ekranı açılır; e-Devlet girişi gerekir.",
+        "url": "https://kariyerkapisi.gov.tr/isealim",
+        "instructions": "Şahsen/posta başvurusu yoktur. Okuyucu Kariyer Kapısı'na giriş yapmaz; yalnız resmî başvuru sayfasına yönlendirir."
+      },
+      "conditions": [
+        "Toplam 181 sözleşmeli pozisyon; her pozisyonun öğrenim şartı, puan türü ve özel koşulları resmî Ek-1 PDF tablosundadır.",
+        "2026 KPSS'de pozisyon için istenen puan türünden en az 70 gerekir.",
+        "Ortaöğretim KPSS P94 grubunda 37 pozisyon: 26 destek personeli (hizmetli), 10 destek personeli (şoför), 1 erkek infaz ve koruma memuru.",
+        "Hizmetli pozisyonlarında en az 6 ay SGK kayıtlı temizlik işi deneyimi ve aktif örgün yükseköğretim öğrencisi olarak kayıtlı olmama şartı bulunur.",
+        "Şoför pozisyonları için eski E sınıfı veya yeni D ve C sınıflarını birlikte içeren sürücü belgesi şartı vardır.",
+        "Erkek infaz-koruma pozisyonunda 01.01.1996 ve sonrası doğum şartı, en az 170 cm boy ve tabloda belirtilen boy-kilo aralığı aranır."
+      ],
+      "tags": [
+        "KPSS",
+        "ortaöğretim",
+        "KPSS P94",
+        "önlisans",
+        "KPSS P93",
+        "lisans",
+        "KPSS P3"
+      ],
+      "pdfUrlPremeasured": true,
+      "applicationOpensAt": "2026-11-30T09:00:00+03:00"
+    },
+    {
+      "id": "anadolu-sozlesmeli-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Anadolu Üniversitesi",
+      "category": "Kamu",
+      "url": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "itemId": "anadolu-2026-4b-1-personel",
+      "title": "Sözleşmeli personel alımı ilanı — 1 pozisyon",
+      "contentType": "job",
+      "expectedText": [
+        "Sözleşmeli Personel Alımı İlanı",
+        "1 (bir) sözleşmeli personel"
+      ],
+      "publicationMode": "anadolu-added-date",
+      "deadlineContext": "başvurular",
+      "howToApply": {
+        "method": "e-Devlet üzerinden Anadolu Üniversitesi — Kariyer Kapısı Kamu İşe Alım.",
+        "url": "https://kariyerkapisi.gov.tr/isealim",
+        "instructions": "Başvuru 16.11.2026–30.11.2026 arasında elektronik ortamda alınır. Okuyucu giriş yapmaz."
+      },
+      "conditions": [
+        "657 sayılı Kanun 4/B kapsamında 1 sözleşmeli personel alınacağı duyurulmuştur.",
+        "Yerleştirme KPSS (B) grubu puan sıralaması esas alınarak yapılır.",
+        "Ünvan ve ayrıntılı özel nitelikler duyuru sayfasındaki resmî ilan PDF ekindedir; bu otomatik ölçümde PDF uç noktası ağ hatası verdiği için PDF içeriği toplanmaz."
+      ],
+      "tags": [
+        "KPSS"
+      ]
+    },
+    {
+      "id": "duzce-ogretim-elemani-2026",
+      "reader": "official",
+      "format": "pdf",
+      "institution": "Düzce Üniversitesi",
+      "category": "Kamu",
+      "url": "https://cdn.duzce.edu.tr/File/GetFile/4455f177-5bf2-414d-a4c6-9de77131bf51",
+      "itemId": "duzce-2026-11-23-ogretim-elemani-5-kadro",
+      "title": "23.11.2026 tarihli öğretim elemanı alımı — 5 kadro",
+      "contentType": "job",
+      "expectedText": [
+        "DÜZCE ÜNİVERSİTESİ",
+        "ÖĞRETİM ELEMANI ALIMI İLANI",
+        "Başvuru Tarihleri"
+      ],
+      "publicationMode": "duzce-title",
+      "deadlineContext": "başvuru",
+      "howToApply": {
+        "method": "Düzce Üniversitesi Akademik İlan Başvuru Sistemi üzerinden elektronik başvuru.",
+        "url": "http://abas.duzce.edu.tr",
+        "instructions": "Başvurular 23.11.2026–07.12.2026 arasında alınır; yalnız bir kadroya başvurulabilir."
+      },
+      "conditions": [
+        "Duyuru 5 öğretim elemanı kadrosu içerir; her kadro için ayrı lisans/alan şartı vardır.",
+        "ALES taban puanı 70'tir; yabancı dil taban puanı bazı kadrolarda 50, bazı kadrolarda muaftır.",
+        "Başvuru için ilgili lisans mezuniyeti ve kadroya göre tezli yüksek lisans/deneyim şartları aranır."
+      ],
+      "tags": [
+        "KPSS'siz",
+        "ALES"
+      ]
+    },
+    {
+      "id": "tarsus-ogretim-elemani-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Tarsus Üniversitesi",
+      "category": "Kamu",
+      "url": "https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895",
+      "pdfUrl": "https://personel.tarsus.edu.tr/Files/ckFiles/personel-tarsus-edu-tr/Resmi%20Gazete%20%C4%B0lan%2023.11.2026.pdf",
+      "itemId": "tarsus-2026-11-23-ogretim-gorevlisi-3-kadro",
+      "title": "23.11.2026 öğretim görevlisi alımı — 3 kadro",
+      "contentType": "job",
+      "expectedText": [
+        "Öğretim Elemanı İlanı",
+        "23.11.2026",
+        "07.12.2026"
+      ],
+      "publicationMode": "tarsus-gazette",
+      "deadlineContext": "başvuru tarihleri",
+      "howToApply": {
+        "method": "İlan metninde her kadro için gösterilen ilgili fakülte/MYO başvuru yerine şahsen veya posta yoluyla.",
+        "url": "https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895",
+        "instructions": "Son başvuru 07.12.2026 mesai bitimidir; posta/şahsen başvuru ilan metnindeki birim adresine yapılır."
+      },
+      "conditions": [
+        "Toplam 3 öğretim görevlisi kadrosu: Yabancı Diller Yüksekokulunda 1, Mersin Tarsus Organize Sanayi Bölgesi Teknik Bilimler MYO'da 2.",
+        "ALES taban puanı 70'tir. İngilizce kadrosunda yabancı dil puanı 85, Kaynak Teknolojisi kadrolarında yabancı dil şartı muaftır.",
+        "İstenen lisans alanı ve tezli yüksek lisans şartları kadroya göre değişir; ayrıntılar resmî PDF tablosundadır."
+      ],
+      "tags": [
+        "ALES",
+        "KPSS'siz"
+      ],
+      "pdfUrlPremeasured": true
+    }
+  ]
+}
