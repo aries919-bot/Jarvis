@@ -9,7 +9,7 @@
 - Varsayılan `main`: `63e877d96cb910e6d98d56834ae55ae8edafab2a` (2026-11-21); bu SHA için PR tetiklemeli workflow run listesi boş.
 - Notlar `durum` dalında; GitHub okuma/yazma erişimi doğrulandı.
 - `main` üzerinde docs/HARITA.md ve docs/TALIMAT.md yok; doğru kopyalar `durum` dalında.
-- Branch araması sayfalandırılarak tamamlandı; `cline/*` dalı/PR'ı görünmüyor. Cline `DEVAM: K1` demedi. K1 sahipliği Cline'da.
+- `cline/K1` dalı mevcut; Cem Cline'ın K1 üzerinde çalıştığını bildirdi. Dalına/dosyalarına müdahale yok; PR/bitirme kanıtı bekleniyor. K1 sahipliği Cline'da.
 - K1 eski PR #24 ChatGPT koludur; Cline K1 tamamlayana kadar #24'e dokunma.
 - A2 PR #25 açık/taslak, `is/a2-expressive-theme` → `main`; ikinci CI denemesi test+APK SUCCESS, ilk Gradle metadata NPE'nin kök nedeni bilinmiyor.
 - A2 tanılama PR #27 açık/taslak, `fix/a2-gradle-metadata-stacktrace` → A2; workflow-only, PR/push CI SUCCESS.
@@ -65,10 +65,12 @@
 
 **C1 — sahip: chatgpt / DEVAM**
 - C1 özel kabul/kanıt/kamu/firstSeenAt/kaynak-bazlı stale ve Cline bekleme kuralları: [NOT_C1.md](NOT_C1.md). Worker PR #5 ayrıntıları aşağıdadır.
-- 15 aday (9 Lever, 6 Ashby); canlı çalışan kaynak sayısı bilinmiyor. Testlerdeki 15 kayıt sentetik fixture, canlı ilan kanıtı değil.
-- Statik QA: `getCareerFeed` import edilmiş ama çağrılmıyor; kimlik doğrulamalı GET `/kariyer-feed` rotası yok. Zamanlayıcı toplama çağrısı var.
-- İlk görülme zamanı geçmiş çalışmalardan korunmuyor; `collectedAt` yenileniyor. Kısmi (1–9 kaynak veya <100 ilan) sonuç da son iyi feed'in üstüne yazılabiliyor.
-- CI #45382012869 ve yeniden deneme #45382024807 başarısız; iş adımları boş, log/artefakt yok. Runner sebebi bilinmiyor. Canlı kaynak raporu ve 10 kaynak/100 ilan eşiği kanıtlanmadı.
+- 15 aday (9 Lever, 6 Ashby); canlı çalışan kaynak ve ilan sayısı kanıtlanmadı. Testlerdeki 15 kayıt sentetik fixture'dır.
+- 24.11 bağımsız PR #5 statik QA: GET `/kariyer-feed` rotası yok; `getCareerFeed` kullanılmıyor; `firstSeenAt` yok. Son iyi veri yalnız 0 başarılı kaynakta korunuyor; 1–9 kaynak veya 100 altı ilanla ezilebilir.
+- Mimari ihlal: Worker `scheduled` içinde `runCareerFeed` çağırıp kaynak/robots/pagination topluyor; ağır toplama Actions'a taşınmalı, Worker yalnız JSON sunmalı.
+- Test açığı: 403 ve timeout senaryosu yok; 503/boş/bozuk/robots ve sentetik ilan fixture'ları var. Gerçek ilan kanıtı yok.
+- CI run #45382024807 failure; tek job `syntax-and-unit` failure, adımlar/loglar dönmedi. [CI #45382024807](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45382024807). Yeşil CI, canlı kaynak sayımı ve 10/100 eşiği kanıtlanmadı.
+- Kaynak adayı ölçümü: Kariyer Kapısı `/isealim` HTML'de filtre başlıkları var ama ilan satırları yok (JS içerik yükleme adayı; reader başarısı sayılmaz); e-Şube formu açılıyor ama statik sayfada sonuç ilanları yok (POST arama sonucu bekleniyor); ilan.gov.tr web erişimi 502 verdi (TLS doğrulaması kapatılmayacak); ÇSGB BTGM sayfasında 04.10.2026 tarihli gerçek 5 kişilik ilan doğrulandı fakat başvuru 11.10.2026'da bitti, güncel ilan değil. Bu adaylar C1'in 10 kaynak/100 ilan sayımına eklenmedi.
 
 **E1-Veri — sahip: cline**
 - Dosyalar: `market/sources.json`, `worker/src/market-data.ts`, `.github/workflows/market-data.yml`, `worker/test/market-data.test.ts`.
@@ -93,4 +95,4 @@
 10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
 **SONRAKİ ADIM:** C1 PR #5'te kimlik doğrulamalı GET /kariyer-feed rotası, kalıcı firstSeenAt ve eşik altı koşulda son iyi feed korumasını tamamla; sonra CI'ı yeşil çalıştırıp gerçek canlı kaynak başına sayıları ve JSON'da 10 kaynak/100 ilanı doğrula. Android entegrasyonuna geçme.
 
-11. C1 bağımsız statik QA: GET feed rotası yok; kalıcı ilk görülme alanı yok; eşik altı feed son iyi veriyi ezebilir. CI retry de step/log/artefakt üretmedi; canlı sayılar bilinmiyor.
+11. 24.11 C1 bağımsız QA: PR #5'te GET feed rotası/firstSeenAt yok; kısmi feed son iyiyi ezebilir; Worker ağır toplama yapıyor. #45382024807 failure (step/log yok). Kariyer Kapısı JS kabuğu, e-Şube formu, ilan.gov.tr 502; ÇSGB örneği süresi geçmiş. Cline K1 dalı mevcut; işine dokunulmadı.
