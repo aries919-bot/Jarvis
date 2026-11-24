@@ -1,0 +1,57 @@
+name: C1 Private Backend QA (public runner)
+
+on:
+  push:
+    branches: [qa/c1-private-runner]
+    paths:
+      - '.github/workflows/c1-private-backend-qa-public.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c1-backend-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - name: Check out QA workflow repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Detect private read credential without printing it
+        id: credentials
+        shell: bash
+        run: |
+          if [ -n "$C1_READ_TOKEN" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+            echo "A private-repository credential is configured."
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::error::No read-only credential is configured for aries919-bot/jarvis-cloud."
+            exit 1
+          fi
+
+      - name: Check out private C1 backend source
+        if: ${{ steps.credentials.outputs.has_token == 'true' }}
+        uses: actions/checkout@v7
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: is/c1-career-feed
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Set up Node 22
+        if: ${{ steps.credentials.outputs.has_token == 'true' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Run C1 backend regression suite
+        if: ${{ steps.credentials.outputs.has_token == 'true' }}
+        working-directory: private-c1
+        run: npm run test:c1
