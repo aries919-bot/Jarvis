@@ -218,3 +218,11 @@
 - Böylece ödeme/Codespaces gerektirmeyen runner bulundu. Kalan zorunlu erişim koşulu: repo sahibi Jarvis public repo Settings → Secrets and variables → Actions içine yalnız `jarvis-cloud` için fine-grained read-only token'ı `JARVIS_CLOUD_READ_TOKEN` adıyla eklemeli. Token sohbetten paylaşılmamalı; bu ücretsiz UI ayarıdır. Alternatif erişilebilir self-hosted runner, mevcut değil.
 - İlk taslak workflow düzeltildi; hatalı eski dosya deney dalından silindi. Aktif workflow yalnız public runner deney dalında.
 - 31 backend test hâlâ 0 çalıştırıldı / 0 PASS. PR #5 open/draft/unmerged. Kamu 1 e-Şube / 43; 15 özel aday ölçülmedi; 10 kaynak/100 ilan eşiği RED.
+
+
+### C1-1 secret sonrası backend QA sonucu — 24.11.2026
+- Cem `JARVIS_CLOUD_READ_TOKEN` secret'ının kaydedildiğini bildirdi; değer sohbetten istenmedi/okunmadı/loglanmadı.
+- Ücretsiz public runner workflow [#45461343191](https://github.com/aries919-bot/Jarvis/actions/runs/45461343191), job `138684419009`, SHA `e6f934670dc024db3f80c0dc85e5fed40b3d17b9`: public workflow checkout SUCCESS, secret check SUCCESS, private `jarvis-cloud` checkout SUCCESS, Node 22 SUCCESS, `npm run test:c1` SUCCESS.
+- Node TAP sonucu: **31 tests / 31 pass / 0 fail / 0 cancelled / 0 skipped**. CI conclusion SUCCESS.
+- İlk gerçek test çalışması [#45461164106](https://github.com/aries919-bot/Jarvis/actions/runs/45461164106) 29 PASS / 2 FAIL buldu. İki hata fixture beklentisiydi: mock, 9 Lever board'ın her birine birer geçmiş ilan veriyordu; toplam beklenen 1/15 idi. Testler sağlayıcıya göre düzeltildi: 9 Lever x 1 expired, 6 Ashby x 0; toplam expired 9. Üretim kodu ve source catalog sayısı değiştirilmedi. Private branch head `8fca11674762cfd63bdc6b8412df3374d36a6d83`.
+- C1 test kapısı artık **PASS**; ancak genel C1-1 **RED / kabul bekliyor**: kamu kanıtı 1 e-Şube kaynağı/43 snapshot; 15 özel ATS adayının canlı sayımı yok; 10 kaynak/100 doğrulanmış ilan eşiği sağlanmadı. Worker production deployment ve gerçek D1 QA'sı da kanıtlanmadı. PR #5 açık/taslak/birleştirilmedi.
