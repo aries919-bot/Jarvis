@@ -1,7 +1,7 @@
 # Aries — Durum Haritası
 
 > Tek gerçek durum dosyası. Önce bu dosya ve docs/TALIMAT.md okunur.
-> Son kontrol: 23.11.2026. Repo: `aries919-bot/Jarvis`.
+> Son kontrol: 24.11.2026. Repo: `aries919-bot/Jarvis`.
 > Bu dal yalnızca proje notları içindir; Android kodu burada geliştirilmez.
 
 ## Repo gerçeği
@@ -35,7 +35,7 @@
 | A1 İki ekran taslağı | ONAYLANDI | sahip: chatgpt; ana ekran + İş & Kariyer Cem tarafından onaylandı |
 | A2 Tüm uygulama tema sistemi | PR AÇIK | sahip: chatgpt; #25/#27/#28 CI yeşil; bağımsız inceleme ve telefon testi |
 | B1 Streaming, bellek ve hata yönetimi | PR AÇIK | sahip: chatgpt; #26 CI yeşil; canlı API, bağımsız inceleme ve telefon testi |
-| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | CLINE BEKLİYOR | sahip: cline; K1 onayından sonra |
+| C1 Sunucu ilan toplayıcı + tekilleştirme JSON | DEVAM | sahip: chatgpt; ayrı repo aries919-bot/jarvis-cloud, PR #5 açık/taslak; CI iş adımı başlamadan başarısız, canlı ilan sayıları henüz yok |
 | C2 İlan listeleri, geçmiş, Haber/Duyuru ayrımı | PR AÇIK | sahip: chatgpt; #22 + #31; son HEAD `4ec0158`; CI #671/#116 sürüyor, gerçek telefon testi bekliyor |
 | C3 İlan şeması, AI alan çıkarımı, kullanıcı tetikli tarayıcı yedeği | DEVAM | sahip: chatgpt; #29/#30 açık taslak; #30 APK #638 + Full QA #84 yeşil; gerçek cihaz ve bağımsız insan incelemesi bekliyor |
 | C4 CV + KPSS tercih/uygunluk modülü | YAPILMADI | sahip: chatgpt; kişisel profil telefonda kalır |
@@ -62,10 +62,10 @@
 - Kaynak başına erişim/giriş/CAPTCHA, çekim zamanı, ilan sayısı ve hatayı ölç; yalnız açık ve girişsiz sayfaları otomasyon adayı yap.
 - Bitiş: her kaynak gerçek sayfa denetimi; PR başına en az 3 ilan örneği veya yokluk nedeni; test sonucu; `cline/K1` PR ve yeşil CI.
 
-**C1 — K1 onayından sonra / sahip: cline**
-- Dosyalar: `worker/src/career-feed.ts`, `career/feeds.json`, `.github/workflows/career-feed.yml`, `worker/test/career-feed.test.ts`.
-- Yalnız K1 doğrulamalı kaynaklardan günde iki kez ücretsiz Actions/Worker ile çek; normalize et, kurum+pozisyon+il ile tekilleştir, süresi dolanı geçmişe taşı, kaynak sağlığını JSON'a yaz.
-- Bitiş: en az 3 resmî örnek; bozuk internet/boş yanıt/tekrar/eski veri testleri; zaman ve kaynak raporu; `cline/C1` PR ve yeşil CI.
+**C1 — sahip: chatgpt / DEVAM**
+- Gerçek Worker deposu aries919-bot/jarvis-cloud; dal is/c1-career-feed, PR #5 → main.
+- Lever/Ashby aday kaynak okuyucuları, D1 JSON feed, /kariyer-feed, 06:00/18:00 UTC cron, tarih/provenans/tekilleştirme ve hata/eski veri testleri eklendi.
+- 15 kaynak adayı tanımlı; gerçek çalışan kaynak ve ilan sayısı CI canlı raporu olmadan bilinmiyor. CI run #45381602885 failure, runner/job adımları boş; eşik sağlandı sayılmaz. İlerleme için yeşil CI ve JSON'da 10 kaynak/100 gerçek ilan kanıtı şart.
 
 **E1-Veri — sahip: cline**
 - Dosyalar: `market/sources.json`, `worker/src/market-data.ts`, `.github/workflows/market-data.yml`, `worker/test/market-data.test.ts`.
@@ -86,7 +86,7 @@
 5. B1 #26 bellek/streaming; CI yeşil, bağımsız inceleme ve telefon testi bekliyor.
 6. A2 #27 workflow-only tanılama; PR/push CI SUCCESS.
 7. A2 #28 açık/koyu mod, dashboard sayacı ve skeleton; PR/push CI SUCCESS.
-8. Cline sahiplik ayrımı: K1/C1/E1-Veri Cline; diğer uygulama işleri ChatGPT.
+8. Sahiplik güncellemesi: K1 ve E1-Veri Cline; C1 ChatGPT (jarvis-cloud PR #5); diğer uygulama işleri ChatGPT.
 9. C2 #22 kategoriler ve Haber/Süreç/Program ayrımı; APK + API29/33/34/35 Full QA SUCCESS.
 10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
-**SONRAKİ ADIM:** İndirilen APK'yı gerçek telefona kurup C3 kontrol listesini çalıştır: kaynak açma/metin okuma, AI gönderme iptali ve onayı, yanlış anahtar/boş yanıt, 403/CAPTCHA/login, farklı host/alt kaynak, pencere kapatma ve yeniden başlatma. Bunlar denenmeden ONAY/merge yok. Cline `DEVAM: K1` demeden K1/C1/E1-Veri dosyalarına dokunma.
+**SONRAKİ ADIM:** C1 PR #5 CI koşusunun neden runner/step başlatmadığını çöz; yeşil test ve canlı kaynak raporu al. Kaynak başına gerçek ilan sayısı, JSON toplamı ve 10 kaynak/100 ilan eşiği doğrulanmadan Android entegrasyonuna geçme. C1 yalnız is/c1-career-feed dalında sürdürülür.
