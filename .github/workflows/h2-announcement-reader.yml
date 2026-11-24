@@ -45,9 +45,9 @@ jobs:
       - name: Read measured official announcements
         if: github.event_name != 'pull_request'
         run: |
-          python scripts/h2_announcement_reader.py \\
-            --out-dir reports/h2 \\
-            --previous-dir reports/h2-last-good \\
+          python scripts/h2_announcement_reader.py \
+            --out-dir reports/h2 \
+            --previous-dir reports/h2-last-good \
             --summary "$GITHUB_STEP_SUMMARY"
 
       - name: Save fresh source feeds as last-good
