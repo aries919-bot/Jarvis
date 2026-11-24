@@ -126,6 +126,18 @@ def deterministic_only_fallback(account: str, cf_token: str) -> tuple[str, str] 
     )
 
 
+def test_log_is_successful(test_log: str) -> bool:
+    """Require a real non-empty unittest summary, OK marker, and successful CI job."""
+    summary = re.search(r"^Ran (\\d+) tests? in ", test_log, re.MULTILINE)
+    if not summary or int(summary.group(1)) < 1:
+        return False
+    if not re.search(r"^OK$", test_log, re.MULTILINE):
+        return False
+    if re.search(r"^(?:FAILED\\b|ERROR:)", test_log, re.MULTILINE):
+        return False
+    return "Test job result: success" in test_log
+
+
 def post_comment(repo: str, number: int, token: str, body: str) -> None:
     url = f"https://api.github.com/repos/{repo}/issues/{number}/comments"
     request_json(url, {
@@ -164,7 +176,7 @@ def main() -> int:
             reasons.append("PR diff boş veya alınamadı.")
         reasons.extend(deterministic_findings(diff, base))
         test_log = Path(args.test_log).read_text(encoding="utf-8", errors="replace")[-MAX_TEST_BYTES:]
-        if "FAILED" in test_log or "ERROR:" in test_log or "Ran " not in test_log or "Test job result: success" not in test_log:
+        if not test_log_is_successful(test_log):
             reasons.append("Test özeti başarısız veya eksik.")
         if len(diff.encode("utf-8")) > MAX_DIFF_BYTES:
             reasons.append("Diff boyutu sınırı aşıldı.")
