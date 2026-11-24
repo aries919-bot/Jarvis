@@ -239,7 +239,7 @@
 
 
 ### C1-1 son doğrulama — 24.11.2026 18:47 UTC
-- Private PR HEAD `86318bacfdc28d6f4da7252910dc9950ab12daaf`; PR #5 açık/taslak/birleştirilmedi, 13 dosya (+2.484/-6). `main` SHA `fb291c0ce06b05c61f988e71b8e40c` değildir; son denetlenen gerçek main SHA aşağıdaki tool raporunda doğrulanmıştır; PR main'e yazılmadı.
+- Private PR HEAD `86318bacfdc28d6f4da7252910dc9950ab12daaf`; PR #5 açık/taslak/birleştirilmedi, 13 dosya (+2.484/-6). `main` SHA `fb291c0ce06b05c61f988e71c3d6587ffc945e93`; PR main'e yazılmadı.
 - Ücretsiz runner son koşu [#45463284336](https://github.com/aries919-bot/Jarvis/actions/runs/45463284336), job `138691370107`: private checkout SUCCESS; Node 22 SUCCESS; **32 test / 32 PASS / 0 FAIL / 0 skipped**; canlı kaynak audit SUCCESS; yerel Wrangler Worker + D1 HTTP smoke **8/8 PASS**. Job conclusion SUCCESS.
 - D1 yerel smoke kontrolleri: health 200; auth yoksa 401; boş D1 ilk GET not_ready + stale; auth POST 202 ile feed kaydı; GET orijinal raw JSON'u byte-identical döndürür ve fresh header verir; stale metadata ayrı kalıcıdır; POST text/plain 415; geçersiz generatedAt 400. Bu izole Wrangler local D1 testidir, Cloudflare production D1 değildir.
 - Deadline çıkarımı düzeltildi: Lever/Ashby açıklamasının görünen 700 karakteri yerine temizlenmiş açıklamanın ilk 50.000 karakteri taranır; kartta gösterilen conditions metni 700 karakterle sınırlı kalır. Yeni regresyon testi, 700 karakter sonundaki tarihin çıkarılmasını doğrular. Canlı ölçümde kaynak açıklamalarında açık deadline bulunmadığından ilan sayıları değişmedi.
