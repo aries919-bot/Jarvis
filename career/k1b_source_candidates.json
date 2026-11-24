@@ -1,0 +1,256 @@
+{
+  "userAgent": "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)",
+  "sources": [
+    {
+      "id": "esube-public",
+      "category": "Kamu",
+      "name": "İŞKUR e-Şube Açık İş İlanı Arama",
+      "url": "https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "ilan-www",
+      "category": "Kamu",
+      "name": "İlan.gov.tr (www)",
+      "url": "https://www.ilan.gov.tr/",
+      "origin": "H1",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TLS_CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; robots izni doğrulanamadı; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "resmigazete-ilanlar",
+      "category": "Kamu",
+      "name": "Resmî Gazete İlanlar",
+      "url": "https://www.resmigazete.gov.tr/ilanlar",
+      "origin": "H1",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TIMEOUT: robots.txt erişimi zaman aşımına uğradı; robots izni UNKNOWN olduğundan hedef sayfa istenmedi; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "yhgm-kura",
+      "category": "Kura",
+      "name": "Sağlık Bakanlığı YHGM kura duyurusu",
+      "url": "https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "tuseb-duyurular",
+      "category": "Kura",
+      "name": "TÜSEB resmî duyurular",
+      "url": "https://www.tuseb.gov.tr/public/tr/duyurular",
+      "origin": "H1",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TLS_CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; robots izni doğrulanamadı; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "tuseb-ik",
+      "category": "Kura",
+      "name": "TÜSEB İnsan Kaynakları",
+      "url": "https://www.tuseb.gov.tr/kurumsal/insan-kaynaklari",
+      "origin": "H1",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TLS_CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; robots izni doğrulanamadı; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "osym-kpss",
+      "category": "KPSS",
+      "name": "ÖSYM KPSS duyuru grubu",
+      "url": "https://osym.gov.tr/SinavGrubu/Menu/338",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "osym-duyurular",
+      "category": "KPSS",
+      "name": "ÖSYM tüm duyurular",
+      "url": "https://www.osym.gov.tr/Duyurular/Index",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "kariyerkapisi",
+      "category": "KPSS",
+      "name": "Kariyer Kapısı Kamu İşe Alım",
+      "url": "https://kariyerkapisi.gov.tr/isealim",
+      "origin": "H1",
+      "collectionMode": "REDIRECT_ONLY",
+      "policyNote": "Kariyer Kapısı/e-Devlet: içerik kazınmaz veya yoklanmaz; kullanıcı yalnız resmî sayfaya Custom Tabs ile yönlendirilir."
+    },
+    {
+      "id": "msvk-kariyerkapisi",
+      "category": "KPSS'siz",
+      "name": "Malatya Su ve Kanalizasyon İdaresi Kariyer Kapısı",
+      "url": "https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim",
+      "origin": "H1",
+      "collectionMode": "REDIRECT_ONLY",
+      "policyNote": "Kariyer Kapısı/e-Devlet: içerik kazınmaz veya yoklanmaz; kullanıcı yalnız resmî sayfaya Custom Tabs ile yönlendirilir."
+    },
+    {
+      "id": "izbb-kariyerkapisi",
+      "category": "KPSS'siz",
+      "name": "İzmir Büyükşehir Belediyesi Kariyer Kapısı",
+      "url": "https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim",
+      "origin": "H1",
+      "collectionMode": "REDIRECT_ONLY",
+      "policyNote": "Kariyer Kapısı/e-Devlet: içerik kazınmaz veya yoklanmaz; kullanıcı yalnız resmî sayfaya Custom Tabs ile yönlendirilir."
+    },
+    {
+      "id": "turkcell-kariyer",
+      "category": "Büyük özel şirket",
+      "name": "Turkcell Kariyer Fırsatları",
+      "url": "https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "sisecam-kariyer",
+      "category": "Büyük özel şirket",
+      "name": "Şişecam Kariyer",
+      "url": "https://www.sisecam.com/tr/kariyer",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "sisecam-jobs",
+      "category": "Büyük özel şirket",
+      "name": "Şişecam açık pozisyonlar",
+      "url": "https://careers.sisecam.com/?locale=tr_TR",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "koc-kariyerim",
+      "category": "Büyük özel şirket",
+      "name": "Koç Kariyerim ilan listesi",
+      "url": "https://www.kockariyerim.com/jobAd/list",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "ptt-duyurular",
+      "category": "Kamu bağlı büyük şirket",
+      "name": "PTT duyurular",
+      "url": "https://www.ptt.gov.tr/duyurular",
+      "origin": "H1",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TLS_CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; robots izni doğrulanamadı; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "botas-duyurular",
+      "category": "Kamu bağlı büyük şirket",
+      "name": "BOTAŞ duyurular",
+      "url": "https://www.botas.gov.tr/Kategori/duyurular/2",
+      "origin": "H1",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "tpao-personel-pdf",
+      "category": "Kamu bağlı büyük şirket",
+      "name": "TPAO personel alımı PDF",
+      "url": "https://www.tpao.gov.tr/file/2512/sinav-ilani-33-personel-alimi-29-12-2025-37736953d2e834d07.pdf",
+      "origin": "H1",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TIMEOUT: robots.txt erişimi zaman aşımına uğradı; robots izni UNKNOWN olduğundan hedef sayfa istenmedi; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "ilan-apex-extra",
+      "category": "Kamu",
+      "name": "İlan.gov.tr (apex ek kontrol)",
+      "url": "https://ilan.gov.tr/",
+      "origin": "EK",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TLS_CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; robots izni doğrulanamadı; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "resmigazete-root-extra",
+      "category": "Kamu",
+      "name": "Resmî Gazete ana sayfa (ek kontrol)",
+      "url": "https://www.resmigazete.gov.tr/",
+      "origin": "EK",
+      "collectionMode": "TEMPORARILY_CLOSED",
+      "closeReason": "TIMEOUT: robots.txt erişimi zaman aşımına uğradı; robots izni UNKNOWN olduğundan hedef sayfa istenmedi; yeniden istek yapılmayacak.",
+      "lastMeasurementRunId": 45425771149,
+      "lastMeasuredAt": "2026-11-24T15:27:49Z"
+    },
+    {
+      "id": "atk-duyuru-2026-2",
+      "category": "Kamu",
+      "name": "Adli Tıp Kurumu 2026-2 personel alım duyurusu",
+      "url": "https://atk.gov.tr/haber20.11.26.html",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "atk-ek1-2026-2",
+      "category": "Kamu",
+      "name": "Adli Tıp Kurumu 2026-2 pozisyon ve nitelik tablosu",
+      "url": "https://www.atk.gov.tr/Pdf/2026-2/ek-1.pdf",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "anadolu-sozlesmeli-2026",
+      "category": "Kamu",
+      "name": "Anadolu Üniversitesi sözleşmeli personel alım duyurusu",
+      "url": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "anadolu-sozlesmeli-pdf-2026",
+      "category": "Kamu",
+      "name": "Anadolu Üniversitesi 2026 sözleşmeli personel ilan PDF",
+      "url": "https://anadolu.edu.tr/uploads/anadolu/ckfinder/personel/files/S%C3%B6zle%C5%9Fmeli%20Personel%20Al%C4%B1m%20%C4%B0lan%C4%B1%20-%202026.pdf",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "turkak-guvenlik-2026",
+      "category": "Kamu",
+      "name": "TÜRKAK 3 koruma ve güvenlik görevlisi sınav duyurusu",
+      "url": "https://www.turkak.org.tr/basvuru-ilanlari/turk-akreditasyon-kurumu-sozlesmeli-koruma-ve-guvenlik-gorevlisi-giris-sinavi-duyurusu",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "duzce-ogretim-elemani-2026",
+      "category": "Kamu",
+      "name": "Düzce Üniversitesi 23.11.2026 öğretim elemanı ilan PDF",
+      "url": "https://cdn.duzce.edu.tr/File/GetFile/4455f177-5bf2-414d-a4c6-9de77131bf51",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "tarsus-ogretim-elemani-2026",
+      "category": "Kamu",
+      "name": "Tarsus Üniversitesi öğretim elemanı alım duyurusu",
+      "url": "https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    },
+    {
+      "id": "tarsus-ogretim-elemani-pdf-2026",
+      "category": "Kamu",
+      "name": "Tarsus Üniversitesi 23.11.2026 öğretim görevlisi ilan PDF",
+      "url": "https://personel.tarsus.edu.tr/Files/ckFiles/personel-tarsus-edu-tr/Resmi%20Gazete%20%C4%B0lan%2023.11.2026.pdf",
+      "origin": "H2-YENİ",
+      "collectionMode": "MEASURE"
+    }
+  ]
+}
