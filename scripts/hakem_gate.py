@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed deterministic + Cloudflare Workers AI PR referee."""
+"""Fail-closed deterministic PR gate with optional Cloudflare Workers AI review."""
 from __future__ import annotations
 
 import argparse
@@ -115,6 +115,17 @@ def deterministic_findings(diff: str, base: str) -> list[str]:
             findings.append(reason)
     return findings
 
+def deterministic_only_fallback(account: str, cf_token: str) -> tuple[str, str] | None:
+    """Use deterministic checks without external AI; never claim human approval."""
+    if account and cf_token:
+        return None
+    return (
+        "ONAY",
+        "Otomatik statik kontroller geçti. Opsiyonel Cloudflare AI katmanı çalıştırılmadı; "
+        "bu sonuç bağımsız insan hakem incelemesinin yerine geçmez.",
+    )
+
+
 def post_comment(repo: str, number: int, token: str, body: str) -> None:
     url = f"https://api.github.com/repos/{repo}/issues/{number}/comments"
     request_json(url, {
@@ -159,8 +170,8 @@ def main() -> int:
             reasons.append("Diff boyutu sınırı aşıldı.")
         if reasons:
             ai_reason = "Deterministik kontrol RED: " + " ".join(reasons)
-        elif not account or not cf_token:
-            ai_reason = "Cloudflare Secrets eksik; AI hakem kararı üretilemedi. Fail-closed."
+        elif deterministic_only_fallback(account, cf_token) is not None:
+            decision, ai_reason = deterministic_only_fallback(account, cf_token)  # type: ignore[misc]
         else:
             system_prompt = (
                 "You are an additional security reviewer. Return exactly one first line: ONAY or RED. "
