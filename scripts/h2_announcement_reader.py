@@ -572,10 +572,10 @@ def collect_official(source: dict[str,Any], requester: Callable[[str,int],FetchR
             linked_pdf = official_link_target(page,source["url"],pdf_url)
             if not linked_pdf and source.get("pdfUrlPremeasured") is not True:
                 raise SourceError("Ek PDF sayfada bağlantı olarak bulunamadı ve K1-B ile ayrıca ölçülmüş değil")
-            pdf_target = linked_pdf or pdf_url
-            if not same_official_host(source["url"],pdf_target):
+            if not same_official_host(source["url"],pdf_url):
                 raise SourceError("Ek PDF farklı resmî hosta yönlendirildi; istek yapılmadı")
-            pdf_body,_,_ = fetch_public_url(pdf_target,requester,robots_cache,MAX_PDF_BYTES)
+            # Use the K1-B-measured, URL-encoded manifest URL; a page may expose the same href with spaces.
+            pdf_body,_,_ = fetch_public_url(pdf_url,requester,robots_cache,MAX_PDF_BYTES)
             attachment_text = extract_pdf_text(pdf_body)
     else:
         raise SourceError(f"Desteklenmeyen resmî duyuru biçimi: {fmt}")
