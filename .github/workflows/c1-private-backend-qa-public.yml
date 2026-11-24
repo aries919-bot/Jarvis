@@ -66,6 +66,7 @@ jobs:
           private_branch="$(git branch --show-current)"
           echo "Private backend ref: ${private_branch}" >> "$GITHUB_STEP_SUMMARY"
           echo "Private backend SHA: ${private_sha}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Private backend SHA: ${private_sha}"
           if [ "$private_sha" != "$EXPECTED_PRIVATE_SHA" ]; then
             echo "::error::Private C1 branch moved; expected audited SHA $EXPECTED_PRIVATE_SHA."
             exit 1
