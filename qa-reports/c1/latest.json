@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "area": "C1 İş ve Kariyer kaynak doğrulama",
   "decision": "RED",
-  "privateSha": "0eeefed9534040a46ce7ef83157c0d6872b7f0b0",
-  "baseSha": "d78df6104265cca25de67617ccb5031ba3d3bfdb",
-  "runId": "45504531310",
-  "runUrl": "https://github.com/aries919-bot/Jarvis/actions/runs/45504531310",
-  "collectedAt": "2026-11-24T22:50:27.845233+00:00",
+  "privateSha": "68e858424c3589b7d6cffea7ba26c7941027b017",
+  "baseSha": "74816f3954c3fa8164ef0266b848b0b9e9a897d4",
+  "runId": "45504819883",
+  "runUrl": "https://github.com/aries919-bot/Jarvis/actions/runs/45504819883",
+  "collectedAt": "2026-11-24T22:52:18.988262+00:00",
   "gates": {
-    "codeQaPass": false,
+    "codeQaPass": true,
     "productionAuthenticatedReadPass": false,
     "publicEvidence": {
       "freshSources": 1,
@@ -34,25 +34,25 @@
     "unknownDeadlineListings": 114,
     "expiredListings": 1,
     "publicSnapshotAt": "2026-11-24T11:57:55+00:00",
-    "publicSnapshotAgeHours": 10.87,
+    "publicSnapshotAgeHours": 10.9,
     "publicRawRows": 43,
     "publicUniqueRows": 43
   },
   "jobs": {
     "preflight": {
       "qa": "preflight",
-      "privateSha": "0eeefed9534040a46ce7ef83157c0d6872b7f0b0",
-      "baseSha": "d78df6104265cca25de67617ccb5031ba3d3bfdb",
+      "privateSha": "68e858424c3589b7d6cffea7ba26c7941027b017",
+      "baseSha": "74816f3954c3fa8164ef0266b848b0b9e9a897d4",
       "status": "PASS",
       "reasons": [],
-      "checkedOutSha": "0eeefed9534040a46ce7ef83157c0d6872b7f0b0"
+      "checkedOutSha": "68e858424c3589b7d6cffea7ba26c7941027b017"
     },
     "unit-tests": {
       "qa": "unit-tests",
       "command": "npm run test:c1",
       "exitCode": 0,
-      "tests": 37,
-      "passed": 37,
+      "tests": 38,
+      "passed": 38,
       "failed": 0,
       "skipped": 0,
       "status": "PASS"
@@ -71,7 +71,7 @@
       "exitCode": 0,
       "status": "PASS",
       "metrics": {
-        "collectedAt": "2026-11-24T22:50:07.637Z",
+        "collectedAt": "2026-11-24T22:51:54.343Z",
         "sourceCount": 16,
         "freshSourceCount": 10,
         "staleSourceCount": 6,
@@ -103,8 +103,8 @@
           "rawCount": 44,
           "listingCount": 35,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -120,8 +120,8 @@
           "rawCount": 17,
           "listingCount": 16,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -137,8 +137,8 @@
           "rawCount": 7,
           "listingCount": 5,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -154,8 +154,8 @@
           "rawCount": 17,
           "listingCount": 17,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -171,8 +171,8 @@
           "rawCount": 171,
           "listingCount": 5,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -188,8 +188,8 @@
           "rawCount": 176,
           "listingCount": 13,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -205,8 +205,8 @@
           "rawCount": 112,
           "listingCount": 22,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -222,8 +222,8 @@
           "rawCount": 4,
           "listingCount": 0,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "no-turkey-openings",
           "lastError": null
         },
@@ -239,8 +239,8 @@
           "rawCount": 15,
           "listingCount": 1,
           "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastGoodAt": "2026-11-24T22:51:54.343Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         },
@@ -257,7 +257,7 @@
           "listingCount": 0,
           "collectedAt": null,
           "lastGoodAt": null,
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "robots-erisilemedi",
           "lastError": "HTTP_401"
         },
@@ -274,7 +274,7 @@
           "listingCount": 0,
           "collectedAt": null,
           "lastGoodAt": null,
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "robots-erisilemedi",
           "lastError": "HTTP_401"
         },
@@ -291,7 +291,7 @@
           "listingCount": 0,
           "collectedAt": null,
           "lastGoodAt": null,
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "robots-erisilemedi",
           "lastError": "HTTP_401"
         },
@@ -308,7 +308,7 @@
           "listingCount": 0,
           "collectedAt": null,
           "lastGoodAt": null,
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "robots-erisilemedi",
           "lastError": "HTTP_401"
         },
@@ -325,7 +325,7 @@
           "listingCount": 0,
           "collectedAt": null,
           "lastGoodAt": null,
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "robots-erisilemedi",
           "lastError": "HTTP_401"
         },
@@ -342,7 +342,7 @@
           "listingCount": 0,
           "collectedAt": null,
           "lastGoodAt": null,
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "robots-erisilemedi",
           "lastError": "HTTP_401"
         },
@@ -357,9 +357,9 @@
           "httpStatus": null,
           "rawCount": 43,
           "listingCount": 42,
-          "collectedAt": null,
-          "lastGoodAt": "2026-11-24T22:50:07.637Z",
-          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "collectedAt": "2026-11-24T11:57:55.000Z",
+          "lastGoodAt": "2026-11-24T11:57:55.000Z",
+          "lastAttemptAt": "2026-11-24T22:51:54.343Z",
           "lastAttemptStatus": "ok",
           "lastError": null
         }
@@ -370,9 +370,9 @@
     },
     "public-data-contract": {
       "qa": "public-data-contract",
-      "status": "FAIL",
+      "status": "PASS",
       "snapshotAt": "2026-11-24T11:57:55+00:00",
-      "ageHours": 10.87,
+      "ageHours": 10.9,
       "rawRows": 43,
       "uniqueRows": 43,
       "freshPublicSources": 1,
@@ -380,9 +380,7 @@
       "expiredRows": 1,
       "mappedRows": 42,
       "mapperStatus": "ok",
-      "errors": [
-        "source snapshot time not preserved"
-      ]
+      "errors": []
     },
     "failure-matrix": {
       "qa": "failure-matrix",
@@ -480,7 +478,6 @@
     }
   },
   "reasons": [
-    "public-data-contract: FAIL — ['source snapshot time not preserved']",
     "production-readonly: BLOCKED — JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN pair is not configured.",
     "10 kaynak / 100 doğrulanmış ilan eşiği karşılanmadı."
   ]
