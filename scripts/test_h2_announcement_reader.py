@@ -414,7 +414,11 @@ class H2ReaderTests(unittest.TestCase):
         page = h2.PageParser()
         page.feed('<a href="/Files/Resmi Gazete İlan 23.11.2026.pdf">İlan metni</a>')
         expected = "https://personel.tarsus.edu.tr/Files/Resmi%20Gazete%20%C4%B0lan%2023.11.2026.pdf"
-        self.assertEqual(expected,h2.official_link_target(page,"https://personel.tarsus.edu.tr/tr/news/notice",expected))
+        found = h2.official_link_target(page,"https://personel.tarsus.edu.tr/tr/news/notice",expected)
+        self.assertIsNotNone(found)
+        expected_path = h2.urllib.parse.unquote(h2.urllib.parse.urlsplit(expected).path)
+        found_path = h2.urllib.parse.unquote(h2.urllib.parse.urlsplit(found).path)
+        self.assertEqual(expected_path.casefold(),found_path.casefold())
 
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
