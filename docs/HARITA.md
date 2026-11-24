@@ -148,3 +148,10 @@
 - Sonuç: C1-1 **RED / kısmi kod hazır**. CI yeşil değil, canlı Actions çıktısı yok, Worker'ın dağıtılmış uçtan uca kalıcılığı doğrulanmadı. Kamu 1 kaynak / 43 ilan; 10 kaynak / 100 doğrulanmış ilan eşiği RED. Arayüz işi yok, PR birleştirilmez.
 
 **SONRAKİ ADIM:** jarvis-cloud Actions runner sorunu çözülüp PR/push CI gerçek runner'da çalışmalı; ardından canlı kaynak raporu ve Worker dağıtımı sonrası kalıcı feed doğrulanmalı.
+
+### Actions runner tanılaması — 24.11.2026
+
+- GitHub Status sayfası kontrol anında “All Systems Operational”; Actions bileşeni “Operational” gösteriyordu. 24 Kasım geçmiş olay kaydı Copilot model sağlayıcısına aitti, Actions'a değil. Genel Actions kesintisi kanıtı yok.
+- GitHub Community'de 18.11.2026 tarihli özel depo tartışmasında aynı belirti var: `runner_id=0`, boş `steps`, kullanılabilir günlük yok. Topluluk yanıtı; başarısız koşunun açıklama/annotation alanını, Actions kullanım-bütçe sınırını, Settings → Actions → General izinlerini kontrol etmeyi; sebep görünmüyorsa GitHub Support'a run ID'leri iletmeyi öneriyor. Bu bir topluluk önerisidir, kesin kök neden değildir.
+- Bu depo için Actions izin endpoint'i bu denetim aracından okunamadı. Faturaya, hesap kısıtına veya depo ayarına dair varsayım yapılmıyor.
+- Telefonda GitHub depo Settings → Actions → General altında GitHub-hosted runner kullanımının açık olduğu; Billing → Actions kullanım/bütçe sınırının dolmadığı; başarısız koşu sayfasında üst annotation bulunup bulunmadığı kontrol edilmeli. Annotation/ayar sorunu görünmüyorsa Support'a şu run ID'ler gönderilmeli: `45447411669`, `45447399299`.
