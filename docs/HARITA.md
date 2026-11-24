@@ -111,7 +111,7 @@
 8. Sahiplik güncellemesi: K1 ve E1-Veri Cline; C1 ChatGPT (jarvis-cloud PR #5); diğer uygulama işleri ChatGPT.
 9. C2 #22 kategoriler ve Haber/Süreç/Program ayrımı; APK + API29/33/34/35 Full QA SUCCESS.
 10. C3 #30 HEAD `5f6eebb`: APK #638 + Full QA #84 SUCCESS; PR açıklaması ve COMMENTED hakem notu güncellendi (onay değil); genel emülatör QA C3 WebView akışını kapsamıyor.
-**SONRAKİ ADIM:** C1 PR #5'te kimlik doğrulamalı GET /kariyer-feed rotası, kalıcı firstSeenAt ve eşik altı koşulda son iyi feed korumasını tamamla; sonra CI'ı yeşil çalıştırıp gerçek canlı kaynak başına sayıları ve JSON'da 10 kaynak/100 ilanı doğrula. Android entegrasyonuna geçme.
+**SONRAKİ ADIM:** C1-1 hâlâ RED. Bir sonraki geliştirme: robots izinli yeni resmî kamu kaynaklarını ekleyip her biri için gerçek açık deadline'lı ilanı kanıtlamak; 10 kaynak/100 doğrulanmış ilan eşiğine yaklaşmak. PR #5 için 60 KB Hakem sınırı ve private Actions failure ayrıca çözülmeli; production Worker/D1 GET-POST/kalıcı firstSeenAt kanıtlanmalı. PR #5 `main` hedefli olduğundan birleştirme için ayrıca kullanıcı onayı gerekir. Eşik ve tüm kabul kapıları tamamlanmadan C1-2/UI yok.
 
 11. 24.11 C1 bağımsız QA: PR #5'te GET feed rotası/firstSeenAt yok; kısmi feed son iyiyi ezebilir; Worker ağır toplama yapıyor. #45382024807 failure (step/log yok). Kariyer Kapısı JS kabuğu, e-Şube formu, ilan.gov.tr 502; ÇSGB örneği süresi geçmiş. Cline K1 dalı mevcut; işine dokunulmadı.
 
