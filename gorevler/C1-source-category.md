@@ -20,13 +20,14 @@
 - Üç `readSource()` dönüş yolunda `category` korunuyor; başarı, robots deny/unreachable, HTTP hata ve timeout testlerine kategori regresyon kontrolleri eklendi.
 - PR #8 taslak/açık; merge edilmedi.
 
-## Güncel paralel QA ve Hakem
-- Workflow: [C1 parallel QA and Hakem](https://github.com/aries919-bot/Jarvis/blob/qa/c1-private-runner/.github/workflows/c1-private-backend-qa-public.yml)
-- Run: [#45504819883](https://github.com/aries919-bot/Jarvis/actions/runs/45504819883)
-- Exact private SHA: `68e858424c3589b7d6cffea7ba26c7941027b017`
-- Exact base SHA: `74816f3954c3fa8164ef0266b848b0b9e9a897d4`
-- Ara sonuç: preflight, unit tests, public-data contract, failure matrix, security-diff ve live-source-audit PASS; production authenticated GET BLOCKED (URL/token ayarı eksik); local Worker+D1 smoke tamamlanmayı bekliyordu; Hakem kararı henüz bekleniyor.
-- Yeni QA JSON'u kaynak başına `category`, `collectedAt`, `lastGoodAt`, `lastAttemptAt`, `lastAttemptStatus` ve `lastError` alanlarını toplar. Kategori kapısı kamu için `Kamu`, private ATS için `Büyük özel` bekler.
+## Nihai stacked PR ve paralel Hakem sonucu
+- Eski tabanlı PR #7 kapatıldı. Geçerli kategori düzeltmesi [PR #8](https://github.com/aries919-bot/jarvis-cloud/pull/8): `fix/c1-source-category-after-timestamp` → PR #6'nın `fix/c1-source-snapshot-time` tabanı; HEAD `68e858424c3589b7d6cffea7ba26c7941027b017`; diff yeniden sayımı 2 dosya / +9 / -0.
+- PR #6 timestamp düzeltmesi taban SHA `74816f3954c3fa8164ef0266b848b0b9e9a897d4`; PR #6 açık/taslak. PR #8 de açık/taslak; ikisi de merge edilmedi.
+- Son paralel QA [#45504819883](https://github.com/aries919-bot/Jarvis/actions/runs/45504819883), exact SHA #8. Nihai JSON: [qa-reports/c1/latest.json](https://github.com/aries919-bot/Jarvis/blob/durum/qa-reports/c1/latest.json). Karar **RED**.
+- Test: `npm run test:c1` 38/38; `node scripts/c1-worker-d1-smoke.mjs` 11/11; 12/12 senaryo kapsamı; kamu tarih/freshness sözleşmesi PASS; kategori hatası listesi boş; security diff 2 dosya /1.638 bayt / yasaklı desen 0.
+- Kaynak yeniden sayımı: 16 toplam /10 fresh /6 stale. Özel fresh kaynaklar: Trendyol 35, Midas 16, Commencis 5, Dream Games 17, Aleph 5, Ajax Systems 13, Insider One 22, Binance 0, Picus 1 =114 private aday; 114 deadline unknown ve doğrulanmış açık private ilan 0. Altı Ashby robots HTTP 401 stale; API isteği yok.
+- Kamu ayrı: e-Şube 1 kaynak /43 raw unique /42 açık /1 expired; snapshot `2026-11-24T11:57:55Z` (audit anında 10,9 saat); `publishedAt=null`. Doğrulanmış kaynak/ilan toplamı 1/42; 10/100 şartı RED.
+- Production authenticated Worker GET BLOCKED: `JARVIS_WORKER_URL`/`JARVIS_WORKER_TOKEN` yok. Production deploy/Cloudflare D1 doğrulanmadı.
 
 ## Sert kabul kapıları
 - [ ] Exact-head C1 tests green.
