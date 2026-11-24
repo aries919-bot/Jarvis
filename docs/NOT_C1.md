@@ -44,7 +44,7 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - K1-E1: Actions #45388925995 SUCCESS; 3 sayfa, 43 ilan, 8 kurum. `career/esube_kamu_ilanlari.json` durum dalında; 43 benzersiz, 0 tekrar. Cem 24.11.2026'da 3 ilanı elle doğruladı: 00009905681 (Muğla), 00009905686 (İzmir), 00009905689 (İstanbul); MSB Personel GM, son başvuru 27.11.2026. Sayfa altında “Toplam Kayıt: 43”.
 - `csgb.gov.tr/duyurular`: ikincil kaynak. “alım/ilan” başlığı süzülür, “kazananlara ilişkin” elenir. URL sonundaki sayı yayın tarihi olarak doğrulanmamıştır.
 - `ilan.gov.tr`: sertifika zinciri sorunu var; Actions'ta ölçülür, TLS doğrulaması kapatılmaz.
-- jarvis-cloud PR #5 RED: 15 adayın tamamı özel sektör; CI başarısız; `/kariyer-feed` tanımsız; `firstSeenAt` kalıcı değil.
+- C1-1 güncel durum: private `jarvis-cloud` PR #5'te Bearer doğrulamalı `/kariyer-feed`, ham JSON GET/POST ve kaynak bazlı last-good/firstSeenAt birleştirme kodu var; current HEAD 44cb391. Exact-head public QA 36/36 test +10/10 local D1 PASS, ancak private Actions runner tahsisi `runner_id=0` ile step öncesi fail. Üretim publish PUBLISH SKIPPED, Hakem 60 KB diff sınırı aşılmış, 114 özel adayın deadline'ı bilinmiyor; kamu 3 kaynak/44 fresh açık, 10/100 RED. Ayrıntı: `gorevler/C1-1.md`.
 - Mevcut `cline/K1` dalındaki eski e-Şube okuyucu/workflow kanıt olarak korunur; bu not kapsamındaki yeni işler ayrı dallarda yapılır. Cline kullanılmaz.
 
 ## 4. HARITA
