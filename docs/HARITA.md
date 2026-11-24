@@ -169,3 +169,11 @@
 - Eşik 10 kaynak / 100 doğrulanmış ilan sağlanmadı. C1-1 RED; C1-2 ve UI entegrasyonu yok. Worker deploy ve uçtan uca D1 kalıcılık testi yok.
 - Depo metadata okuması `admin=true`, `push=true` gösteriyor; bu Actions runner/billing ayarlarını kanıtlamaz. Actions permissions endpoint'i entegrasyondan okunamadı. Kök neden kesin değil.
 **SONRAKİ ADIM:** runner atanmama sorununun Actions annotation/billing/repo settings tarafında çözülmesi; ardından güncel HEAD için 31 testli PR CI yeşile dönmeli. Merge ve deploy yok.
+
+### C1-1 yeniden deneme — 24.11.2026
+- Son PR koşusu [#45449449913](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45449449913) için başarısız job bir kez yeniden çalıştırıldı (attempt 2).
+- Yeni job [138647328405](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45449449913/job/138647328405): `syntax-and-unit`, completed/failure, `steps=[]`. Hiçbir syntax veya test adımı çalışmadı. İlk attempt 1'de runner_id=0 idi; ikinci denemenin job adım listesi de boş.
+- Node v22.16.0 ile ayrı, izole mikro-harness çalıştırıldı; aynı robots karar fonksiyonu kuralı için `trendyol=reddedildi`, `getmidas=izinli` ve manuel redirect ayarı için iki PASS çıktısı alındı. Bu, depo testleri değildir; `npm run test:c1` yerine geçmez.
+- PR #5 açıklaması yeniden deneme ve sınırlı mikro-harness kanıtıyla güncellendi. HEAD `197295813ed0ac5cc5ec49d8df7d95b677d77322`; 12 dosya, +2.270/-5; 31 test tanımı.
+- Sonuç değişmedi: C1-1 RED; kamu 1 kaynak/43 ölçülmüş benzersiz kayıt; 15 özel pano aday, canlı ilan adetleri ölçülmedi. Merge/deploy yok.
+**SONRAKİ ADIM:** GitHub Actions runner atama/hesap ayarı sorunu giderilmeli; güncel PR HEAD üzerinde tüm 31 test yeşil geçmeli. Sonra güncel e-Şube JSON'u ve kaynak başına canlı ilan sayıları raporlanmalı.
