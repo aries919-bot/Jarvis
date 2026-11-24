@@ -46,38 +46,46 @@ jobs:
           restore-keys: |
             h2-last-good-${{ github.ref_name }}-
 
-      - name: Check whether branch cache contains last-good feeds
+      - name: Check whether branch cache contains Tarsus last-good feed
         if: github.event_name != 'pull_request'
         id: last_good_cache
         shell: bash
         run: |
           mkdir -p reports/h2-last-good
-          if find reports/h2-last-good -maxdepth 1 -type f -name '*.json' -print -quit | grep -q .; then
+          if [ -s reports/h2-last-good/tarsus-ogretim-elemani-2026.json ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Bootstrap last-good feeds from previous verified H2 run
+      - name: Download historical verified H2 feeds when Tarsus cache is missing
         if: github.event_name != 'pull_request' && steps.last_good_cache.outputs.present == 'false'
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: h2-official-feeds-44
-          path: reports/h2-last-good
+          path: reports/h2-seed
           repository: ${{ github.repository }}
           run-id: 45476818354
           github-token: ${{ github.token }}
 
-      - name: Report last-good bootstrap result
+      - name: Fill only missing last-good source files
         if: github.event_name != 'pull_request' && steps.last_good_cache.outputs.present == 'false'
         shell: bash
         run: |
-          if find reports/h2-last-good -maxdepth 1 -type f -name '*.json' -print -quit | grep -q .; then
-            echo "Previous verified source feeds restored." >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p reports/h2-last-good
+          if [ -d reports/h2-seed ]; then
+            for source_file in reports/h2-seed/*.json; do
+              [ -f "$source_file" ] || continue
+              target="reports/h2-last-good/$(basename "$source_file")"
+              [ -e "$target" ] || cp "$source_file" "$target"
+            done
+          fi
+          if [ -s reports/h2-last-good/tarsus-ogretim-elemani-2026.json ]; then
+            echo "Historical Tarsus last-good file restored without overwriting newer source cache." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::warning::No prior H2 artifact was available; failed sources cannot display a last-good card until a fresh run."
-            echo "No historical last-good artifact available." >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::No historical Tarsus last-good file available; Tarsus will remain stale without prior card data."
+            echo "No historical Tarsus last-good file available." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Read measured official announcements
