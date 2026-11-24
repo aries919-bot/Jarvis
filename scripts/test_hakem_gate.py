@@ -100,11 +100,11 @@ class HakemGateTests(unittest.TestCase):
         self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
 
     def test_checker_pattern_file_is_excluded_from_self_scan(self):
-        source_line = 'UA_PATTERN = r"(?:Moz" + "illa)/[0-9]"'
+        pattern_line = '(re.compile(r"Mozilla' + "/5.0" + '", re.I), "UA pattern")'
         diff = (
             "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
             "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
-            "@@ -1 +1 @@\n+" + source_line + "\n"
+            "@@ -1 +1 @@\n+        " + pattern_line + "\n"
         )
         self.assertFalse(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
 
