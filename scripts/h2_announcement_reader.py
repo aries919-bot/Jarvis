@@ -507,6 +507,67 @@ def parse_botas_result(body: bytes, headers: Any, collected_at: str,
     )
 
 
+def parse_official_notice(source: dict[str,Any], page_text: str, attachment_text: str,
+                         collected_at: str, first_seen_at: str, today: date) -> dict[str,Any]:
+    combined = html.unescape((page_text or "") + "\\n" + (attachment_text or ""))
+    for needle in source.get("expectedText", []):
+        if str(needle).lower() not in combined.lower():
+            raise SourceError(f"Resmî duyuru doğrulanamadı; beklenen metin bulunamadı: {needle}")
+    published = explicit_published_at(combined, mode=source.get("publicationMode"))
+    if not published:
+        raise SourceError("Açık yayın tarihi kanıtı bulunamadı; publishedAt üretilmedi")
+    deadline = application_deadline(combined, str(source.get("deadlineContext", "başvuru")))
+    if not deadline:
+        raise SourceError("Açık başvuru aralığı bulunamadı; deadline üretilmedi")
+    how_to_apply = source.get("howToApply")
+    if not isinstance(how_to_apply, dict) or not how_to_apply.get("url"):
+        raise SourceError("Resmî başvuru yönlendirmesi eksik")
+    return make_item(
+        item_id=str(source["itemId"]),
+        institution=str(source["institution"]),
+        title=str(source["title"]),
+        category=str(source.get("category", "Kamu")),
+        content_type=str(source.get("contentType", "job")),
+        official_url=str(source["url"]),
+        how_to_apply=how_to_apply,
+        conditions=[str(x) for x in source.get("conditions", [])],
+        deadline=deadline,
+        published_at=published,
+        collected_at=collected_at,
+        first_seen_at=first_seen_at,
+        today=today,
+        tags=[str(x) for x in source.get("tags", [])],
+    )
+
+
+def collect_official(source: dict[str,Any], requester: Callable[[str,int],FetchResponse],
+                     now: str, previous: dict[str,Any] | None, today: date) -> dict[str,Any]:
+    robots_cache: dict[str,RobotFileParser] = {}
+    fmt = source.get("format", "html")
+    body,_,headers = fetch_public_url(source["url"],requester,robots_cache,
+                                       MAX_PDF_BYTES if fmt == "pdf" else MAX_HTML_BYTES)
+    attachment_text = ""
+    if fmt == "pdf":
+        page_text = extract_pdf_text(body)
+    elif fmt == "html":
+        page = parse_html(body,headers)
+        page_text = page.text
+        pdf_url = source.get("pdfUrl")
+        if pdf_url:
+            links = official_link_map(page,source["url"])
+            if pdf_url not in links:
+                raise SourceError("Ek PDF resmî HTML sayfasında bağlantı olarak bulunamadı")
+            pdf_body,_,_ = fetch_public_url(pdf_url,requester,robots_cache,MAX_PDF_BYTES)
+            attachment_text = extract_pdf_text(pdf_body)
+    else:
+        raise SourceError(f"Desteklenmeyen resmî duyuru biçimi: {fmt}")
+    item = parse_official_notice(source,page_text,attachment_text,now,now,today)
+    items = [item]
+    assign_first_seen(items,previous,now)
+    return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,
+            "sourceStatus":"fresh","items":items}
+
+
 def load_previous(previous_dir: Path | None, source_id: str) -> dict[str,Any] | None:
     if previous_dir is None:
         return None
