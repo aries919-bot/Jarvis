@@ -1,0 +1,487 @@
+{
+  "schemaVersion": 1,
+  "area": "C1 İş ve Kariyer kaynak doğrulama",
+  "decision": "RED",
+  "privateSha": "0eeefed9534040a46ce7ef83157c0d6872b7f0b0",
+  "baseSha": "d78df6104265cca25de67617ccb5031ba3d3bfdb",
+  "runId": "45504531310",
+  "runUrl": "https://github.com/aries919-bot/Jarvis/actions/runs/45504531310",
+  "collectedAt": "2026-11-24T22:50:27.845233+00:00",
+  "gates": {
+    "codeQaPass": false,
+    "productionAuthenticatedReadPass": false,
+    "publicEvidence": {
+      "freshSources": 1,
+      "verifiedOpenListings": 42,
+      "met": true
+    },
+    "sourceAndListingThreshold": {
+      "requiredSources": 10,
+      "actualSources": 1,
+      "requiredListings": 100,
+      "actualListings": 42,
+      "met": false
+    }
+  },
+  "metrics": {
+    "sourceCount": 16,
+    "freshSources": 10,
+    "staleSources": 6,
+    "verifiedSources": 1,
+    "verifiedListings": 42,
+    "publicSources": 1,
+    "publicVerifiedListings": 42,
+    "unknownDeadlineListings": 114,
+    "expiredListings": 1,
+    "publicSnapshotAt": "2026-11-24T11:57:55+00:00",
+    "publicSnapshotAgeHours": 10.87,
+    "publicRawRows": 43,
+    "publicUniqueRows": 43
+  },
+  "jobs": {
+    "preflight": {
+      "qa": "preflight",
+      "privateSha": "0eeefed9534040a46ce7ef83157c0d6872b7f0b0",
+      "baseSha": "d78df6104265cca25de67617ccb5031ba3d3bfdb",
+      "status": "PASS",
+      "reasons": [],
+      "checkedOutSha": "0eeefed9534040a46ce7ef83157c0d6872b7f0b0"
+    },
+    "unit-tests": {
+      "qa": "unit-tests",
+      "command": "npm run test:c1",
+      "exitCode": 0,
+      "tests": 37,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    "worker-d1-smoke": {
+      "qa": "worker-d1-smoke",
+      "command": "node scripts/c1-worker-d1-smoke.mjs",
+      "exitCode": 0,
+      "checksPassed": 11,
+      "environment": "local Wrangler + local D1; not production",
+      "status": "PASS"
+    },
+    "live-source-audit": {
+      "qa": "live-source-audit",
+      "command": "node scripts/career-feed-live.mjs",
+      "exitCode": 0,
+      "status": "PASS",
+      "metrics": {
+        "collectedAt": "2026-11-24T22:50:07.637Z",
+        "sourceCount": 16,
+        "freshSourceCount": 10,
+        "staleSourceCount": 6,
+        "successfulSourceCount": 1,
+        "totalCount": 156,
+        "freshListingCount": 156,
+        "verifiedListingCount": 42,
+        "activeDeadlineCount": 42,
+        "pastDeadlineCount": 1,
+        "unknownDeadlineCount": 114,
+        "publicSourceCount": 1,
+        "publicListingCount": 42,
+        "threshold": {
+          "requiredSources": 10,
+          "requiredListings": 100,
+          "met": false
+        }
+      },
+      "sources": [
+        {
+          "id": "trendyol",
+          "name": "Trendyol",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 44,
+          "listingCount": 35,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "midas",
+          "name": "Midas",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 17,
+          "listingCount": 16,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "commencis",
+          "name": "Commencis",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 7,
+          "listingCount": 5,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "dream-games",
+          "name": "Dream Games",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 17,
+          "listingCount": 17,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "aleph",
+          "name": "Aleph",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 171,
+          "listingCount": 5,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "ajax-systems",
+          "name": "Ajax Systems",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 176,
+          "listingCount": 13,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "insider-one",
+          "name": "Insider One",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 112,
+          "listingCount": 22,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "binance",
+          "name": "Binance",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "no-turkey-openings",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 4,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "no-turkey-openings",
+          "lastError": null
+        },
+        {
+          "id": "picus",
+          "name": "Picus Security",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": 200,
+          "rawCount": 15,
+          "listingCount": 1,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        },
+        {
+          "id": "bold-games",
+          "name": "Bold Games",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": null,
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "robots-erisilemedi",
+          "lastError": "HTTP_401"
+        },
+        {
+          "id": "fal-ai",
+          "name": "fal",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": null,
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "robots-erisilemedi",
+          "lastError": "HTTP_401"
+        },
+        {
+          "id": "global-talent-co",
+          "name": "The Global Talent Co.",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": null,
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "robots-erisilemedi",
+          "lastError": "HTTP_401"
+        },
+        {
+          "id": "sensor-tower",
+          "name": "Sensor Tower",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": null,
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "robots-erisilemedi",
+          "lastError": "HTTP_401"
+        },
+        {
+          "id": "xds",
+          "name": "XDS",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": null,
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "robots-erisilemedi",
+          "lastError": "HTTP_401"
+        },
+        {
+          "id": "cambly",
+          "name": "Cambly",
+          "category": "Büyük özel",
+          "expectedCategory": "Büyük özel",
+          "state": "STALE",
+          "status": "stale",
+          "robots": "erisilemedi",
+          "httpStatus": null,
+          "rawCount": 0,
+          "listingCount": 0,
+          "collectedAt": null,
+          "lastGoodAt": null,
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "robots-erisilemedi",
+          "lastError": "HTTP_401"
+        },
+        {
+          "id": "esube-kamu",
+          "name": "İŞKUR e-Şube",
+          "category": "Kamu",
+          "expectedCategory": "Kamu",
+          "state": "FRESH",
+          "status": "ok",
+          "robots": "izinli",
+          "httpStatus": null,
+          "rawCount": 43,
+          "listingCount": 42,
+          "collectedAt": null,
+          "lastGoodAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptAt": "2026-11-24T22:50:07.637Z",
+          "lastAttemptStatus": "ok",
+          "lastError": null
+        }
+      ],
+      "categoryErrors": [],
+      "parseError": null,
+      "productionPublish": "NOT_RUN; no Worker URL/token passed"
+    },
+    "public-data-contract": {
+      "qa": "public-data-contract",
+      "status": "FAIL",
+      "snapshotAt": "2026-11-24T11:57:55+00:00",
+      "ageHours": 10.87,
+      "rawRows": 43,
+      "uniqueRows": 43,
+      "freshPublicSources": 1,
+      "verifiedOpenPublicListings": 42,
+      "expiredRows": 1,
+      "mappedRows": 42,
+      "mapperStatus": "ok",
+      "errors": [
+        "source snapshot time not preserved"
+      ]
+    },
+    "failure-matrix": {
+      "qa": "failure-matrix",
+      "status": "PASS",
+      "cases": 12,
+      "covered": 12,
+      "missing": [],
+      "results": [
+        {
+          "key": "real_official_listing",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "broken_internet",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "empty_response",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "http_403_500_timeout",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "robots_denied",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "source_last_good",
+          "file": "tests/career-feed-state.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "expired_stale_data",
+          "file": "tests/career-feed-state.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "missing_auth",
+          "file": "tests/career-feed-route.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "general_token_denied",
+          "file": "tests/career-feed-route.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "raw_json_roundtrip",
+          "file": "tests/career-feed-route.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "esube_stale_12h",
+          "file": "tests/esube-input.test.mjs",
+          "covered": true
+        },
+        {
+          "key": "source_category_preserved",
+          "file": "tests/career-feed.test.mjs",
+          "covered": true
+        }
+      ]
+    },
+    "security-diff": {
+      "qa": "security-diff",
+      "status": "PASS",
+      "changedFileCount": 2,
+      "changedFiles": [
+        "src/career-feed.js",
+        "tests/career-feed.test.mjs"
+      ],
+      "allowedFilesExactMatch": true,
+      "diffBytes": 1638,
+      "diffLimitBytes": 60000,
+      "numstat": [
+        "3\t0\tsrc/career-feed.js",
+        "6\t0\ttests/career-feed.test.mjs"
+      ],
+      "addedLineFindings": {},
+      "diffCheckClean": true,
+      "userAgentExact": true
+    },
+    "production-readonly": {
+      "qa": "production-readonly",
+      "method": "authenticated GET only; no POST or deployment",
+      "status": "BLOCKED",
+      "reason": "JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN pair is not configured."
+    }
+  },
+  "reasons": [
+    "public-data-contract: FAIL — ['source snapshot time not preserved']",
+    "production-readonly: BLOCKED — JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN pair is not configured.",
+    "10 kaynak / 100 doğrulanmış ilan eşiği karşılanmadı."
+  ]
+}
