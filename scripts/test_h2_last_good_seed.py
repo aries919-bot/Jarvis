@@ -91,5 +91,23 @@ class H2LastGoodSeedTests(unittest.TestCase):
             seed.seed_last_good(self.seed_file, self.previous)
 
 
+    def test_committed_seed_contains_five_historical_verified_feeds(self):
+        path = ROOT / "career" / "h2_last_good_seed.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(1, manifest["schemaVersion"])
+        self.assertEqual(45476818354, manifest["provenance"]["runId"])
+        sources = manifest["sources"]
+        ids = {source["sourceId"] for source in sources}
+        self.assertEqual({
+            "anadolu-sozlesmeli-2026", "atk-personel-2026-2",
+            "duzce-ogretim-elemani-2026", "tarsus-ogretim-elemani-2026",
+            "yhgm-kura",
+        }, ids)
+        for source in sources:
+            self.assertTrue(seed.valid_last_good(source, source["sourceId"]))
+            for item in source["items"]:
+                self.assertIsNotNone(seed.timestamp(item.get("firstSeenAt")))
+
+
 if __name__ == "__main__":
     unittest.main()
