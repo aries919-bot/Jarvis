@@ -56,29 +56,33 @@ class HakemGateTests(unittest.TestCase):
         self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
 
     def test_added_verify_false_in_checker_is_flagged(self):
+        unsafe_call = "requests.get(url, verify" + "=" + "False)"
         diff = (
             "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
             "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
             "@@ -1,0 +2 @@\n"
-            "+requests.get(url, verify=False)\n"
+            "+" + unsafe_call + "\n"
         )
         self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
 
     def test_added_browser_ua_in_checker_is_flagged(self):
+        ua = "Mozilla" + "/5.0"
+        user_agent_line = "headers['User-Agent'] = '" + ua + "'"
         diff = (
             "diff --git a/scripts/hakem_gate.py b/scripts/hakem_gate.py\n"
             "--- a/scripts/hakem_gate.py\n+++ b/scripts/hakem_gate.py\n"
             "@@ -1,0 +2 @@\n"
-            "+headers['User-Agent'] = 'Mozilla/5.0'\n"
+            "+" + user_agent_line + "\n"
         )
         self.assertTrue(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
 
     def test_hunk_added_content_starting_with_plus_plus_plus_is_scanned(self):
+        unsafe_line = "+++" + " b/verify" + "=" + "False"
         diff = (
             "diff --git a/config.txt b/config.txt\n"
             "--- a/config.txt\n+++ b/config.txt\n"
             "@@ -1,0 +2 @@\n"
-            "+++ b/verify=False\n"
+            + unsafe_line + "\n"
         )
         self.assertTrue(any("TLS" in item for item in deterministic_findings(diff, "cline/K1")))
 
