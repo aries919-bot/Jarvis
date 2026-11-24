@@ -11,12 +11,12 @@ on:
         description: Exact jarvis-cloud commit SHA
         required: true
         type: string
-        default: 0eeefed9534040a46ce7ef83157c0d6872b7f0b0
+        default: 68e858424c3589b7d6cffea7ba26c7941027b017
       base_sha:
         description: Exact private C1 base SHA for diff review
         required: true
         type: string
-        default: d78df6104265cca25de67617ccb5031ba3d3bfdb
+        default: 74816f3954c3fa8164ef0266b848b0b9e9a897d4
 
 permissions:
   contents: write
@@ -27,8 +27,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '0eeefed9534040a46ce7ef83157c0d6872b7f0b0' }}
-  PRIVATE_C1_BASE_SHA: ${{ github.event.inputs.base_sha || 'd78df6104265cca25de67617ccb5031ba3d3bfdb' }}
+  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '68e858424c3589b7d6cffea7ba26c7941027b017' }}
+  PRIVATE_C1_BASE_SHA: ${{ github.event.inputs.base_sha || '74816f3954c3fa8164ef0266b848b0b9e9a897d4' }}
 
 jobs:
   preflight:
