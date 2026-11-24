@@ -105,3 +105,22 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - PR #39 açık, merge yok. Cem'in açık “birleştir” izni bekleniyor. Bu izin verilmeden PR birleştirilmeyecek.
 - #39 tabana girdikten sonra PR #33 Hakem job'ı yeniden çalıştırılır. #33 ancak test ve Hakem tümüyle SUCCESS olduktan, sonra Cem'in ayrı birleştirme onayı geldikten sonra birleşebilir.
 - Secret sona erme tarihi yaklaşık 24.12.2026 olarak Cem tarafından bildirilmiştir; GitHub tarafında kesin expiry doğrulanmadı. Secret değerleri raporlanmaz.
+
+
+## 9. Güncel hakem ve K1-F2 sonucu — 24.11.2026 20:26 UTC
+
+### PR #39 — tamamlandı
+- Cem'in “benim yerime sen yap” yanıtı, hemen önce #39'un birleştirilmesine ilişkin açık soruya verildiğinden yalnız PR #39 için onay kabul edildi.
+- [PR #39](https://github.com/aries919-bot/Jarvis/pull/39) squash ile cline/K1 dalına birleştirildi: 34809ef345d2756734808f238a7beb4012ddd84e. main dalına doğrudan yazılmadı.
+- Actions [#45477635801](https://github.com/aries919-bot/Jarvis/actions/runs/45477635801) ve [#45477635690](https://github.com/aries919-bot/Jarvis/actions/runs/45477635690): her iki test işi 66/66 PASS. PR #39 bootstrap olduğu için otomatik AI diff adımı atlandı; manuel review zorunluluğu kayda alındı.
+
+### PR #33 — eski deneme kapatıldı
+- Eski PR #33, #39 sonrasında geride kalmış base SHA ve mergeable=false nedeniyle birleştirilmedi.
+- Aynı iki dosyanın silinmesi temiz taban üzerinden PR #44'e taşındı; #33 superseded olarak kapatıldı.
+
+### PR #44 — temiz K1-F2 adayı
+- PR: [#44](https://github.com/aries919-bot/Jarvis/pull/44), is/K1-F2-clean-20261124 → cline/K1; base commit 34809ef345d2756734808f238a7beb4012ddd84e.
+- Diff: yalnız .github/workflows/iskur-render.yml ve scripts/render_probe.py; 2 dosya, 0 ekleme, 606 silme.
+- Python Script Tests [#45480461048](https://github.com/aries919-bot/Jarvis/actions/runs/45480461048): Ran 66 tests in 0.092s, OK; summary 66 toplam /66 geçen /0 başarısız.
+- PR Hakem [#45480461106](https://github.com/aries919-bot/Jarvis/actions/runs/45480461106): test ve hakem job SUCCESS; Cloudflare AI katmanı çalıştı ve ilk yanıt satırı ONAY. Secret alanları logda maskeli tutuldu; değerleri rapora yazılmadı.
+- Kod incelemesi KABUL. PR #44 henüz birleştirilmedi; bu PR için ayrıca açık Cem onayı gerekir.
