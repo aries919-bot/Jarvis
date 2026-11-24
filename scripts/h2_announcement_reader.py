@@ -181,7 +181,7 @@ def fetch_public_url(
             for robots_redirect in range(MAX_REDIRECTS + 1):
                 robots = requester(robots_url,MAX_ROBOTS_BYTES)
                 if robots.error:
-                    raise SourceError(f"robots UNKNOWN: {robots.error}")
+                    raise SourceError(f"{robots_url}: robots UNKNOWN: {robots.error}")
                 if robots.status in {301,302,303,307,308}:
                     location = header(robots.headers,"Location")
                     if not location:
@@ -208,7 +208,7 @@ def fetch_public_url(
             raise SourceError("robots DISALLOW; hedef sayfaya istek gönderilmedi")
         response = requester(current,limit)
         if response.error:
-            raise SourceError(response.error)
+            raise SourceError(f"{current}: {response.error}")
         if response.status in {301,302,303,307,308}:
             location = header(response.headers,"Location")
             if not location:
@@ -577,7 +577,9 @@ def main() -> int:
     if args.summary:
         with args.summary.open("a",encoding="utf-8") as handle:
             handle.write(summary)
-    return 0 if any(row["sourceStatus"] == "fresh" for row in rows) else 1
+    # On initial setup every configured source must be readable; on later
+    # failures stale JSON is still uploaded but CI reports the source outage.
+    return 0 if rows and all(row["sourceStatus"] == "fresh" for row in rows) else 1
 
 
 if __name__ == "__main__":
