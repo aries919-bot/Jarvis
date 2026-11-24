@@ -86,3 +86,49 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - **YHGM:** 2.764 sürekli işçi kura/sonuç duyurusu; güncel iş ilanı değil, Haber sekmesinde **Kura** olarak sınıflanır.
 - TLS beş hedefinde hata CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate; hata süresi dolmuş sertifikayı kanıtlamaz. SSL doğrulaması açık kalır.
 - Resmî Gazete'de robots izinli iki timeout hedefi birer kez yeniden denendi; tekrar timeout. TPAO PDF için robots izni belirsiz olduğundan tekrar istek yok.
+
+
+## 8. Hakem düzeltmesi ve K1-F2 yeniden denemesi — 24.11.2026
+
+### PR #33 K1-F2
+- Diff yeniden sayımı: 2 dosya, 0 ekleme, 606 silme. Yalnız `.github/workflows/iskur-render.yml` ve `scripts/render_probe.py`.
+- Test job SUCCESS: `Ran 53 tests in 0.093s`, `OK` (53/53).
+- Başarısız Hakem job yeniden çalıştırıldı: [Actions #45413014756](https://github.com/aries919-bot/Jarvis/actions/runs/45413014756), attempt 2. GitHub API yeniden çalıştırma cevabı `success=true`; tests SUCCESS, hakem `138746764701` FAILURE / RED.
+- Actions logunda secret alanları maskeli (`CF_ACCOUNT_ID: ***`, `CF_API_TOKEN: ***`). Hakem silinen eski render_probe.py içindeki Mozilla/Chrome User-Agent satırlarını taradığı için RED verdi. Deterministik kontrolde durduğundan Cloudflare API çağrısına ulaşmadı; secret geçerliliği kanıtlanmış değildir.
+
+### PR #39 HAKEM-DIFF
+- PR: [#39](https://github.com/aries919-bot/Jarvis/pull/39), `fix/hakem-added-diff-only` → `cline/K1`.
+- Kapsam: `.github/workflows/hakem.yml`, `scripts/hakem_gate.py`, `scripts/test_hakem_gate.py`. Diff'te yalnız eklenen hunk satırları denetlenir; silinen UA yanlış pozitif olmaz. Test logunda pozitif test sayısı, OK ve test job success zorunludur. Cloudflare AI opsiyoneldir; AI yoksa bunun bir insan onayı olmadığı açıkça belirtilir.
+- Kod hakem incelemesi: KABUL. Diff'te yasak desen tekrar sayımı 0.
+- Actions [#45477635801](https://github.com/aries919-bot/Jarvis/actions/runs/45477635801): Python Script Tests SUCCESS; `Ran 66 tests`, `OK` (66/66).
+- Actions [#45477635690](https://github.com/aries919-bot/Jarvis/actions/runs/45477635690): tests SUCCESS, 66/66; hakem job SUCCESS; otomatik diff/AI adımı bootstrap PR #39 için SKIPPED, manual-review Step Summary SUCCESS. Bu bir bağımsız insan PR onayı değildir.
+- PR #39 açık, merge yok. Cem'in açık “birleştir” izni bekleniyor. Bu izin verilmeden PR birleştirilmeyecek.
+- #39 tabana girdikten sonra PR #33 Hakem job'ı yeniden çalıştırılır. #33 ancak test ve Hakem tümüyle SUCCESS olduktan, sonra Cem'in ayrı birleştirme onayı geldikten sonra birleşebilir.
+- Secret sona erme tarihi yaklaşık 24.12.2026 olarak Cem tarafından bildirilmiştir; GitHub tarafında kesin expiry doğrulanmadı. Secret değerleri raporlanmaz.
+
+
+## 9. Güncel hakem ve K1-F2 sonucu — 24.11.2026 20:26 UTC
+
+### PR #39 — tamamlandı
+- Cem'in “benim yerime sen yap” yanıtı, hemen önce #39'un birleştirilmesine ilişkin açık soruya verildiğinden yalnız PR #39 için onay kabul edildi.
+- [PR #39](https://github.com/aries919-bot/Jarvis/pull/39) squash ile cline/K1 dalına birleştirildi: 34809ef345d2756734808f238a7beb4012ddd84e. main dalına doğrudan yazılmadı.
+- Actions [#45477635801](https://github.com/aries919-bot/Jarvis/actions/runs/45477635801) ve [#45477635690](https://github.com/aries919-bot/Jarvis/actions/runs/45477635690): her iki test işi 66/66 PASS. PR #39 bootstrap olduğu için otomatik AI diff adımı atlandı; manuel review zorunluluğu kayda alındı.
+
+### PR #33 — eski deneme kapatıldı
+- Eski PR #33, #39 sonrasında geride kalmış base SHA ve mergeable=false nedeniyle birleştirilmedi.
+- Aynı iki dosyanın silinmesi temiz taban üzerinden PR #44'e taşındı; #33 superseded olarak kapatıldı.
+
+### PR #44 — temiz K1-F2 adayı
+- PR: [#44](https://github.com/aries919-bot/Jarvis/pull/44), is/K1-F2-clean-20261124 → cline/K1; base commit 34809ef345d2756734808f238a7beb4012ddd84e.
+- Diff: yalnız .github/workflows/iskur-render.yml ve scripts/render_probe.py; 2 dosya, 0 ekleme, 606 silme.
+- Python Script Tests [#45480461048](https://github.com/aries919-bot/Jarvis/actions/runs/45480461048): Ran 66 tests in 0.092s, OK; summary 66 toplam /66 geçen /0 başarısız.
+- PR Hakem [#45480461106](https://github.com/aries919-bot/Jarvis/actions/runs/45480461106): test ve hakem job SUCCESS; Cloudflare AI katmanı çalıştı ve ilk yanıt satırı ONAY. Secret alanları logda maskeli tutuldu; değerleri rapora yazılmadı.
+- Kod incelemesi KABUL. PR #44 henüz birleştirilmedi; bu PR için ayrıca açık Cem onayı gerekir.
+
+
+## 10. K1-F2 merge tamamlandı — 24.11.2026 20:30 UTC
+- Cem'in açık “Evet” onayıyla [PR #44](https://github.com/aries919-bot/Jarvis/pull/44) squash merge edildi.
+- Merge commit: `7348f47a339fcaebe581111f41bcc9689035234a`; hedef `cline/K1`, `main` değil.
+- GitHub metadata: closed, merged=true; 2 dosya, 0 ekleme, 606 silme.
+- Ön-merge test [#45480461048](https://github.com/aries919-bot/Jarvis/actions/runs/45480461048): 66/66 PASS. Hakem [#45480461106](https://github.com/aries919-bot/Jarvis/actions/runs/45480461106): SUCCESS, AI ONAY.
+- Merge SHA sonrası Actions sorgusu boş döndü; post-merge CI çalıştığı iddia edilmiyor.
