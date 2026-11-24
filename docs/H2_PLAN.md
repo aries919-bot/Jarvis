@@ -77,3 +77,22 @@ H2 okuyucu için yeni genel parser:
 - Workflow yalnız JSON kaynak artefaktlarını üretir ve Actions cache'de kaynak bazlı last-good/firstSeenAt korur. Cache ve 14 günlük artifact production database değildir.
 - Aries uygulamasındaki Android Haber ekranı bu artefaktı henüz çekmiyor. Worker'da H2 public feed route/publish yok; C1 `/kariyer-feed` production publish de secret çifti olmadığı için SKIPPED. Android uygulama network fetch/refresh bağlı değil. Dolayısıyla **haber okuyucu canlı kaynak çekebiliyor; telefon ekranında canlı haber akışı henüz yok**.
 - Üretim canlı akışı için: default branch'e onaylı schedule workflow; kaynak başına last-good ve firstSeenAt kalıcılığı Worker/D1; güvenli public/read authenticated feed; Android haber ekranı JSON refresh; per-source stale; dış site Custom Tabs. Bu iş C1 kabul/threshold öncesinde UI'ya taşınmaz.
+
+
+### Son doğrulama — 24.11.2026 20:04 UTC
+
+- Son kod HEAD: `3d2012c3d4e3208b40ef2b24e5f70d30912182ac`.
+- [Test koşusu #45476832673](https://github.com/aries919-bot/Jarvis/actions/runs/45476832673): **32/32 test PASS**, 0 failure.
+- [Canlı okuma koşusu #45476818354](https://github.com/aries919-bot/Jarvis/actions/runs/45476818354): overall SUCCESS; job `138739101315`; live feed step, cache restore/save, JSON artifact upload SUCCESS.
+- Ölçüm `collectedAt=2026-11-24T20:04:05Z`; 6 sources, 5 fresh / 1 stale, 5 cards. Artefakt [#14961200293](https://github.com/aries919-bot/Jarvis/actions/runs/45476818354/artifacts/14961200293), 5.283 bayt.
+- Artefakt zip'i açılıp altı JSON dosyası tekrar sayıldı:
+  - `yhgm-kura`: fresh, 1 lottery card; `publishedAt=2025-11-12`, `deadline=2025-10-13`, Süresi geçti; yeni iş sayılmaz.
+  - `atk-personel-2026-2`: fresh, 1 job card; 181 pozisyon; `publishedAt=2025-11-20`; `applicationOpensAt=2026-11-30T09:00:00+03:00`; `deadline=2026-12-06`; 24 Kasım'da henüz açılmadığı için **Doğrulanamadı** (başvuruyu açık göstermiyoruz).
+  - `anadolu-sozlesmeli-2026`: fresh, 1 job card; `publishedAt=2026-11-13`; `deadline=2026-11-30`; Doğrulandı. PDF endpoint'i K1-B'de ağ hatası olduğundan sadece HTML sayfasında kanıtlanan genel şartlar taşınır.
+  - `duzce-ogretim-elemani-2026`: fresh, 1 job card; `publishedAt=2026-11-23`; `deadline=2026-12-07`; Doğrulandı; 5 kadroluk duyuru bir karttır.
+  - `tarsus-ogretim-elemani-2026`: fresh, 1 job card; `publishedAt=2026-11-23`; `deadline=2026-12-07`; Doğrulandı; 3 kadroluk duyuru bir karttır.
+  - `botas-duyurular`: stale; detay sayfası timeout + tek retry timeout; son iyi kayıt stale korundu.
+- Her kurum duyurusu tek karttır; kontenjan adedi haber/kaynak sayısını şişirmez. 5 kart = 4 iş/personel duyurusu +1 geçmiş kura haberi. Başvurusu açık/doğrulanmış güncel iş sayısı H2'de 3 karttır (Anadolu, Düzce, Tarsus); ATK başvurusu 30 Kasım'da açılacağından henüz açık sayılmaz. Kura kartı yeni iş sayılmaz.
+- İlk görülme değerleri JSON artefaktından tekrar kontrol edildi. İlk üç / YHGM için önceki cache'deki `firstSeenAt` değerleri korundu; Tarsus için ilk fresh görülme `2026-11-24T20:00:39Z`.
+- H2 workflow schedule `17 */6 * * *` UTC tanımlı. Ancak PR #40 `durum` tabanına açık/taslak olduğundan schedule **henüz otomatik çalışır durumda değildir**; GitHub schedule yalnız default branch'teki workflow'da tetiklenir. Manual/push koşuları branch'te canlı çekim yapıyor.
+- Android uygulaması H2 JSON artefaktına/Worker'a bağlı değildir. Mevcut genel Haber yenileme butonu hâlâ Google News RSS başlıklarını elle yeniler; H2 doğrulanmış kartları telefonda henüz gösterilmez.
