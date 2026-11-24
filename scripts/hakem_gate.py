@@ -59,17 +59,17 @@ def deterministic_findings(diff: str, base: str) -> list[str]:
     if base == "main":
         findings.append("PR hedef dalı main; yasak.")
     patterns = [
-        (re.compile(r"verify\\s*=\\s*False", re.I), "TLS doğrulaması kapatılıyor."),
-        (re.compile(r"robots\\.txt.{0,100}(ignore|bypass|skip)|(?:ignore|bypass|skip).{0,100}robots\\.txt", re.I), "robots kuralları atlanıyor."),
-        (re.compile(r"(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer\\s+[A-Za-z0-9._~-]{24,})"), "Token/credential benzeri sabit değer."),
+        (re.compile(r"verify\s*=\s*False", re.I), "TLS doğrulaması kapatılıyor."),
+        (re.compile(r"robots\.txt.{0,100}(ignore|bypass|skip)|(?:ignore|bypass|skip).{0,100}robots\.txt", re.I), "robots kuralları atlanıyor."),
+        (re.compile(r"(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer\s+[A-Za-z0-9._~-]{24,})"), "Token/credential benzeri sabit değer."),
         (re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"), "Özel anahtar sızıntısı."),
-        (re.compile(r"(?:CF_API_TOKEN|GITHUB_TOKEN|API_KEY)\\s*[:=]\\s*['\"][^'\"]{12,}['\"]", re.I), "Secret değeri kod içine yazılmış."),
-        (re.compile(r"(?:TCKN|TC\\s*Kimlik|Kimlik\\s*No)\\D{0,20}[1-9][0-9]{10}", re.I), "Kimlik numarası benzeri kişisel veri."),
-        (re.compile(r"(?:CV|özgeçmiş).{0,120}(?:telefon|e-?posta|adres)\\s*[:=]", re.I), "CV/kişisel iletişim verisi diff'e eklenmiş olabilir."),
+        (re.compile(r"(?:CF_API_TOKEN|GITHUB_TOKEN|API_KEY)\s*[:=]\s*['\"][^'\"]{12,}['\"]", re.I), "Secret değeri kod içine yazılmış."),
+        (re.compile(r"(?:TCKN|TC\s*Kimlik|Kimlik\s*No)\D{0,20}[1-9][0-9]{10}", re.I), "Kimlik numarası benzeri kişisel veri."),
+        (re.compile(r"(?:CV|özgeçmiş).{0,120}(?:telefon|e-?posta|adres)\s*[:=]", re.I), "CV/kişisel iletişim verisi diff'e eklenmiş olabilir."),
         (re.compile(r"(?:Chrome|Firefox|Safari|Edge|Mozilla)/[0-9]", re.I), "Tarayıcı taklidi User-Agent."),
         (re.compile(r"(?:publishedAt|published_at).{0,100}(?:collectedAt|collected_at|firstSeenAt|first_seen_at)|(?:collectedAt|collected_at|firstSeenAt|first_seen_at).{0,100}(?:publishedAt|published_at)", re.I), "Toplama/ilk görülme tarihi yayın tarihi olarak atanıyor."),
-        (re.compile(r"git\\s+push.{0,80}\\bmain\\b|branches:\\s*\\[?\\s*main\\b", re.I), "main dalına yazma/push hedefi."),
-        (re.compile(r"(?:KPSS|e-Devlet).{0,100}(?:TCKN|şifre|password|token)\\s*[:=]", re.I), "KPSS/e-Devlet kimlik bilgisi sızıntısı."),
+        (re.compile(r"git\s+push.{0,80}\bmain\b|branches:\s*\[?\s*main\b", re.I), "main dalına yazma/push hedefi."),
+        (re.compile(r"(?:KPSS|e-Devlet).{0,100}(?:TCKN|şifre|password|token)\s*[:=]", re.I), "KPSS/e-Devlet kimlik bilgisi sızıntısı."),
     ]
     for pattern, reason in patterns:
         if pattern.search(diff):
