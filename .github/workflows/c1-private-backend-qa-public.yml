@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Public-runner QA for private C1 after malformed-JSON validation ordering fix. Records exact private HEAD, runs unit tests, live source counts and local D1 round-trip.
+# Public-runner QA for parser-free raw Worker feed storage. Records exact private HEAD, runs unit tests, live source counts and local D1 round-trip.
 
 on:
   push:
