@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Latest rerun includes the bounded Wrangler shutdown and full-description deadline regression coverage.
+# Latest rerun also excludes internships and training-camp programmes from vacancy counts.
 
 on:
   push:
