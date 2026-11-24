@@ -139,13 +139,13 @@
 
 ## 24.11.2026 — Hakem ve merge politikası
 
-- PR #34 hedefi **cline/K1**, dalı `is/K1-test-workflow`; PR açık, merge edilmedi. Son güncel head `b58ebdeb6f6775f19e32ead4a075eae2214032de`. Üç dosya: `.github/workflows/testler.yml`, `.github/workflows/hakem.yml`, `scripts/hakem_gate.py`.
-- Eski test kanıtı [Actions #45403193778](https://github.com/aries919-bot/Jarvis/actions/runs/45403193778): 46/46. Yeni hakem push denemesinde test işi yeşil, hakem işi RED: Cloudflare Secrets eksik. [Son bilinen test run #45409847854](https://github.com/aries919-bot/Jarvis/actions/runs/45409847854). Hakem yorumları PR #34 konuşmasında; son karar RED, hiçbir APPROVE review yok.
-- Hakem: önce deterministik tarama (TLS verify kapatma, robots atlama, token/özel anahtar/kimlik verisi, tarayıcı UA taklidi, collected/firstSeen -> published alan ataması, main push); sonra Cloudflare Workers AI REST. Diff 60 KB ile sınırlı; diff/test özeti güvenilmeyen veri. ONAY yalnız Cloudflare cevabından; secret yoksa fail-closed RED.
-- Güvenlik sertleştirmesi: PR testleri ayrı secretsiz job'da; AI job PR olayında base SHA'den hakem kodunu çalıştırır. Böylece PR head kodu Cloudflare/GitHub secrets görmez.
-- `CF_ACCOUNT_ID` ve `CF_API_TOKEN` GitHub Secrets henüz tanımlı değil; değerleri sohbete veya loga yazma. Bu nedenle #34 merge edilmedi.
-- PR #32 gerçek hedefi `durum`, head `is/not-c1-v3`; açık, merge edilmedi. Yeni politikada yalnız `cline/K1` hedefli PR merge edilebilir; #32 şu an uygun değil. #34 çözülmeden sıra #32'ye geçmez.
-- PR #33 hedefi hâlâ `is/K1-test-workflow`; `testler.yml` `cline/K1` içinde yok. #34 merge edilmeden #33 hedefi değiştirilmedi.
+- PR #34 hedefi **cline/K1**, dalı `is/K1-test-workflow`; PR açık, merge edilmedi. Son head `ae2303f4b85c056d8ea27cfebe1422ed28a0cd1b`. Dört dosya: `.github/workflows/testler.yml`, `.github/workflows/hakem.yml`, `scripts/hakem_gate.py`, `scripts/test_hakem_gate.py`.
+- [Actions #45410380341](https://github.com/aries919-bot/Jarvis/actions/runs/45410380341) Python test job SUCCESS; [Actions #45410380308](https://github.com/aries919-bot/Jarvis/actions/runs/45410380308) hakem workflow'unda test job SUCCESS, **53/53 test geçti, 0 hata**. Hakem job'u compile aşamasını geçti ancak Cloudflare Secrets eksikliği nedeniyle fail-closed RED; AI çağrısı yapılamadı.
+- Hakem: diff 60 KB sınırı; deterministik kontroller TLS doğrulaması kapatma, robots atlama, token/özel anahtar/kimlik verisi, tarayıcı UA taklidi, `collectedAt/firstSeenAt → publishedAt` ataması ve main push. Ardından Cloudflare Workers AI REST API. Diff/test özeti güvenilmeyen veri; prompt injection talimatı sayılmaz. İlk satır yalnız Cloudflare cevabından ONAY olabilir.
+- Güvenlik: PR testleri secretsiz ayrı job'da; PR hakem işi hedef dalın güvenilir commit'inden kod çalıştırır. Bootstrap PR #34 için hakem kodu sabit commit'e pinlendi. Secret değerleri loglanmaz.
+- `CF_ACCOUNT_ID` ve `CF_API_TOKEN` GitHub Secrets henüz yok; son hakem yorumu RED. PR #34'te ONAY veya APPROVE review yok. Merge edilmedi.
+- PR #32 gerçek hedefi `durum`, head `is/not-c1-v3`; açık, merge edilmedi. Politika yalnız `cline/K1` hedefli PR'ların merge edilmesine izin verir; #32'nin hedefi değiştirilmedi.
+- PR #33 hedefi `is/K1-test-workflow`; `testler.yml` `cline/K1` içinde yok. #34 merge edilmediği için #33 hedefi değiştirilmedi.
 - `main` dalına hiçbir işlem yapılmadı. [PR #34](https://github.com/aries919-bot/Jarvis/pull/34) · [PR #32](https://github.com/aries919-bot/Jarvis/pull/32) · [PR #33](https://github.com/aries919-bot/Jarvis/pull/33).
 
-**SONRAKİ ADIM:** Cem GitHub Secrets'a `CF_ACCOUNT_ID` ve `CF_API_TOKEN` ekler; secret değerleri paylaşılmaz. Sonra #34 hakem koşusu ONAY + testler yeşil olursa ChatGPT #34'ü `cline/K1`'e merge eder. Ardından #32'nin tabanı ve #33 için `testler.yml` görünürlüğü tekrar GitHub'dan doğrulanır.
+**SONRAKİ ADIM:** Cem GitHub Secrets'a `CF_ACCOUNT_ID` ve `CF_API_TOKEN` ekler; değerler paylaşılmaz. Sonra #34 hakem koşusu ONAY + testler yeşil olursa ChatGPT #34'ü `cline/K1`'e merge eder. Ardından #32 tabanı ve #33 için `testler.yml` görünürlüğü tekrar GitHub'dan doğrulanır.
