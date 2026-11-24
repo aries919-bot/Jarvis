@@ -665,8 +665,16 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
                collected_at: str | None = None, today: date | None = None) -> tuple[list[dict[str,Any]],str]:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     sources = config.get("sources",[])
-    if len(sources) != 2 or {source.get("reader") for source in sources} != {"yhgm","botas"}:
-        raise SourceError("H2 yalnız ölçülmüş YHGM ve BOTAŞ kaynaklarını kabul eder")
+    allowed_readers = {"yhgm", "botas", "official"}
+    if not isinstance(sources,list) or len(sources) < 2:
+        raise SourceError("H2 en az iki ölçülmüş resmî kaynak bekler")
+    source_ids = [source.get("id") for source in sources]
+    if any(not isinstance(source_id,str) or not source_id for source_id in source_ids) or len(source_ids) != len(set(source_ids)):
+        raise SourceError("H2 kaynak kimlikleri eksik veya tekrarlı")
+    if {source.get("reader") for source in sources} - allowed_readers:
+        raise SourceError("H2 ölçülmemiş okuyucu türünü reddetti")
+    if not {"yhgm","botas"}.issubset({source.get("reader") for source in sources}):
+        raise SourceError("H2 ana YHGM ve BOTAŞ kayıtları eksik")
     now = collected_at or utc_now()
     today_value = today or istanbul_today()
     out_dir.mkdir(parents=True,exist_ok=True)
@@ -674,10 +682,13 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
     for source in sources:
         previous = load_previous(previous_dir,source["id"])
         try:
-            if source["reader"] == "yhgm":
+            reader = source["reader"]
+            if reader == "yhgm":
                 feed = collect_yhgm(source,requester,now,previous,today_value)
-            else:
+            elif reader == "botas":
                 feed = collect_botas(source,requester,now,previous,today_value)
+            else:
+                feed = collect_official(source,requester,now,previous,today_value)
         except SourceError as exc:
             feed = stale_feed(source["id"],now,str(exc),previous)
         write_feed(feed,out_dir,previous_dir)
@@ -695,7 +706,7 @@ def make_summary(rows: list[dict[str,Any]], collected_at: str) -> str:
         "## H2 resmî duyuru okuyucusu",
         "",
         f"- collectedAt (UTC): **{collected_at}**",
-        f"- Kaynak: **{len(rows)}** (YHGM + BOTAŞ)",
+        f"- Kaynak: **{len(rows)}** (ölçülmüş resmî kaynaklar)",
         f"- Durum: **{fresh} fresh / {stale} stale**",
         f"- Kart: **{total}**",
         "",
@@ -727,7 +738,7 @@ def main() -> int:
             handle.write(summary)
     # Source outages are reported as per-source stale states, not parser failures.
     # The workflow succeeds when both source records were processed and summarized.
-    return 0 if len(rows) == 2 else 1
+    return 0 if len(rows) >= 2 else 1
 
 
 if __name__ == "__main__":
