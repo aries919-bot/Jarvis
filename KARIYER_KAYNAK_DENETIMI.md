@@ -54,6 +54,11 @@ User-Agent: AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)
 
 Bu çıktı sertifikanın süresinin dolduğunu söylemiyor. Hata, güven zincirinde issuer/CA doğrulamasının tamamlanamadığını gösteriyor. Sunucunun ara sertifikayı eksik sunması ile Actions runner CA deposunun eksikliği bu rapordan ayrıştırılamadı. TLS doğrulaması kapatılmadı; Şişecam 403 ve ÖSYM robots belirsizliği aşılmaya çalışılmadı.
 
+## Yayın tarihi / sınav tarihi ayrımı
+
+- YHGM resmî sayfasında “12 Kasım 2025” ve “12.11.2025 Tarihli Duyuru” açıkça yer alıyor; bu kayıt kura/sonuç haberidir. Aynı metin başvuru dönemini 08.10.2025–13.10.2025 olarak veriyor. Bu nedenle H1 kaydında publishedAt=2025-11-12, deadline=2025-10-13; contentType=lottery ve freshnessStatus=Süresi geçti olmalı. Kayıt yeni iş ilanı sayılmaz. [Resmî sayfa](https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html)
+- BOTAŞ'ın ölçülen duyuru listesinde yer alan sonuç kaydının resmî detay sayfasında ayrı “Tarih: 21/1/2026” alanı görülüyor. Başlıktaki “10 Kasım 2025 / 14 Kasım 2025” yazılı sınav tarihlerini ifade ediyor; publishedAt alanına yazılmamalı. H1 kaydında publishedAt=2026-01-21, deadline=null, contentType=result ve freshnessStatus=Süresi geçti olmalı. Detay sayfası manuel okunarak tarih ayrımı doğrulandı; K1-B otomatik URL listesinde ayrı adres olarak ölçülmedi. [Resmî detay](https://www.botas.gov.tr/Icerik/10-kasim-2025-14-kasim-2025/1233)
+
 ## Timeout deneme sınırı — HATA / RED
 
 - Resmî Gazete /ilanlar ve kök sayfa için robots izni bulunan sonraki koşularda şu Actions run'larında HTTP TIMEOUT kaydı oluştu: [#45405355596](https://github.com/aries919-bot/Jarvis/actions/runs/45405355596), [#45405516646](https://github.com/aries919-bot/Jarvis/actions/runs/45405516646), [#45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813).
