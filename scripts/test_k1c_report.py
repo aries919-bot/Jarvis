@@ -94,5 +94,15 @@ class K1CAuditReportTests(unittest.TestCase):
         self.assertIn("gerçek açık ilan / ilan sayısı kanıtı değildir", REPORT)
 
 
+    def test_candidate_urls_are_https_and_exclude_prohibited_job_boards(self):
+        entries = rows()
+        urls = [entry[3].lower() for entry in entries]
+        self.assertTrue(all(url.startswith("https://") for url in urls))
+        self.assertFalse(any("linkedin.com" in url or "indeed.com" in url for url in urls))
+        for source_id in ("kariyerkapisi", "msvk-kariyerkapisi", "izbb-kariyerkapisi"):
+            row = next(entry for entry in entries if entry[1] == source_id)
+            self.assertEqual("YALNIZ_YÖNLENDİRME", row[0])
+
+
 if __name__ == "__main__":
     unittest.main()
