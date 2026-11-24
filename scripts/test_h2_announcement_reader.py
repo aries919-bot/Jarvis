@@ -115,7 +115,7 @@ class H2ReaderTests(unittest.TestCase):
         self.assertTrue(calls[0].endswith("/robots.txt"))
 
     def test_403_500_empty_and_timeout_fail_closed(self):
-        for status,body,error in ((403,b"blocked",None),(500,b"failed",None),(200,b"",None),(None,b"","TIMEOUT: page")):
+        for status,body,error in ((403,b"blocked",None),(500,b"failed",None),(200,b"",None)):
             calls=[]
             def requester(url,limit,status=status,body=body,error=error):
                 calls.append(url)
@@ -125,6 +125,62 @@ class H2ReaderTests(unittest.TestCase):
             with self.assertRaises(h2.SourceError):
                 h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
             self.assertEqual(2,len(calls))
+
+    def test_page_timeout_is_retried_once_after_robots_allow(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\\nAllow: /")
+            if len([x for x in calls if not x.endswith("/robots.txt")]) == 1:
+                return h2.FetchResponse(None,None,b"","TIMEOUT: first page timeout")
+            return ok(b"page after one retry")
+        with mock.patch.object(h2.time,"sleep"):
+            body,final_url,_=h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+        self.assertEqual(b"page after one retry",body)
+        self.assertEqual("https://www.botas.gov.tr/notice",final_url)
+        self.assertEqual(2,len([x for x in calls if not x.endswith("/robots.txt")]))
+
+    def test_page_timeout_retries_only_once_then_fails_closed(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\\nAllow: /")
+            return h2.FetchResponse(None,None,b"","TIMEOUT: page")
+        with mock.patch.object(h2.time,"sleep"):
+            with self.assertRaisesRegex(h2.SourceError,"TIMEOUT_RETRY_FAILED"):
+                h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+        self.assertEqual(2,len([x for x in calls if not x.endswith("/robots.txt")]))
+
+    def test_official_link_map_keeps_only_same_official_host_family(self):
+        page=h2.PageParser()
+        page.feed(
+            '<a href="/Icerik/223-kisilik-personel-alim-duyu/1203">'
+            '223 Kişilik Personel Alım Duyurusu</a>'
+            '<a href="https://www.botas.gov.tr/uploads/dosyaYoneticisi/559215-lan-tablo.pdf">'
+            'tıklayınız</a>'
+            '<a href="https://evil.example/attack">outside</a>'
+        )
+        links=h2.official_link_map(page,"https://www.botas.gov.tr/Kategori/duyurular/2")
+        self.assertIn("https://www.botas.gov.tr/Icerik/223-kisilik-personel-alim-duyu/1203",links)
+        self.assertIn("https://www.botas.gov.tr/uploads/dosyaYoneticisi/559215-lan-tablo.pdf",links)
+        self.assertNotIn("https://evil.example/attack",links)
+
+    def test_fresh_feed_updates_last_good_but_stale_feed_does_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            out=root/"out"
+            last=root/"last-good"
+            fresh={"schemaVersion":1,"sourceId":"yhgm-kura","sourceStatus":"fresh","collectedAt":"2026-11-24T10:00:00Z","items":[{"id":"x","firstSeenAt":"2026-11-01T00:00:00Z"}]}
+            stale={"schemaVersion":1,"sourceId":"yhgm-kura","sourceStatus":"stale","collectedAt":"2026-11-24T10:00:00Z","items":[]}
+            h2.write_feed(fresh,out,last)
+            h2.write_feed(stale,out,last)
+            saved=json.loads((last/"yhgm-kura.json").read_text(encoding="utf-8"))
+            rendered=json.loads((out/"yhgm-kura.json").read_text(encoding="utf-8"))
+            self.assertEqual("fresh",saved["sourceStatus"])
+            self.assertEqual("x",saved["items"][0]["id"])
+            self.assertEqual("stale",rendered["sourceStatus"])
 
     def test_redirect_to_other_host_is_rejected(self):
         headers=Message()

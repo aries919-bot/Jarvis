@@ -9,6 +9,7 @@ import io
 import json
 import re
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -207,6 +208,14 @@ def fetch_public_url(
         if not cache[host_origin].can_fetch(USER_AGENT,current):
             raise SourceError("robots DISALLOW; hedef sayfaya istek gönderilmedi")
         response = requester(current,limit)
+        if response.error and response.error.startswith("TIMEOUT:"):
+            first_timeout = response.error
+            time.sleep(1)
+            response = requester(current,limit)
+            if response.error:
+                raise SourceError(
+                    f"{current}: TIMEOUT_RETRY_FAILED: first={first_timeout}; retry={response.error}"
+                )
         if response.error:
             raise SourceError(f"{current}: {response.error}")
         if response.status in {301,302,303,307,308}:
@@ -240,6 +249,19 @@ def parse_html(body: bytes, headers: Any) -> PageParser:
     parser = PageParser()
     parser.feed(source)
     return parser
+
+
+def official_link_map(page: PageParser, base_url: str) -> dict[str,str]:
+    """Return only links that stay on the same official host family."""
+    links: dict[str,str] = {}
+    for label, href in page.links:
+        absolute = urllib.parse.urljoin(base_url,href)
+        try:
+            if same_official_host(base_url,absolute):
+                links[absolute] = " ".join(label.split())
+        except SourceError:
+            continue
+    return links
 
 
 def parse_date(value: str | None) -> str | None:
@@ -490,14 +512,37 @@ def collect_yhgm(source: dict[str,Any], requester: Callable[[str,int],FetchRespo
     return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,"sourceStatus":"fresh","items":items}
 
 
+def write_feed(feed: dict[str,Any], out_dir: Path, previous_dir: Path | None = None) -> None:
+    source_id = feed["sourceId"]
+    payload = json.dumps(feed,ensure_ascii=False,indent=2) + "\n"
+    out_dir.mkdir(parents=True,exist_ok=True)
+    (out_dir/f"{source_id}.json").write_text(payload,encoding="utf-8")
+    if previous_dir is not None and feed.get("sourceStatus") == "fresh":
+        previous_dir.mkdir(parents=True,exist_ok=True)
+        (previous_dir/f"{source_id}.json").write_text(payload,encoding="utf-8")
+
+
 def collect_botas(source: dict[str,Any], requester: Callable[[str,int],FetchResponse],
                   now: str, previous: dict[str,Any] | None, today: date) -> dict[str,Any]:
     robots_cache: dict[str,RobotFileParser] = {}
     # Read measured official archive first, then only the two verified detail pages and the linked official PDF.
     listing,_,listing_headers = fetch_public_url(source["listingUrl"],requester,robots_cache,MAX_HTML_BYTES)
-    if "Duyurular" not in parse_html(listing,listing_headers).text:
+    listing_page = parse_html(listing,listing_headers)
+    if "Duyurular" not in listing_page.text:
         raise SourceError("BOTAŞ duyuru arşivi doğrulanamadı")
+    listed_links = official_link_map(listing_page,source["listingUrl"])
+    job_label = listed_links.get(source["jobUrl"],"").lower()
+    result_label = listed_links.get(source["resultUrl"],"").lower()
+    if "223 kişilik personel alım duyurusu" not in job_label:
+        raise SourceError("223 kişilik duyuru arşivde resmî bağlantı olarak bulunamadı")
+    if "sonuç duyurusu" not in result_label:
+        raise SourceError("Müfettiş yardımcılığı sonuç bağlantısı arşivde bulunamadı")
+
     job_body,_,job_headers = fetch_public_url(source["jobUrl"],requester,robots_cache,MAX_HTML_BYTES)
+    job_page = parse_html(job_body,job_headers)
+    pdf_links = official_link_map(job_page,source["jobUrl"])
+    if source["jobPdfUrl"] not in pdf_links:
+        raise SourceError("BOTAŞ resmî PDF eki detay sayfasında bağlantı olarak bulunamadı")
     pdf_body,_,_ = fetch_public_url(source["jobPdfUrl"],requester,robots_cache,MAX_PDF_BYTES)
     result_body,_,result_headers = fetch_public_url(source["resultUrl"],requester,robots_cache,MAX_HTML_BYTES)
     pdf_text = extract_pdf_text(pdf_body)
@@ -530,9 +575,7 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
                 feed = collect_botas(source,requester,now,previous,today_value)
         except SourceError as exc:
             feed = stale_feed(source["id"],now,str(exc),previous)
-        (out_dir/f"{source['id']}.json").write_text(
-            json.dumps(feed,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"
-        )
+        write_feed(feed,out_dir,previous_dir)
         rows.append({"sourceId":source["id"],"sourceStatus":feed["sourceStatus"],
                      "items":len(feed.get("items",[])),"error":feed.get("lastError")})
     summary = make_summary(rows,now)
@@ -577,9 +620,9 @@ def main() -> int:
     if args.summary:
         with args.summary.open("a",encoding="utf-8") as handle:
             handle.write(summary)
-    # On initial setup every configured source must be readable; on later
-    # failures stale JSON is still uploaded but CI reports the source outage.
-    return 0 if rows and all(row["sourceStatus"] == "fresh" for row in rows) else 1
+    # Source outages are reported as per-source stale states, not parser failures.
+    # The workflow succeeds when both source records were processed and summarized.
+    return 0 if len(rows) == 2 else 1
 
 
 if __name__ == "__main__":

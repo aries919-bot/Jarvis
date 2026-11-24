@@ -20,6 +20,7 @@ H1 şeması: institution, title, category, contentType, officialSourceUrl, howTo
 - Başlıktaki sınav/kura tarihi publishedAt sayılmaz. Tarih alanı yoksa null; PDF dosya adı ve çekim saati yayın tarihi değildir.
 - collectedAt kaynak başarıyla okunduğu anda üretilir. firstSeenAt önceki feed dosyasındaki aynı id'den korunur; yoksa ilk okunduğu an yazılır.
 - Her kaynak ayrı JSON dosyasıdır. Bir kaynak hata verirse yalnız o kaynağın son iyi JSON'u stale olur; diğer kaynak etkilenmez.
+- GitHub Actions branch-scoped cache, bu dalın son başarılı JSON'larını ve firstSeenAt değerlerini sonraki koşuya taşır. Cache bulunamazsa ilk görülme zamanı yeni başlangıç olarak yazılır; cache 7 günlük kullanım politikası nedeniyle kalıcı üretim deposu sayılmaz. Kalıcı firstSeenAt ve last-good saklaması C1-1 Worker veri deposunda tamamlanacaktır.
 
 ## Güvenlik ve hata davranışı
 
