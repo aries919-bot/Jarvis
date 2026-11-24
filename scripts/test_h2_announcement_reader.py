@@ -33,6 +33,45 @@ class H2ReaderTests(unittest.TestCase):
         text = "223 Kişilik Personel Alım Duyurusu Tarih: 5/11/2025"
         self.assertEqual("2025-11-05",h2.explicit_published_at(text))
 
+    def test_yhgm_actual_word_order_extracts_deadline_after_date_range(self):
+        text = (
+            "2.764 sürekli işçi alımı için 08/10/2025 – 13/10/2025 tarihleri "
+            "arasında İŞKUR tarafından alınan başvurular Bakanlığımıza bildirilmiştir."
+        )
+        self.assertEqual("2025-10-13",h2.application_deadline(text,"başvurular"))
+
+    def test_botas_robots_redirect_to_official_apex_is_followed(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url == "https://www.botas.gov.tr/robots.txt":
+                headers=Message()
+                headers["Location"]="https://botas.gov.tr/robots.txt"
+                return ok(b"",302,headers)
+            if url == "https://botas.gov.tr/robots.txt":
+                return ok(b"User-agent: *\\nAllow: /")
+            if url == "https://www.botas.gov.tr/notice":
+                headers=Message()
+                headers["Location"]="https://botas.gov.tr/notice"
+                return ok(b"",302,headers)
+            if url == "https://botas.gov.tr/notice":
+                return ok(b"official page")
+            raise AssertionError("Unexpected request: "+url)
+        body,final_url,_=h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+        self.assertEqual(b"official page",body)
+        self.assertEqual("https://botas.gov.tr/notice",final_url)
+        self.assertIn("https://botas.gov.tr/robots.txt",calls)
+
+    def test_robots_redirect_to_unapproved_host_is_rejected(self):
+        def requester(url,limit):
+            if url.endswith("/robots.txt"):
+                headers=Message()
+                headers["Location"]="https://evil.example/robots.txt"
+                return ok(b"",302,headers)
+            raise AssertionError("Target request must not be made")
+        with self.assertRaises(h2.SourceError):
+            h2.fetch_public_url("https://www.botas.gov.tr/notice",requester)
+
     def test_botas_pdf_deadline_is_end_of_iskur_range(self):
         pdf = (
             "223 Kişilik Personel Alım Duyurusu İlgili ilanda istenilen KPSS puan türünden "
