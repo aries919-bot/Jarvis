@@ -123,7 +123,7 @@ Her `items[]` kaydı:
 - Actions: [K1-B ölçüm run #45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813) — job SUCCESS; özel testler **9/9 geçti**; tam tablo Actions özetinde, makine raporu artefaktı [14926070923](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813/artifacts/14926070923).
 - Commit: `b1e6c1b808ea0901595d80983791ce68cc848d75`; ölçüm zamanı: `2026-11-24T13:38:46Z`.
 - Hedef sayısı yeniden sayıldı: **20 URL / 20 benzersiz URL**. H1'de e-Şube iki kategoride tekrarlandığı için tek URL sayıldı; Şişecam açık pozisyon bağlantısı ayrı URL; ayrıca `ilan.gov.tr/` ve Resmî Gazete kök adresi ek kontrol olarak ölçüldü.
-- Sonuç: **8 ÇALIŞIYOR / 12 ENGELLİ / 0 ÖLÜ**. 20 ölçüm satırı logda tekrar sayıldı.
+- İlk dar ölçüm sonucu (önceki koşu): **8 ÇALIŞIYOR / 12 ENGELLİ / 0 ÖLÜ**. Bu sayı 28 URL'lik geniş ölçümle güncellendi; son ölçüm aşağıdaki 7B bölümündedir.
 - TLS doğrulaması varsayılan Python SSL context ile açık kaldı. User-Agent: `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)`. Her host için robots.txt önce kontrol edildi; izin belirsiz/yasaksa hedef sayfaya istek yapılmadı. Sadece GET kullanıldı.
 - “Tarihli duyuru: EVET” sinyali yalnız sayfa metninde tarih kalıbının yakınında duyuru/ilan/personel/kura vb. kelime bulunduğunu gösterir; `publishedAt` kanıtı veya güncel iş ilanı sayısı değildir. HAYIR da sitede hiç ilan bulunmadığını kanıtlamaz.
 
@@ -131,6 +131,18 @@ Her `items[]` kaydı:
 
 1. **İŞKUR e-Şube Açık İş İlanı Arama** — https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx  
    K1-B: robots izinli, HTTP 200, 79.115 bayt, tarihli duyuru EVET, ÇALIŞIYOR. K1-E1'de kamu filtresiyle 3 sayfa / 43 kayıt doğrulandı. e-Şube satırındaki tarih son başvurudur; `publishedAt=null`, `deadline=son başvuru`. Yalnız izinli, girişsiz ve CAPTCHA'sız yüzey kullanılabilir.
+
+2. **Adli Tıp Kurumu 2026-2 personel alımı** — https://atk.gov.tr/haber20.11.26.html  
+   K1-B geniş ölçüm: robots.txt HTTP 404 (dosya yok), HTTPS HTTP 200, 8.598 bayt. 20.11.2026 yayın tarihi; 181 pozisyon; başvuru 30.11.2026 09:00–06.12.2026 23:59. Ek-1 PDF aynı kurum hostunda ayrıca ölçüldü. P3/P93/P94 ilgili puan türü en az 70.
+
+3. **Anadolu Üniversitesi sözleşmeli personel duyurusu** — https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099  
+   K1-B: robots HTTP 200 / sayfa HTTP 200 / 36.462 bayt. Eklenme 13.11.2026; başvuru 16.11–30.11.2026. Tek sözleşmeli personel, 657 4/B ve KPSS(B) puan sıralaması. Resmî PDF uç noktası K1-B'de ağ hatası verdi; otomatik okuyucu PDF metnini almaz, duyuru sayfasındaki genel bilgiyi gösterir.
+
+4. **Düzce Üniversitesi öğretim elemanı ilanı** — https://cdn.duzce.edu.tr/File/GetFile/4455f177-5bf2-414d-a4c6-9de77131bf51  
+   K1-B: robots.txt HTTP 404 / PDF HTTP 200 / 434.992 bayt. Başlık açıkça 23.11.2026 tarihli; 5 akademik kadro; başvuru 23.11–07.12.2026. Lisans, ALES ve bazı kadrolarda yabancı dil/tezli yüksek lisans şartı.
+
+5. **Tarsus Üniversitesi öğretim elemanı duyurusu** — https://personel.tarsus.edu.tr/tr/news-detail/ogretim-elemani-ilani/17895  
+   K1-B: robots HTTP 200 / sayfa HTTP 200 / 26.000 bayt; bağlı PDF HTTP 200 / 771.374 bayt. Resmî Gazete tarihi 23.11.2026; 3 öğretim görevlisi kadrosu; son başvuru 07.12.2026 mesai bitimi. ALES 70; İngilizce kadrosunda yabancı dil 85, Kaynak Teknolojisi kadrolarında muafiyet.
 
 ### Kura
 
@@ -206,7 +218,7 @@ Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını kar�
 - Kura/sonuç/staj kayıtları yeni iş ilanı sayacına girmez.
 - `firstSeenAt` aynı kaynak ilan kimliği için güncellemelerde değişmez.
 - Kaynaklardan biri stale olduğunda yalnız onun kayıtları stale işaretlenir.
-- İlk taramada her kategori için 2–3 aday araştırıldı; K1-B sonrası aktif aday listesi yalnız ÇALIŞIYOR olan 8 URL ile sınırlıdır. Bazı kategorilerde tek veya iki kaynak kaldığından kaynak çeşitliliği hedefi henüz karşılanmış sayılmaz. Girişli sayfalar yalnız yönlendirmedir; tarihli duyuru/ilan içeriği ve otomasyon uygunluğu H2/K1-C'de ayrıca doğrulanır.
+- İlk taramada her kategori için 2–3 aday araştırıldı; geniş K1-B ölçümünde aktif URL listesi 11 ÇALIŞIYOR adresle güncellendi. Bazı kategorilerde tek veya iki kaynak kaldığından kaynak çeşitliliği hedefi henüz karşılanmış sayılmaz. Girişli sayfalar yalnız yönlendirmedir; tarihli duyuru/ilan içeriği ve otomasyon uygunluğu H2/K1-C'de ayrıca doğrulanır.
 
 
 ## 7B. 24.11.2026 genişletilmiş resmî kaynak ölçümü
