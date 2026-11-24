@@ -120,7 +120,7 @@
 ## Cline PR hakem akışı
 - Cline yalnız `DEVAM: <iş-id>` ile başlar, `cline/<iş-id>` dalında PR açar.
 - PR açıklamasında değişiklik, test, gerçek test sonucu ve telefon denemeleri olmalı; eksikse onay/merge yok.
-- ChatGPT PR'ı sıfırdan inceler; kaynak/sayı iddialarını tekrar ölçer. Yetki yoksa ONAY yorumundan sonra Cem'den merge istenir.
+- ChatGPT PR'ı sıfırdan inceler; kaynak/sayı iddialarını tekrar ölçer. Cem'in onayladığı yeni düzende merge yetkisi ChatGPT'dedir: yalnız hedefi `cline/K1` olan PR, testler yeşil ve Cloudflare hakem yorumu ilk satırda `ONAY` ise birleştirilir. `main`e asla dokunulmaz; cron değişikliği ayrıca Cem'e sorulur.
 - `sahip: cline` işlerinin kaynak koduna ve dallarına ChatGPT müdahale etmez.
 
 ## Son 10 kayıt
@@ -136,3 +136,16 @@
 **SONRAKİ ADIM:** PR #34'ün merge durumu ve `.github/workflows/testler.yml` dosyasının `cline/K1` tabanında görünmesi doğrulandıktan sonra PR #33 tabanını `cline/K1` yap ve yeni yeşil CI'ı kontrol et. H1 #35 açık kalır; K1-C/H2 ancak onay ve gerçek içerik/ilan denetimi için ayrı görevle ilerler. C1 genel 10 kaynak / 100 doğrulanmış ilan eşiği sağlanmadan Android entegrasyonuna geçme.
 
 11. 24.11 C1 bağımsız QA: PR #5'te GET feed rotası/firstSeenAt yok; kısmi feed son iyiyi ezebilir; Worker ağır toplama yapıyor. #45382024807 failure (step/log yok). Kariyer Kapısı JS kabuğu, e-Şube formu, ilan.gov.tr 502; ÇSGB örneği süresi geçmiş. Cline K1 dalı mevcut; işine dokunulmadı.
+
+## 24.11.2026 — Hakem ve merge politikası
+
+- PR #34 hedefi **cline/K1**, dalı `is/K1-test-workflow`; PR açık, merge edilmedi. Son güncel head `b58ebdeb6f6775f19e32ead4a075eae2214032de`. Üç dosya: `.github/workflows/testler.yml`, `.github/workflows/hakem.yml`, `scripts/hakem_gate.py`.
+- Eski test kanıtı [Actions #45403193778](https://github.com/aries919-bot/Jarvis/actions/runs/45403193778): 46/46. Yeni hakem push denemesinde test işi yeşil, hakem işi RED: Cloudflare Secrets eksik. [Son bilinen test run #45409847854](https://github.com/aries919-bot/Jarvis/actions/runs/45409847854). Hakem yorumları PR #34 konuşmasında; son karar RED, hiçbir APPROVE review yok.
+- Hakem: önce deterministik tarama (TLS verify kapatma, robots atlama, token/özel anahtar/kimlik verisi, tarayıcı UA taklidi, collected/firstSeen -> published alan ataması, main push); sonra Cloudflare Workers AI REST. Diff 60 KB ile sınırlı; diff/test özeti güvenilmeyen veri. ONAY yalnız Cloudflare cevabından; secret yoksa fail-closed RED.
+- Güvenlik sertleştirmesi: PR testleri ayrı secretsiz job'da; AI job PR olayında base SHA'den hakem kodunu çalıştırır. Böylece PR head kodu Cloudflare/GitHub secrets görmez.
+- `CF_ACCOUNT_ID` ve `CF_API_TOKEN` GitHub Secrets henüz tanımlı değil; değerleri sohbete veya loga yazma. Bu nedenle #34 merge edilmedi.
+- PR #32 gerçek hedefi `durum`, head `is/not-c1-v3`; açık, merge edilmedi. Yeni politikada yalnız `cline/K1` hedefli PR merge edilebilir; #32 şu an uygun değil. #34 çözülmeden sıra #32'ye geçmez.
+- PR #33 hedefi hâlâ `is/K1-test-workflow`; `testler.yml` `cline/K1` içinde yok. #34 merge edilmeden #33 hedefi değiştirilmedi.
+- `main` dalına hiçbir işlem yapılmadı. [PR #34](https://github.com/aries919-bot/Jarvis/pull/34) · [PR #32](https://github.com/aries919-bot/Jarvis/pull/32) · [PR #33](https://github.com/aries919-bot/Jarvis/pull/33).
+
+**SONRAKİ ADIM:** Cem GitHub Secrets'a `CF_ACCOUNT_ID` ve `CF_API_TOKEN` ekler; secret değerleri paylaşılmaz. Sonra #34 hakem koşusu ONAY + testler yeşil olursa ChatGPT #34'ü `cline/K1`'e merge eder. Ardından #32'nin tabanı ve #33 için `testler.yml` görünürlüğü tekrar GitHub'dan doğrulanır.
