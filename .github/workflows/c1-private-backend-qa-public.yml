@@ -57,7 +57,7 @@ jobs:
         working-directory: private-c1
         run: npm run test:c1
 
-      - name: Run live C1 source audit
+      - name: Run live C1 source audit with full-text deadline parsing
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
         working-directory: private-c1
         run: node scripts/career-feed-live.mjs | tee -a "$GITHUB_STEP_SUMMARY"
