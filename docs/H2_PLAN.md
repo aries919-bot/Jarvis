@@ -29,3 +29,17 @@ H1 şeması: institution, title, category, contentType, officialSourceUrl, howTo
 - 403/500, timeout, ağ kesintisi, boş yanıt veya bozuk PDF son iyi veriyi ezmez.
 - BOTAŞ PDF yalnız aynı resmî host ve robots izniyle indirilir.
 - Actions artefaktı 14 gün saklanır. PR doğrulaması persistent firstSeenAt/last-good deposunun üretimde kalıcılaştırıldığını tek başına kanıtlamaz; bu kalıcılık adımı C1-1/kalıcı veri deposu entegrasyonunda ayrıca yapılacaktır.
+
+
+## İlk canlı çalıştırma — 24.11.2026
+
+- PR testi: [#45437948449](https://github.com/aries919-bot/Jarvis/actions/runs/45437948449) — **19/19 test SUCCESS**.
+- Canlı okuyucu: [#45437928827](https://github.com/aries919-bot/Jarvis/actions/runs/45437928827) — workflow SUCCESS; `collectedAt=2026-11-24T16:30:37Z`.
+- Kaynak sonuçları yeniden sayıldı: **2 kaynak, 1 fresh / 1 stale, 1 kart**.
+  - `yhgm-kura`: fresh, 1 kart. `publishedAt=2025-11-12`, `deadline=2025-10-13`, `contentType=lottery`, `freshnessStatus=Süresi geçti`.
+  - `botas-duyurular`: stale, 0 yeni kart. `/Icerik/223-kisilik-personel-alim-duyu/1203` hedefi timeout oldu; robots izni sonrası yalnız bir kontrollü tekrar yapıldı ve o da timeout verdi. Başarısız/boş cevap son iyi veriyi ezmedi.
+- JSON artefaktı: [#14942950569](https://github.com/aries919-bot/Jarvis/actions/runs/45437928827/artifacts/14942950569). İçerik açılıp doğrulandı: YHGM JSON'unda tarih/lottery alanları doğru; BOTAŞ JSON'unda `sourceStatus=stale`, `lastError=TIMEOUT_RETRY_FAILED`.
+- Bu çıktı iki kaynağın da canlı veri verdiğini kanıtlamaz. BOTAŞ detay sayfası stale kaldığı için H2 **KISMİ**; BOTAŞ duyurusu güncel ilan sayısına eklenmez.
+- 1 fresh haber kartı da yeni kamu işi değildir. Kamu ilanı hâlâ **1 kaynak / 43 doğrulanmış ilan** (e-Şube); **10 kaynak / 100 ilan** hedefi karşılanmadı.
+- Branch-scoped Actions cache başarılı kaynakların JSON/firstSeenAt değerlerini sonraki çalıştırmaya taşır; bu geçici çözümdür. Kalıcı saklama C1-1 Worker veri deposunda tamamlanır.
+
