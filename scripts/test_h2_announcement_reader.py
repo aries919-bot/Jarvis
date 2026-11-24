@@ -230,6 +230,7 @@ class H2ReaderTests(unittest.TestCase):
             "url":"https://atk.gov.tr/haber20.11.26.html",
             "publicationMode":"leading-date",
             "deadlineContext":"başvurular",
+            "applicationOpensAt":"2026-11-30T09:00:00+03:00",
             "expectedText":["Adli Tıp Kurumu Başkanlığı","181 pozisyon"],
             "howToApply":{"method":"Kariyer Kapısı","url":"https://kariyerkapisi.gov.tr/isealim","instructions":"Okuyucu giriş yapmaz."},
             "conditions":["2026 KPSS puan türünden en az 70."]
@@ -243,9 +244,25 @@ class H2ReaderTests(unittest.TestCase):
             "2026-11-24T19:00:00Z","2026-11-24T19:00:00Z",date(2026,11,24))
         self.assertEqual("2026-11-20",item["publishedAt"])
         self.assertEqual("2026-12-06",item["deadline"])
-        self.assertEqual("Doğrulandı",item["freshnessStatus"])
+        self.assertEqual("Doğrulanamadı",item["freshnessStatus"])
+        self.assertEqual("2026-11-30T09:00:00+03:00",item["applicationOpensAt"])
         self.assertEqual("job",item["contentType"])
         self.assertEqual("https://kariyerkapisi.gov.tr/isealim",item["howToApply"]["url"])
+
+
+    def test_atk_upcoming_application_is_not_marked_open_before_start(self):
+        status = h2.status_for(
+            "2026-12-06","2026-11-20","job",date(2026,11,24),
+            "2026-11-30T09:00:00+03:00","2026-11-24T20:00:39Z"
+        )
+        self.assertEqual("Doğrulanamadı",status)
+
+    def test_atk_application_becomes_verified_after_start(self):
+        status = h2.status_for(
+            "2026-12-06","2026-11-20","job",date(2026,11,30),
+            "2026-11-30T09:00:00+03:00","2026-11-30T06:15:00Z"
+        )
+        self.assertEqual("Doğrulandı",status)
 
     def test_anadolu_added_date_and_deadline_are_separate(self):
         source = {
