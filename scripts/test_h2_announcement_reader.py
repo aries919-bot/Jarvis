@@ -361,6 +361,54 @@ class H2ReaderTests(unittest.TestCase):
         self.assertEqual("https://personel.tarsus.edu.tr/test.pdf",calls[-1])
         self.assertFalse(any("kariyerkapisi" in call for call in calls))
 
+
+    def test_independently_measured_same_host_pdf_is_allowed_without_html_anchor(self):
+        source = {
+            "id":"tarsus-test","reader":"official","format":"html",
+            "url":"https://personel.tarsus.edu.tr/test",
+            "pdfUrl":"https://personel.tarsus.edu.tr/test.pdf",
+            "pdfUrlPremeasured":True,
+            "itemId":"tarsus-test-item","institution":"Tarsus Üniversitesi",
+            "title":"Öğretim elemanı","category":"Kamu","contentType":"job",
+            "publicationMode":"tarsus-gazette","deadlineContext":"başvuru tarihleri",
+            "expectedText":["Notice"],
+            "howToApply":{"method":"Resmî","url":"https://personel.tarsus.edu.tr/test","instructions":"İlan metni."},
+            "conditions":[]
+        }
+        calls = []
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\\nAllow: /")
+            if url == source["url"]:
+                return ok(b"<h1>Notice</h1>")
+            if url == source["pdfUrl"]:
+                return ok(b"%PDF-fake")
+            raise AssertionError("Unexpected request: "+url)
+        pdf_text = (
+            "Öğretim Elemanı İlanı İlanın Yayımlandığı Resmî Gazete Tarih ve Sayısı: "
+            "23.11.2026 İlana Başvuru Tarihleri: 23.11.2026 - 07.12.2026"
+        )
+        with mock.patch.object(h2,"extract_pdf_text",return_value=pdf_text):
+            feed = h2.collect_official(source,requester,"2026-11-24T19:00:00Z",None,date(2026,11,24))
+        self.assertEqual("fresh",feed["sourceStatus"])
+        self.assertIn(source["pdfUrl"],calls)
+
+    def test_premeasured_pdf_from_other_host_is_still_rejected(self):
+        source = {
+            "id":"bad-pdf","reader":"official","format":"html",
+            "url":"https://personel.tarsus.edu.tr/test",
+            "pdfUrl":"https://evil.example/test.pdf","pdfUrlPremeasured":True
+        }
+        def requester(url,limit):
+            if url.endswith("/robots.txt"):
+                return ok(b"User-agent: *\\nAllow: /")
+            if url == source["url"]:
+                return ok(b"<h1>Notice</h1>")
+            raise AssertionError("Foreign PDF must not be requested")
+        with self.assertRaisesRegex(h2.SourceError,"farklı resmî host"):
+            h2.collect_official(source,requester,"2026-11-24T19:00:00Z",None,date(2026,11,24))
+
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual(6,len(cfg["sources"]))
