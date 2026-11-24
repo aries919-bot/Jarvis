@@ -1,4 +1,4 @@
-> **C1 özel ek:** [docs/NOT_C1.md — ARIES C1 NOTU v2](NOT_C1.md). C1 hattında bu ek, TALIMAT.md ile çelişirse önceliklidir; görev sırası ve kabul şartları oradan okunur.
+> **ARIES NOTU v3 FINAL (24 Kasım 2026):** [docs/NOT_C1.md — ARIES NOTU v3 FINAL](NOT_C1.md). Bu not v2'yi ve önceki v3 yamalarını geçersiz kılar; bu dosyanın aşağısındaki kurallarla çelişirse v3 FINAL geçerlidir. Cline kullanılmaz; kod, test, PR ve denetimi ChatGPT yapar. Cem'den komut/Termux/yapıştırma istenmez. main'e doğrudan yazılmaz.
 
 # Aries Geliştirme Talimatı — Kalıcı İşletim Kuralları
 
