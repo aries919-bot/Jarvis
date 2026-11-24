@@ -1,3 +1,5 @@
+> **C1 özel ek:** [docs/NOT_C1.md — ARIES C1 NOTU v2](NOT_C1.md). C1 hattında bu ek, TALIMAT.md ile çelişirse önceliklidir; görev sırası ve kabul şartları oradan okunur.
+
 # Aries Geliştirme Talimatı — Kalıcı İşletim Kuralları
 
 ## C1 SERT KABUL KRİTERLERİ (24.11.2026)
