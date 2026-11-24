@@ -1,0 +1,33 @@
+name: K1-C Audit Report Validation
+
+on:
+  push:
+    branches:
+      - is/K1-C-final-20261124
+    paths:
+      - 'KARIYER_KAYNAK_DENETIMI.md'
+      - 'career/adaylar.txt'
+      - 'scripts/test_k1c_report.py'
+      - '.github/workflows/k1c-report.yml'
+  pull_request:
+    paths:
+      - 'KARIYER_KAYNAK_DENETIMI.md'
+      - 'career/adaylar.txt'
+      - 'scripts/test_k1c_report.py'
+      - '.github/workflows/k1c-report.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate K1-C source counts and policy tags
+        run: python -m unittest scripts/test_k1c_report.py -v
