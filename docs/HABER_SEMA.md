@@ -114,63 +114,56 @@ Her `items[]` kaydı:
 - Herhangi bir kaynak için otomasyon başlamadan robots.txt, TLS, HTTP durumu, yönlendirme, giriş/CAPTCHA ve içerik gerçekten ölçülür. Robots sonucu bilinmiyorsa otomasyon adayı değildir.
 - User-Agent: `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)`. Tarayıcı taklidi, TLS doğrulamasını kapatma ve robots ihlali yasaktır.
 
-## 7. Resmî duyuru / kariyer sayfası adayları
+## 7. K1-B ile ölçülmüş resmî duyuru / kariyer sayfaları
 
-Aşağıdakiler H1 kategori tasarımı için resmî sayfa adaylarıdır. Bu liste canlı okuyucu onayı değildir. Her adres için robots.txt, HTTP/TLS, erişim, giriş/CAPTCHA, içerik ve ilan sayısı K1-B/K1-C/H2 aşamalarında ayrı ölçülür. Giriş isteyen sayfalar yalnız kullanıcıya yönlendirme içindir.
+**Durum: PR AÇIK, ölçüm bekliyor.** Aşağıda yalnız K1-B'de `ÇALIŞIYOR` sınıfına giren 8 benzersiz adres aktif kaynak adayı olarak tutulur. Bu sınıf yalnız robots izni + TLS doğrulamalı HTTP 2xx + boş olmayan yanıt anlamına gelir; canlı ilan bulunduğunu, tarihlerin yayın tarihi olduğunu veya otomatik okuyucunun hazır olduğunu kanıtlamaz.
+
+### Ölçüm kanıtı — 24.11.2026
+
+- Actions: [K1-B ölçüm run #45405558813](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813) — job SUCCESS; özel testler **9/9 geçti**; tam tablo Actions özetinde, makine raporu artefaktı [14926070923](https://github.com/aries919-bot/Jarvis/actions/runs/45405558813/artifacts/14926070923).
+- Commit: `b1e6c1b808ea0901595d80983791ce68cc848d75`; ölçüm zamanı: `2026-11-24T13:38:46Z`.
+- Hedef sayısı yeniden sayıldı: **20 URL / 20 benzersiz URL**. H1'de e-Şube iki kategoride tekrarlandığı için tek URL sayıldı; Şişecam açık pozisyon bağlantısı ayrı URL; ayrıca `ilan.gov.tr/` ve Resmî Gazete kök adresi ek kontrol olarak ölçüldü.
+- Sonuç: **8 ÇALIŞIYOR / 12 ENGELLİ / 0 ÖLÜ**. 20 ölçüm satırı logda tekrar sayıldı.
+- TLS doğrulaması varsayılan Python SSL context ile açık kaldı. User-Agent: `AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)`. Her host için robots.txt önce kontrol edildi; izin belirsiz/yasaksa hedef sayfaya istek yapılmadı. Sadece GET kullanıldı.
+- “Tarihli duyuru: EVET” sinyali yalnız sayfa metninde tarih kalıbının yakınında duyuru/ilan/personel/kura vb. kelime bulunduğunu gösterir; `publishedAt` kanıtı veya güncel iş ilanı sayısı değildir. HAYIR da sitede hiç ilan bulunmadığını kanıtlamaz.
 
 ### Kamu
 
-1. İŞKUR e-Şube Açık İş İlanı Arama — https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx  
-   K1-E1'de kamu filtresiyle 3 sayfa/43 kayıt doğrulandı. Yayın tarihi yok; satır tarihi son başvuru tarihidir.
-2. Resmî İlan Portalı — https://www.ilan.gov.tr/  
-   Resmî ilan kaynağı adayı. Daha önce TLS sertifika zinciri sorunu raporlandı; doğrulama kapatılmadan K1-B'de yeniden ölçülür.
-3. Resmî Gazete — https://www.resmigazete.gov.tr/ilanlar  
-   Resmî ilan/ek duyurular için aday. İlan metninin personel alımı olup olmadığı ayrıca sınıflandırılır.
+1. **İŞKUR e-Şube Açık İş İlanı Arama** — https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx  
+   K1-B: robots izinli, HTTP 200, 79.115 bayt, tarihli duyuru EVET, ÇALIŞIYOR. K1-E1'de kamu filtresiyle 3 sayfa / 43 kayıt doğrulandı. e-Şube satırındaki tarih son başvurudur; `publishedAt=null`, `deadline=son başvuru`. Yalnız izinli, girişsiz ve CAPTCHA'sız yüzey kullanılabilir.
 
 ### Kura
 
-1. Sağlık Bakanlığı Yönetim Hizmetleri Genel Müdürlüğü — https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html  
-   Sürekli işçi alım kura duyurusu örneği; kura ve sonuç haberlerini ayırmak için aday.
-2. TÜSEB resmî duyuruları — https://www.tuseb.gov.tr/public/tr/duyurular  
-   Personel alımı, noter kura ve sonuç duyuruları yayımlanıyor; başlık/tarih türü ayrıştırılmalı.
-3. TÜSEB İnsan Kaynakları — https://www.tuseb.gov.tr/kurumsal/insan-kaynaklari  
-   Personel alım duyurusu arşivi için aday; alt sayfalar ve erişim ayrıca ölçülecek.
+1. **Sağlık Bakanlığı YHGM kura duyurusu** — https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html  
+   K1-B: robots izinli, HTTP 200, 89.063 bayt, tarihli duyuru EVET, ÇALIŞIYOR. Kura/sonuç duyurusu `contentType=lottery/result` olarak sınıflandırılır; yeni iş ilanı sayacına eklenmez.
 
 ### KPSS
 
-1. ÖSYM KPSS duyuru grubu — https://osym.gov.tr/SinavGrubu/Menu/338  
-   KPSS tercih kılavuzları ve yerleştirme duyuruları.
-2. ÖSYM tüm duyurular — https://www.osym.gov.tr/Duyurular/Index  
-   İlan/tercih/sınav/sonuç ayrımı yapılmalı; sınav tarihi yayın tarihi sayılmamalı.
-3. Kariyer Kapısı Kamu İşe Alım — https://kariyerkapisi.gov.tr/isealim  
-   Kullanıcıya resmî başvuru sayfası olarak yönlendirme. Giriş gerektiren bölümler kazınmaz/yoklanmaz.
+1. **Kariyer Kapısı Kamu İşe Alım** — https://kariyerkapisi.gov.tr/isealim  
+   K1-B: robots.txt HTTP 404 (kurala göre izinli), HTTP 200, 18.791 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. Bu yüzeyde tarihli duyuru kanıtı bulunmadı; giriş/JS ile açılan kişisel ilan listeleri kazınmaz. Şimdilik yalnız kullanıcıya resmî site yönlendirmesi; ilan okuyucu kaynağı sayılmaz.
 
 ### KPSS'siz
 
-1. İŞKUR e-Şube Açık İş İlanı Arama — https://esube.iskur.gov.tr/Istihdam/AcikIsIlanAra.aspx  
-   KPSS'siz sınıfı yalnız ilan şartlarında KPSS istenmediği açıkça görülen kayıtlar için kullanılır; tüm e-Şube ilanları otomatik KPSS'siz değildir.
-2. Malatya Su ve Kanalizasyon İdaresi Kariyer Kapısı — https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim  
-   Resmî e-Devlet/Kariyer Kapısı yönlendirme adayı; oturum gerektirir, kazınmaz.
-3. İzmir Büyükşehir Belediyesi Kariyer Kapısı — https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim  
-   Resmî e-Devlet/Kariyer Kapısı yönlendirme adayı; oturum gerektirir, kazınmaz. KPSS koşulu her ilanda ayrı okunur.
+1. **Malatya Su ve Kanalizasyon İdaresi Kariyer Kapısı yönlendirmesi** — https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim  
+   K1-B: robots izinli, HTTP 200, 16.283 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. e-Devlet oturumuna bağlıdır; yalnız dış bağlantı/Custom Tabs yönlendirmesi, kazıma yok.
+2. **İzmir Büyükşehir Belediyesi Kariyer Kapısı yönlendirmesi** — https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim  
+   K1-B: robots izinli, HTTP 200, 15.953 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. e-Devlet oturumuna bağlıdır; yalnız dış bağlantı/Custom Tabs yönlendirmesi, kazıma yok. KPSS koşulu her ilanda ayrıca resmî metinden doğrulanır.
 
 ### Büyük özel şirket
 
-1. Turkcell Kariyer Fırsatları — https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay  
-   Şirketin kendi kariyer sayfası; pozisyonların ilan/başvuru alt sayfaları ayrıca bulunmalı.
-2. Şişecam Kariyer — https://www.sisecam.com/tr/kariyer  
-   Şirketin kariyer sayfası; açık pozisyon listesi https://careers.sisecam.com/?locale=tr_TR adresinde.
-3. Koç Kariyerim — https://www.kockariyerim.com/jobAd/list  
-   Koç Topluluğu şirketlerinin ilan platformu. Giriş/robots/otomasyon uygunluğu ayrıca ölçülür.
+1. **Turkcell Kariyer Fırsatları** — https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay  
+   K1-B: robots izinli, HTTP 200, 132.486 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. Sayfa erişilebilir; bu ölçüm açık pozisyon veya tarihli ilan bulunduğunu kanıtlamaz. İlan alt sayfaları ayrıca incelenmeli.
+2. **Koç Kariyerim ilan listesi** — https://www.kockariyerim.com/jobAd/list  
+   K1-B: robots izinli, HTTP 200, 707.465 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. Sayfa erişilebilir; pozisyonların içeriği, başvuru durumu ve son tarihleri ayrı doğrulanmadan iş ilanı sayılmaz.
 
 ### Kamu bağlı büyük şirket
 
-1. PTT A.Ş. Duyurular — https://www.ptt.gov.tr/duyurular  
-   PTT personel alımı ve resmî açıklamalarının ana duyuru sayfası. PTT SSS, ilk defa atanacak personel için KPSS şartını belirtir; KPSS'siz diye etiketlenmez.
-2. BOTAŞ Duyurular — https://www.botas.gov.tr/Kategori/duyurular/2  
-   Personel alımı, sınav ve sonuç duyuruları var; sınav tarihleri yayın tarihi sayılmaz.
-3. TPAO Personel Alımı Duyurusu — https://www.tpao.gov.tr/file/2512/sinav-ilani-33-personel-alimi-29-12-2025-37736953d2e834d07.pdf  
-   Resmî personel alımı PDF örneği. PDF içindeki tarih ve KPSS şartı metinden ayrı çıkarılır; dosya adı yayın tarihi sayılmaz.
+1. **BOTAŞ duyurular** — https://www.botas.gov.tr/Kategori/duyurular/2  
+   K1-B: robots izinli, HTTP 200, 55.753 bayt, tarihli duyuru EVET, ÇALIŞIYOR. Personel alımı/sınav/sonuç içerikleri ayrı türlere ayrılır; sınav tarihi yayın tarihi olarak alınmaz.
+
+### Aktif kaynak listesinden çıkarılan adaylar
+
+K1-B'de **ENGELLİ** çıkan 12 URL aktif kaynak listesine alınmadı: İlan.gov.tr (www ve apex TLS doğrulama hatası), Resmî Gazete `/ilanlar` ve kök sayfa (timeout), iki TÜSEB adresi (TLS doğrulama hatası), iki ÖSYM adresi (robots sonucu belirsiz olduğu için hedef sayfa isteği yapılmadı), Şişecam iki adresi (HTTP 403), PTT (TLS doğrulama hatası), TPAO PDF (timeout). Bunlar `ÖLÜ` ilan edilmedi; bu ölçümde **0 ÖLÜ** sonucu var. Sonradan tekrar ölçüm ayrı PR/Actions koşusudur; TLS doğrulaması kapatılmaz ve robots belirsizliği izin sayılmaz.
 
 ## 8. H1 kabul ölçütleri
 
@@ -179,4 +172,4 @@ Aşağıdakiler H1 kategori tasarımı için resmî sayfa adaylarıdır. Bu list
 - Kura/sonuç/staj kayıtları yeni iş ilanı sayacına girmez.
 - `firstSeenAt` aynı kaynak ilan kimliği için güncellemelerde değişmez.
 - Kaynaklardan biri stale olduğunda yalnız onun kayıtları stale işaretlenir.
-- Her kategori için en az 2–3 resmî aday listelenmiştir; ancak bu adayların ölçümü/otomasyon izni H1'in tamamlanmasıyla karıştırılmaz.
+- İlk taramada her kategori için 2–3 aday araştırıldı; K1-B sonrası aktif aday listesi yalnız ÇALIŞIYOR olan 8 URL ile sınırlıdır. Bazı kategorilerde tek veya iki kaynak kaldığından kaynak çeşitliliği hedefi henüz karşılanmış sayılmaz. Girişli sayfalar yalnız yönlendirmedir; tarihli duyuru/ilan içeriği ve otomasyon uygunluğu H2/K1-C'de ayrıca doğrulanır.
