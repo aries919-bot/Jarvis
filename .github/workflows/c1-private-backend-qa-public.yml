@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Retry after the repository owner confirmed JARVIS_CLOUD_READ_TOKEN was saved.
+# Retry after source-level test expectation fixes; checkout tracks the latest C1 branch.
 
 on:
   push:
