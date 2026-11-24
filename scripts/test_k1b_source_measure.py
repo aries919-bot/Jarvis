@@ -71,6 +71,23 @@ class K1BSourceMeasureTests(unittest.TestCase):
         self.assertEqual(2, row["attempts"])
         self.assertEqual("ÇALIŞIYOR", row["status"])
 
+    def test_robots_timeout_is_retried_once(self):
+        from email.message import Message
+        headers = Message()
+        headers["Content-Type"] = "text/plain; charset=utf-8"
+        robots_body = b"User-agent: AriesKaynakTara\\nAllow: /"
+        with mock.patch.object(
+            measure, "_request_once",
+            side_effect=[
+                (None, None, b"", "TIMEOUT: robots read timed out"),
+                (200, headers, robots_body, None),
+            ],
+        ) as request_once:
+            with mock.patch.object(measure.time, "sleep"):
+                result = measure._robots_for("https://example.gov.tr/jobs")
+        self.assertEqual(2, request_once.call_count)
+        self.assertEqual("RULES", result["permission"])
+
     def test_unknown_robots_timeout_is_not_retried_or_fetched(self):
         source = {"id": "x", "category": "Kamu", "name": "Örnek", "url": "https://example.gov.tr/"}
         robots = {"permission": "UNKNOWN", "label": "BİLİNMİYOR", "status": None,
