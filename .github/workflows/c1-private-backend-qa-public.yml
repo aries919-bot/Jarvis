@@ -1,5 +1,5 @@
 name: C1 Private Backend QA (public runner)
-# Public-runner QA for parser-free raw Worker feed storage. Records exact private HEAD, runs unit tests, live source counts and local D1 round-trip.
+# Public-runner QA retry for parser-free raw Worker feed storage after the D1 test fixture count correction. Records exact private HEAD, runs unit tests, live source counts and local D1 round-trip.
 
 on:
   push:
