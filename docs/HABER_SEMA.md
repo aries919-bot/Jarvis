@@ -37,6 +37,7 @@ Her `items[]` kaydı:
 | `officialSourceUrl` | HTTPS URL | İlan/duyurunun resmî asıl sayfası; arama sonucu veya haber kopyası olmaz. |
 | `howToApply` | object | `method`, `url`, `instructions`. Başvuru yeri/yöntemi resmî metinden aktarılır. |
 | `conditions` | string[] | Eğitim, bölüm, KPSS, yaş, deneyim, belge ve diğer şartlar; yalnız kaynakta yazanlar. |
+| `applicationOpensAt` | ISO-8601 tarih/saat veya null (opsiyonel) | Kaynak açıkça duyurmuşsa başvurunun açılacağı an; deadline yerine geçmez. Yoksa null/alan yok. |
 | `deadline` | ISO-8601 tarih/saat veya null | Son başvuru. Kaynakta yoksa null; başka tarihten türetilmez. |
 | `publishedAt` | ISO-8601 tarih/saat veya null | Kaynağın açıkça bildirdiği yayın tarihi. Yoksa null. |
 | `collectedAt` | ISO-8601 UTC | Bu kaynak kaydının son başarıyla kontrol edildiği zaman. Yayın tarihi değildir. |
@@ -86,7 +87,7 @@ Her `items[]` kaydı:
 4. Duyuru başlığındaki tarih çoğunlukla sınav/kura tarihidir. Yayın tarihi kabul edilmez.
 5. `deadline < bugün` ise `Süresi geçti`; güncel listede gösterilmez, arşive alınır.
 6. `deadline` yoksa veya tarih kanıtlanamıyorsa başvuru süresi açık kabul edilmez: `Doğrulanamadı`.
-7. `Doğrulandı` için yayın tarihi kanıtı ve gelecekte/açık son başvuru tarihi gerekir. Saat dilimi Türkiye yerel saatiyle yorumlanır; saklama UTC'dir.
+7. `Doğrulandı` için yayın tarihi kanıtı, son başvuru tarihi ve başvuru döneminin başlamış olması gerekir. Kaynak `applicationOpensAt` veriyorsa bu an gelmeden `Doğrulandı` denmez; `Doğrulanamadı` kalır. Saat dilimi Türkiye yerel saatiyle yorumlanır; saklama UTC'dir.
 8. Geçmiş tarihli ilan yeni ilan gibi yeniden yayınlanmaz. Kaynak güncellenmişse değişiklik geçmişi saklanır.
 
 ## 4. İçerik türü / yeni iş ilanı ayrımı
@@ -240,3 +241,8 @@ Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını kar�
 - Aynı kurumun resmî HTML sayfası + bağlı PDF'si ayrı URL olabilir; kaynak sayımında kurum/işveren tek kaynak sayılır. Yeni aktif kurumlar: Adli Tıp Kurumu, Anadolu Üniversitesi, Düzce Üniversitesi, Tarsus Üniversitesi. PDF ekleri kaynak sayısını artırmaz.
 - ENGELLİ örnekleri: Anadolu PDF doğrudan uç noktası ağ hatası; TÜRKAK sayfası HTTP 200 dönmesine rağmen erişim sınıflandırıcısında engelli (otomatik okuyucuya alınmadı); Şişecam 403; İlan.gov.tr TLS doğrulama hatası; Resmî Gazete robots timeout/önceden ölçülmüş kapalı; ÖSYM robots bilinmiyor; Kariyer Kapısı ve e-Devlet linkleri yalnız yönlendirme. Ayrıntı için Actions job özeti ve artifact.
 - **Sınır:** ÇALIŞIYOR yalnız robots/TLS/HTTP erişimini gösterir; iş ilanı, başvuru şartı, açık deadline veya otomatik okuyucu kanıtı değildir. H2'ye yalnız ölçülmüş ve metni ayrıştırılabilen resmî adresler eklenir.
+
+
+## 7C. Başvuru başlangıcı ile son başvuru ayrımı
+- Bazı duyurular başvuru ekranının açılacağı saati ayrıca verir. Bu bilgi `applicationOpensAt` alanında tutulur; `deadline` yalnız son başvuru anıdır.
+- 24.11.2026 H2 ölçümünde Adli Tıp 2026-2 başvurusu 30.11.2026 09:00 Türkiye saatinde açılacağından, bugünkü kart `freshnessStatus=Doğrulanamadı` olarak kalır. 30.11.2026 09:00'dan sonraki başarılı kaynak okuması, diğer şartlar devam ediyorsa `Doğrulandı` yapabilir.
