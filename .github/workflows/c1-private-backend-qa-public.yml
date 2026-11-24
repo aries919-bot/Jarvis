@@ -62,6 +62,17 @@ jobs:
         working-directory: private-c1
         run: node scripts/career-feed-live.mjs | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Archive public C1 source-count report
+        if: ${{ steps.credentials.outputs.has_token == 'true' && always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-live-source-report
+          path: |
+            private-c1/career-feed-live.json
+            private-c1/career-feed-live.txt
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Run local Worker and D1 integration smoke (bounded process shutdown)
         if: ${{ steps.credentials.outputs.has_token == 'true' }}
         working-directory: private-c1
