@@ -118,3 +118,14 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Exact test annotation recount: 17 model tests +8 store tests =25 new @Test.
 - Full App QA/emulator workflow not found on `kariyer-modulu`; no actual phone test. This is not production/phone acceptance.
 - PR #71 stays open/draft/unmerged pending referee review and device test. PR #69/70 remain independently open/draft; no merge/deploy.
+
+## 4. PR #71 Android emülatör smoke ve son diff — 25.11.2026
+- HEAD `0a376b4c7355a5a6822252da4d9286606ce23bde`; base `kariyer-modulu`; 57 commit /10 file /+2.132 /-26 /0 behind.
+- Test annotations yeniden sayımı: `CareerNewsVerificationTest.kt` 17 + `CareerNewsVerificationStoreTest.kt` 8 + `CareerNewsVerificationSmokeTest.kt` 2 = **27 @Test**.
+- Workflow `.github/workflows/h1-android-ui-smoke.yml`: PR event; explicit checkout of `github.event.pull_request.head.sha || github.sha`; PR-number concurrency; redundant push trigger removed; runner action pinned to `a421e43855164a8197daf9d8d40fe71c6996bb0d`; emulator API34 Google APIs x86_64.
+- Instrumentation test 1: launches non-exported H1 Activity with valid HTTPS source; verifies title/section/claim button/source button and persisted original URL + `publishedAt=null`.
+- Instrumentation test 2: writes/updates real SQLite store, corrupts primary raw row, verifies last-good fallback and recovery count.
+- Normal exact-head Android APK run [#45669708914](https://github.com/aries919-bot/Jarvis/actions/runs/45669708914): SUCCESS. Unit tests, assembleDebug and artifact upload all SUCCESS. Artifact `aries-apk` ID `15049965420`, 14,176,024 bytes.
+- Emulator exact-head run [#45669709252](https://github.com/aries919-bot/Jarvis/actions/runs/45669709252): last checked IN_PROGRESS in `Run Android emulator instrumentation tests`; no final result/artifact yet. Canceled earlier attempts aren't PASS.
+- Limited QA: smoke currently checks Activity launch and SQLite durability/recovery, not the full UI taps for add claim/evidence/review/correction. Next follow-up after smoke: instrument those interactions; then install current APK on physical phone for source navigation, rotation/background/return and offline/error state.
+- PR #71 remains open/draft/unmerged. PR #70 source policy remains separate; current `kariyer-modulu` base has not yet integrated #70. No merge/deploy.
