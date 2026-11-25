@@ -574,3 +574,12 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Exact-head Android run [#45662111632](https://github.com/aries919-bot/Jarvis/actions/runs/45662111632): latest status in_progress at last check; no PASS yet.
 - H1 core PR #69 exact-head tests + APK already PASS, but PR #71 is the actual UI/store superset. No merge/deploy; phone/emulator test pending.
 - Detailed task: [H1-news-store-ui-2026-11-25.md](../gorevler/H1-news-store-ui-2026-11-25.md).
+
+
+### 20.1 PR #71 SQLite ve sınırlandırma güncellemesi — 25.11.2026
+- H1 yerel depo SharedPreferences'tan platform SQLite'a geçirildi; yeni harici DB kütüphanesi yok. Primary + last-good JSON aynı SQLite transaction'ında yazılır; ilk kayıtta da backup vardır.
+- Sınırlar: 300 hikâye, 16 KB/hikâye, 50 claim/hikâye, 25 evidence/claim, 100 correction/hikâye. Kapasite dolunca kayıt silinmez; yeni kayıt reddedilir.
+- PII koruması publisher/review/correction metinlerine genişletildi.
+- Güncel PR #71 HEAD `b9abd9433badf90d0cda306c8c81daa001b0a383`; compare 43 commit /8 files /+1811/-25 /0 behind; 18 model +6 store =24 @Test.
+- Exact-head Actions [#45663064814](https://github.com/aries919-bot/Jarvis/actions/runs/45663064814): queued; PASS yok.
+- Store fake adapter testleri geçse bile SQLite Android adapter için gerçek emulator/telefon smoke testi hâlâ gerekir.
