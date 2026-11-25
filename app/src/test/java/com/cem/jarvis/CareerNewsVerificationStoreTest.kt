@@ -199,4 +199,97 @@ class CareerNewsVerificationStoreTest {
         assertEquals(second, loaded[second.storyId])
     }
 
+
+    @Test
+    fun rejectsReviewOverwriteWithoutArchiveAndAcceptsArchivedReReview() {
+        val storage = MemoryStorage()
+        val store = CareerNewsVerificationStore(storage)
+        val reviewed = record()
+            .addClaim(CareerNewsClaim(id = "claim-1", text = "Kurum 12 teknisyen alacak."))!!
+            .addEvidence("claim-1", CareerNewsEvidence(
+                id = "evidence-1",
+                publisher = "Devlet Su İşleri",
+                sourceUrl = "https://www.dsi.gov.tr/duyurular",
+                sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+                stance = CareerEvidenceStance.SUPPORTS,
+                excerpt = "Kurum 12 teknisyen alımı yapacağını duyurdu.",
+                publishedAt = null,
+                checkedAt = "2026-11-25T14:00:00Z"
+            ))!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM,
+                "2026-11-25T14:05:00Z", "İlk inceleme gerekçesi.")!!
+        assertTrue(store.save(reviewed).saved)
+
+        val oldClaim = reviewed.claims.single()
+        val overwritten = reviewed.copy(claims = listOf(oldClaim.copy(
+            reviewDecision = CareerHumanReviewDecision.REFUTE,
+            reviewedAt = "2026-11-25T14:10:00Z",
+            reviewNote = "Önceki kararı geçmişsiz değiştirme denemesi."
+        )))
+        assertFalse(store.save(overwritten).saved)
+
+        val archived = reviewed.reviewClaim(
+            "claim-1",
+            CareerHumanReviewDecision.INCONCLUSIVE,
+            "2026-11-25T14:15:00Z",
+            "İkinci inceleme kararsız kaldı."
+        )!!
+        assertTrue(store.save(archived).saved)
+        val storedClaim = store.load(reviewed.storyId)!!.claims.single()
+        assertEquals(CareerHumanReviewDecision.CONFIRM, storedClaim.reviewHistory.single().decision)
+        assertEquals(CareerHumanReviewDecision.INCONCLUSIVE, storedClaim.reviewDecision)
+    }
+
+    @Test
+    fun addingEvidenceMustArchiveTheReviewThatItInvalidates() {
+        val storage = MemoryStorage()
+        val store = CareerNewsVerificationStore(storage)
+        val reviewed = record()
+            .addClaim(CareerNewsClaim(id = "claim-1", text = "Kurum 12 teknisyen alacak."))!!
+            .addEvidence("claim-1", CareerNewsEvidence(
+                id = "evidence-1",
+                publisher = "Devlet Su İşleri",
+                sourceUrl = "https://www.dsi.gov.tr/duyurular",
+                sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+                stance = CareerEvidenceStance.SUPPORTS,
+                excerpt = "Kurum 12 teknisyen alımı yapacağını duyurdu.",
+                publishedAt = null,
+                checkedAt = "2026-11-25T14:00:00Z"
+            ))!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM,
+                "2026-11-25T14:05:00Z", "İlk inceleme gerekçesi.")!!
+        assertTrue(store.save(reviewed).saved)
+
+        val oldClaim = reviewed.claims.single()
+        val silentReset = reviewed.copy(claims = listOf(oldClaim.copy(
+            evidence = oldClaim.evidence + CareerNewsEvidence(
+                id = "evidence-2",
+                publisher = "Resmî Gazete",
+                sourceUrl = "https://www.resmigazete.gov.tr/",
+                sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+                stance = CareerEvidenceStance.CONTRADICTS,
+                excerpt = "Düzeltme duyurusu yayımlandı.",
+                publishedAt = null,
+                checkedAt = "2026-11-25T14:12:00Z"
+            ),
+            reviewDecision = null,
+            reviewedAt = null,
+            reviewNote = ""
+        )))
+        assertFalse(store.save(silentReset).saved)
+
+        val archived = reviewed.addEvidence("claim-1", CareerNewsEvidence(
+            id = "evidence-2",
+            publisher = "Resmî Gazete",
+            sourceUrl = "https://www.resmigazete.gov.tr/",
+            sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+            stance = CareerEvidenceStance.CONTRADICTS,
+            excerpt = "Düzeltme duyurusu yayımlandı.",
+            publishedAt = null,
+            checkedAt = "2026-11-25T14:12:00Z"
+        ))!!
+        assertTrue(store.save(archived).saved)
+        assertEquals(CareerHumanReviewDecision.CONFIRM,
+            store.load(reviewed.storyId)!!.claims.single().reviewHistory.single().decision)
+    }
 }
