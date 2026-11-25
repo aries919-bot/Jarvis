@@ -88,3 +88,68 @@
 1. Cross-feed dedup için H2 ve e-Şube kartlarını ortak externalId/canonicalUrl anahtarıyla test eden küçük, bağımsız QA görevi.
 2. 10 kaynak / 100 doğrulanmış açık kart hedefi için kamu ve özel kaynakları ayrı ölç; özel ATS/API ancak izin/lisans doğrulanınca.
 3. Production GET/D1 erişimi kanıtlanmadan Worker deploy veya uygulama entegrasyonu yok.
+
+
+---
+
+## EK DENETİM — C1 çapraz kaynak ve H1 haber doğrulama (25.11.2026)
+
+### Rakip mimarileri: ek bulgular
+- ATS adapter katalogu: https://github.com/Mersetti/ats-job-board-apis — 11 ATS'nin public JSON/XML/RSS endpoint'leri ve pagination farkları. Greenhouse/Lever/Ashby/Workable/Recruitee/Personio/SmartRecruiters/Workday/Breezy/Teamtailor/Rippling.
+- https://github.com/mherzog4/job-boards — işveren board slug'larını keşfedip public API'leri kullanma yaklaşımı. Global tek iş ilanı endpoint'i yok.
+- Adzuna/Jooble API: https://developer.adzuna.com/ ve https://jooble.org/api/about — lisans/kota/ülke koşullarıyla ayrı agregatör adapter'ı; agregatör tek kaynak sayılır.
+- Google JobPosting: https://developers.google.com/search/docs/appearance/structured-data/job-posting — datePosted/validThrough/organization/location alan standardı; Indexing API başka şirketlerin ilanlarını çekmez.
+- Ground News: https://ground.news/about — aynı olay haberlerini story altında toplar; publisher bias değerlendirmesi tek makalenin doğruluk hükmü değildir.
+- GDELT: https://gdeltproject.org/data.html — çok dilli haber keşif sinyali; doğruluk kanıtı değil, 429/rate limit ve boş/HTML yanıt kontrolü gerekir.
+- Google Fact Check API: https://developers.google.com/fact-check/tools/api/ — ClaimReview ile önceden kontrol edilmiş iddia araması; API key gerektirir.
+- Reuters Fact Check: https://www.reuters.com/fact-check/about/ — iddia/ilk kaynak/lehte-aleyhte kanıt/insan incelemesi/düzeltme geçmişi yaklaşımı.
+
+### Kod denetimi ve bulunan kök neden
+Backend `aries919-bot/jarvis-cloud`:
+1. `src/career-feed.js` yalnız Lever/Ashby adapter'larını içeriyor; diğer ATS'ler henüz yok.
+2. `dedupeJobs()` anahtarı `sourceId + providerId`; aynı ilan başka sourceId'de farklı kimlikle gelirse tekilleştirmiyor.
+3. `src/career-feed-store.js` listing id ile birleştiriyordu; H2/e-Şube farklı ID kullanınca çift sayım riski vardı.
+4. `src/h2-input.js` H2 ilanlarında `city: null`; şehir kanıtı yokken otomatik birleştirme yanlış ilanı silebilir.
+5. `.github/workflows/validate.yml` PR base filtresi `fix/c1-h2-official-feed` dalını kapsamıyordu; C1 fix branch filtresi genişletildi.
+
+### Uygulanan kod — PR #10
+https://github.com/aries919-bot/jarvis-cloud/pull/10
+
+- Kesin eşleşme yalnız normalize kurum + pozisyon + şehir + deadline birebir aynıysa.
+- Birleşen kartta sourceIds/sourceEvidence ve en eski firstSeenAt korunur.
+- Şehir eksikse otomatik birleştirme yok; olası tekrar olarak işaretlenir ve doğrulanmış tekil ilan sayısına girmez.
+- Tarih/şehir farklıysa ayrı kart.
+- Bir kaynak stale/500 olsa da diğer fresh kaynağın kanıtı korunur.
+- 4 regresyon testi: kesin eşleşme, farklı tarih/şehir, şehir eksik, stale kaynak izolasyonu.
+- PR açık; merge/deploy yapılmadı. Head commit: `09e375a7f6745b1928e41ca88956efc8ef428224`.
+
+### CI sonucu / kök neden
+- Actions run #45649406146: FAILURE.
+- Job #139329455436: `steps=[]`; log endpoint 404 BlobNotFound.
+- Bu nedenle test adımları başlamadı; **PASS denemez**.
+- Önceki C1 denemelerinde de aynı runner_id/boş steps belirtisi görülmüştü. Körlemesine rerun yapılmayacak; Actions runner/plan/izin ayarları veya GitHub Support incelemesi gerekir.
+
+### H1 haber doğrulama uyarlaması — ayrı iş
+H1 mevcut kart şeması korunur. Ayrı kanıt katmanı:
+- storyId: aynı olayın haberlerini gruplar.
+- claimId/claimText: tek sınanabilir iddia.
+- originUrl: ilk kaynak; bilinmiyorsa null.
+- evidence[]: destekleyen/çelişen kaynak, resmî URL, collectedAt.
+- verificationStatus: Doğrulandı / Çelişkili / Bağlam Eksik / Doğrulanamadı.
+- reviewedAt/correctionHistory[]: inceleme ve düzeltme geçmişi.
+
+Akış: izinli RSS/API ile haber keşfi → canonical URL/olay kümeleri → sınanabilir iddia → ilk kaynak → lehte/aleyhte kanıt → insan incelemesi → düzeltme geçmişi. Haber kopyaları bağımsız kaynak sayılmaz; haber sayısı doğruluk oyu değildir. GDELT/ClaimReview boş yanıtı veya 429 hatası doğruluk etiketini değiştirmez.
+
+### Güncel sayım sınırı
+- Önceki birleşik kamu ölçümü: 6 kaynak / 47 doğrulanmış açık kart; 10/100 eşiği nedeniyle RED.
+- H2 ayrı reader: 13 açık doğrulanmış kart.
+- e-Şube ayrı snapshot: 42 açık benzersiz kayıt.
+- Cross-feed kanıtı olmadan 13+42=55 tekil ilan değildir.
+- PR #10 CI geçip canlı ortak artifact oluşmadan yeni birleşik toplam verilmez.
+
+### Sonraki adım
+1. Runner kök nedenini çöz; PR #10 exact-head testlerini çalıştır.
+2. e-Şube/H2 ortak feed canlı yeniden sayımı: kaynak başına ham/tekil/olası tekrar/açık kart.
+3. ATS yeni adapter'larını yalnız ölçülmüş izinli board'larda ekle.
+4. H1 story/claim/evidence/correctionHistory için ayrı görev dosyası.
+5. Production authenticated GET/D1 kanıtı olmadan deploy/Android entegrasyonu yok.
