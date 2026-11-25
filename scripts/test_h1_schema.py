@@ -99,12 +99,17 @@ class H1SchemaTests(unittest.TestCase):
             for error in validate_feed(feed([not_open]), TODAY)
         ))
 
-    def test_verified_open_job_count_requires_fresh_source_and_deadline(self):
+    def test_verified_open_job_count_requires_fresh_published_open_job(self):
         records = [
             item(id="fresh-open"),
             item(id="stale", sourceStatus="stale"),
             item(id="past", deadline="2026-11-24", freshnessStatus="Süresi geçti"),
             item(id="unverified", freshnessStatus="Doğrulanamadı"),
+            item(id="missing-published", publishedAt=None),
+            item(
+                id="not-yet-open",
+                applicationOpensAt="2026-11-30T09:00:00+03:00",
+            ),
         ]
         self.assertEqual(1, count_verified_open_jobs({"source": records}, TODAY))
 

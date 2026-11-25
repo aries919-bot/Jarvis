@@ -230,7 +230,7 @@ def count_verified_open_jobs(
     feeds_by_source: dict[str, list[dict[str, Any]]],
     today: date,
 ) -> int:
-    """Count fresh, deadline-backed, verified jobs; never count notices/results."""
+    """Count only fresh jobs with publication, deadline and an already-open application."""
     count = 0
     for records in feeds_by_source.values():
         for record in records:
@@ -239,12 +239,21 @@ def count_verified_open_jobs(
                 or record.get("sourceStatus") != "fresh"
                 or record.get("freshnessStatus") != "Doğrulandı"
                 or record.get("deadline") is None
+                or record.get("publishedAt") is None
             ):
                 continue
             try:
                 deadline = _parse_date_or_datetime(record["deadline"], "deadline")
-            except ValueError:
+                _parse_date_or_datetime(record["publishedAt"], "publishedAt")
+                if deadline < today:
+                    continue
+                collected_at = _parse_datetime(record.get("collectedAt"), "collectedAt")
+                opens_value = record.get("applicationOpensAt")
+                if opens_value is not None:
+                    opens_at = _parse_datetime(opens_value, "applicationOpensAt")
+                    if collected_at < opens_at:
+                        continue
+            except (ValueError, TypeError):
                 continue
-            if deadline >= today:
-                count += 1
+            count += 1
     return count
