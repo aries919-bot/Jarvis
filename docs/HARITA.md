@@ -767,3 +767,13 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #69, PR #71 ile 6 dosyada çakıştığı ve eski SharedPreferences mimarisini kullandığı için MERGE DIŞI tutuluyor. #71 geçmeden #69 kapatılmayacak.
 - Kamu C1 sayımı değişmedi: 12 resmî kaynak /55 doğrulanmış açık kamu ilanı; 45 eksik. Worker production GET/D1, city kanıtlı dedup eksik. C1 RED.
 - **KARAR:** H1 RED/beklemede; yeni emülatör sonucu ve gerçek telefon kontrolü olmadan #71 merge yok. Ayrıntı `gorevler/H1-EMULATOR-FAIL-ANALYSIS-2026-11-25.md`.
+
+
+## 32) H1 yeni exact-head build kanıtı — 25.11.2026 19:34Z
+- PR #71 HEAD `5df909fb1d0893aa0fb308f33b5fb8064aec8811`; PR diff GitHub API yeniden sayımı 10 dosya / +2.607 / -26. Test tanımı kaynaklardan 20 model +10 store +4 Android instrumentation =34.
+- APK/unit [#45685959491](https://github.com/aries919-bot/Jarvis/actions/runs/45685959491) **SUCCESS**; birim test adımı ve APK derlemesi/upload tamamlandı.
+- Merge-ref emulator [#45685959506](https://github.com/aries919-bot/Jarvis/actions/runs/45685959506): verify step #3 PASS (parent1 #70 merge `09f98b3...`, parent2 PR HEAD), AndroidX dependencyInsight PASS; instrumentation step #7 IN_PROGRESS.
+- Önceki emulator #45679523114: FAILURE; 4 testten 1 PASS /3 FAIL /0 ERROR /0 SKIP. 3 UI test RootViewWithoutFocusException. Bu eski test sonucu düzelmiş sayılmaz; yeni emulator 4/4 PASS gelmeli.
+- Workflow son revizyonu: `github.sha` PR merge-ref checkout, AOSP default API34 Pixel 2, tracing/monitor dependencyInsight, 30 dk emulator action timeout, log/XML/HTML report artifact if: always().
+- Yeni #71 HEAD için static diff scan tekrar sayımı: 10 dosya; secret pattern 0; LinkedIn/Indeed URL 0; browser impersonation UA 0.
+- **KARAR:** APK/unit PASS; emulator hâlâ RED/beklemede; telefon yok; PR #71 merge yok. PR #69 eski/duble SharedPreferences yaklaşımı nedeniyle merge dışı.
