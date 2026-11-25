@@ -11,6 +11,7 @@ import android.os.Build
 import android.content.pm.PackageManager
 import android.view.Gravity
 import android.widget.*
+import androidx.browser.customtabs.CustomTabsIntent
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
@@ -20,6 +21,7 @@ import java.text.SimpleDateFormat
 
 class CareerActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
+    private val newsVerificationStore by lazy { CareerNewsVerificationStore(SharedPreferencesCareerNewsStorage(this)) }
     private lateinit var cv: EditText
     private lateinit var role: EditText
     private lateinit var place: EditText
@@ -1316,6 +1318,7 @@ class CareerActivity : Activity() {
         for (i in 0 until stored.length()) {
             stored.optJSONObject(i)?.let { items.add(JSONObject(it.toString())) }
         }
+        val collectedNow = System.currentTimeMillis()
         hits.forEach { hit ->
             val classification = CareerContentClassifier.classify(hit.title, hit.snippet, hit.url)
             if (classification.isJobListing || hit.url.isBlank()) return@forEach
@@ -1333,13 +1336,20 @@ class CareerActivity : Activity() {
                 .put("contentLabel", classification.label)
                 .put("contentReason", classification.reason)
                 .put("contentConfidence", classification.confidence)
-                .put("lastSeenAt", System.currentTimeMillis())
-            if (index < 0) items.add(item)
-            else if (hit.snippet.length > items[index].optString("snippet").length) {
-                item.put("createdAt", items[index].optLong("createdAt", 0L))
+                .put("lastSeenAt", collectedNow)
+            if (index < 0) {
+                item.put("createdAt", collectedNow)
+                    .put("firstSeenAt", utcTimestamp(collectedNow))
+                items.add(item)
+            } else if (hit.snippet.length > items[index].optString("snippet").length) {
+                val old = items[index]
+                item.put("createdAt", old.optLong("createdAt", 0L))
+                old.optString("firstSeenAt").takeIf { it.isNotBlank() }?.let {
+                    item.put("firstSeenAt", it)
+                }
                 items[index] = item
             } else {
-                items[index].put("lastSeenAt", System.currentTimeMillis())
+                items[index].put("lastSeenAt", collectedNow)
             }
         }
         val output = JSONArray()
@@ -1593,12 +1603,61 @@ class CareerActivity : Activity() {
                     10f, false, muted
                 ))
             }
+            val storyId = CareerNewsVerificationRecord.stableStoryId(url, title)
+            val verification = newsVerificationStore.load(storyId)
+            card.addView(label(
+                "Haber doğrulama: " + verificationStatusLabel(verification?.verdict()),
+                11f, true, if (verification?.verdict() == CareerNewsVerdict.VERIFIED) successColor else warningColor
+            ))
+            card.addView(primaryButton("İddia / kanıt incele") {
+                val collectedAt = item.optLong("lastSeenAt", 0L).takeIf { it > 0L }?.let(::utcTimestamp)
+                val firstSeenAt = item.optString("firstSeenAt")
+                    .takeIf { CareerNewsVerificationPolicy.isUtcTimestamp(it) }
+                val publishedAt = item.optString("publishedAt")
+                    .takeIf { CareerNewsVerificationPolicy.isUtcTimestamp(it) }
+                val publisher = if (source == "Bilinmeyen kaynak") host else source
+                startActivity(Intent(this, CareerNewsVerificationActivity::class.java).apply {
+                    putExtra(CareerNewsVerificationActivity.EXTRA_STORY_ID, storyId)
+                    putExtra(CareerNewsVerificationActivity.EXTRA_TITLE, title)
+                    putExtra(CareerNewsVerificationActivity.EXTRA_URL, url)
+                    putExtra(CareerNewsVerificationActivity.EXTRA_PUBLISHER, publisher)
+                    putExtra(CareerNewsVerificationActivity.EXTRA_PUBLISHED_AT, publishedAt)
+                    putExtra(CareerNewsVerificationActivity.EXTRA_COLLECTED_AT, collectedAt)
+                    putExtra(CareerNewsVerificationActivity.EXTRA_FIRST_SEEN_AT, firstSeenAt)
+                })
+            }, params(-1, dp(46), 0, 8, 0, 0))
             card.addView(primaryButton("Kaynağın asıl sayfasını aç  ↗") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-                    .onFailure { toast("Kaynak açılamadı.") }
+                openNewsSource(url)
             }, params(-1, dp(46), 0, 8, 0, 0))
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
+    }
+
+    private fun utcTimestamp(epochMillis: Long): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(Date(epochMillis))
+
+    private fun verificationStatusLabel(verdict: CareerNewsVerdict?): String = when (verdict) {
+        null -> "İnceleme başlatılmadı"
+        CareerNewsVerdict.NEEDS_CLAIMS -> "İddia eklenmedi"
+        CareerNewsVerdict.NEEDS_EVIDENCE -> "Kanıt bekliyor"
+        CareerNewsVerdict.CONTEXT_MISSING -> "Bağlam eksik"
+        CareerNewsVerdict.REVIEW_PENDING -> "İnsan incelemesi bekliyor"
+        CareerNewsVerdict.CONFLICTING_EVIDENCE -> "Çelişkili kanıt"
+        CareerNewsVerdict.VERIFIED -> "Doğrulandı"
+        CareerNewsVerdict.REFUTED -> "Çürütüldü"
+        CareerNewsVerdict.PARTIALLY_VERIFIED -> "Kısmen doğrulandı"
+    }
+
+    private fun openNewsSource(url: String) {
+        if (CareerNewsVerificationPolicy.validateHttpsUrl(url) != null) {
+            toast("Kaynak bağlantısı güvenli HTTPS değil.")
+            return
+        }
+        runCatching {
+            CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this, Uri.parse(url))
+        }.onFailure { toast("Kaynak açılamadı.") }
     }
 
     private fun showProcessEvents(parent: LinearLayout) {
@@ -1659,8 +1718,7 @@ class CareerActivity : Activity() {
             }
             val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(button("Duyuruyu aç") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
-                    .onFailure { toast("Kaynak açılamadı.") }
+                openNewsSource(event.url)
             }, LinearLayout.LayoutParams(0, dp(48), 1f))
             actions.addView(button("Başvurulara kaydet") {
                 saveJob(Net.Hit(event.title, event.url, event.snippet))
