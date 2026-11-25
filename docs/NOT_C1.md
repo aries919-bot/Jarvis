@@ -261,3 +261,14 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Reminders.kt setAlarmClock kullanıyor. Android resmi belgelerine göre exact alarm yetkisi gerekir; USE_EXACT_ALARM otomatik verilir ancak alarm/takvim uygulamaları için sınırlıdır. Jarvis'in ana fonksiyonu alarm değilse policy riski vardır. Kullanıcı onaylı SCHEDULE_EXACT_ALARM veya inexact alarm/WorkManager değerlendirilecek.
 - **KARAR:** Kod henüz değiştirilmedi; ayrı güvenlik PR'ı.
 
+
+## 24. H1 emülatör hata kanıtı + retest — 25.11.2026
+- Run #45679523114 FAILURE. Artifact 15055314040 XML: 4 instrumentation testi; 1 PASS, 3 FAIL, 0 ERROR, 0 SKIP. Üç UI testi RootViewWithoutFocusException (window-focus=false) ile kaldı; yalnız SQLite last-good recovery testi geçti.
+- Logcat 177+ frame skip, 2.5–3.2s renderer jank ve Activity PAUSED geçişi gösteriyor. onCreate senkron SQLite load + koşulsuz save P2 performans işi ayrı kaydedildi; tek kök neden olduğu kesin değil.
+- `Trace.forceEnableAppTracing()` NoSuchMethodError için AndroidX Test issue #2248 ve Trace API dokümanı incelendi; app dependency `androidx.tracing:tracing:1.2.0` eklendi. Bu AndroidX Test monitor 1.7.1 düzeltmesiyle karıştırılmamalı; logdaki hata caught/logged idi. Kaynak: https://github.com/android/android-test/issues/2248 ; https://developer.android.com/reference/androidx/tracing/Trace ; https://developer.android.com/jetpack/androidx/releases/tracing.
+- İlk merge-ref run #45685844306 workflow doğrulama adımında eski PR base.sha snapshot nedeniyle durdu; test adımı atlandı. Kontrol gerçek `github.sha` merge commit parent'ları üzerinden düzeltildi.
+- Yeni HEAD `5df909fb1d0893aa0fb308f33b5fb8064aec8811`; [merge-ref emulator #45685959506](https://github.com/aries919-bot/Jarvis/actions/runs/45685959506) + [APK/unit #45685959491](https://github.com/aries919-bot/Jarvis/actions/runs/45685959491) IN_PROGRESS. Workflow merge-ref verification PASS; parent1 #70 merge `09f98b324a9a1f38dbbc25853ec2eba2fc544db9`, parent2 PR head.
+- Emulator test image AOSP default API34 / Pixel 2 / x86_64; report + logs if: always() ile korunuyor.
+- PR #71 merge yok; PR #69 mükerrer iş/SharedPreferences mimarisi nedeniyle merge dışı. PR #71 için yeni emülatör PASS ve gerçek telefon kontrolü gereklidir.
+- Kamu C1 12 kaynak /55 doğrulanmış açık ilan; 45 eksik; Worker production GET/D1 ve city dedup yok; **RED**.
+- Ayrıntı: `gorevler/H1-EMULATOR-FAIL-ANALYSIS-2026-11-25.md` ve `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
