@@ -26,7 +26,7 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - Betik: scripts/c1_public_source_robots.py
 - User-Agent: AriesKaynakTara/1.0
 - Yalnızca her origin için /robots.txt alınır; TLS doğrulaması açıktır, yönlendirme takip edilmez.
-- Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45533647101 — job 138934831450 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14986645039. collectedAt=2026-11-25T02:32:37.4870793Z.
+- Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45535128244 — job 138939749838 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14986457434. collectedAt=2026-11-25T02:45:11Z. Mardin öğretim görevlisi PDF bağlantısındaki boşluk kodlaması düzeltildikten sonra exact path de ölçüldü.
 - Sonuç: Mardin Artuklu ve ORAN robots 404 (NO_ROBOTS_FILE); Atatürk robots 200 boş gövde; Balıkesir HTML 200 ve PDF host 404 (NO_ROBOTS_FILE); Zafer ve DOKA sayfaları ile tam PDF ek yolları 200/ALLOW; TGA ve YÖKAK yolları 200/ALLOW. 401/403, 5xx, timeout, redirect ve ağ hatası UNKNOWN/fail-closed.
 - TGA'nın canlı Actions link-audit metni 13 pozisyonu, 03.11.2026 ilan tarihini ve 04.12.2026 son başvuru tarihini doğruladı; kariyer portalında 6 rol türü listeleniyor.
 - RFC 9309 §2.3.1.3: robots 404, robots dosyasının bulunmaması/erişilememesi anlamına gelir ve kaynağa erişime izin verir; 200 boş dosyada da parse edilebilir yasak kuralı yoktur. 401/403, 5xx, timeout, redirect ve ağ hatası UNKNOWN/fail-closed.
