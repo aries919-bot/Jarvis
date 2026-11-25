@@ -528,3 +528,10 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 ## 26.11.2026 — H1 latest HEAD APK result
 - [APK/unit CI #45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` SUCCESS; unit tests + APK build + artifact upload tamamlandı. Artifact ID 15069888409, 14,198,084 byte, sha256 `8f98ae33b42003beb70851e5b596e0b6354f7d24559b9585219e1f0ae46fbb79`.
 - Exact-head emulator #45716694004 IN_PROGRESS; instrumentation XML henüz yok. H1 kabul yok.
+
+
+## 26.11.2026 — b51c53a APK/unit exact-head sonucu
+- APK/unit run #45716694105 exact head b51c53a5797c19d4e18ed81b679024fc14fa3723: SUCCESS; APK ve unit test adımları tamamlandı: https://github.com/aries919-bot/Jarvis/actions/runs/45716694105.
+- Artifact #15069888409 (aries-apk), app-debug.apk SHA-256 96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab.
+- Emulator run #45716694004 henüz IN_PROGRESS, job #139564450544 step7; XML/artefact yok. Önceki #45712459718 XML 4/1/3/0/0 FAILURE geçerlidir.
+- H1 ancak yeni exact-head XML 4/4 PASS, 0 fail/error/skipped ve gerçek cihaz doğrulamasıyla kabul edilebilir. APK/unit PASS tek başına yeterli değildir.
