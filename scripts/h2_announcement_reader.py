@@ -811,6 +811,7 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
             "sourceStatus":source_status,
             "items":len(items),
             "positions":sum(position_count_for(item) for item in items),
+            "verifiedOpenListings":len(verified_items),
             "verifiedOpenPositions":sum(position_count_for(item) for item in verified_items),
             "verifiedInstitutions":verified_institutions,
             "error":feed.get("lastError")
@@ -826,6 +827,7 @@ def make_summary(rows: list[dict[str,Any]], collected_at: str) -> str:
     verified_institutions = sorted({
         institution for row in rows for institution in row.get("verifiedInstitutions", [])
     })
+    verified_listings = sum(row.get("verifiedOpenListings",0) for row in rows)
     verified_positions = sum(row.get("verifiedOpenPositions",0) for row in rows)
     lines = [
         "## H2 resmî duyuru okuyucusu",
@@ -835,22 +837,25 @@ def make_summary(rows: list[dict[str,Any]], collected_at: str) -> str:
         f"- Durum: **{fresh} fresh / {stale} stale**",
         f"- Kart: **{total}**",
         f"- Güncel açık doğrulanmış kurum: **{len(verified_institutions)}**",
-        f"- Güncel açık doğrulanmış pozisyon: **{verified_positions}**",
+        f"- Güncel açık doğrulanmış ilan kartı: **{verified_listings}**",
+        f"- Kartlardaki güncel açık pozisyon toplamı: **{verified_positions}**",
         "",
-        "| sourceId | kurum | sourceStatus | kart | pozisyon | güncel açık | hata |",
-        "|---|---|---|---:|---:|---:|---|",
+        "| sourceId | kurum | sourceStatus | kart | pozisyon | açık doğrulanmış kart | açık pozisyon | hata |",
+        "|---|---|---|---:|---:|---:|---:|---|",
     ]
     for row in rows:
         lines.append(
             f"| {row['sourceId']} | {row.get('institution') or ''} | {row['sourceStatus']} "
-            f"| {row['items']} | {row.get('positions',0)} | {row.get('verifiedOpenPositions',0)} "
-            f"| {row.get('error') or ''} |"
+            f"| {row['items']} | {row.get('positions',0)} | {row.get('verifiedOpenListings',0)} "
+            f"| {row.get('verifiedOpenPositions',0)} | {row.get('error') or ''} |"
         )
     lines.extend([
         "",
-        "Güncel açık sayacı yalnız fresh kaynak, Doğrulandı etiketi ve geçmemiş deadline koşullarını karşılayan kartları sayar.",
-        "Kaynak sayısı kurum adına göre tekilleştirilir; aynı kurumun birden fazla ilanı kaynak sayısını artırmaz.",
-        "Kura/sonuç kayıtları, süresi geçmiş ilanlar, başvurusu henüz açılmamış ilanlar ve stale kaynaklar güncel açık toplamına girmez.",
+        "C1'nin 100 ilan eşiği ayrı doğrulanmış ilan kartı adedinden hesaplanır; bir karttaki positionCount kart sayısını çoğaltmaz.",
+        "Pozisyon toplamı bilgi amaçlı ayrı gösterilir; 70 kadrolu tek duyuru 70 ilan kartı değildir.",
+        "Güncel açık sayaç yalnız fresh kaynak, Doğrulandı etiketi ve geçmemiş deadline koşullarını karşılayan kartları sayar.",
+        "Kurum sayısı adına göre tekilleştirilir; aynı kurumun birden fazla duyurusu yeni kurum kaynağı oluşturmaz.",
+        "Kura/sonuç kayıtları, süresi geçmiş ilanlar, başvurusu henüz açılmamış ilanlar ve stale kaynaklar güncel açık toplama girmez.",
         "Robots izni belirsizse hedef sayfaya istek yoktur; TLS varsayılan doğrulaması açıktır.",
     ])
     return "\n".join(lines)+"\n"
