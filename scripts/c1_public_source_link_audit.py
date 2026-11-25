@@ -207,7 +207,7 @@ def parse_page(body: bytes, base_url: str, allowed_hosts: list[str]) -> dict:
     return {
         "title": " ".join(parser.title_parts)[:300],
         "meta": parser.meta,
-        "text_excerpt": text[:1800],
+        "text_excerpt": text[:10000],
         "official_links": links,
     }
 
