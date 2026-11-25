@@ -365,7 +365,7 @@ PDF ekran görüntüleri sayfalar 1–9 için alındı ve tablo/giriş metni gö
 - İŞKUR e-Şube ayrı kaynakta **1 kaynak /42 kayıt**. Birleşik Worker feed bu iki ölçümü tek JSON içinde 12 kurum/55 kart olarak sayıyor; eski 6/47 baseline artık bu exact-head entegrasyon ölçümünün yerine kullanılmaz.
 - Manuel kamu envanterinin son belgelenmiş toplamı **23 ana duyuru /17 kurum** olarak korunur. ORAN, DOKA ve Zafer H2 feed'de mevcuttur; bu üç kaynağın 23/17 manuel sayımına dahil olup olmadığı satır bazlı eşleştirme olmadan söylenemez. Bu nedenle 26/20 gibi yeni bir manuel toplam üretilmez. Manuel envanter ile Worker feed arasındaki tam URL/ilan kesişimi henüz tamamlanmadı; sayılar toplanmaz.
 - H2 feed'deki üç ajans kartının alanları H2 JSON'da: ORAN `publishedAt=2026-10-19`, `deadline=2026-12-03`, `collectedAt/firstSeenAt=2026-11-25T16:09:42Z`; DOKA `publishedAt=2026-11-02`, `deadline=2026-12-06`, aynı source collection/first-seen; Zafer `publishedAt=2026-11-03`, `deadline=2026-12-14`, aynı source collection/first-seen. Pozisyon sayıları kart adedini artırmaz.
-- Dicle Kalkınma Ajansı (DİKA) 4 uzman duyurusu ayrıca **future/opening-soon**: resmi kurum sayfası 16.11.2026'da yayımlanmış; PDF'de Resmî Gazete ilan tarihi 14.11.2026; başvuru 04.12.2026–18.12.2026. `applicationOpensAt=2026-12-04`, `deadline=2026-12-18`; 26 açık kart/20 kurum sayısına eklenmez. Kaynak: https://www.dika.org.tr/duyuru/ajansimiza-dort-uzman-personel-alimi/322 .
+- Dicle Kalkınma Ajansı (DİKA) 4 uzman duyurusu ayrıca **future/opening-soon**: resmi kurum sayfası 16.11.2026'da yayımlanmış; PDF'de Resmî Gazete ilan tarihi 14.11.2026; başvuru 04.12.2026–18.12.2026. `applicationOpensAt=2026-12-04`, `deadline=2026-12-18`; 23/17 manuel açık sayımına tekrar eklenmez. Kaynak: https://www.dika.org.tr/duyuru/ajansimiza-dort-uzman-personel-alimi/322 .
 
 ### Production / karar
 - `PUBLISH status=SKIPPED`: `JARVIS_WORKER_URL` / `JARVIS_WORKER_TOKEN` QA ortamında yapılandırılmadı. Production authenticated GET/POST, gerçek Cloudflare D1 ve kalıcı production `firstSeenAt` kanıtı yok.
@@ -375,6 +375,6 @@ PDF ekran görüntüleri sayfalar 1–9 için alındı ve tablo/giriş metni gö
 
 ### C1-3 sıradaki iş
 - Görev açıldı: [C1-3 — 100 doğrulanmış açık ilan + production feed kapısı](../gorevler/C1-3-100-OPEN-LISTINGS-2026-11-26.md) (yalnız `durum` dokümantasyonu).
-- Manuel kamu envanterinin son kesin belgelenmiş toplamı **23 açık ana duyuru /17 kurum**; future/opening-soon önceki 4'e yeni DİKA duyurusu eklenince **5 aday** (crosswalk teyidi bekliyor), deadline-null/Doğrulanamadı 5, süresi geçmiş 5. Özel havuz 7 aday/duyuru olarak ayrı kalır.
+- Manuel kamu envanterinin son kesin belgelenmiş toplamı **23 açık ana duyuru /17 kurum**; future/opening-soon **4** olarak korunur; DİKA daha önceki 10 kaynaklık manuel aday listesinde zaten anılmıştır, yeni kayıt diye eklenmez, deadline-null/Doğrulanamadı 5, süresi geçmiş 5. Özel havuz 7 aday/duyuru olarak ayrı kalır.
 - Feed sayısı farklıdır: **12 kurum /55 açık doğrulanmış kart**. Manuel 23/17 ile feed 12/55 birleştirilmez; önce canonical URL/ilan kesişimi çıkarılır.
 - Sonraki iş, 23 manuel duyurunun H2 13 kartıyla tam eşleştirilmesi; yalnız eksik, robots-izinli, deadline'ı açık kaynakların eklenmesidir. Production Worker GET/D1 ise ayrı blokerdir.
