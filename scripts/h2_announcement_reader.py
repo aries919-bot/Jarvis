@@ -775,8 +775,30 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
         except SourceError as exc:
             feed = stale_feed(source["id"],now,str(exc),previous)
         write_feed(feed,out_dir,previous_dir)
-        rows.append({"sourceId":source["id"],"sourceStatus":feed["sourceStatus"],
-                     "items":len(feed.get("items",[])),"error":feed.get("lastError")})
+        items = feed.get("items", [])
+        source_status = feed["sourceStatus"]
+        def count_for(item: dict[str,Any]) -> int:
+            value = item.get("positionCount")
+            return value if isinstance(value,int) and value > 0 else 1
+        verified_items = [
+            item for item in items
+            if source_status == "fresh"
+            and item.get("freshnessStatus") == "Doğrulandı"
+            and item.get("deadline")
+            and item["deadline"] >= today_value.isoformat()
+        ]
+        institutions = sorted({str(item.get("institution")) for item in items if item.get("institution")})
+        verified_institutions = sorted({str(item.get("institution")) for item in verified_items if item.get("institution")})
+        rows.append({
+            "sourceId":source["id"],
+            "institution":institutions[0] if len(institutions) == 1 else (source.get("institution") or source.get("name") or source["id"]),
+            "sourceStatus":source_status,
+            "items":len(items),
+            "positions":sum(count_for(item) for item in items),
+            "verifiedOpenPositions":sum(count_for(item) for item in verified_items),
+            "verifiedInstitutions":verified_institutions,
+            "error":feed.get("lastError")
+        })
     summary = make_summary(rows,now)
     return rows,summary
 
@@ -785,24 +807,35 @@ def make_summary(rows: list[dict[str,Any]], collected_at: str) -> str:
     fresh = sum(row["sourceStatus"] == "fresh" for row in rows)
     stale = sum(row["sourceStatus"] == "stale" for row in rows)
     total = sum(row["items"] for row in rows)
+    verified_institutions = sorted({
+        institution for row in rows for institution in row.get("verifiedInstitutions", [])
+    })
+    verified_positions = sum(row.get("verifiedOpenPositions",0) for row in rows)
     lines = [
         "## H2 resmî duyuru okuyucusu",
         "",
         f"- collectedAt (UTC): **{collected_at}**",
-        f"- Kaynak: **{len(rows)}** (ölçülmüş resmî kaynaklar)",
+        f"- Kaynak kaydı: **{len(rows)}** (ölçülmüş resmî duyurular)",
         f"- Durum: **{fresh} fresh / {stale} stale**",
         f"- Kart: **{total}**",
+        f"- Güncel açık doğrulanmış kurum: **{len(verified_institutions)}**",
+        f"- Güncel açık doğrulanmış pozisyon: **{verified_positions}**",
         "",
-        "| sourceId | sourceStatus | kart | hata |",
-        "|---|---|---:|---|",
+        "| sourceId | kurum | sourceStatus | kart | pozisyon | güncel açık | hata |",
+        "|---|---|---|---:|---:|---:|---|",
     ]
     for row in rows:
-        lines.append(f"| {row['sourceId']} | {row['sourceStatus']} | {row['items']} | {row.get('error') or ''} |")
+        lines.append(
+            f"| {row['sourceId']} | {row.get('institution') or ''} | {row['sourceStatus']} "
+            f"| {row['items']} | {row.get('positions',0)} | {row.get('verifiedOpenPositions',0)} "
+            f"| {row.get('error') or ''} |"
+        )
     lines.extend([
         "",
-        "Kura/sonuç kayıtları yeni iş sayacına girmez. Geçmiş deadline güncel iş listesine girmez.",
-        "Robots izin belirsizse hedef sayfaya istek yoktur; TLS varsayılan doğrulaması açıktır.",
-        "Bu okuyucu gerçek başvurusu açık kamu ilanı sayısını artırdığını iddia etmez.",
+        "Güncel açık sayacı yalnız fresh kaynak, Doğrulandı etiketi ve geçmemiş deadline koşullarını karşılayan kartları sayar.",
+        "Kaynak sayısı kurum adına göre tekilleştirilir; aynı kurumun birden fazla ilanı kaynak sayısını artırmaz.",
+        "Kura/sonuç kayıtları, süresi geçmiş ilanlar, başvurusu henüz açılmamış ilanlar ve stale kaynaklar güncel açık toplamına girmez.",
+        "Robots izni belirsizse hedef sayfaya istek yoktur; TLS varsayılan doğrulaması açıktır.",
     ])
     return "\n".join(lines)+"\n"
 
