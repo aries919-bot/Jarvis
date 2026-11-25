@@ -732,3 +732,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Job log isteği BlobNotFound döndürdü; bu PASS/FAIL kanıtı değildir. Test raporu upload adımı henüz başlamadı.
 - APK/unit run #45679523180 SUCCESS aynı exact HEAD.
 - **Karar: H1 RED/beklemede; emülatör ve telefon doğrulaması olmadan merge yok.**
+
+## 28) C1 kaynak politikası PR #70 birleştirildi — 25.11.2026
+- PR #70 exact HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`; 4 dosya / +75 / -20.
+- Exact-head Android unit + APK CI [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) SUCCESS; scoped öz-QA ONAY; secret/browser-UA/source-policy diff taraması temiz.
+- PR #70 draft ready yapıldı ve merge edildi: commit `09f98b324a9a1f38dbbc25853ec2eba2fc544db9`; `kariyer-modulu` branch head bu commit.
+- PR #71 artık güncel base üzerinde mergeable; ancak emülatör run #45679523114 hâlâ PR head'i checkout ediyor. #70 base entegrasyonunu emülatörde doğrulamak için mevcut run kapandıktan sonra H1 workflow merge-ref checkout edecek şekilde güncellenecek ve exact new-head CI tekrar çalıştırılacak.
+- PR #71 merge yok; emülatör + gerçek telefon testi bekleniyor.
+- **KARAR:** #70 yalnız kaynak/UA P0 kapsamı için kabul edildi. C1 genel 10/100 ve production GET/D1 hâlâ RED.
