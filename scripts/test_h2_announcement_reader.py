@@ -439,7 +439,7 @@ class H2ReaderTests(unittest.TestCase):
 
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(15,len(cfg["sources"]))
+        self.assertEqual(17,len(cfg["sources"]))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
         self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
 
@@ -455,6 +455,23 @@ class H2ReaderTests(unittest.TestCase):
         self.assertTrue(all(source.get("category") in allowed for source in cfg["sources"]))
         botas = next(source for source in cfg["sources"] if source["id"] == "botas-duyurular")
         self.assertEqual("Kamu bağlı şirket", botas["category"])
+
+
+
+    def test_marmara_named_publication_date_is_parsed_from_official_pdb_page(self):
+        text="Üniversitemiz Öğretim Görevlisi Alım İlanı Yayın Tarihi: 24 Kasım 2026 Son Başvuru Tarihi: 08.12.2026"
+        self.assertEqual("2026-11-24",h2.explicit_published_at(text,mode="marmara-pdb"))
+        self.assertEqual("2026-12-08",h2.application_deadline(text,"son başvuru"))
+
+    def test_marmara_24_november_notices_are_two_cards_and_eleven_positions(self):
+        cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
+        teacher=next(s for s in cfg["sources"] if s["id"]=="marmara-ogretim-elemani-2026-11-24")
+        faculty=next(s for s in cfg["sources"] if s["id"]=="marmara-ogretim-uyesi-2026-11-24")
+        self.assertEqual(4,teacher["positionCount"])
+        self.assertEqual(7,faculty["positionCount"])
+        self.assertNotEqual(teacher["itemId"],faculty["itemId"])
+        self.assertEqual("marmara-pdb",teacher["publicationMode"])
+        self.assertEqual("marmara-pdb",faculty["publicationMode"])
 
 
     def test_empty_200_robots_file_allows_public_page(self):
