@@ -42,7 +42,7 @@ class CareerNewsVerificationActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        store = CareerNewsVerificationStore(SharedPreferencesCareerNewsStorage(this))
+        store = CareerNewsVerificationStore(SQLiteCareerNewsStorage(this))
 
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty().trim()
         val sourceUrl = intent.getStringExtra(EXTRA_URL).orEmpty().trim()
