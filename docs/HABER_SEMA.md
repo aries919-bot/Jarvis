@@ -312,3 +312,12 @@ PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt
 - Test dosyası sayımı 17 model +8 store =25 @Test. Batch read testi tek `getMany` çağrısında iki kaydı ve bozuk primary için last-good fallback'i doğrular.
 - APK artifact `aries-apk`, ID `15049240153`, 14,176,012 bytes.
 - CI yalnız JVM unit tests + debug APK derlemesini kanıtlar; Android emulator/Full App QA ve gerçek telefon testi yapılmadı. H1 bu nedenle CI teknik olarak PASS, telefon kabulü bekliyor.
+
+### 11.2 PR #71 exact-head emülatör smoke — 25.11.2026
+- PR #71 current HEAD `0a376b4c7355a5a6822252da4d9286606ce23bde`; 10 files /+2.132/-26 /0 behind; 57 commits relative to `kariyer-modulu`.
+- New Android instrumentation tests: Activity visible, claim/source actions visible, original source URL persisted, `publishedAt=null` preserved; separate test verifies corrupt primary restores last-good from the actual SQLite adapter.
+- Total tests: 17 model +8 store +2 instrumentation =27 @Test.
+- Normal exact-head Android run [#45669708914](https://github.com/aries919-bot/Jarvis/actions/runs/45669708914) SUCCESS; APK artifact ID `15049965420` (14,176,024 bytes).
+- Emulator exact-head run [#45669709252](https://github.com/aries919-bot/Jarvis/actions/runs/45669709252) last checked IN_PROGRESS; no PASS yet.
+- Smoke kapsamı tam uçtan uca değil: claim ekleme, evidence ekleme, review ve correction UI taps henüz gerçek emulatorde otomatik test edilmedi. Telefon testi yok.
+- Workflow: pull_request + workflow_dispatch; exact PR-head checkout; PR-number concurrency; push duplicate event removed; emulator action commit SHA pinned. No network fetch in instrumentation test.
