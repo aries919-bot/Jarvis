@@ -252,6 +252,24 @@ class CareerNewsVerificationTest {
         assertFalse(value.validationErrors().isEmpty())
     }
 
+
+    @Test
+    fun primaryEvidenceRequiresAnAllowlistedOfficialEmployerSource() {
+        assertTrue(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://personel.ozal.edu.tr/duyuru"))
+        assertTrue(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://personel.example.gov.tr/duyuru"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://example.edu.tr/duyuru"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://www.linkedin.com/jobs/view/1"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://tr.indeed.com/jobs/1"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://www.kariyer.net/is-ilani/1"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceAllowed("https://www.secretcv.com/is-ilani/1"))
+
+        val rejected = record().addClaim(claim())!!.addEvidence(
+            "claim-1",
+            evidence(sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE, url = "https://www.kariyer.net/is-ilani/1")
+        )
+        assertNull(rejected)
+    }
+
     @Test
     fun humanReviewRequiresRationaleAndNoOpCorrectionIsRejected() {
         val withEvidence = record().addClaim(claim())!!
