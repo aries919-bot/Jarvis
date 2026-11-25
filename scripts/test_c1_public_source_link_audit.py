@@ -8,21 +8,36 @@ import c1_public_source_link_audit as audit
 
 
 class LinkAuditTests(unittest.TestCase):
-    def test_robots_404_never_requests_page(self):
+    def test_robots_404_means_no_file_and_may_access_page(self):
         calls = []
 
         def requester(url, limit):
             calls.append(url)
-            return {"status": 404, "body": b"", "error": "HTTP_404"}
+            if url.endswith("/robots.txt"):
+                return {"status": 404, "body": b"", "error": "HTTP_404"}
+            return {"status": 200, "body": b"<html><title>Public</title></html>", "error": None}
 
-        result = audit.audit_page(
-            "https://example.gov.tr/notice",
-            ["example.gov.tr"],
-            requester,
-        )
-        self.assertFalse(result["page_requested"])
-        self.assertIsNone(result["allowed"])
-        self.assertEqual(["https://example.gov.tr/robots.txt"], calls)
+        result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
+        self.assertTrue(result["page_requested"])
+        self.assertTrue(result["allowed"])
+        self.assertEqual("NO_ROBOTS_FILE", result["robots_policy"])
+        self.assertEqual(200, result["page_http_status"])
+        self.assertEqual(2, len(calls))
+
+    def test_empty_200_robots_file_has_no_rules_and_allows_page(self):
+        calls = []
+
+        def requester(url, limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return {"status": 200, "body": b"", "error": None}
+            return {"status": 200, "body": b"<html><title>Public</title></html>", "error": None}
+
+        result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
+        self.assertTrue(result["page_requested"])
+        self.assertTrue(result["allowed"])
+        self.assertEqual("ALLOW", result["robots_policy"])
+        self.assertEqual(2, len(calls))
 
     def test_robots_disallow_never_requests_page(self):
         calls = []
@@ -33,14 +48,29 @@ class LinkAuditTests(unittest.TestCase):
                 return {"status": 200, "body": b"User-agent: *\nDisallow: /notice", "error": None}
             return {"status": 200, "body": b"<html>must not fetch</html>", "error": None}
 
-        result = audit.audit_page(
-            "https://example.gov.tr/notice",
-            ["example.gov.tr"],
-            requester,
-        )
+        result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
         self.assertFalse(result["page_requested"])
         self.assertIs(result["allowed"], False)
-        self.assertEqual(["https://example.gov.tr/robots.txt"], calls)
+        self.assertEqual("DISALLOW", result["robots_policy"])
+        self.assertEqual(1, len(calls))
+
+    def test_robots_403_and_500_never_request_page(self):
+        for response in (
+            {"status": 403, "body": b"", "error": "HTTP_403"},
+            {"status": 500, "body": b"", "error": "HTTP_500"},
+            {"status": None, "body": b"", "error": "TIMEOUT"},
+        ):
+            calls = []
+
+            def requester(url, limit, response=response):
+                calls.append(url)
+                return response
+
+            result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
+            self.assertFalse(result["page_requested"])
+            self.assertIsNone(result["allowed"])
+            self.assertEqual(1, len(calls))
+            self.assertTrue(calls[0].endswith("/robots.txt"))
 
     def test_allowed_page_extracts_only_allowlisted_official_links(self):
         calls = []
@@ -77,7 +107,6 @@ class LinkAuditTests(unittest.TestCase):
             calls,
         )
 
-
     def test_parser_ignores_script_and_style_content(self):
         body = (
             b'<html><head><title>Notice</title><style>.secret { display:none }</style>'
@@ -88,7 +117,6 @@ class LinkAuditTests(unittest.TestCase):
         self.assertIn("Real announcement", result["text_excerpt"])
         self.assertNotIn("fake", result["text_excerpt"])
         self.assertNotIn("display:none", result["text_excerpt"])
-
 
     def test_page_403_is_reported_without_redirect_or_retry(self):
         calls = []
@@ -131,24 +159,6 @@ class LinkAuditTests(unittest.TestCase):
         self.assertEqual("TIMEOUT", result["page_error"])
         self.assertEqual(2, len(calls))
 
-
-    def test_robots_500_and_empty_response_never_request_page(self):
-        for response in (
-            {"status": 500, "body": b"", "error": "HTTP_500"},
-            {"status": 200, "body": b"", "error": None},
-        ):
-            calls = []
-
-            def requester(url, limit, response=response):
-                calls.append(url)
-                return response
-
-            result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
-            self.assertFalse(result["page_requested"])
-            self.assertIsNone(result["allowed"])
-            self.assertEqual(1, len(calls))
-            self.assertTrue(calls[0].endswith("/robots.txt"))
-
     def test_page_500_and_empty_response_are_reported(self):
         for response in (
             {"status": 500, "body": b"", "error": "HTTP_500"},
@@ -159,7 +169,7 @@ class LinkAuditTests(unittest.TestCase):
             def requester(url, limit, response=response):
                 calls.append(url)
                 if url.endswith("/robots.txt"):
-                    return {"status": 200, "body": b"User-agent: *\\nAllow: /", "error": None}
+                    return {"status": 200, "body": b"User-agent: *\nAllow: /", "error": None}
                 return response
 
             result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
