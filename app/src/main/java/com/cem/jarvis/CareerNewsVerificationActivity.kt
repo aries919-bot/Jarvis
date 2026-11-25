@@ -190,6 +190,7 @@ class CareerNewsVerificationActivity : Activity() {
             "Aries tek başına haber doğrulamaz. İddia için asıl kaynak, destekleyen/çelişen kanıt ve açık insan incelemesi gerekir.",
             12f
         ))
+        root.addView(button("Haber hakkında soru sor") { askNewsQuestion() })
         root.addView(button("＋  İddia ekle") { addClaimDialog() })
         root.addView(text("İDDİALAR VE KANITLAR", 11f, true))
 
@@ -296,6 +297,49 @@ class CareerNewsVerificationActivity : Activity() {
         val scroll = ScrollView(this).apply { addView(root) }
         setContentView(scroll)
         status.text = "Haber durumu: " + newsVerdictLabel(record.verdict())
+    }
+
+    private fun askNewsQuestion() {
+        val question = field("Örnek: Bu iddiayı hangi kanıt destekliyor?", true)
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(4), dp(8), dp(4))
+            addView(text("Yalnızca bu haberin yerel iddia, kanıt ve inceleme kayıtları kullanılır. Bulunmayan bilgi tahmin edilmez.", 12f))
+            addView(question)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Haber hakkında soru sor")
+            .setView(content)
+            .setPositiveButton("Yanıtla") { _, _ ->
+                showNewsAnswer(CareerNewsQuestionAnswer.answer(record, question.text.toString()))
+            }
+            .setNegativeButton("Kapat", null)
+            .show()
+    }
+
+    private fun showNewsAnswer(answer: CareerNewsQAAnswer) {
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(4), dp(8), dp(4))
+            addView(text(answer.answer, 14f))
+            if (answer.sources.isNotEmpty()) {
+                addView(text("KAYNAKLAR / KANITLAR", 11f, true))
+                answer.sources.forEach { source ->
+                    addView(panel().apply {
+                        addView(text(source.label, 12f, true))
+                        if (source.excerpt.isNotBlank()) addView(text(source.excerpt, 12f))
+                        addView(text(source.detail, 10f))
+                        addView(button("Kaynağı aç") { openExternal(source.url) })
+                    })
+                }
+            }
+        }
+        val scroll = ScrollView(this).apply { addView(content) }
+        AlertDialog.Builder(this)
+            .setTitle("Aries Haber QA")
+            .setView(scroll)
+            .setPositiveButton("Kapat", null)
+            .show()
     }
 
     private fun persist(updated: CareerNewsVerificationRecord): Boolean {
