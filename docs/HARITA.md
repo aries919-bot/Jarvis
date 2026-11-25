@@ -641,7 +641,7 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #71 dalında düzeltme uygulandı; exact HEAD `2520b085bdd3e60a9f97ab42406147b1b57f3b07`.
 - `CareerNewsReviewEvent`: karar + UTC zaman + gerekçe + o karardaki kanıt ID'leri append-only tutuluyor. Yeni kanıt eski review'u arşivleyip aktif kararı sıfırlar; yeniden inceleme eski kararı arşivler. Store geçmiş silme/yeniden yazma ve eski kararın yeni kanıtla aktif kalmasını reddeder. Activity geçmiş review'ları gösterir.
 - Regresyonlar: 2 model + 2 store testi; 1 SQLite Activity instrumentation testi eklendi.
-- Exact-head APK/unit run [#45675851347](https://github.com/aries919-bot/Jarvis/actions/runs/45675851347) IN_PROGRESS; exact-head emulator/SQLite [#45675851473](https://github.com/aries919-bot/Jarvis/actions/runs/45675851473) IN_PROGRESS. Önceki HEAD emulator #45673231634 yeni commit nedeniyle CANCELLED; PASS değildir.
+- Exact-head APK/unit run [#45675851347](https://github.com/aries919-bot/Jarvis/actions/runs/45675851347) SUCCESS; exact-head emulator/SQLite [#45675851473](https://github.com/aries919-bot/Jarvis/actions/runs/45675851473) IN_PROGRESS (instrumentation step). Önceki HEAD emulator #45673231634 yeni commit nedeniyle CANCELLED; PASS değildir.
 - CI PASS, tam UI uçtan uca testi ve gerçek telefon testi hâlâ gerekli. Kanıt formunda publishedAt alanı ve correction UI'da önceki kanıt ayrıntıları ayrı takip işidir.
 - PR #70 kaynak/UA politikası bu PR'ın tabanında yok; ayrıca denetlenmelidir.
 - **KARAR: RED / beklemede.** Exact-head CI sonuçları gelmeden merge yok.
