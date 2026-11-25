@@ -28,7 +28,7 @@ class CareerNewsVerificationActivity : Activity() {
     private lateinit var content: LinearLayout
     private lateinit var status: TextView
     private lateinit var record: CareerNewsVerificationRecord
-    private val padding by lazy { (resources.displayMetrics.density * 16).toInt() }
+    private var saving = false
 
     companion object {
         const val EXTRA_STORY_ID = "news_story_id"
@@ -198,13 +198,24 @@ class CareerNewsVerificationActivity : Activity() {
     }
 
     private fun persist(updated: CareerNewsVerificationRecord): Boolean {
-        val result = store.save(updated)
-        if (!result.saved) {
-            Toast.makeText(this, result.reason ?: "Kayıt saklanamadı.", Toast.LENGTH_LONG).show()
+        if (saving) {
+            Toast.makeText(this, "Önceki kayıt işlemi sürüyor.", Toast.LENGTH_SHORT).show()
             return false
         }
-        record = updated
-        render()
+        saving = true
+        Thread {
+            val result = store.save(updated)
+            runOnUiThread {
+                saving = false
+                if (isFinishing) return@runOnUiThread
+                if (!result.saved) {
+                    Toast.makeText(this, result.reason ?: "Kayıt saklanamadı.", Toast.LENGTH_LONG).show()
+                } else {
+                    record = updated
+                    render()
+                }
+            }
+        }.start()
         return true
     }
 
