@@ -14,7 +14,7 @@ Mevcut İş & Kariyer modülünde NOT_C1 ihlali olan LinkedIn/Indeed kaynak güv
 - PR #67: https://github.com/aries919-bot/Jarvis/pull/67 (aktif)
 - Eski PR #66 kapatıldı; taban C3 PR #30 commitlerini diff'e karıştırdığı için kapsam temizliği amacıyla superseded.
 - PR #67 durumu: open, draft, unmerged; mergeable false (GitHub sonucu).
-- Temiz PR #67 doğrudan C3 dalından açıldı; compare yalnız 4 dosya / +28 / -13. PR #66'nın 9 dosyalı parent-diff sorunu giderildi.
+- Temiz PR #67 doğrudan C3 dalından açıldı; compare yalnız 4 dosya / +32 / -13. PR #66'nın 9 dosyalı parent-diff sorunu giderildi. Son test commit'i katalogda Indeed/LinkedIn URL'lerinin hiç bulunmadığını da doğrular.
 
 ## Değişen dosyalar
 1. CareerMonitor.kt: Indeed/LinkedIn kaynak kayıtları, trustedDomains kayıtları, secondaryDomains kayıtları ve site sorguları çıkarıldı. Genel edu.tr trusted domain listesinden çıkarıldı.
