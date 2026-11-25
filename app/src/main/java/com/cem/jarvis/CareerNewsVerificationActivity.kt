@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
@@ -22,13 +23,16 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+import java.util.concurrent.Executors
 
 class CareerNewsVerificationActivity : Activity() {
+    private lateinit var storage: SQLiteCareerNewsStorage
     private lateinit var store: CareerNewsVerificationStore
-    private lateinit var content: LinearLayout
     private lateinit var status: TextView
     private lateinit var record: CareerNewsVerificationRecord
+    private val ioExecutor = Executors.newSingleThreadExecutor()
     private var saving = false
+    private var closing = false
 
     companion object {
         const val EXTRA_STORY_ID = "news_story_id"
@@ -42,7 +46,8 @@ class CareerNewsVerificationActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        store = CareerNewsVerificationStore(SQLiteCareerNewsStorage(this))
+        storage = SQLiteCareerNewsStorage(this)
+        store = CareerNewsVerificationStore(storage)
 
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty().trim()
         val sourceUrl = intent.getStringExtra(EXTRA_URL).orEmpty().trim()
@@ -55,8 +60,7 @@ class CareerNewsVerificationActivity : Activity() {
         val storyId = intent.getStringExtra(EXTRA_STORY_ID)
             ?.takeIf { it.isNotBlank() }
             ?: CareerNewsVerificationRecord.stableStoryId(sourceUrl, title)
-
-        record = store.load(storyId) ?: CareerNewsVerificationRecord(
+        val initialRecord = CareerNewsVerificationRecord(
             storyId = storyId,
             headline = title,
             publisher = intent.getStringExtra(EXTRA_PUBLISHER).orEmpty().ifBlank {
@@ -71,13 +75,59 @@ class CareerNewsVerificationActivity : Activity() {
                 ?.takeIf { CareerNewsVerificationPolicy.isUtcTimestamp(it) }
         )
 
-        val saved = store.save(record)
-        if (!saved.saved) {
-            Toast.makeText(this, saved.reason ?: "Haber doğrulama kaydı açılamadı.", Toast.LENGTH_LONG).show()
-            finish()
-            return
+        showLoading(title)
+        ioExecutor.execute {
+            val outcome = runCatching {
+                val existing = store.load(storyId)
+                if (existing != null) {
+                    // Opening an existing story is read-only; do not rewrite SQLite on every view.
+                    existing
+                } else {
+                    val saved = store.save(initialRecord)
+                    if (!saved.saved) {
+                        throw IllegalStateException(saved.reason ?: "Haber doğrulama kaydı açılamadı.")
+                    }
+                    initialRecord
+                }
+            }
+            runOnUiThread {
+                if (closing || isFinishing) return@runOnUiThread
+                outcome.onSuccess { loaded ->
+                    record = loaded
+                    render()
+                }.onFailure { error ->
+                    Toast.makeText(
+                        this,
+                        error.message ?: "Haber doğrulama kaydı açılamadı.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    finish()
+                }
+            }
         }
-        render()
+    }
+
+    private fun showLoading(headline: String) {
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(24), dp(24), dp(24), dp(24))
+            setBackgroundColor(0xfff8fafc.toInt())
+        }
+        root.addView(ProgressBar(this).apply { isIndeterminate = true })
+        root.addView(text("Haber kaydı hazırlanıyor", 16f, true))
+        root.addView(text(headline, 12f))
+        setContentView(root)
+    }
+
+    override fun onDestroy() {
+        closing = true
+        if (::storage.isInitialized) {
+            // FIFO queue ensures pending reads/writes finish before the helper is closed.
+            runCatching { ioExecutor.execute { storage.close() } }
+        }
+        ioExecutor.shutdown()
+        super.onDestroy()
     }
 
     private fun dp(value: Int): Int = (resources.displayMetrics.density * value).toInt()
@@ -254,19 +304,31 @@ class CareerNewsVerificationActivity : Activity() {
             return false
         }
         saving = true
-        Thread {
-            val result = store.save(updated)
+        ioExecutor.execute {
+            val outcome = runCatching { store.save(updated) }
             runOnUiThread {
                 saving = false
-                if (isFinishing) return@runOnUiThread
-                if (!result.saved) {
-                    Toast.makeText(this, result.reason ?: "Kayıt saklanamadı.", Toast.LENGTH_LONG).show()
-                } else {
-                    record = updated
-                    render()
+                if (closing || isFinishing) return@runOnUiThread
+                outcome.onSuccess { result ->
+                    if (!result.saved) {
+                        Toast.makeText(
+                            this,
+                            result.reason ?: "Kayıt saklanamadı.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        record = updated
+                        render()
+                    }
+                }.onFailure { error ->
+                    Toast.makeText(
+                        this,
+                        error.message ?: "Kayıt diske yazılamadı.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
-        }.start()
+        }
         return true
     }
 
