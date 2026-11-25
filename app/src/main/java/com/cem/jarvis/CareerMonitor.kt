@@ -185,12 +185,13 @@ object CareerSourceCatalog {
     }
 
     fun isSecondary(url: String): Boolean {
-        val host = normalizedHost(url).orEmpty()
-        val secondaryDomains = listOf(
-            "malatyatso.org.tr", "malorsa.org.tr", "kariyer.net", "eleman.net",
-            "manpower.com.tr", "jooble.org"
-        )
-        return secondaryDomains.any { host == it || host.endsWith(".$it") }
+        val host = normalizedHost(url) ?: return false
+        // Every catalogued non-official source remains discovery-only/secondary.
+        // Derive this from the source metadata so a new job board cannot become alert-eligible by omission.
+        return sources.asSequence()
+            .filterNot { it.official }
+            .mapNotNull { normalizedHost(it.url) }
+            .any { host == it || host.endsWith(".$it") }
     }
 
     /** Press/news sites are searchable for context, never treated as official employers. */
