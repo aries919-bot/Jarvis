@@ -62,3 +62,13 @@
 6. Worker production authenticated GET ve durable firstSeenAt kanıtı olmadan C1 kabul/merge ve Android UI yok.
 
 **KARAR: RED — fresh daily recount not proven; 10/100 and production gates unmet.**
+
+
+## Mevcut e-Şube/H2 zamanlanmış işlerinin yeniden denetimi
+- `cline/K1` dalındaki son görülen commit: `f22ba0b9487d88185f9cd277388403b4f8e3ab4d` (24.11.2026 21:40:36Z).
+- Mevcut e-Şube okuyucusu: [scripts/esube_kamu_okuyucu.py](https://github.com/aries919-bot/Jarvis/blob/cline/K1/scripts/esube_kamu_okuyucu.py), blob `42adddc7408c8a93e94cb2d74ddbd452078c196f`. Standart kütüphane kullanır; robots kontrolü hedef isteğinden önce yapılır; oturum/captcha yok; UA AriesKaynakTara/1.0; tek session, istekler arası 2 sn, max 40 sayfa; çıktıda önceki JSON'dan `ilk_gorulme` korunur.
+- Mevcut e-Şube workflow: [.github/workflows/kamu-ilan-cek.yml](https://github.com/aries919-bot/Jarvis/blob/cline/K1/.github/workflows/kamu-ilan-cek.yml), blob `5babc3f06dde3dfce21662f91caecf068433058d`. `workflow_dispatch`, `cline/K1` üzerinde script/workflow push tetikleyicisi ve `17 5,14 * * *` UTC schedule tanımlı. Başarılı çekim `career/esube_kamu_ilanlari.json` dosyasını `durum` dalına commit eder.
+- H2 workflow: [.github/workflows/h2-announcement-reader.yml](https://github.com/aries919-bot/Jarvis/blob/cline/K1/.github/workflows/h2-announcement-reader.yml), blob `b5dbeccbee530bb777b93c6d7b1fe23ec5890237`; 6 saatte bir schedule ve workflow_dispatch içerir. H2 config/reader `cline/K1` dalındadır.
+- GitHub schedule olayları yalnız varsayılan dalda işler. Bu workflow dosyaları `cline/K1`'dedir; `main` dalına taşındığına/birleştiğine dair kanıt yok. Bu nedenle tanımlı cron satırlarını bugün fiilen çalışmış otomatik tazeleme kanıtı saymıyoruz.
+- C1 PR #9 `validate.yml` ayrıca 06:00 ve 18:00 UTC schedule tanımlar; C1 de açıkça varsayılan dalda birleşmeden cron çalışmaz. Entegrasyon sıralaması tasarımda e-Şube 05:17/14:17 UTC, C1 06:00/18:00 UTC şeklindedir; ancak bugün e-Şube JSON'unda 25.11'e ait yeni `cekim_zamani` görünmüyor.
+- Önemli düzeltme: yeni bir e-Şube kazıyıcısı yazılmamalı. Var olan robots-uyumlu okuyucu ve mevcut scheduled workflow kullanılmalı; C1, yalnız güncel ve doğrulanmış `durum` JSON'unu tüketmeli. Mevcut darboğaz, iki workflow'un varsayılan dalda etkin olmaması ve bugünkü yeni çıktı kanıtının bulunmamasıdır.
