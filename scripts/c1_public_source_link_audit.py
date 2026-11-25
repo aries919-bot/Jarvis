@@ -20,6 +20,24 @@ TIMEOUT_SECONDS = 15
 MAX_BYTES = 1024 * 1024
 SOURCES = [
     {
+        "id": "mardin_artuklu",
+        "name": "Mardin Artuklu Üniversitesi",
+        "allowed_link_hosts": ["www.artuklu.edu.tr"],
+        "page_urls": [
+            "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-uyesi-alim-ilani-profdr-docdr-drogruyesi-20112026-04122026",
+            "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
+        ],
+    },
+    {
+        "id": "oran",
+        "name": "Orta Anadolu Kalkınma Ajansı (ORAN)",
+        "allowed_link_hosts": ["www.dogaka.gov.tr"],
+        "page_urls": [
+            "https://www.dogaka.gov.tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855",
+            "https://www.dogaka.gov.tr/tr/duyurular",
+        ],
+    },
+    {
         "id": "ataturk",
         "name": "Atatürk Üniversitesi",
         "allowed_link_hosts": ["atauni.edu.tr"],
