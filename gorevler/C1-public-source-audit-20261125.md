@@ -8,12 +8,12 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 | Kurum / resmî kaynak | Açık kadro sayısı | Son başvuru | İlan/yayın tarihi | Başvuru / önemli şart |
 |---|---:|---|---|---|
 | Mardin Artuklu Üniversitesi | 40 (36 öğretim üyesi + 4 öğretim görevlisi) | 04.12.2026 | 20.11.2026 | Öğretim üyesi başvuruları Rektörlük/ilgili birime şahsen; öğretim görevlisi başvuruları ilgili birime şahsen/posta. İlgili kadro için 657/48, ALES en az 70; yabancı dil genel olarak en az 50, bazı MYO kadrolarında muaf. Öğretim görevlisinde tezli yüksek lisans; araştırma görevlisi koşulları ilgili eğitim statüsünü gerektirir. |
-| Türkiye Turizm Tanıtım ve Geliştirme Ajansı (TGA) | 13 | 04.12.2026 | 03.11.2026 | TGA kariyer sayfasından çevrimiçi başvuru. Genel şartlar: T.C. vatandaşı, 18+, kamu haklarından mahrum olmama, göreve engel sağlık sorunu olmama. Şoför pozisyonu için en az ilkokul, 6 yıl deneyim, B sınıfı ehliyet ve profesyonel şoförlük deneyimi. Diğer pozisyonların özel şartları Ek-1'de. |
+| TGA | 13 aday pozisyon; **0 sayıldı** | Arama dizininde 04.12.2026; doğrudan sayfa verisi çelişkili | 03.11.2026 olarak indekslenmiş | Resmî kariyer sayfasının arama özeti 13 pozisyon ve 03.11–04.12 başvuru aralığı gösteriyor; fakat doğrudan açılan aynı sayfa 2 pozisyon ve 25.06–26.07 tarihlerini gösterdi. Resmî kariyer portalı /jobs sayfası da “yayınlanmış açık pozisyon bulunamadı” diyor. Çelişki çözülene kadar Doğrulanamadı; 13 sayısı açık ilana eklenmez. |
 | Balıkesir Üniversitesi | 7 | 04.12.2026 mesai bitimi | 20.11.2026 | İlgili fakülte dekanlığına/üniversite birimine şahsen veya posta. ALES en az 70, yabancı dil en az 50; öğretim görevlisinde tezli yüksek lisans. Araştırma görevlisi kadrolarında ilgili alanda yüksek lisans öğrenciliği şartları var. |
 | Orta Anadolu Kalkınma Ajansı (ORAN) | 7 (6 uzman + 1 destek) | 03.12.2026 | İlan tarihi tabloda 19.10.2026; kurum duyurusu 26.10.2026 | e-Devlet/Kariyer Kapısı üzerinden başvuru. Kayseri, Sivas veya Yozgat'ta görevlendirme kabulü; ileri düzey yabancı dil ve pozisyona özel şartlar. Sözlü sınav. |
 | Atatürk Üniversitesi | 1 | 04.12.2026 | 20.11.2026 | İlgili birime dosya ile başvuru. Hukuk Fakültesi mezunu, Kamu Hukuku alanında yüksek lisans ve doktora şartı. |
 
-**Yeniden sayım:** 40 + 13 + 7 + 7 + 1 = **68 kadro**. Bu beş kaynak, başvuru süresi 25.11.2026 tarihinde henüz kapanmamış resmî ilanlardır. Kadro sayısı, doğrulanmış ilan kaydı adedi değil; her kurumun ilanındaki pozisyon/kadro sayısıdır.
+**Aday kadro yeniden sayımı:** Mardin 40 + Balıkesir 7 + ORAN 7 + Atatürk 1 = **55 kadro adayı**. TGA'nın 13 pozisyonu resmî sayfa çelişkisi nedeniyle bu toplama alınmadı. Robots sonucu sonrası yalnız Atatürk (1) ve Balıkesir (7) sayfaları ALLOW; bu iki kaynaktaki **8 kadro** şu an robots ve resmî ilan metniyle doğrulanmış yeni açık kadrodur. Mardin 40 ve ORAN 7, robots HTTP 404 nedeniyle UNKNOWN ve sayılmaz. TGA 13 aday pozisyon UNKNOWN; sayılmaz. Kadro sayısı, doğrulanmış ilan kaydı adedi değil; her kurumun ilanındaki pozisyon/kadro sayısıdır.
 
 ### Gelecekte açılacak kaynak — güncel açık sayısına eklenmez
 - Yükseköğretim Kalite Kurulu (YÖKAK): 5 uzman yardımcısı. Başvuru 01.12.2026–14.12.2026 arasında açılacağından 25.11.2026 tarihinde henüz açık değildir. applicationOpensAt=2026-12-01; mevcut açık ilan toplamına eklenmez.
@@ -23,7 +23,9 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - Betik: scripts/c1_public_source_robots.py
 - User-Agent: AriesKaynakTara/1.0
 - Yalnızca her origin için /robots.txt alınır; TLS doğrulaması açıktır, yönlendirme takip edilmez.
-- robots HTTP 200 ve sayfa yolu için izin sonucu true olmadan duyuru sayfasına/PDF'ye istek gönderilmez.
+- Exact-head CI: https://github.com/aries919-bot/Jarvis/actions/runs/45532429537 — job 138930761817 SUCCESS; Python syntax check SUCCESS; robots-only ölçüm SUCCESS; artifact 14985447797. collectedAt=2026-11-25T02:22:15.837584Z.
+- Sonuçlar: Atatürk 200/ALLOW; Balıkesir 200/ALLOW; TGA tga.gov.tr 200/ALLOW; YÖKAK 200/ALLOW. Mardin Artuklu 404/UNKNOWN; DOĞAKA/ORAN 404/UNKNOWN. 404 kaynaklarına hedef sayfa isteği yapılmadı.
+- TGA'nın tga.gov.tr yolları izinli görünse de sayfa içeriği çelişkili; bu, robots izninden bağımsız veri doğrulama sorunudur. TGA kariyer alt alanı için /jobs yolu da robots kontrol listesine eklendi.
 - HTTP 401/403/404/5xx, timeout, redirect veya ağ hatası UNKNOWN sayılır; hedef sayfaya istek yapılmaz.
 
 ## Önceki kamu sayımı düzeltmesi
@@ -52,6 +54,6 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 5. Kamu raporu ayrı verilmeli. Hedef 10 kaynak / 100 doğrulanmış açık ilan; eşiğin altında RED.
 
 ## Şu anki karar
-**RED / ön denetim sürüyor.** 68 yeni kadro adayı resmî metinlerden elle sayıldı; robots doğrulaması, H2/e-Şube canlı yenilemesi ve birleşik güncel sayım henüz yok. Production Worker GET ve D1 kalıcılık kanıtı da yok. Hiçbir PR birleştirilmedi, deploy yapılmadı.
+**RED / ön denetim sürüyor.** İki yeni kamu kaynağında robots izni doğrulandı ve 8 kadro açık; Mardin/ORAN robots UNKNOWN, TGA ilan verisi çelişkili, YÖKAK başvurusu henüz açılmadı. Eski e-Şube/H2 snapshot'ları stale olduğundan birleşik güncel kamu toplamı kanıtlanmadı. Production Worker GET ve D1 kalıcılık kanıtı da yok. Hiçbir PR birleştirilmedi, deploy yapılmadı.
 
 **SONRAKİ ADIM:** Bu PR'daki robots-only Actions sonucunu incele; yalnız izinli kaynakları sonraki canlı ilan ölçümüne geçir.
