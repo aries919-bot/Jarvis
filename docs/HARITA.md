@@ -1101,3 +1101,20 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - PR validation skips live source ingestion by design; scheduled/push runs perform upstream e-Şube clone, H2 live read and Worker authenticated GET/D1. No successful scheduled refresh/publish evidence.
 
 **KARAR:** Cloud C1 runner admission BLOCKED; no production feed update, no merge/deploy.
+
+
+## 26.11.2026 — 20 Kasım Resmî Gazete ek araştırması / C1 yeniden sayım
+- Ayrıntılı görev kaydı: [C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md](../gorevler/C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md), yeni bölüm commit `765f56d5ae2aaf8f880b35d73b3b8683fb614005`.
+- 20.11.2026 Resmî Gazete 33436 ve kurumların kendi duyuru sayfalarından 10 yeni kamu ana duyurusu doğrulandı: Atatürk 1, Mardin Artuklu 2, Necmettin Erbakan 1, Abdullah Gül Öğretim Elemanı 1, Bartın akademik 2, Balıkesir 2, İstanbul Üniversitesi-Cerrahpaşa Öğretim Elemanı 1. Bartın 4/B mevcut aday olduğundan tekrar sayılmadı. Aynı kurum içindeki farklı akademik başlıklar ayrı kart, alt kadro/pozisyonlar kart adedinden ayrı tutuldu.
+- Yeni güncel elle doğrulanmış kamu aday toplamı: ilk küme 6 + 23 Kasım RG yeni 3 + 20 Kasım RG yeni 10 = **19 ana duyuru /15 kurum**. Bu manuel araştırma toplamıdır; Worker/H2'ye ingest edilmedi. `collectedAt=null`, `firstSeenAt=null`.
+- Kamu future/opening-soon: 4 duyuru (SGK, Kültür ve Turizm Bakanlığı, İçişleri Bakanlığı 1.170 pozisyonu tek ana kart, Adli Tıp 181 pozisyonu tek ana kart). Kamu `deadline=null`/doğrulanamadı: 4 (AGÜ Öğretim Üyesi, İÜ-Cerrahpaşa Öğretim Üyesi, Kütahya Dumlupınar, OMÜ). Kamu expired: MEB 3 usta öğretici duyurusu + Sağlık Bakanlığı 3. Dönem atama kurası 1 kayıt; hiçbirisi current open'e eklenmez.
+- Sağlık Bakanlığı'nın 25.11.2026 sayfası yeni ilan değil: 30.10.2026'da başlayan 2026/3 İlk Defa ve Yeniden Atama Kurası başvurusu 05.11.2026 18:00'de kapanmıştır; 25 Kasım sayfası itiraz sonucu ve 26 Kasım 10:30 kura saatini ilan eder. Münhal kadro pozisyon toplamı bu notta ayrıca sayılmadı, null tutuldu. Resmî sayfa: https://yhgm.saglik.gov.tr/TR-121745/2026-yili-3-donem-ilk-defa-ve-yeniden-atama-kurasi.html.
+- Adli Tıp Kurumu 20.11.2026: 181 adet 4/B pozisyon tek duyurudur; başvuru 30.11.2026 09:00–06.12.2026 23:59; KPSS ilgili P3/P93/P94 en az 70. 26 Kasım itibarıyla başvuru future olduğu için açık sayısı 0. Resmî kurum metni: https://atk.gov.tr/haber20.11.26.html.
+- 20 Kasım RG PDF 43,377,793 byte nedeniyle screenshot aracı 400/timeout döndürdü; metin katmanı + kurum sayfaları incelendi, görsel PDF QA tamamlanmadı.
+- Özel üniversite adayları ayrı sayaçta: Belek, Yaşar, Özyeğin, Beykoz ve Hasan Kalyoncu; kamu 19/15 sayısına dahil değil. 26 Kasım RG indexindeki bireysel PDF'si doğrulanamayan SUEN/Özburun/KSÜ/Mersin vb. başlıklar `Doğrulanamadı`, açık sayaca eklenmedi.
+**KARAR:** Kamu sıfır değil; manuel araştırma 19/15. Worker/H2 son iyi 6/47 hâlâ stale; eski manuel envanter 12/55 ayrı; üç katman toplanmaz. 10 kaynak/100 doğrulanmış ilan ve production authenticated GET/D1 kanıtı olmadığından C1 RED.
+
+## 26.11.2026 — H1 yeni HEAD test durumu
+- PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723`. APK/unit [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) SUCCESS; artifact #15069888409, APK SHA-256 `96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab`.
+- Exact-head emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) son sorguda IN_PROGRESS; job #139564450544, adım 1–6 SUCCESS, step7 instrumentation/preflight running, XML/artifact henüz yok. Önceki #45712459718 FAILURE: XML 4 test/1 pass/3 fail/0 error/0 skipped.
+- Yeni script launcher ANR/window-focus preflight ve dumpsys tanısı eklemiştir; yeni sonuç gelmeden H1 ONAY/merge yok. PR #71 draft/open; merge/deploy yapılmadı.
