@@ -304,3 +304,12 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - QA notu: gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md, commit 71ddd4a722942113f748c1afc586891ef041ed56.
 - Cloudflare model belgeleri ve maliyet: BGE-M3 https://developers.cloudflare.com/workers-ai/models/bge-m3/ ; Gemma 4 https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/ ; rejectIfBusy https://developers.cloudflare.com/workers-ai/features/reject-if-busy/.
 - Kamu C1 sayımı değişmedi: **12 kaynak /55 doğrulanmış açık ilan /45 eksik**, Worker production GET/D1 ve city dedup RED.
+
+## 28. Son Career QA/RAG ve H1 exact-head durumu — 25.11.2026 20:20Z
+- Cloud PR #12 HEAD 4b010df6fbd30229ec1868cf12e86a03b3eab055; 4 dosya / +1045 / -20; 26 test tanımı. Çalıştırılmış test sayısı **0**.
+- Son 7 run #45692642608, #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527; hepsinde 1 job / 0 step / failure / 2–3 saniye. En son job 139485957163: 20:19:25Z–20:19:27Z. Logs BlobNotFound, annotation içeriği okunamıyor. **Runner/job startup blocker; kod test failure/pass olarak sınıflandırılamaz.**
+- QA source allowlist: public categories iskur-esube-json/H2 official, Büyük özel Lever/Ashby official host; stale, expired, unknown, unresolved duplicate dışarıda. Cevaplar deadline, şart, application, city, positionCount alanlarından deterministik çıkarılır; city/positionCount yoksa tahmin edilmez.
+- PII gate: CV/özgeçmiş, kişisel KPSS puanı, national ID, phone, e-mail, bearer/API token bloklanır; off-topic soru abstain; model rejectIfBusy → BM25 fallback. PR taslak, merge/deploy yok.
+- H1 current PR #71 HEAD b8a78126cbc6713cb4d42838027a6189274f19e7; APK/unit #45692016951 SUCCESS. Emulator #45692017824 son kontrolde IN_PROGRESS; XML yok. Eski run #45685959506 XML 4/1 pass/3 fail; false green wrapper hatası geri alındı; asenkron SQLite init eklendi. H1 merge yok; phone testi yok.
+- Ayrıntılar: docs/HARITA.md bölüm 34–35; gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md; gorevler/QA-EKIP-PANOSU-2026-11-25.md.
+- Kamu C1 sayımı 12 kaynak /55 doğrulanmış açık ilan /45 eksik. Worker production GET/D1 ve city dedup RED.
