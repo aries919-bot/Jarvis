@@ -174,6 +174,22 @@ SOURCES = [
         ],
     },
     {
+        "id": "resmigazete-20-11-2026",
+        "name": "Resmî Gazete — 20.11.2026 Çeşitli İlanlar",
+        "allowed_link_hosts": ["www.resmigazete.gov.tr", "resmigazete.gov.tr"],
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261120-4.htm",
+        ],
+    },
+    {
+        "id": "resmigazete-23-11-2026",
+        "name": "Resmî Gazete — 23.11.2026 Çeşitli İlanlar",
+        "allowed_link_hosts": ["www.resmigazete.gov.tr", "resmigazete.gov.tr"],
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261123-4.htm",
+        ],
+    },
+    {
         "id": "tga",
         "name": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
         "allowed_link_hosts": ["tga.gov.tr", "kariyer.tga.gov.tr"],
