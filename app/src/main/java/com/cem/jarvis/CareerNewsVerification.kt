@@ -332,7 +332,7 @@ data class CareerNewsVerificationRecord(
     companion object {
         fun stableStoryId(sourceUrl: String, headline: String): String {
             val normalizedUrl = sourceUrl.substringBefore('#').trimEnd('/').lowercase(Locale.ROOT)
-            val normalizedTitle = headline.trim().lowercase(Locale(\"tr\", \"TR\"))
+            val normalizedTitle = headline.trim().lowercase(Locale("tr", "TR"))
                 .replace(Regex("\\s+"), " ")
             return UUID.nameUUIDFromBytes(
                 (normalizedUrl + "\n" + normalizedTitle).toByteArray(Charsets.UTF_8)
