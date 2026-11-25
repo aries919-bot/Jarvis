@@ -446,7 +446,7 @@ class H2ReaderTests(unittest.TestCase):
     def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(15,len(cfg["sources"]))
 
 
     def test_source_categories_match_h1_allowed_enum(self):
@@ -528,7 +528,7 @@ class H2ReaderTests(unittest.TestCase):
         item=h2.parse_official_notice(
             source,page,pdf,"2026-11-25T02:40:00Z","2026-11-25T02:40:00Z",date(2026,11,25)
         )
-        self.assertEqual("https://www.zafer.gov.tr/duyurular/227",item["sourceUrl"])
+        self.assertEqual("https://www.zafer.gov.tr/duyurular/227",item["officialSourceUrl"])
         self.assertEqual(2,item["positionCount"])
         self.assertEqual("2026-11-03",item["publishedAt"])
 
