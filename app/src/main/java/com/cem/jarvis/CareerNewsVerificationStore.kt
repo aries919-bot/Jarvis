@@ -158,6 +158,7 @@ class CareerNewsVerificationStore(
                     correction.previousEvidence == oldClaim.evidence &&
                     correction.previousReviewDecision == oldClaim.reviewDecision &&
                     correction.previousReviewedAt == oldClaim.reviewedAt &&
+                    correction.previousReviewNote == oldClaim.reviewNote &&
                     correction.previousReviewNote == oldClaim.reviewNote
             }
             if (oldClaim.text != updated.text && !hasCorrection) return false
