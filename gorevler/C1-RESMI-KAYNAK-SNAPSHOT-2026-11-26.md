@@ -310,3 +310,19 @@ Bu duyuru 20 Kasım sayısının dizininde görünse de 20 Kasım'da yayımlanm�
 - 23/17 manual count is still not Worker ingest. For all manual-only candidates `collectedAt=null`, `firstSeenAt=null`; production Worker GET/D1 confirmation still missing.
 
 **KARAR:** Kamu sıfır değil. Resmî kaynakla deadline doğrulanan manuel araştırma kümesi 23 ana duyuru/17 kurumdur; bu 100 doğrulanmış ilan eşiğini karşılamaz ve Worker feed sayısı değildir. 10 kaynak/100 doğrulanmış/süresi geçmemiş ilan ve production authenticated GET/D1 kapıları geçilmediğinden C1 RED.
+
+## Düzeltme — İstanbul Nişantaşı Üniversitesi 24.11.2026 ilanı resmî PDF ile doğrulandı
+
+Önceki bölümde Nişantaşı kaydı `deadline=null / Doğrulanamadı` olarak tutulmuştu. Bu ifade artık geçersizdir. Üniversitenin kendi duyuru sayfasındaki 24.11.2026 ilanı, dokuz sayfalık resmî ilan PDF'si ve İnsan Kaynakları akademik ilan portalı açıldı ve birbirleriyle eşleştirildi.
+
+| Kurum / kategori | Duyuru kartı | publishedAt | deadline | Başvuru yolu | Şart özeti | Resmî kanıt |
+|---|---:|---|---|---|---|---|
+| İstanbul Nişantaşı Üniversitesi — Büyük özel / KPSS'siz akademik | 1 karma Öğretim Elemanı Alım İlanı | 2026-11-24 | 2026-12-08 | Yalnızca https://insankaynaklari.nisantasi.edu.tr/akademisyen-ilanlari adresindeki dijital başvuru sistemi. İstenen belgeler PDF yüklenir; profesör/doçent/dr. öğretim üyesi için özgeçmiş, öğrenim belgeleri, akademik çalışma/yayın dosyaları ve üniversitenin ek koşul puan tablosu; öğretim görevlisi/araştırma görevlisi için başvuru dilekçesi, ALES/yabancı dil, diplomalar/transkript ve ilgili belgeler. | 2547 ve ilgili öğretim üyesi/öğretim elemanı mevzuatı. Kadro ve programa göre özel diploma, uzmanlık/doktora, yayın/tecrübe; tabloda bazı programlarda ALES 70, yabancı dil 50 veya İngilizce programlarda 85. Araştırma görevlisi ataması 2547 50/d. | Kurum duyurusu https://www.nisantasi.edu.tr/duyuru/24112026-akademik-ilan-236481 ; 9 sayfalık resmî PDF https://www.nisantasi.edu.tr/Uploads/Akademisyenler/ik-kadro/24_11.2026%20tarihli%20resmi%20gazete%20%C4%B0lan%C4%B1.pdf ; başvuru portalı https://insankaynaklari.nisantasi.edu.tr/akademisyen-ilanlari |
+
+PDF'nin ilk sayfasında tek ana başlık `ÖĞRETİM ELEMANI ALIM İLANI` bulunur; tabloda profesör, doçent, doktor öğretim üyesi, öğretim görevlisi ve araştırma görevlisi sütunları birlikte yer alır. Bu nedenle alt program/pozisyon satırlarını ayrı ana duyuru kartı yapmayın. Portalın tabloda her kadro satırı için ayrı `İlan No` ve `BAŞVUR` bağlantısı vermesi, duyurunun ana kartını çoğaltma gerekçesi değildir.
+
+İlanın kendi metni başvuru başlangıcını 24.11.2026, bitişini 08.12.2026 olarak açıkça verir; ön değerlendirme 11.12, sınav 15.12, sonuç 18.12 tarihleridir. Sınav tarihi deadline veya publishedAt olarak kullanılmaz. Bu kayıt özel kurum havuzunda `Doğrulandı` olarak yer alır; kamu sayımına eklenmez.
+
+**Özel kurum sayımı düzeltmesi:** özel havuzdaki Nişantaşı 1 duyuru adedi zaten 7 özel adayın içindeydi; yalnızca doğrulama etiketi ve deadline düzeltildi. Özel havuz toplamı hâlâ 7 aday/duyurudur. Kamu aktif toplamı 23/17 değişmez.
+
+PDF ekran görüntüleri sayfalar 1–9 için alındı ve tablo/giriş metni görsel olarak kontrol edildi; böylece bu Nişantaşı PDF'si için önceki screenshot eksikliği giderildi.
