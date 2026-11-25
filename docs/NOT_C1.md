@@ -434,3 +434,15 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - **Kapsam yüzdesi (yalnız H1 + C1; tüm Aries değil): H1 yaklaşık %50, C1 yaklaşık %40, eşit ağırlıklı toplam yaklaşık %45.** Bu planlama tahminidir, ölçülmüş uygulama tamamlama metriği değildir. Tam Aries için tek bir doğrulanmış payda bulunmadığından bütün uygulamaya yüzde verilmedi.
 - C1 son kamu feed ölçümü 6 kaynak/47 last-good kart; tümü stale. Fresh ilan sayısı 0 olarak değil, 0 fresh ölçüm /47 last-good kayıt şeklinde sunulmalı. 10/100 ve production GET/D1 hâlâ RED.
 **KARAR:** H1 RED; C1 RED; merge/deploy yok. Ayrıntı ve hesaplama: `gorevler/H1-CI-XML-GATE-IMPLEMENTATION-2026-11-26.md`.
+
+
+## 26.11.2026 — Tekrarlanan CI döngüsünü kırma / yeni kanıt
+
+- Yeni iş kaydı: [gorevler/CI-ALTERNATIF-DOGRULAMA-2026-11-26.md](gorevler/CI-ALTERNATIF-DOGRULAMA-2026-11-26.md). Bu ek, önceki CI planının güncel durumunu geçersiz kılar.
+- Jarvis PR #71 HEAD `4398073b3759109fa27a8172956cbea13f31ce27`: aynı HEAD APK CI [#45707502321](https://github.com/aries919-bot/Jarvis/actions/runs/45707502321) SUCCESS. Aynı HEAD emulator CI [#45707502311](https://github.com/aries919-bot/Jarvis/actions/runs/45707502311) şu son kontrolde IN_PROGRESS; checkout, PR head/base kontrolü, Java/Gradle kurulumu ve AndroidX dependencyInsight başarılı; emulator instrumentation adımı çalışıyor. XML gate ve artifact henüz tamamlanmadı. Önceki “exact-head run yok” notu artık güncel değildir.
+- PR #71 API diff sayımı: 14 dosya / +3.370 / -26. PR açık/taslak; merge yok. APK SUCCESS, H1 emulator sonucu henüz bilinmiyor; H1 kabulü yok.
+- Cloud PR #12 HEAD `1692930b60b952589fdf5d849010a177e288bfb2`; son run [#45697424481](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45697424481) failure. Job API: `runner_id=0`, boş runner adı, `steps=[]`, yaklaşık 2 saniye. Bu testlerin başarısızlığı değil, runner/job-start seviyesinde kanıtsız kapanıştır. Aynı koşulda yeni commit/rerun döngüsü durduruldu.
+- Yeni strateji: H1 mevcut emulator run tamamlanana kadar bekle; XML 4/4 ve failure/error/skipped=0 yeniden sayılacak. Tekrar RootViewWithoutFocusException olursa aynı koşuda rerun yok; hata anı window/activity/input dumpsys + logcat artifact'i eklenerek odak kaynağı teşhis edilecek. Cloud PR #12 için CI dışında Node.js unit/contract testleri ve local D1/Miniflare yolu ayrıştırılacak; bunlar production GET/D1 kanıtı yerine sayılmayacak.
+- C1 sayımları değişmedi: Worker son iyi kamu verisi 6 kaynak /47 kart; altı kaynak stale. 10/100 ve production GET/D1 RED. Yeni ilan adayları exact dedup/ingest olmadan sayaca eklenmez.
+
+**KARAR:** H1 ve C1 henüz RED/BLOCKED; PR #71 ve #12 taslak/açık, merge/deploy yok. Yeni yaklaşım aynı başarısız CI'ı tekrarlamak değil; runner başlangıç arızasını kod testinden ayırmak ve UI focus için teşhis kanıtı toplamak.
