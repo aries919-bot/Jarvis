@@ -37,3 +37,9 @@ Cem: ChatGPT'ye verilecek bir geliştirme notu (benzer uygulamalar, siteler, aç
 
 ## Kural hatırlatma
 `main`'e doğrudan yazma yok (bu dosyalar yalnız `durum` dalında). Sırlar yazılmaz: Worker adresi/token bu dosyalara kopyalanmadı. Kanıtsız “bitti” yok.
+
+## 2. tur (25.11.2026 sabah)
+- Cem rakiplerin arka plan mimarisini sordu (Aries neden geride kaldı, nasıl çalışıyorlar). Ayrı bir Claude sohbetindeki 7 araştırmadan "Asistan çekirdeği" başarısız olmuş ve o sohbette ücretsiz mesaj hakkı bitmişti; konu burada yeniden yapıldı.
+- Çıktı: `docs/arastirma/RAKIP_ARKA_PLAN.md` (Ghostfolio, KAP sarmalayıcıları, Simplify/ApplyTalon, AIHawk, Jellyfin, öneri sistemleri, Home Assistant Assist, Pipecat + "neden geride kaldı" çıkarımları).
+- Okunmayanlar: Teal/Huntr iç mimarisi, Fintables/Kariyer.net iç mimarisi (kapalı kaynak, yalnız dış açıklamalar), Plex/Stremio (kapsam dışı bırakıldı).
+- Sonraki adım: ChatGPT bu dosyayı da okusun; öneri sistemi (TF-IDF) ve "niyet→araç→LLM yedek" sıralaması Bölüm 9 B grubuna eklenebilir.
