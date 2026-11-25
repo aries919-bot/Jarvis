@@ -165,3 +165,12 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - APK artifact ID `15049240153`, size 14,176,012 bytes.
 - Full App QA/emulator workflow ve gerçek telefon testi yok. CI PASS tek başına UI/telefon veya production kabulü değildir.
 - PR #71 open/draft/unmerged. PR #70 source policy unit + APK run #45658875411 SUCCESS. C1 10 source/100 verified cards, public report, Worker production authenticated GET and cross-feed dedup remain separate/RED/BLOCKED.
+
+## 16. H1 exact-head APK + Android emülatör doğrulaması — 25.11.2026
+- PR #71 HEAD `0a376b4c7355a5a6822252da4d9286606ce23bde`; compare `kariyer-modulu`: 57 commit /10 dosya /+2.132 /-26 /0 behind.
+- Test sayımı: 17 model +8 store +2 Android instrumentation =27 @Test.
+- Exact-head APK/Unit run [#45669708914](https://github.com/aries919-bot/Jarvis/actions/runs/45669708914) SUCCESS; artifact `aries-apk` ID `15049965420`, 14,176,024 bytes.
+- Emulator workflow [#45669709252](https://github.com/aries919-bot/Jarvis/actions/runs/45669709252) son kontrolde IN_PROGRESS. Workflow PR head SHA'sini açık checkout eder; PR numarası concurrency key'i; duplicate push event kaldırıldı.
+- Emulator testleri yalnız Activity açılışı, iddia/kaynak düğmelerinin görünmesi, nullable publishedAt'in SQLite'a yazılması ve SQLite last-good recovery'yi kontrol eder. Bütün claim/evidence/review etkileşimleri henüz UI test edilmedi.
+- C1 source-policy PR #70 ayrı: Indeed/LinkedIn kaldırma, generic .edu.tr deny ve Aries UA düzeltmesi [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) SUCCESS. #70 #71 tabanına henüz birleşmedi; H1 CI PASS, C1 gate sonucu değildir.
+- C1 10 kaynak/100 doğrulanmış ilan, kamu 0=RED, source-specific last-good, e-Şube/H2 cross-feed dedup ve production authenticated Worker GET kapıları etkilenmedi; ayrı RED/BLOCKED kalır. Merge/deploy/telefon doğrulaması yok.
