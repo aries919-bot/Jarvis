@@ -153,3 +153,11 @@ Akış: izinli RSS/API ile haber keşfi → canonical URL/olay kümeleri → sı
 3. ATS yeni adapter'larını yalnız ölçülmüş izinli board'larda ekle.
 4. H1 story/claim/evidence/correctionHistory için ayrı görev dosyası.
 5. Production authenticated GET/D1 kanıtı olmadan deploy/Android entegrasyonu yok.
+
+
+### Actions runner arızası — kök neden araştırması
+- GitHub resmi log belgesi: https://docs.github.com/en/actions/how-tos/monitor-workflows/use-workflow-run-logs — normal bir job'da GitHub'ın eklediği “Set up job” ve “Complete job” adımları da görünür.
+- GitHub troubleshooting: https://docs.github.com/en/actions/how-tos/troubleshoot-workflows — branch/path filtreleri workflow'un oluşturulmasını engelleyebilir; PR #10'da branch filtresi zaten düzeltildi ve run oluştu.
+- Aynı belirtiyi anlatan topluluk kayıtları: https://github.com/orgs/community/discussions/213925 ve https://github.com/orgs/community/discussions/209028 — steps boş + runner_id 0 + BlobNotFound, job'ın runner'a atanmasından önceki dispatch/provisioning aşamasında kesildiğiyle uyumlu.
+- Olası nedenler: private repo Actions dakika/bütçe sınırı, repo/organizasyon Actions politikası veya GitHub runner provisioning/platform sorunu. Bu hesap/repo ayarlarına buradan erişim yok; kesin neden seçilemedi.
+- Sonuç: YAML komutları veya test kodu henüz çalışmadığı için PR #10 CI RED/kanıtsızdır. Workflow'u aynı şekilde tekrar çalıştırmak kök nedeni çözmez. Ayarlar/usage ve check-run annotation incelenmeden yeniden deneme yapılmayacak; gerekirse GitHub Support'a run #45649406146 ve job #139329455436 verilmeli.
