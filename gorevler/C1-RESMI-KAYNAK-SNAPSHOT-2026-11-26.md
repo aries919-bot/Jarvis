@@ -76,3 +76,41 @@ Resmî Gazete “Çeşitli İlanlar” dizininde MEB, MSB, Sağlık Bakanlığı
 4. Kaynak başına lastGoodAt ve collectedAt yenilenmeden eski 47 kartı fresh diye sunma. Tek kaynak hatası yalnız o sourceId'yi stale yapmalı.
 5. Deadline geçen kayıtları güncel akıştan çıkar; deadline, applicationOpensAt ve ek evrak teslim tarihini ayrı tut.
 6. 10 benzersiz kaynak /100 doğrulanmış ilan ve production authenticated GET/D1 kapıları geçilmeden genel C1 RED kalır.
+
+
+## Ek tarama — MEB usta öğretici duyuruları ve 26 Kasım Resmî Gazete adayları
+
+### MEB e-Olgunlaşma — doğrulanmış, başvurusu geçmiş duyurular
+
+MEB'in kendi e-Olgunlaşma ilan sayfasında üç ayrı duyuru kaydı doğrudan okundu. Bunlar başvurusu bitmiş olduğundan açık iş sayımına eklenmez; Haber geçmişinde etiketleri Süresi geçti olmalıdır. Sayfalarda yayımlanma tarihi alanı gösterilmediğinden publishedAt=null bırakılır.
+
+| Kurum / kategori | Duyuru | Kontenjan | publishedAt | deadline | Sınav tarihi (deadline değildir) | Başvuru / şart | Resmî bağlantı |
+|---|---|---:|---|---|---|---|---|
+| Mardin Olgunlaşma Enstitüsü — Kamu / KPSS'siz | Görsel Sanatlar / Sanat ve Tasarım Usta Öğretici | 1 | null | 2026-11-20 | 2026-11-26 | e-Olgunlaşma üzerinden e-Devlet ile; ilgili alana ait kabul edilen belge/diploma, sağlık raporu, ikamet, adli sicil ve fotoğraf; beceri sınavı | https://e-olgunlasma.meb.gov.tr/Ilan/IlanDetay?ilanId=b59b23e8-d94a-4e6a-ba8e-78f02ca20e06 |
+| Mardin Olgunlaşma Enstitüsü — Kamu / KPSS'siz | Bilişim Teknolojileri / Veritabanı Programcılığı Usta Öğretici | 1 | null | 2026-11-20 | 2026-11-24 | e-Olgunlaşma üzerinden e-Devlet ile; ilgili alan yeterlilik belgesi/diploma ve ilandaki belgeler; beceri sınavı | https://e-olgunlasma.meb.gov.tr/Ilan/IlanDetay?ilanId=f7c0e251-be0e-4399-bb6c-66478257f2c2 |
+| Kahramanmaraş Olgunlaşma Enstitüsü — Kamu / KPSS'siz | Türk Halk Bilimi Kadrosuz Usta Öğretici Ek Alım | 1 | null | 2026-11-25 | 2026-11-26 | e-Devlet üzerinden başvuru; kabul edilen sanatkâr/ustalık/mesleki yeterlilik veya diploma belgeleri; başvuru belgeleri sınav günü elden teslim | https://e-olgunlasma.meb.gov.tr/Ilan/IlanDetay?ilanId=a9a6a617-c7f4-4658-8fd6-dbd0f6be966a |
+
+Yeniden sayım: Mardin 1+1, Kahramanmaraş 1 = **3 ayrı duyuru / 3 pozisyon / 2 kurum kaynağı**. Deadline geçmiş olduğu için **0 güncel açık ilan**. Sınav tarihleri ilan başlığı veya publishedAt yerine yazılmadı. e-Devlet arkasındaki form/login ekranı kazınmaz; yalnız resmî başvuru yönlendirmesi kullanılır.
+
+### 26.11.2026 Resmî Gazete yeni duyuru dizini — doğrulama sınırı
+
+Resmî Gazete 33442 sayılı 26.11.2026 tarihli “Çeşitli İlanlar” dizini aşağıdaki kurum başlıklarını listeliyor: MEB Mesleki ve Teknik Eğitim GM, MSB Tedarik Hizmetleri GM, Sağlık Bakanlığı Halk Sağlığı GM ve Strateji Geliştirme Başkanlığı, DSİ, Düzce Üniversitesi, Çevre Bakanlığı Yapı İşleri GM, Karamanoğlu Mehmetbey Üniversitesi, Sakarya Üniversitesi, Türkiye Su Enstitüsü, Özburun Belediyesi, KSÜ, Mersin Üniversitesi, Afyonkarahisar Sağlık Bilimleri Üniversitesi, Boğaziçi Üniversitesi, İstanbul Beykent Üniversitesi ve Kültür ve Turizm Bakanlığı.
+
+Resmî index URL: https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261126-4.htm
+
+Bu oturumda Resmî Gazete günlük PDF'si açılamadı (HTTP/fetch timeout). Kurumların kendi ilan sayfalarında da her yeni metin bulunamadı: SUEN duyuru listesi 28.08.2026/22.07.2026 kayıtlarında kalıyor; Mersin Personel Daire sayfasında 26.11 duyurusu görülmedi; KSÜ başvuru portalı 502 döndürdü. Dolayısıyla dizin başlığı tek başına her kurum için aktif ilan kanıtı değildir.
+
+Ayrı bir ikincil derleme 26 Kasım sayısında şu adayları raporluyor: Türkiye Su Enstitüsü 1 bilgisayar mühendisi; Özburun Belediyesi 2 sürekli işçi; KSÜ 1 öğretim görevlisi; KSÜ akademik kadro duyurusu; Mersin Üniversitesi 1 sistem yöneticisi. Aynı derlemenin KSÜ akademik alımı metninde bir bölümde 42, bir tabloda 54 kadro yazması iç tutarsızlıktır. Bu yüzden kontenjan ve deadline detayları resmî PDF ile görülmeden doğrulanmış kabul edilmez. Bu adaylar:
+- Worker/manuel kamu sayaçlarına eklenmedi;
+- ilan kartı sayısına ve 10/100 eşiğine eklenmedi;
+- ayrı takip edilecek Doğrulanamadı kaynak adayları olarak kaldı.
+İkincil derleme yalnız araştırma ipucu olarak: https://www.habereguven.com/resmi-gazetede-personel-alim-ilanlari-yayimlandi-4-kuruma-59-personel-alinacak
+
+**Düzeltme kuralı:** Resmî Gazete sayısının yayın tarihi 26.11.2026 olabilir; bu, başlıklar içinde yer alan her kurumun ilan PDF'si açılmadan şartları, kesin kontenjanı veya deadline'ı doğrulamaz. Süre “yayımlandığı tarihten itibaren 30 gün” gibi göreli yazılmışsa resmi metinde kesin son gün kontrol edilmeden son tarih uydurulmaz.
+
+### Ek kanıt sayacı
+
+- Yeni resmî MEB expired duyuruları: 2 kurum /3 duyuru /3 kontenjan; güncel open=0.
+- 26 Kasım RG dizinindeki ek institution leads: 18 başlık satırı, ancak bunların içinden bireysel personel ilanı olduğu kesinleştirilen ve koşulları resmî içerikle okunabilen ilave kayıt bu incelemede 0; bu 0 kaynak/0 ilan değil, **henüz ölçülememiş** demektir.
+- Worker 6/47 last-good stale ve eski manuel envanter 12/55 değişmedi. Yeni MEB expired kayıtları da bu açık ilan sayılarına eklenmez.
+**KARAR:** C1 10/100 RED ve production GET/D1 BLOCKED kalır.
