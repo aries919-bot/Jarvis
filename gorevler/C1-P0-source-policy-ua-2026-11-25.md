@@ -65,3 +65,13 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 - Android APK run #45658875411 (#692): job SUCCESS; Birim testleri SUCCESS; APK derle SUCCESS; artifact upload SUCCESS.
 - Artifact ID 15044212711; 14.061.515 bayt; SHA-256 zip digest 2a8f2183f474b907ee9345266b75c7a6d483c0982939073b2667f6560ce0b9de.
 - Bu exact head için CI yeşil; bağımsız statik inceleme/öz-QA ve PR karar kaydı henüz yazılmadı. PR açık/taslak, merge yok.
+## ChatGPT öz-QA / hakem notu — 25.11.2026
+- PR #70 exact-head HEAD `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`; compare 8 commit /4 dosya /+46/-13 /0 behind.
+- Kapsam yeniden sayıldı: Ai.kt, CareerMonitor.kt, CareerForbiddenSourcesPolicyTest.kt, CareerSourceCatalogTest.kt — tam 4 dosya.
+- Statik kaynak taraması: CareerMonitor.kt içinde Indeed/LinkedIn ve genel trusted edu.tr kalıbı 0 eşleşme; Ai.kt içinde Mozilla/Chrome UA 0 eşleşme; Aries source UA 1 sabit + 4 kullanım.
+- Regresyon: yeni dosyada 2 test; mevcut CareerSourceCatalogTest 13 testten 1 eski generic edu.tr beklentisi yeni kurala göre değişti.
+- Exact-head Android APK #45658875411 (#692): job SUCCESS; unit test step SUCCESS; APK assemble SUCCESS; artifact upload SUCCESS. Artifact 15044212711, 14.061.515 bayt.
+- Değişen davranış yalnız kaynak güven politikası ve User-Agent tanımıdır. Worker, HTTP retry/timeout davranışı, UI, local archive ve HTML fallback değiştirilmedi.
+- ChatGPT öz-QA kararı: **ONAY — yalnız PR #70 kapsamı için**. Bu bağımsız Claude/insan incelemesi değildir ve global C1 kabulü değildir.
+- Global C1: 6 kamu kaynağı /47 doğrulanmış açık ilan; 10/100 RED; Worker production authenticated GET BLOCKED. Bu PR bu kapıları geçirmiş sayılmaz.
+- Bu öz-QA kaydı merge/deploy işlemi değildir; PR açık/taslak tutuluyor.
