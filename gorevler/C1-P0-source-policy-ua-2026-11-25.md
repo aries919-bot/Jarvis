@@ -9,11 +9,12 @@ Mevcut İş & Kariyer modülünde NOT_C1 ihlali olan LinkedIn/Indeed kaynak güv
 - Repo: aries919-bot/Jarvis
 - PR hedef tabanı: is/c3-ilan-semasi-ai-kaynak-kaniti (Actions filtresindeki izinli taban)
 - Önceki C3 consent commit'i: 5f6eebb816fadfa8e1c7c51b4ccce1234d1cee03; PR #66 diff'i bu commit'i de içerir
-- Dal: fix/c1-source-policy-ua-guard-20261125
+- Dal: fix/c1-source-policy-ua-clean-20261125
 - HEAD: dc71e10dac04f17d0608678376d3ad38a3e1edf2
-- PR #66: https://github.com/aries919-bot/Jarvis/pull/66
-- PR durumu: open, draft, unmerged; mergeable false (GitHub sonucu).
-- İlk dar compare (C3 consent head tabanına göre): 4 dosya / +24 / -13. Actions tetiklenebilmesi için PR hedefi C3 dalına alındı; güncel compare 11 commit / 9 dosya / +207 / -41 (C3 PR #30 değişiklikleri de diff içinde).
+- PR #67: https://github.com/aries919-bot/Jarvis/pull/67 (aktif)
+- Eski PR #66 kapatıldı; taban C3 PR #30 commitlerini diff'e karıştırdığı için kapsam temizliği amacıyla superseded.
+- PR #67 durumu: open, draft, unmerged; mergeable false (GitHub sonucu).
+- Temiz PR #67 doğrudan C3 dalından açıldı; compare yalnız 4 dosya / +28 / -13. PR #66'nın 9 dosyalı parent-diff sorunu giderildi.
 
 ## Değişen dosyalar
 1. CareerMonitor.kt: Indeed/LinkedIn kaynak kayıtları, trustedDomains kayıtları, secondaryDomains kayıtları ve site sorguları çıkarıldı. Genel edu.tr trusted domain listesinden çıkarıldı.
