@@ -133,7 +133,7 @@ class CareerNewsVerificationTest {
     fun addingEvidenceInvalidatesPreviousHumanReview() {
         val reviewed = record().addClaim(claim())!!
             .addEvidence("claim-1", evidence())!!
-            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt, "İlk kanıt resmî kaynakla karşılaştırıldı.")!!
         assertEquals(CareerClaimVerdict.VERIFIED, reviewed.claims.single().verdict())
 
         val updated = reviewed.addEvidence(
@@ -155,7 +155,7 @@ class CareerNewsVerificationTest {
     fun correctionHistoryIsAppendOnlyAndResetsReview() {
         val reviewed = record().addClaim(claim())!!
             .addEvidence("claim-1", evidence())!!
-            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt, "İddia resmî metinle karşılaştırıldı.")!!
         val revised = reviewed.correctClaim(
             revisedClaim = reviewed.claims.single().copy(
                 text = "Kurum 10 teknisyen alımı yapacağını duyurdu."
@@ -187,7 +187,7 @@ class CareerNewsVerificationTest {
     fun publishedAtRemainsNullAndRoundTripsWithEvidenceAndCorrections() {
         val value = record().addClaim(claim())!!
             .addEvidence("claim-1", evidence())!!
-            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt, "Yayın tarihi ayrı tutuldu.")!!
         val restored = CareerNewsVerificationRecord.fromJson(value.toJson().toString())
         assertNotNull(restored)
         assertNull(restored!!.publishedAt)
@@ -241,6 +241,24 @@ class CareerNewsVerificationTest {
         assertFalse(value.validationErrors().isEmpty())
     }
 
+    @Test
+    fun humanReviewRequiresRationaleAndNoOpCorrectionIsRejected() {
+        val withEvidence = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+        assertNull(
+            withEvidence.reviewClaim(
+                "claim-1",
+                CareerHumanReviewDecision.CONFIRM,
+                reviewedAt
+            )
+        )
+        assertNull(withEvidence.correctClaim(
+            revisedClaim = withEvidence.claims.single(),
+            correctedAt = "2026-11-25T14:20:00Z",
+            explanation = "Metin değişmedi.",
+            sourceUrl = "https://kurum.gov.tr/duyuru/1"
+        ))
+    }
     @Test
     fun humanReviewRequiresRationaleAndNoOpCorrectionIsRejected() {
         val withEvidence = record().addClaim(claim())!!
