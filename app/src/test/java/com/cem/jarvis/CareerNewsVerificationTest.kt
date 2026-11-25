@@ -306,4 +306,12 @@ class CareerNewsVerificationTest {
         assertNull(record().addClaim(claim())!!.addEvidence("claim-1", untrustedPrimary))
     }
 
+    @Test
+    fun rejectsPersonalIdentifiersInClaimText() {
+        val withPersonalData = record().addClaim(
+            claim().copy(text = "Başvuranın kimlik numarası 12345678901.")
+        )
+        assertNull(withPersonalData)
+    }
+
 }
