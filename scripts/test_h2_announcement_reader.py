@@ -33,6 +33,18 @@ class H2ReaderTests(unittest.TestCase):
         text = "223 Kişilik Personel Alım Duyurusu Tarih: 5/11/2025"
         self.assertEqual("2025-11-05",h2.explicit_published_at(text))
 
+    def test_botas_job_parser_uses_h1_exact_category(self):
+        detail = "<p>223 Kişilik Personel Alım Duyurusu</p>".encode()
+        pdf_text = (
+            "İlanlar, 10.11.2025-14.11.2025 tarihleri arasında yayımlanacaktır."
+        )
+        item = h2.parse_botas_job(
+            detail, Message(), pdf_text,
+            "2026-11-25T14:00:00Z", "2026-11-25T14:00:00Z",
+            date(2026, 11, 25),
+        )
+        self.assertEqual("Kamu bağlı şirket", item["category"])
+
     def test_yhgm_actual_word_order_extracts_deadline_after_date_range(self):
         text = (
             "2.764 sürekli işçi alımı için 08/10/2025 – 13/10/2025 tarihleri "
@@ -91,6 +103,7 @@ class H2ReaderTests(unittest.TestCase):
         self.assertEqual("2026-01-21",item["publishedAt"])
         self.assertIsNone(item["deadline"])
         self.assertEqual("result",item["contentType"])
+        self.assertEqual("Kamu bağlı şirket",item["category"])
         self.assertEqual("Süresi geçti",item["freshnessStatus"])
 
     def test_robots_disallow_prevents_target_request(self):
@@ -439,14 +452,14 @@ class H2ReaderTests(unittest.TestCase):
 
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(19,len(cfg["sources"]))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
         self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
 
     def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(19,len(cfg["sources"]))
 
 
     def test_source_categories_match_h1_allowed_enum(self):
@@ -455,6 +468,196 @@ class H2ReaderTests(unittest.TestCase):
         self.assertTrue(all(source.get("category") in allowed for source in cfg["sources"]))
         botas = next(source for source in cfg["sources"] if source["id"] == "botas-duyurular")
         self.assertEqual("Kamu bağlı şirket", botas["category"])
+
+
+
+    def test_marmara_named_publication_date_is_parsed_from_official_pdb_page(self):
+        text="Üniversitemiz Öğretim Görevlisi Alım İlanı Yayın Tarihi: 24 Kasım 2026 Son Başvuru Tarihi: 08.12.2026"
+        self.assertEqual("2026-11-24",h2.explicit_published_at(text,mode="marmara-pdb"))
+        self.assertEqual("2026-12-08",h2.application_deadline(text,"son başvuru"))
+
+    def test_marmara_24_november_notices_are_two_cards_and_eleven_positions(self):
+        cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
+        teacher=next(s for s in cfg["sources"] if s["id"]=="marmara-ogretim-elemani-2026-11-24")
+        faculty=next(s for s in cfg["sources"] if s["id"]=="marmara-ogretim-uyesi-2026-11-24")
+        self.assertEqual(4,teacher["positionCount"])
+        self.assertEqual(7,faculty["positionCount"])
+        self.assertNotEqual(teacher["itemId"],faculty["itemId"])
+        self.assertEqual("marmara-pdb",teacher["publicationMode"])
+        self.assertEqual("marmara-pdb",faculty["publicationMode"])
+
+
+
+    def test_munzur_official_pdf_publication_and_deadline_dates_are_explicit(self):
+        text="İlan Tarihi : 10.11.2026 Son Başvuru Tarihi : 25.11.2026 mesai bitimine kadar"
+        self.assertEqual("2026-11-10",h2.explicit_published_at(text,mode="munzur-ilan-date"))
+        self.assertEqual("2026-11-25",h2.application_deadline(text,"son başvuru"))
+
+    def test_munzur_two_notices_are_distinct_cards_not_position_multiplier(self):
+        cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
+        faculty=next(s for s in cfg["sources"] if s["id"]=="munzur-ogretim-uyesi-2026-11-10")
+        lecturer=next(s for s in cfg["sources"] if s["id"]=="munzur-ogretim-gorevlisi-2026-11-10")
+        self.assertEqual(11,faculty["positionCount"])
+        self.assertEqual(1,lecturer["positionCount"])
+        self.assertNotEqual(faculty["itemId"],lecturer["itemId"])
+        self.assertEqual(faculty["url"],lecturer["url"])
+        self.assertTrue(lecturer["allowNullPublishedAt"])
+
+
+
+    def test_empty_200_robots_file_allows_public_page(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"")
+            return ok(b"public page")
+        body,final_url,_=h2.fetch_public_url("https://atauni.edu.tr/notice",requester)
+        self.assertEqual(b"public page",body)
+        self.assertEqual("https://atauni.edu.tr/notice",final_url)
+        self.assertEqual(2,len(calls))
+
+    def test_balikesir_personel_and_baunwebapi_are_same_official_host_family(self):
+        self.assertTrue(h2.same_official_host(
+            "https://personel.balikesir.edu.tr/notice",
+            "https://baunwebapi.balikesir.edu.tr/uploads/notice.pdf"
+        ))
+
+    def test_oran_table_publication_date_is_explicit(self):
+        text="ORAN Personel Alım İlanı İlan Tarihi 19/10/2026 Başvuru Tarihleri 09/11/2026 - 03/12/2026"
+        self.assertEqual("2026-10-19",h2.explicit_published_at(text,mode="oran-table-date"))
+
+    def test_doka_and_zafer_page_dates_parse_turkish_month_abbreviation(self):
+        doka="02 Kas 2026 T.C. Doğu Karadeniz Kalkınma Ajansı Personel Alım İlanı"
+        zafer="03 Kas 2026 T.C. Zafer Kalkınma Ajansı Personel Alım İlanı"
+        self.assertEqual("2026-11-02",h2.explicit_published_at(doka,mode="doka-page-date"))
+        self.assertEqual("2026-11-03",h2.explicit_published_at(zafer,mode="zafer-page-date"))
+
+    def test_ataturk_page_date_is_not_taken_from_numeric_title_date(self):
+        text="20 Kasım 2026 Atatürk Üniversitesi Öğretim Üyesi Alım İlanı 20.11.2026 Son Başvuru Tarihi 04.12.2026"
+        self.assertEqual("2026-11-20",h2.explicit_published_at(text,mode="ataturk-page-date"))
+
+    def test_single_labeled_deadline_is_parsed_without_title_date(self):
+        text="Atatürk Üniversitesi Öğretim Üyesi Alım İlanı 20.11.2026 Son Başvuru Tarihi: 04.12.2026"
+        self.assertEqual("2026-12-04",h2.application_deadline(text,"son başvuru"))
+
+    def test_null_published_at_is_preserved_only_when_source_opts_in(self):
+        source={
+            "itemId":"tga-test","institution":"TGA","title":"TGA personel alımı — 13 pozisyon",
+            "category":"Kamu","contentType":"job","url":"https://tga.gov.tr/kariyer",
+            "publicationMode":"labelled","allowNullPublishedAt":True,
+            "deadlineContext":"başvuru tarihleri","expectedText":["13 pozisyon","04.12.2026"],
+            "positionCount":13,
+            "howToApply":{"method":"TGA kariyer sayfası","url":"https://tga.gov.tr/kariyer","instructions":"Çevrimiçi."},
+            "conditions":["Pozisyona özel şartlar resmî duyurudadır."]
+        }
+        page="TGA personel alımı 13 pozisyon. Başvuru Tarihleri 03.11.2026 - 04.12.2026."
+        item=h2.parse_official_notice(
+            source,page,"","2026-11-25T02:40:00Z","2026-11-25T02:40:00Z",date(2026,11,25)
+        )
+        self.assertIsNone(item["publishedAt"])
+        self.assertEqual(13,item["positionCount"])
+        self.assertEqual("2026-12-04",item["deadline"])
+        self.assertEqual("Doğrulandı",item["freshnessStatus"])
+
+    def test_zafer_official_url_override_is_used_in_card(self):
+        source={
+            "itemId":"zafer-test","institution":"Zafer Kalkınma Ajansı","title":"2 uzman",
+            "category":"Kamu","contentType":"job",
+            "url":"https://www.doka.org.tr/announcement-detail.php?id=1222",
+            "officialUrl":"https://www.zafer.gov.tr/duyurular/227",
+            "publicationMode":"zafer-page-date","deadlineContext":"başvuru tarihleri",
+            "expectedText":["Zafer Kalkınma Ajansı","14.12.2026"],"positionCount":2,
+            "howToApply":{"method":"Kariyer Kapısı","url":"https://www.zafer.gov.tr/duyurular/227","instructions":"Resmî duyuru."},
+            "conditions":[]
+        }
+        page="03 Kas 2026 T.C. Zafer Kalkınma Ajansı Personel Alım İlanı"
+        pdf="2 (iki) Uzman Personel Başvuru Tarihleri 25.11.2026 - 14.12.2026"
+        item=h2.parse_official_notice(
+            source,page,pdf,"2026-11-25T02:40:00Z","2026-11-25T02:40:00Z",date(2026,11,25)
+        )
+        self.assertEqual("https://www.zafer.gov.tr/duyurular/227",item["officialSourceUrl"])
+        self.assertEqual(2,item["positionCount"])
+        self.assertEqual("2026-11-03",item["publishedAt"])
+
+    def test_h2_page_parser_ignores_script_and_style_text(self):
+        page=h2.PageParser()
+        page.feed("<html><head><style>.hide { display:none }</style><script>fake text</script></head><body><p>Official notice</p></body></html>")
+        self.assertIn("Official notice",page.text)
+        self.assertNotIn("fake text",page.text)
+        self.assertNotIn("display:none",page.text)
+
+
+
+    def test_summary_recounts_unique_institutions_and_verified_positions(self):
+        rows=[
+            {"sourceId":"ataturk-prof","institution":"Atatürk Üniversitesi","sourceStatus":"fresh",
+             "items":1,"positions":70,"verifiedOpenListings":1,"verifiedOpenPositions":70,
+             "verifiedInstitutions":["Atatürk Üniversitesi"],"error":None},
+            {"sourceId":"ataturk-dr","institution":"Atatürk Üniversitesi","sourceStatus":"fresh",
+             "items":1,"positions":1,"verifiedOpenListings":1,"verifiedOpenPositions":1,
+             "verifiedInstitutions":["Atatürk Üniversitesi"],"error":None},
+            {"sourceId":"atk-future","institution":"Adli Tıp Kurumu","sourceStatus":"fresh",
+             "items":1,"positions":181,"verifiedOpenListings":0,"verifiedOpenPositions":0,
+             "verifiedInstitutions":[],"error":None},
+            {"sourceId":"botas-stale","institution":"BOTAŞ","sourceStatus":"stale",
+             "items":1,"positions":223,"verifiedOpenListings":0,"verifiedOpenPositions":0,
+             "verifiedInstitutions":[],"error":"TIMEOUT"},
+        ]
+        summary=h2.make_summary(rows,"2026-11-25T02:50:00Z")
+        self.assertIn("Güncel açık doğrulanmış kurum: **1**",summary)
+        self.assertIn("Güncel açık doğrulanmış ilan kartı: **2**",summary)
+        self.assertIn("Kartlardaki güncel açık pozisyon toplamı: **71**",summary)
+        self.assertIn("70 kadrolu tek duyuru 70 ilan kartı değildir",summary)
+        self.assertIn("botas-stale",summary)
+        self.assertIn("stale",summary)
+
+
+
+    def test_application_window_sentence_extracts_ending_date(self):
+        text="TGA kariyer ilanı. Başvurular 03 Kasım 2026 tarihinde başlayıp 04 Aralık 2026 tarihinde sona erecektir."
+        self.assertEqual("2026-12-04",h2.application_deadline(text,"başvurular"))
+
+
+
+    def test_missing_position_count_is_not_invented_as_one(self):
+        self.assertEqual(0,h2.position_count_for({"positionCount":None}))
+        self.assertEqual(0,h2.position_count_for({}))
+        self.assertEqual(0,h2.position_count_for({"positionCount":0}))
+        self.assertEqual(7,h2.position_count_for({"positionCount":7}))
+
+
+
+
+    def test_same_day_mesai_deadline_without_time_is_not_claimed_open(self):
+        item={
+            "itemId":"munzur-deadline-test","institution":"Munzur Üniversitesi",
+            "title":"Munzur akademik ilan","category":"Kamu","contentType":"job",
+            "url":"https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
+            "publicationMode":"munzur-ilan-date","deadlineContext":"son başvuru",
+            "expectedText":["Munzur Üniversitesi Rektörlüğünden","Son Başvuru Tarihi : 25.11.2026"],
+            "positionCount":11,"deadlineTimeUnknown":True,
+            "deadlineTimeText":"mesai bitimine kadar (kesin saat belirtilmemiş)",
+            "howToApply":{"method":"Şahsen veya posta","url":"https://www.munzur.edu.tr/","instructions":"Mesai bitimine kadar."},
+            "conditions":["Resmî PDF'deki kadro koşulları uygulanır."]
+        }
+        raw="Munzur Üniversitesi Rektörlüğünden İlan Tarihi : 10.11.2026 Son Başvuru Tarihi : 25.11.2026"
+        same_day=h2.parse_official_notice(item,raw,"", "2026-11-25T03:30:00Z","2026-11-25T03:30:00Z",date(2026,11,25))
+        self.assertEqual("Doğrulanamadı",same_day["freshnessStatus"])
+        self.assertEqual("mesai bitimine kadar (kesin saat belirtilmemiş)",same_day["deadlineTimeText"])
+        later_day=h2.parse_official_notice(item,raw,"", "2026-11-26T03:30:00Z","2026-11-25T03:30:00Z",date(2026,11,26))
+        self.assertEqual("Süresi geçti",later_day["freshnessStatus"])
+
+    def test_munzur_same_day_time_unknown_is_excluded_from_verified_listing_count(self):
+        rows=[
+            {"sourceId":"munzur","institution":"Munzur Üniversitesi","sourceStatus":"fresh",
+             "items":1,"positions":11,"verifiedOpenListings":0,"verifiedOpenPositions":0,
+             "verifiedInstitutions":[],"error":None}
+        ]
+        summary=h2.make_summary(rows,"2026-11-25T03:30:00Z")
+        self.assertIn("Güncel açık doğrulanmış ilan kartı: **0**",summary)
+        self.assertIn("Kartlardaki güncel açık pozisyon toplamı: **0**",summary)
+
 
 
 if __name__ == "__main__":

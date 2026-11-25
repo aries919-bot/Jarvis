@@ -30,7 +30,14 @@ MAX_PDF_BYTES = 20 * 1024 * 1024
 MAX_ROBOTS_BYTES = 512 * 1024
 TIMEOUT_SECONDS = 15
 MAX_REDIRECTS = 3
-ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr", "atk.gov.tr", "www.atk.gov.tr", "anadolu.edu.tr", "cdn.duzce.edu.tr", "personel.tarsus.edu.tr"}
+ALLOWED_HOSTS = {
+    "yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr",
+    "atk.gov.tr", "www.atk.gov.tr", "anadolu.edu.tr", "cdn.duzce.edu.tr",
+    "personel.tarsus.edu.tr", "www.artuklu.edu.tr", "artuklu.edu.tr",
+    "atauni.edu.tr", "personel.balikesir.edu.tr", "baunwebapi.balikesir.edu.tr",
+    "www.oran.org.tr", "oran.org.tr", "www.doka.org.tr", "doka.org.tr",
+    "www.zafer.gov.tr", "zafer.gov.tr", "tga.gov.tr", "kariyer.tga.gov.tr", "pdb.marmara.edu.tr", "cdn.munzur.edu.tr",
+}
 
 NUMERIC_DATE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 RANGE_DATE = re.compile(
@@ -64,9 +71,13 @@ class PageParser(HTMLParser):
         self.meta: dict[str,str] = {}
         self._href: str | None = None
         self._anchor: list[str] = []
+        self._ignored_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str,str | None]]) -> None:
         values = {k.lower():v for k,v in attrs if v is not None}
+        if tag.lower() in {"script", "style", "noscript"}:
+            self._ignored_depth += 1
+            return
         if tag.lower() == "a":
             self._href = values.get("href")
             self._anchor = []
@@ -76,6 +87,8 @@ class PageParser(HTMLParser):
                 self.meta[name] = values["content"]
 
     def handle_data(self, data: str) -> None:
+        if self._ignored_depth:
+            return
         clean = " ".join(data.split())
         if clean:
             self.parts.append(clean)
@@ -83,6 +96,9 @@ class PageParser(HTMLParser):
                 self._anchor.append(clean)
 
     def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in {"script", "style", "noscript"}:
+            self._ignored_depth = max(0, self._ignored_depth - 1)
+            return
         if tag.lower() == "a" and self._href is not None:
             self.links.append((" ".join(self._anchor).strip(), self._href))
             self._href = None
@@ -157,7 +173,15 @@ def same_official_host(left: str, right: str) -> bool:
     b = (urllib.parse.urlsplit(right).hostname or "").lower()
     if a == b:
         return True
-    return {a, b}.issubset({"www.botas.gov.tr", "botas.gov.tr"}) or {a, b}.issubset({"atk.gov.tr", "www.atk.gov.tr"})
+    groups = (
+        {"www.botas.gov.tr", "botas.gov.tr"},
+        {"atk.gov.tr", "www.atk.gov.tr"},
+        {"personel.balikesir.edu.tr", "baunwebapi.balikesir.edu.tr"},
+        {"www.doka.org.tr", "doka.org.tr"},
+        {"www.oran.org.tr", "oran.org.tr"},
+        {"www.zafer.gov.tr", "zafer.gov.tr"},
+    )
+    return any({a, b}.issubset(group) for group in groups)
 
 
 def official_link_target(page: PageParser, base_url: str, expected_url: str) -> str | None:
@@ -212,9 +236,9 @@ def fetch_public_url(
                     parser = RobotFileParser()
                     parser.parse([])
                     break
-                if robots.status is not None and 200 <= robots.status < 300 and robots.body:
+                if robots.status is not None and 200 <= robots.status < 300:
                     parser = RobotFileParser()
-                    parser.parse(robots.body.decode("utf-8","replace").splitlines())
+                    parser.parse((robots.body or b"").decode("utf-8","replace").splitlines())
                     break
                 raise SourceError(f"robots UNKNOWN: HTTP {robots.status}; hedef istenmedi")
             else:
@@ -282,10 +306,10 @@ def official_link_map(page: PageParser, base_url: str) -> dict[str,str]:
 MONTHS_TR = {
     "ocak":1, "şubat":2, "subat":2, "mart":3, "nisan":4, "mayıs":5, "mayis":5,
     "haziran":6, "temmuz":7, "ağustos":8, "agustos":8, "eylül":9, "eylul":9,
-    "ekim":10, "kasım":11, "kasim":11, "aralık":12, "aralik":12,
+    "ekim":10, "kasım":11, "kasim":11, "kas":11, "aralık":12, "aralik":12,
 }
 WORD_DATE = re.compile(
-    r"(\d{1,2})\s+(Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\s+(20\d{2})",
+    r"(\d{1,2})\s+(Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Kas|Aralık|Aralik)\s+(20\d{2})",
     re.I,
 )
 WORD_RANGE = re.compile(
@@ -337,11 +361,35 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
         match = re.search(r"İlanın Yayımlandığı Resmî Gazete Tarih ve Sayısı\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
         if match:
             return parse_date(match.group(1))
+    if mode == "oran-table-date":
+        match = re.search(r"İlan Tarihi\s*(?:\||:)?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "munzur-ilan-date":
+        match = re.search(r"İlan Tarihi\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})", page_text, re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "marmara-pdb":
+        match = re.search(r"Yayın Tarihi\s*:\s*(\d{1,2})\s+Kasım\s+2026", page_text, re.I)
+        if match:
+            return parse_date(f"{match.group(1)}.11.2026")
+    if mode == "ataturk-page-date":
+        match = re.search(r"(\d{1,2}\s+Kasım\s+2026)\s+Atatürk Üniversitesi Öğretim Üyesi Alım İlanı",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "doka-page-date":
+        match = re.search(r"(\d{1,2}\s+Kas\s+2026)\s+T\.C\. Doğu Karadeniz Kalkınma Ajansı",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "zafer-page-date":
+        match = re.search(r"(\d{1,2}\s+Kas\s+2026)\s+T\.C\.?\s+Zafer Kalkınma Ajansı",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
     # A named publication field is stronger evidence than a date in a title.
     labelled = re.search(r"(?:Yayın Tarihi|Yayımlanma Tarihi|Tarih)\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
     if labelled:
         return parse_date(labelled.group(1))
-    added = re.search(r"Eklenme Tarihi\s*:\s*(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})",page_text,re.I)
+    added = re.search(r"Eklenme Tarihi\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]20\d{2}|\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})",page_text,re.I)
     if added:
         return parse_date(added.group(1))
     # YHGM explicitly dates the notice; this is not the kura date in the title.
@@ -364,22 +412,44 @@ def application_deadline(text: str, context: str) -> str | None:
         end = min(len(text),match.end()+260)
         if lowered_context in text[start:end].lower():
             return parse_date(match.group(2))
+    # Some official pages express the application window as "starts ... and ends ...".
+    start_end = re.search(
+        r"(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})\s+tarihinde\s+başlayıp\s+"
+        r"(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})\s+tarihinde\s+sona",
+        text, re.I
+    )
+    if start_end:
+        context_window = text[max(0,start_end.start()-220):min(len(text),start_end.end()+100)].lower()
+        if lowered_context in context_window or "başvurular" in context_window:
+            return parse_date(start_end.group(2))
+    # Some official notices publish one explicit final date instead of a range.
+    single = re.search(
+        r"(?:Son Başvuru Tarihi|Başvuru Son Tarihi|Başvuruların Son Günü)\s*[:|]?\s*(\d{1,2}[./-]\d{1,2}[./-]20\d{2})",
+        text, re.I
+    )
+    if single and (lowered_context in text[max(0,single.start()-80):single.end()+80].lower()
+                   or "son başvuru" in text[max(0,single.start()-80):single.end()+80].lower()):
+        return parse_date(single.group(1))
     return None
 
 
 def status_for(deadline: str | None, published: str | None, content_type: str, today: date,
-                application_opens_at: str | None = None, collected_at: str | None = None) -> str:
+                application_opens_at: str | None = None, collected_at: str | None = None,
+                allow_null_published: bool = False,
+                deadline_time_unknown: bool = False) -> str:
     if deadline:
         end = date.fromisoformat(deadline)
         if end < today:
             return "Süresi geçti"
+        if end == today and deadline_time_unknown:
+            return "Doğrulanamadı"
         # A known future application start is not an open application yet.
         if application_opens_at:
             opening = datetime.fromisoformat(application_opens_at.replace("Z","+00:00"))
             observed = datetime.fromisoformat((collected_at or utc_now()).replace("Z","+00:00"))
             if observed < opening:
                 return "Doğrulanamadı"
-        if published and date.fromisoformat(published) <= today:
+        if (published and date.fromisoformat(published) <= today) or (published is None and allow_null_published):
             return "Doğrulandı"
         return "Doğrulanamadı"
     if content_type == "result" and published and date.fromisoformat(published) <= today:
@@ -392,7 +462,9 @@ def make_item(
     content_type: str, official_url: str, how_to_apply: dict[str,str],
     conditions: list[str], deadline: str | None, published_at: str | None,
     collected_at: str, first_seen_at: str, today: date, tags: list[str] | None = None,
-    application_opens_at: str | None = None,
+    application_opens_at: str | None = None, position_count: int | None = None,
+    allow_null_published: bool = False, deadline_time_text: str | None = None,
+    deadline_time_unknown: bool = False,
 ) -> dict[str,Any]:
     return {
         "id":item_id,
@@ -404,12 +476,15 @@ def make_item(
         "howToApply":how_to_apply,
         "conditions":conditions,
         "deadline":deadline,
+        "deadlineTimeText":deadline_time_text,
+        "deadlineTimeUnknown":deadline_time_unknown,
+        "positionCount":position_count,
         "applicationOpensAt":application_opens_at,
         "publishedAt":published_at,
         "collectedAt":collected_at,
         "firstSeenAt":first_seen_at,
         "freshnessStatus":status_for(deadline,published_at,content_type,today,
-                                     application_opens_at,collected_at),
+                                     application_opens_at,collected_at,allow_null_published,deadline_time_unknown),
         "tags":tags or [],
         "sourceStatus":"fresh",
     }
@@ -474,7 +549,7 @@ def parse_botas_job(detail_body: bytes, detail_headers: Any, pdf_text: str,
     if "223 kişilik personel alım duyurusu" not in text.lower():
         raise SourceError("BOTAŞ 223 kişilik personel başlığı yok")
     published = explicit_published_at(text,page.meta)
-    deadline = application_deadline(pdf_text,"ilanlar")
+    deadline = application_deadline(pdf_text,"İlanlar")
     if not deadline:
         raise SourceError("BOTAŞ PDF ilan aralığı yok; deadline üretilmedi")
     required = [
@@ -489,7 +564,7 @@ def parse_botas_job(detail_body: bytes, detail_headers: Any, pdf_text: str,
         item_id="botas-223-personel-alimi-2025",
         institution="Boru Hatları ile Petrol Taşıma A.Ş. (BOTAŞ)",
         title="223 Kişilik Personel Alım Duyurusu",
-        category="Kamu bağlı büyük şirket",
+        category="Kamu bağlı şirket",
         content_type="job",
         official_url=BOTAS_JOB_URL,
         how_to_apply={
@@ -518,7 +593,7 @@ def parse_botas_result(body: bytes, headers: Any, collected_at: str,
         item_id="botas-mufettis-sonuc-2026",
         institution="Boru Hatları ile Petrol Taşıma A.Ş. (BOTAŞ)",
         title="10 Kasım 2025 / 14 Kasım 2025 Tarihli Müfettiş Yardımcılığı Alımına Yönelik Sonuç Duyurusu",
-        category="Kamu bağlı büyük şirket",
+        category="Kamu bağlı şirket",
         content_type="result",
         official_url=BOTAS_RESULT_URL,
         how_to_apply={"method":"Başvuru yok; sonuç duyurusu.","url":BOTAS_RESULT_URL,"instructions":"Bu kayıt önceki alım sürecinin sonucudur; açık başvuru değildir."},
@@ -539,7 +614,8 @@ def parse_official_notice(source: dict[str,Any], page_text: str, attachment_text
         if str(needle).lower() not in combined.lower():
             raise SourceError(f"Resmî duyuru doğrulanamadı; beklenen metin bulunamadı: {needle}")
     published = explicit_published_at(combined, mode=source.get("publicationMode"))
-    if not published:
+    allow_null_published = source.get("allowNullPublishedAt") is True
+    if not published and not allow_null_published:
         raise SourceError("Açık yayın tarihi kanıtı bulunamadı; publishedAt üretilmedi")
     deadline = application_deadline(combined, str(source.get("deadlineContext", "başvuru")))
     if not deadline:
@@ -553,7 +629,7 @@ def parse_official_notice(source: dict[str,Any], page_text: str, attachment_text
         title=str(source["title"]),
         category=str(source.get("category", "Kamu")),
         content_type=str(source.get("contentType", "job")),
-        official_url=str(source["url"]),
+        official_url=str(source.get("officialUrl", source["url"])),
         how_to_apply=how_to_apply,
         conditions=[str(x) for x in source.get("conditions", [])],
         deadline=deadline,
@@ -563,6 +639,10 @@ def parse_official_notice(source: dict[str,Any], page_text: str, attachment_text
         today=today,
         tags=[str(x) for x in source.get("tags", [])],
         application_opens_at=source.get("applicationOpensAt"),
+        position_count=source.get("positionCount"),
+        allow_null_published=allow_null_published,
+        deadline_time_text=source.get("deadlineTimeText"),
+        deadline_time_unknown=source.get("deadlineTimeUnknown") is True,
     )
 
 
@@ -642,6 +722,7 @@ def collect_yhgm(source: dict[str,Any], requester: Callable[[str,int],FetchRespo
                  now: str, previous: dict[str,Any] | None, today: date) -> dict[str,Any]:
     body,_,headers = fetch_public_url(source["url"],requester,{},MAX_HTML_BYTES)
     items = [parse_yhgm(body,headers,now,now,today)]
+    items[0]["positionCount"] = source.get("positionCount")
     assign_first_seen(items,previous,now)
     return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,"sourceStatus":"fresh","items":items}
 
@@ -684,8 +765,16 @@ def collect_botas(source: dict[str,Any], requester: Callable[[str,int],FetchResp
         parse_botas_job(job_body,job_headers,pdf_text,now,now,today),
         parse_botas_result(result_body,result_headers,now,now,today),
     ]
+    items[0]["positionCount"] = source.get("positionCount")
+    items[1]["positionCount"] = 0
     assign_first_seen(items,previous,now)
     return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,"sourceStatus":"fresh","items":items}
+
+
+
+def position_count_for(item: dict[str,Any]) -> int:
+    value = item.get("positionCount")
+    return value if isinstance(value,int) and value > 0 else 0
 
 
 def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
@@ -721,8 +810,28 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
         except SourceError as exc:
             feed = stale_feed(source["id"],now,str(exc),previous)
         write_feed(feed,out_dir,previous_dir)
-        rows.append({"sourceId":source["id"],"sourceStatus":feed["sourceStatus"],
-                     "items":len(feed.get("items",[])),"error":feed.get("lastError")})
+        items = feed.get("items", [])
+        source_status = feed["sourceStatus"]
+        verified_items = [
+            item for item in items
+            if source_status == "fresh"
+            and item.get("freshnessStatus") == "Doğrulandı"
+            and item.get("deadline")
+            and item["deadline"] >= today_value.isoformat()
+        ]
+        institutions = sorted({str(item.get("institution")) for item in items if item.get("institution")})
+        verified_institutions = sorted({str(item.get("institution")) for item in verified_items if item.get("institution")})
+        rows.append({
+            "sourceId":source["id"],
+            "institution":institutions[0] if len(institutions) == 1 else (source.get("institution") or source.get("name") or source["id"]),
+            "sourceStatus":source_status,
+            "items":len(items),
+            "positions":sum(position_count_for(item) for item in items),
+            "verifiedOpenListings":len(verified_items),
+            "verifiedOpenPositions":sum(position_count_for(item) for item in verified_items),
+            "verifiedInstitutions":verified_institutions,
+            "error":feed.get("lastError")
+        })
     summary = make_summary(rows,now)
     return rows,summary
 
@@ -731,24 +840,39 @@ def make_summary(rows: list[dict[str,Any]], collected_at: str) -> str:
     fresh = sum(row["sourceStatus"] == "fresh" for row in rows)
     stale = sum(row["sourceStatus"] == "stale" for row in rows)
     total = sum(row["items"] for row in rows)
+    verified_institutions = sorted({
+        institution for row in rows for institution in row.get("verifiedInstitutions", [])
+    })
+    verified_listings = sum(row.get("verifiedOpenListings",0) for row in rows)
+    verified_positions = sum(row.get("verifiedOpenPositions",0) for row in rows)
     lines = [
         "## H2 resmî duyuru okuyucusu",
         "",
         f"- collectedAt (UTC): **{collected_at}**",
-        f"- Kaynak: **{len(rows)}** (ölçülmüş resmî kaynaklar)",
+        f"- Kaynak kaydı: **{len(rows)}** (ölçülmüş resmî duyurular)",
         f"- Durum: **{fresh} fresh / {stale} stale**",
         f"- Kart: **{total}**",
+        f"- Güncel açık doğrulanmış kurum: **{len(verified_institutions)}**",
+        f"- Güncel açık doğrulanmış ilan kartı: **{verified_listings}**",
+        f"- Kartlardaki güncel açık pozisyon toplamı: **{verified_positions}**",
         "",
-        "| sourceId | sourceStatus | kart | hata |",
-        "|---|---|---:|---|",
+        "| sourceId | kurum | sourceStatus | kart | pozisyon | açık doğrulanmış kart | açık pozisyon | hata |",
+        "|---|---|---|---:|---:|---:|---:|---|",
     ]
     for row in rows:
-        lines.append(f"| {row['sourceId']} | {row['sourceStatus']} | {row['items']} | {row.get('error') or ''} |")
+        lines.append(
+            f"| {row['sourceId']} | {row.get('institution') or ''} | {row['sourceStatus']} "
+            f"| {row['items']} | {row.get('positions',0)} | {row.get('verifiedOpenListings',0)} "
+            f"| {row.get('verifiedOpenPositions',0)} | {row.get('error') or ''} |"
+        )
     lines.extend([
         "",
-        "Kura/sonuç kayıtları yeni iş sayacına girmez. Geçmiş deadline güncel iş listesine girmez.",
-        "Robots izin belirsizse hedef sayfaya istek yoktur; TLS varsayılan doğrulaması açıktır.",
-        "Bu okuyucu gerçek başvurusu açık kamu ilanı sayısını artırdığını iddia etmez.",
+        "C1'nin 100 ilan eşiği ayrı doğrulanmış ilan kartı adedinden hesaplanır; bir karttaki positionCount kart sayısını çoğaltmaz.",
+        "Pozisyon toplamı bilgi amaçlı ayrı gösterilir; 70 kadrolu tek duyuru 70 ilan kartı değildir.",
+        "Güncel açık sayaç yalnız fresh kaynak, Doğrulandı etiketi ve geçmemiş deadline koşullarını karşılayan kartları sayar.",
+        "Kurum sayısı adına göre tekilleştirilir; aynı kurumun birden fazla duyurusu yeni kurum kaynağı oluşturmaz.",
+        "Kura/sonuç kayıtları, süresi geçmiş ilanlar, başvurusu henüz açılmamış ilanlar ve stale kaynaklar güncel açık toplama girmez.",
+        "Robots izni belirsizse hedef sayfaya istek yoktur; TLS varsayılan doğrulaması açıktır.",
     ])
     return "\n".join(lines)+"\n"
 
