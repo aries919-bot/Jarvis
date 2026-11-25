@@ -20,6 +20,8 @@ import java.text.SimpleDateFormat
 
 class CareerActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
+    private val newsVerificationStore by lazy { CareerNewsVerificationStore(prefs) }
+    private val newsVerificationUi by lazy { CareerNewsVerificationUi(this, newsVerificationStore) }
     private lateinit var cv: EditText
     private lateinit var role: EditText
     private lateinit var place: EditText
@@ -1325,6 +1327,9 @@ class CareerActivity : Activity() {
                     hit
                 )
             }
+            val collectedAt = System.currentTimeMillis()
+            val previousFirstSeenAt = if (index >= 0) items[index].optLong("firstSeenAt", 0L) else 0L
+            val firstSeenAt = previousFirstSeenAt.takeIf { it > 0L } ?: collectedAt
             val item = JSONObject()
                 .put("title", hit.title)
                 .put("url", hit.url)
@@ -1333,13 +1338,15 @@ class CareerActivity : Activity() {
                 .put("contentLabel", classification.label)
                 .put("contentReason", classification.reason)
                 .put("contentConfidence", classification.confidence)
-                .put("lastSeenAt", System.currentTimeMillis())
+                .put("lastSeenAt", collectedAt)
+                .put("firstSeenAt", firstSeenAt)
             if (index < 0) items.add(item)
             else if (hit.snippet.length > items[index].optString("snippet").length) {
                 item.put("createdAt", items[index].optLong("createdAt", 0L))
                 items[index] = item
             } else {
-                items[index].put("lastSeenAt", System.currentTimeMillis())
+                items[index].put("lastSeenAt", collectedAt)
+                if (!items[index].has("firstSeenAt")) items[index].put("firstSeenAt", collectedAt)
             }
         }
         val output = JSONArray()
@@ -1593,10 +1600,17 @@ class CareerActivity : Activity() {
                     10f, false, muted
                 ))
             }
+            card.addView(newsVerificationUi.createActionButton(
+                headline = title,
+                publisher = if (source == "Bilinmeyen kaynak") host else source,
+                sourceUrl = url,
+                collectedAtMillis = seenAt,
+                firstSeenAtMillis = item.optLong("firstSeenAt", 0L)
+            ), params(-1, dp(48), 0, 7, 0, 0))
             card.addView(primaryButton("Kaynağın asıl sayfasını aç  ↗") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     .onFailure { toast("Kaynak açılamadı.") }
-            }, params(-1, dp(46), 0, 8, 0, 0))
+            }, params(-1, dp(46), 0, 4, 0, 0))
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
     }
