@@ -26,6 +26,23 @@ class CareerForbiddenSourcesPolicyTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://personel.ozal.edu.tr/announcements-all"))
     }
     @Test
+    fun everyNonOfficialCatalogSourceRemainsSecondaryAndCannotTriggerPrimaryAlerts() {
+        val nonOfficial = CareerSourceCatalog.sources.filterNot { it.official }
+        assertTrue(nonOfficial.isNotEmpty())
+        nonOfficial.forEach { source ->
+            assertTrue("${source.name} must remain secondary", CareerSourceCatalog.isSecondary(source.url))
+        }
+        listOf(
+            "https://www.secretcv.com/",
+            "https://www.yenibiris.com/",
+            "https://www.isbul.net/"
+        ).forEach { url ->
+            assertTrue(CareerSourceCatalog.isTrustedUrl(url))
+            assertTrue(CareerSourceCatalog.isSecondary(url))
+        }
+    }
+
+    @Test
     fun networkRequestsUseTheDeclaredAriesUserAgent() {
         assertEquals(
             "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)",
