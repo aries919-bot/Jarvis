@@ -549,3 +549,12 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Zafer kaydında fetch `url` DOKA domaini id=1222, `officialUrl` Zafer domaini; H2 live run Zafer'i fresh saymış. Bu nedenle kanıtlanmış hata değil, kaynak provenance kontrolü: [görev](../gorevler/C1-H2-ZAFER-URL-PROVENANCE-2026-11-26.md).
 
 **KARAR:** H2 live 11 source/13 card PASS (H2 katmanı); e-Şube 1/42 ayrı; C1 Worker/production RED, 100 kart yok, merge/deploy yok.
+
+
+## 26.11.2026 — Cloud runner admission: no-code failure
+- Cloud PR #12 run [#45697424481](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45697424481), job 139498357281: `runner_id=0`, empty runner name, zero steps, ~2 seconds; logs 404 BlobNotFound. Workflow uses `ubuntu-latest`; checkout never started. This is pre-runner admission, not a test failure; exact cause UNKNOWN.
+- Cross-repository GitHub issue search found same fingerprint, including zero-dependency `echo` smoke failures; evidence supports runner admission/dispatch class, not a specific billing or account diagnosis.
+- Owner-side check task: [gorevler/C1-CLOUD-RUNNER-ADMISSION-2026-11-26.md](../gorevler/C1-CLOUD-RUNNER-ADMISSION-2026-11-26.md). Check Actions policy, hosted runner eligibility, org runner restrictions and usage limits before one minimal smoke test. No repeated code reruns.
+- PR validation skips live source ingestion by design; scheduled/push runs perform upstream e-Şube clone, H2 live read and Worker authenticated GET/D1. No successful scheduled refresh/publish evidence.
+
+**KARAR:** Cloud C1 runner admission BLOCKED; no production feed update, no merge/deploy.
