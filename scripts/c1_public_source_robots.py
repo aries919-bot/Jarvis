@@ -157,6 +157,20 @@ SOURCES = [
         ],
     },
     {
+        "id": "necmettin-erbakan",
+        "name": "Necmettin Erbakan Üniversitesi",
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261120-4-14.pdf",
+        ],
+    },
+    {
+        "id": "dpu",
+        "name": "Kütahya Dumlupınar Üniversitesi",
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261123-4-11.pdf",
+        ],
+    },
+    {
         "id": "yokak_upcoming",
         "name": "Yükseköğretim Kalite Kurulu (başvuru 01.12.2026'da açılıyor)",
         "page_urls": [
