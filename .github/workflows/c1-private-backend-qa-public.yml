@@ -11,12 +11,12 @@ on:
         description: Exact jarvis-cloud commit SHA
         required: true
         type: string
-        default: 68e858424c3589b7d6cffea7ba26c7941027b017
+        default: 8a43b99981db601de3442e8394b71d0651d0e34e
       base_sha:
         description: Exact private C1 base SHA for diff review
         required: true
         type: string
-        default: 74816f3954c3fa8164ef0266b848b0b9e9a897d4
+        default: 68e858424c3589b7d6cffea7ba26c7941027b017
 
 permissions:
   contents: write
@@ -27,8 +27,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '68e858424c3589b7d6cffea7ba26c7941027b017' }}
-  PRIVATE_C1_BASE_SHA: ${{ github.event.inputs.base_sha || '74816f3954c3fa8164ef0266b848b0b9e9a897d4' }}
+  PRIVATE_C1_SHA: ${{ github.event.inputs.private_sha || '8a43b99981db601de3442e8394b71d0651d0e34e' }}
+  PRIVATE_C1_BASE_SHA: ${{ github.event.inputs.base_sha || '68e858424c3589b7d6cffea7ba26c7941027b017' }}
 
 jobs:
   preflight:
@@ -214,6 +214,42 @@ jobs:
           ref: durum
           path: private-c1/public-input/upstream
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: ae51188ff2bb7c55ef813be7205825b0c5b05db0
+          path: private-c1/public-input/h2-reader
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: private-c1/public-input/h2-reader/reports/h2-last-good
+          key: c1-h2-publicrunner-${{ github.run_id }}
+          restore-keys: |
+            c1-h2-publicrunner-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned H2 PDF parser
+        run: python -m pip install --disable-pip-version-check pypdf==5.4.0
+      - name: Test H2 reader and last-good seed
+        working-directory: private-c1/public-input/h2-reader
+        run: python -m unittest scripts/test_h2_announcement_reader.py scripts/test_h2_last_good_seed.py -v
+      - name: Seed H2 last-good records
+        run: |
+          python private-c1/public-input/h2-reader/scripts/h2_last_good_seed.py \
+            --seed private-c1/public-input/h2-reader/career/h2_last_good_seed.json \
+            --previous-dir private-c1/public-input/h2-reader/reports/h2-last-good
+      - name: Read measured H2 public announcements
+        run: |
+          python private-c1/public-input/h2-reader/scripts/h2_announcement_reader.py \
+            --config private-c1/public-input/h2-reader/career/h2_sources.json \
+            --out-dir private-c1/public-input/h2-reader/reports/h2 \
+            --previous-dir private-c1/public-input/h2-reader/reports/h2-last-good
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: private-c1/public-input/h2-reader/reports/h2-last-good
+          key: c1-h2-publicrunner-${{ github.run_id }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -234,8 +270,13 @@ jobs:
           if isinstance(feed,dict):
               for s in feed.get("sources",[]):
                   sid=s.get("id")
-                  expected_category="Kamu" if sid=="esube-kamu" else "Büyük özel"
                   actual_category=s.get("category")
+                  if sid=="esube-kamu":
+                      expected_category="Kamu"
+                  elif s.get("provider")=="h2-official-announcement":
+                      expected_category=actual_category if actual_category in {"Kamu","Kura","KPSS","KPSS'siz","Büyük özel","Kamu bağlı şirket"} else "INVALID"
+                  else:
+                      expected_category="Büyük özel"
                   if actual_category != expected_category:
                       category_errors.append({"id":sid,"expected":expected_category,"actual":actual_category})
                   sources.append({
@@ -380,7 +421,12 @@ jobs:
             ["general_token_denied","tests/career-feed-route.test.mjs","general Worker token cannot read the career feed"],
             ["raw_json_roundtrip","tests/career-feed-route.test.mjs","authenticated POST stores the raw feed and GET returns the JSON"],
             ["esube_stale_12h","tests/esube-input.test.mjs","e-Şube input older than 12 hours is stale"],
-            ["source_category_preserved","tests/career-feed.test.mjs",'source.category === "Büyük özel"']
+            ["source_category_preserved","tests/career-feed.test.mjs",'source.category === "Büyük özel"'],
+            ["h2_current_mapping","tests/h2-input.test.mjs","H2 fresh public jobs map to C1"],
+            ["h2_future_application_open","tests/h2-input.test.mjs","future application opening date is not counted"],
+            ["h2_stale_last_good","tests/h2-input.test.mjs","stale H2 source keeps its own last-good record"],
+            ["h2_kura_exclusion","tests/h2-input.test.mjs","Kura and result notices remain news items"],
+            ["public_zero_red","tests/h2-input.test.mjs","zero public sources keeps the global acceptance gate RED"]
           ];
           const cache=new Map(),results=[];
           for(const [key,file,needle] of specs){
@@ -432,7 +478,13 @@ jobs:
           cd ..
           python3 - <<'PY'
           import json,os,pathlib,re
-          allowed={"src/career-feed.js","tests/career-feed.test.mjs"}
+          allowed={
+              ".github/workflows/validate.yml",
+              "scripts/career-feed-live.mjs",
+              "src/career-feed-store.js",
+              "src/h2-input.js",
+              "tests/h2-input.test.mjs"
+          }
           files=[x for x in pathlib.Path("qa-results/changed-files.txt").read_text().splitlines() if x]
           diff=pathlib.Path("qa-results/private.diff").read_text(encoding="utf-8",errors="replace")
           added=[x[1:] for x in diff.splitlines() if x.startswith("+") and not x.startswith("+++")]
