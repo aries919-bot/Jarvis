@@ -439,7 +439,7 @@ class H2ReaderTests(unittest.TestCase):
 
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(15,len(cfg["sources"]))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
         self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
 
@@ -455,6 +455,90 @@ class H2ReaderTests(unittest.TestCase):
         self.assertTrue(all(source.get("category") in allowed for source in cfg["sources"]))
         botas = next(source for source in cfg["sources"] if source["id"] == "botas-duyurular")
         self.assertEqual("Kamu bağlı şirket", botas["category"])
+
+
+    def test_empty_200_robots_file_allows_public_page(self):
+        calls=[]
+        def requester(url,limit):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return ok(b"")
+            return ok(b"public page")
+        body,final_url,_=h2.fetch_public_url("https://atauni.edu.tr/notice",requester)
+        self.assertEqual(b"public page",body)
+        self.assertEqual("https://atauni.edu.tr/notice",final_url)
+        self.assertEqual(2,len(calls))
+
+    def test_balikesir_personel_and_baunwebapi_are_same_official_host_family(self):
+        self.assertTrue(h2.same_official_host(
+            "https://personel.balikesir.edu.tr/notice",
+            "https://baunwebapi.balikesir.edu.tr/uploads/notice.pdf"
+        ))
+
+    def test_oran_table_publication_date_is_explicit(self):
+        text="ORAN Personel Alım İlanı İlan Tarihi 19/10/2026 Başvuru Tarihleri 09/11/2026 - 03/12/2026"
+        self.assertEqual("2026-10-19",h2.explicit_published_at(text,mode="oran-table-date"))
+
+    def test_doka_and_zafer_page_dates_parse_turkish_month_abbreviation(self):
+        doka="02 Kas 2026 T.C. Doğu Karadeniz Kalkınma Ajansı Personel Alım İlanı"
+        zafer="03 Kas 2026 T.C. Zafer Kalkınma Ajansı Personel Alım İlanı"
+        self.assertEqual("2026-11-02",h2.explicit_published_at(doka,mode="doka-page-date"))
+        self.assertEqual("2026-11-03",h2.explicit_published_at(zafer,mode="zafer-page-date"))
+
+    def test_ataturk_page_date_is_not_taken_from_numeric_title_date(self):
+        text="20 Kasım 2026 Atatürk Üniversitesi Öğretim Üyesi Alım İlanı 20.11.2026 Son Başvuru Tarihi 04.12.2026"
+        self.assertEqual("2026-11-20",h2.explicit_published_at(text,mode="ataturk-page-date"))
+
+    def test_single_labeled_deadline_is_parsed_without_title_date(self):
+        text="Atatürk Üniversitesi Öğretim Üyesi Alım İlanı 20.11.2026 Son Başvuru Tarihi: 04.12.2026"
+        self.assertEqual("2026-12-04",h2.application_deadline(text,"son başvuru"))
+
+    def test_null_published_at_is_preserved_only_when_source_opts_in(self):
+        source={
+            "itemId":"tga-test","institution":"TGA","title":"TGA personel alımı — 13 pozisyon",
+            "category":"Kamu","contentType":"job","url":"https://tga.gov.tr/kariyer",
+            "publicationMode":"labelled","allowNullPublishedAt":True,
+            "deadlineContext":"başvuru tarihleri","expectedText":["13 pozisyon","04.12.2026"],
+            "positionCount":13,
+            "howToApply":{"method":"TGA kariyer sayfası","url":"https://tga.gov.tr/kariyer","instructions":"Çevrimiçi."},
+            "conditions":["Pozisyona özel şartlar resmî duyurudadır."]
+        }
+        page="TGA personel alımı 13 pozisyon. Başvuru Tarihleri 03.11.2026 - 04.12.2026."
+        item=h2.parse_official_notice(
+            source,page,"","2026-11-25T02:40:00Z","2026-11-25T02:40:00Z",date(2026,11,25)
+        )
+        self.assertIsNone(item["publishedAt"])
+        self.assertEqual(13,item["positionCount"])
+        self.assertEqual("2026-12-04",item["deadline"])
+        self.assertEqual("Doğrulandı",item["freshnessStatus"])
+
+    def test_zafer_official_url_override_is_used_in_card(self):
+        source={
+            "itemId":"zafer-test","institution":"Zafer Kalkınma Ajansı","title":"2 uzman",
+            "category":"Kamu","contentType":"job",
+            "url":"https://www.doka.org.tr/announcement-detail.php?id=1222",
+            "officialUrl":"https://www.zafer.gov.tr/duyurular/227",
+            "publicationMode":"zafer-page-date","deadlineContext":"başvuru tarihleri",
+            "expectedText":["Zafer Kalkınma Ajansı","14.12.2026"],"positionCount":2,
+            "howToApply":{"method":"Kariyer Kapısı","url":"https://www.zafer.gov.tr/duyurular/227","instructions":"Resmî duyuru."},
+            "conditions":[]
+        }
+        page="03 Kas 2026 T.C. Zafer Kalkınma Ajansı Personel Alım İlanı"
+        pdf="2 (iki) Uzman Personel Başvuru Tarihleri 25.11.2026 - 14.12.2026"
+        item=h2.parse_official_notice(
+            source,page,pdf,"2026-11-25T02:40:00Z","2026-11-25T02:40:00Z",date(2026,11,25)
+        )
+        self.assertEqual("https://www.zafer.gov.tr/duyurular/227",item["sourceUrl"])
+        self.assertEqual(2,item["positionCount"])
+        self.assertEqual("2026-11-03",item["publishedAt"])
+
+    def test_h2_page_parser_ignores_script_and_style_text(self):
+        page=h2.PageParser()
+        page.feed("<html><head><style>.hide { display:none }</style><script>fake text</script></head><body><p>Official notice</p></body></html>")
+        self.assertIn("Official notice",page.text)
+        self.assertNotIn("fake text",page.text)
+        self.assertNotIn("display:none",page.text)
+
 
 
 if __name__ == "__main__":
