@@ -549,7 +549,7 @@ def parse_botas_job(detail_body: bytes, detail_headers: Any, pdf_text: str,
     if "223 kişilik personel alım duyurusu" not in text.lower():
         raise SourceError("BOTAŞ 223 kişilik personel başlığı yok")
     published = explicit_published_at(text,page.meta)
-    deadline = application_deadline(pdf_text,"ilanlar")
+    deadline = application_deadline(pdf_text,"İlanlar")
     if not deadline:
         raise SourceError("BOTAŞ PDF ilan aralığı yok; deadline üretilmedi")
     required = [
@@ -564,7 +564,7 @@ def parse_botas_job(detail_body: bytes, detail_headers: Any, pdf_text: str,
         item_id="botas-223-personel-alimi-2025",
         institution="Boru Hatları ile Petrol Taşıma A.Ş. (BOTAŞ)",
         title="223 Kişilik Personel Alım Duyurusu",
-        category="Kamu bağlı büyük şirket",
+        category="Kamu bağlı şirket",
         content_type="job",
         official_url=BOTAS_JOB_URL,
         how_to_apply={
@@ -593,7 +593,7 @@ def parse_botas_result(body: bytes, headers: Any, collected_at: str,
         item_id="botas-mufettis-sonuc-2026",
         institution="Boru Hatları ile Petrol Taşıma A.Ş. (BOTAŞ)",
         title="10 Kasım 2025 / 14 Kasım 2025 Tarihli Müfettiş Yardımcılığı Alımına Yönelik Sonuç Duyurusu",
-        category="Kamu bağlı büyük şirket",
+        category="Kamu bağlı şirket",
         content_type="result",
         official_url=BOTAS_RESULT_URL,
         how_to_apply={"method":"Başvuru yok; sonuç duyurusu.","url":BOTAS_RESULT_URL,"instructions":"Bu kayıt önceki alım sürecinin sonucudur; açık başvuru değildir."},
