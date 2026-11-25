@@ -157,3 +157,11 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - PR #69 H1 temel+SharedPreferences/UI uygulaması için exact-head [#45665491590](https://github.com/aries919-bot/Jarvis/actions/runs/45665491590) SUCCESS; PR #71 SQLite/last-good tasarımıyla onun yerine geçecek adaydır. PR #69/#71 henüz merge edilmedi.
 - C1 P0 PR #70 exact-head [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) unit tests + APK SUCCESS. Bu değişikliklerin hiçbirisi C1'in kaynak sayısı veya Worker production GET sonucunu değiştirmez.
 - 10 kaynak/100 doğrulanmış ilan, kamu 0=RED, kaynak başına last-good, e-Şube/H2 dedup ve production authenticated GET kapıları aynen zorunludur.
+
+## 15. H1 SQLite entegrasyonu exact-head CI — 25.11.2026
+- PR #71 exact HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c` Android run [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387) **SUCCESS**.
+- `gradle testDebugUnitTest --no-daemon` SUCCESS; `gradle assembleDebug --no-daemon` SUCCESS; APK artifact upload SUCCESS.
+- Loglarda test görevi `BUILD SUCCESSFUL in 1m 31s`, APK görevi `BUILD SUCCESSFUL in 50s`. Yeni test count 17 model +8 SQLite store =25 @Test.
+- APK artifact ID `15049240153`, size 14,176,012 bytes.
+- Full App QA/emulator workflow ve gerçek telefon testi yok. CI PASS tek başına UI/telefon veya production kabulü değildir.
+- PR #71 open/draft/unmerged. PR #70 source policy unit + APK run #45658875411 SUCCESS. C1 10 source/100 verified cards, public report, Worker production authenticated GET and cross-feed dedup remain separate/RED/BLOCKED.
