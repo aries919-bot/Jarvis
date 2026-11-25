@@ -708,3 +708,12 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - **Güvenlik bulgusu:** CALL_PHONE ve READ_CONTACTS açılışta gereksiz isteniyor gibi görünüyor. Manifest ve onCreate'den kaldırma, tam repo araması + regresyon testi ve ayrı küçük PR gerektirir. Bu oturumda kod değiştirilmedi; aktif kapsam ve PR'lar kirletilmedi.
 - Emülatör #45679523114 son kontrol: `in_progress`, conclusion `null`; step 5 hâlâ çalışıyor. 35 dakikalık workflow timeout dolmadan fail/stall kararı verilmez.
 - Ayrıntı: `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
+
+## 25) C1 kamu ilanı keşif dalgası 1 — 25.11.2026
+- Resmî sayfalardan 7 açık duyuru adayı bulundu: Sayıştay 16; Zafer 2; TGA 13; Hazine Kontrolörleri Kurulu en fazla 10; Anadolu 1; Bartın 1; SSB 26 pozisyon. Kontenjan sayıları ilan kartı sayısı olarak sayılmadı.
+- Yeni kaynak adayı 4: Sayıştay, HMB, Bartın, SSB. H2'de Zafer/TGA/Anadolu zaten mevcut; exact duplicate kontrolü zorunlu.
+- Gelecek açılış: ATK 181 pozisyon 30 Kasım'da, YÖKAK 5 pozisyon 1 Aralık'ta açılıyor; bugün açık sayımına eklenmez.
+- DİKA son başvuru tarihi teyit edilemedi; dışlandı. Üçüncü taraf listeleri sadece keşif içindi; resmî kaynak yerine kullanılmadı.
+- Kamu sayımı hâlâ 12 kaynak /55 doğrulanmış ilan. Yeni araştırmadan feed'e eklenen 0; exact duplicate ve Worker entegrasyonu yapılmadı.
+- Araştırma: `gorevler/C1-RESMI-ILAN-ARASTIRMASI-2026-11-25.md`.
+- **KARAR: C1 RED; 45 ilan eksiği sürüyor.** Kaynak keşfi ilerledi, sayım henüz değişmedi.
