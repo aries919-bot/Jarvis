@@ -740,3 +740,10 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #71 artık güncel base üzerinde mergeable; ancak emülatör run #45679523114 hâlâ PR head'i checkout ediyor. #70 base entegrasyonunu emülatörde doğrulamak için mevcut run kapandıktan sonra H1 workflow merge-ref checkout edecek şekilde güncellenecek ve exact new-head CI tekrar çalıştırılacak.
 - PR #71 merge yok; emülatör + gerçek telefon testi bekleniyor.
 - **KARAR:** #70 yalnız kaynak/UA P0 kapsamı için kabul edildi. C1 genel 10/100 ve production GET/D1 hâlâ RED.
+
+## 29) H1 emülatör workflow ek kontrolü — 25.11.2026
+- `.github/workflows/h1-android-ui-smoke.yml` exact PR71 HEAD'de tekrar okundu.
+- Job timeout 35 dakika; emulator API 34 / Pixel 6 / x86_64.
+- Report upload adımı zaten `if: always()` kullanıyor; önceki QA-08 notundaki bu öneri uygulanmış durumda, açık eksik değil.
+- Checkout `github.event.pull_request.head.sha` kullanıyor; PR #70 merge commit'i emulator testine dahil değil. Mevcut run bittikten sonra checkout `github.sha` (PR merge ref) olacak şekilde tek workflow değişikliği yapılacak.
+- Ana `android.yml` içinde testDebugUnitTest ve assembleDebug iki ayrı Gradle çağrısı; birleştirme olası hız optimizasyonu olarak ayrı iş.
