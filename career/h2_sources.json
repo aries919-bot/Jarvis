@@ -175,7 +175,7 @@
       "url": "https://tga.gov.tr/kariyer",
       "publicationMode": "labelled",
       "allowNullPublishedAt": true,
-      "deadlineContext": "başvuru tarihleri",
+      "deadlineContext": "başvurular",
       "expectedText": [
         "13 (onüç) adet pozisyon",
         "04 Aralık 2026",
@@ -214,7 +214,7 @@
       "expectedText": [
         "6 (altı) Uzman",
         "1 (bir) Destek Personeli",
-        "03.12.2026"
+        "03 Aralık 2026"
       ],
       "positionCount": 7,
       "howToApply": {
@@ -428,10 +428,15 @@
       "howToApply": {
         "method": "İlgili akademik birime şahsen/posta",
         "url": "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
-        "instructions": "Başvuru belgeleri ve teslim adresi resmî PDF'de kadro bazında belirtilmiştir."
+        "instructions": "20.11.2026–04.12.2026 arasında ilgili fakülte/meslek yüksekokuluna şahsen veya posta yoluyla başvurulur. Birden fazla programa başvuru geçersizdir; posta gecikmesi adaya aittir."
       },
       "conditions": [
-        "4 öğretim görevlisi kadrosu; alan/mezuniyet, ALES, yabancı dil ve varsa deneyim koşulları kadro bazında resmî PDF'dedir."
+        "4 öğretim görevlisi kadrosu; her satırın ALES ve yabancı dil koşulu farklıdır.",
+        "Midyat Kuyumculuk ve Mücevher Tasarımı: Bileşik Sanatlar alanında sanatta yeterlik/doktora ve yükseköğretimde en az 10 yıl görev; ALES 70, yabancı dil 50.",
+        "Bilgisayar Programcılığı: Bilgisayar Mühendisliği veya Matematik Eğitimi doktorası ve yükseköğretimde en az 4 yıl görev; ALES 70, yabancı dil muaf.",
+        "Turizm ve Otel İşletmeciliği: İşletme lisansı, tezli yüksek lisans, en az bir yarıyıl ders verme ve AB destekli projelerde çalışma; ALES 70, yabancı dil muaf.",
+        "Tesbih Tasarımı ve İmalatı: herhangi bir lisans, ilgili alanda en az 2 yıl deneyim ve yükseköğretimde ders verme; ALES ve yabancı dil muaf.",
+        "Birden fazla programa başvuru geçersizdir; eksik/imzasız belge kabul edilmez."
       ],
       "tags": [
         "Akademik",
@@ -471,7 +476,8 @@
         "Akademik",
         "ALES",
         "KPSS'siz"
-      ]
+      ],
+      "allowNullPublishedAt": true
     }
   ]
 }
