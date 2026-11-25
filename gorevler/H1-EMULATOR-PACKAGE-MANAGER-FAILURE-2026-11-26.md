@@ -98,3 +98,28 @@ Bu çalışma önceki 0-test sahte PASS riskini kapatmıştır. Yeni runner/AVD 
 - Ayrım ölçütleri: (1) job sonunda gradle connectedDebugAndroidTest/adb install/system_server/StorageManager tanı logu varsa Android framework/installer kolu; (2) emulator action/runner/Gradle step logları test başlangıcından önce kesilmiş ve Android komutu çıktısı yoksa runner/host kolu. Her iki durumda da XML yoksa H1 RED.
 - Son kontrol: emulator run #45712459718 exact HEAD e390e05... hâlâ in_progress; artifact yok. Log fetch 404 BlobNotFound, bu çalışırken GitHub tarafından log arşivi sunulmadığı anlamına geliyor; test sonucu değildir.
 - Runner kaynaklarına göre StorageManager yarışını ayrıştırmak için gerekirse pm install-create/pm install-abandon preflight kullanılır; yalnız ilgili NPE veya install-session hata kanıtı çıktığında.
+
+
+## 26.11.2026 — Espresso window focus kök neden araştırması
+
+### Exact-head arızanın kanıtı
+- Önceki exact HEAD `e390e05e1485717c3a07ce3af06db6b3840062f3` emülatör run [#45712459718](https://github.com/aries919-bot/Jarvis/actions/runs/45712459718) FAILURE, toplam 24m41s.
+- Artifact ID `15069268534`, 951,757 byte; SHA-256 `f9d848088c2ad8ca49985c0aeb44279f2e94202a1b1ecb8e9069e09ba97628d7`.
+- JUnit XML yeniden sayıldı: tests=4, failures=3, errors=0, skipped=0, time=190.406s. `sqliteLastGoodCopyRecoversCorruptPrimaryWithoutLosingPreviousRecord` geçti; diğer 3 test `androidx.test.espresso.base.RootViewPicker$RootViewWithoutFocusException` ile düştü (Activity root `has-window-focus=false`). Hatalı satırlar: test dosyası 49, 106, 240.
+- Aynı koşuda system_server PID 552 ve Package Manager preflight başarılı; bu run'da önceki Broken pipe/PM hatası yok.
+- Artifact loglarında Nexus Launcher top-resumed/pause timeout kayıtları ve sistem servislerine ait ANR kayıtları var. Ancak failure anındaki `dumpsys window mCurrentFocus` alınmamış; Aries'te Pixel Launcher ANR dialogu doğrudan kanıtlanmış sayılmaz.
+
+### Rakip CI vaka araştırması ve çözüm
+- Benzer API 34 Google APIs/Pixel emülatörü `RootViewWithoutFocusException` vakası [RizzoG99/PersonalFinanceTracker #372](https://github.com/RizzoG99/PersonalFinanceTracker/issues/372) içinde incelenmiş. Kapanış yorumu, açılıştan hemen sonra android-emulator-runner'ın MENU keyevent'i ile Pixel Launcher'ın ANR'a girdiğini; "Pixel Launcher isn't responding" penceresinin focus'u tuttuğunu; çözümün APK'ları önce derleyip sonra yalnız ANR/Application Error penceresini `CLOSE_SYSTEM_DIALOGS + HOME` ile kapatmak olduğunu ve UI testlerini değiştirmeden API 26/34'te doğrulandığını belirtiyor.
+- PR çözümü: https://github.com/RizzoG99/PersonalFinanceTracker/pull/373
+- Aries runner commit `b51c53a5797c19d4e18ed81b679024fc14fa3723`: önce app + instrumentation APK'ları derliyor; `dumpsys window` ile ANR/Application Error odağını 6×5 saniye kontrol ediyor; yalnız bu sistem penceresi odaktaysa CLOSE_SYSTEM_DIALOGS + HOME uyguluyor; hâlâ odaktaysa testleri başlatmadan exit 22 / RED. Failure artifact'ine window/activity/process state eklendi. Testler gevşetilmedi ve Espresso gerçek kontrolleri korundu.
+- Yerel mock entegrasyon: temiz pencere exit 0; ANR dialogu kapatılınca exit 0; kapanmayan ANR dialogu exit 22 ve connected test çağrılmadı. 3/3 beklenen sonuç. `bash -n` PASS. Gerçek emülatör kanıtı değildir.
+
+### Yeni exact-head CI
+- Current HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723`.
+- Emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) ve APK [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) son kontrolde IN_PROGRESS; sonuç bekleniyor.
+- Önceki HEAD APK #45712459742 SUCCESS; bu önceki HEAD kanıtıdır. Yeni HEAD APK SUCCESS olmadan güncel build kapısı PASS sayılmaz.
+- PR #71 açık/taslak, 14 dosya / +3,541 / -26; merge/deploy yok.
+- C1 bağımsız RED: kamu feed 6 kaynak /47 last-good; 6/6 stale; 10/100 eşiği ve production authenticated GET/D1 kanıtı yok.
+
+**KARAR:** Eski HEAD'de 3/4 UI test failure; root-focus için kontrollü CI düzeltmesi commit edildi. Yeni exact-head CI bekleniyor; H1 RED/BLOCKED, C1 RED.
