@@ -77,9 +77,13 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            set -euo pipefail
-            gradle connectedDebugAndroidTest --no-daemon --stacktrace --console=plain 2>&1 | tee h1-emulator.log
+          script: bash scripts/run-h1-emulator-tests.sh
+
+      - name: Verify instrumentation XML reports
+        if: always()
+        env:
+          H1_EXPECTED_TESTS: "4"
+        run: python3 scripts/verify_h1_emulator_xml.py
 
       - name: Upload emulator test reports
         if: always()
