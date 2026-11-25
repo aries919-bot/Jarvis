@@ -24,7 +24,7 @@ Bağımsız Hakem bulunmadığında veya Hakem'in isteğe bağlı AI adımı yet
 - Artefaktı açıp JSON'ları yeniden saydım: 19 kaynak kaydı; 17 fresh / 2 stale; 13 doğrulanmış açık ilan kartı / 11 benzersiz kurum / 125 pozisyon. 125 pozisyon 100 ilan kartı eşiği değildir.
 - Kaynak başına doğrulanmış açık kart: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu 1; Marmara 2; ORAN 1; Tarsus 1; TGA 1; Zafer 1. Yeniden sayım: 13 kart / 11 kurum.
 - Stale: BOTAŞ (timeout; kaynak başına last-good izolasyonu) ve Mardin Artuklu öğretim üyesi (açık başvuru aralığı kanıtı yok). YHGM eski kura; ATK başvurusu 30.11.2026 09:00 +03'te açılacağı için henüz açık değil. Munzur'un 2 duyurusu 25.11.2026 mesai bitimi deadline'ı kesin saat içermediğinden Doğrulanamadı; 2 kart sayaç dışı. Yayın tarihi olmayan Balıkesir ve TGA kartlarında `publishedAt=null`.
-- **Öz-QA RED bulgusu:** `scripts/h2_announcement_reader.py` içindeki `parse_botas_job()` ve `parse_botas_result()` çıktısı `category="Kamu bağlı büyük şirket"` üretiyor. H1 enum'unda geçerli etiket `Kamu bağlı şirket`. H2 testindeki kategori kontrolü yalnız JSON kaynak tanımını kontrol ediyor; üretilen BOTAŞ kartını denetlemiyor. BOTAŞ son live run'da stale/timeout olduğu için bu hata canlı artefaktta görünmedi; kaynağın sonraki başarılı yanıtında H1 doğrulaması bozulabilir.
+- **Öz-QA düzeltmesi (PR #65):** BOTAŞ job/result parser kategorileri `Kamu bağlı şirket` yapıldı; `İlanlar` deadline bağlamı Türkçe büyük İ ile eşleştirildi. H2 60/60, bütün scripts 161/161, K1-B 24/24 ve Hakem #45646136859 ONAY; PR #65 squash merge SHA `fe37be93202442394504f455b4a1caeb31f298cf`. Yeni head push reader #45646698179 bu notta henüz in_progress.
 - Hakem job #45540323511 Cloudflare AI bootstrap eksikliği nedeniyle başarısız; bu bağımsız insan incelemesi değildir. Formal review sayısı 0.
 - **Karar: RED; PR #61 birleştirilmez.** Önce iki BOTAŞ parser kategorisi H1 enum'una eşitlenmeli ve her iki çıktı için regresyon testi eklenmeli; ardından exact-head H2 + Python CI ve live reader yeniden çalışmalı. Ayrıca 13/100 kart eşiği, çapraz e-Şube/H2 tek-feed tekilleştirmesi ve production authenticated GET hâlâ eksik.
 - PR #61 H2 sayımı e-Şube ile tek feed değildir. e-Şube snapshot `2026-11-25T13:49:08Z`: 1 kamu kaynağı / 42 ham / 42 benzersiz / 42 açık kart / 0 geçmiş, `publishedAt=null`. Bu sayı H2'nin 13 kartına eklenerek birleşik kabul sayısı diye sunulamaz; cross-feed dedup/Worker kanıtı yok.
@@ -47,3 +47,13 @@ Bağımsız Hakem bulunmadığında veya Hakem'in isteğe bağlı AI adımı yet
 ## İşlem dışı PR'lar
 - PR #58 tek seferlik e-Şube refresh tetik koludur; geçici workflow değişikliği merge edilmez.
 - PR #59/#60 robots ve link-audit araçları açık/taslak; bu turda merge kararı verilmedi. Ayrı self-QA ve current-base diff denetimi gerekir.
+## PR #65 BOTAŞ parser kusurunun düzeltilmesi — 25.11.2026
+
+- Ayrı düzeltme PR'ı: https://github.com/aries919-bot/Jarvis/pull/65; base `is/C1-h2-public-source-feed-20261125`; head `3020790f3b450f6e0f0cf04cfb4df598b749a6a7`.
+- Diff: 2 dosya / +16 / -3; yalnız `scripts/h2_announcement_reader.py` ve `scripts/test_h2_announcement_reader.py`.
+- İlk koşu test kusurunu yakaladı: `application_deadline(pdf_text, "ilanlar")` Türkçe `İlanlar` metnini eşleştirmiyordu. İlk koşu H2 60 testte 1 error; scripts 161 testte 1 error. Context düzeltildi.
+- Başarılı exact-head: H2 Reader #45646136860 60/60; Python Script Tests #45646137068 161/161; K1-B #45646137091 24/24; K1-B ölçümü 28 URL /12 ÇALIŞIYOR /16 ENGELLİ /0 ÖLÜ; deterministic Hakem #45646136859 ONAY.
+- Güvenlik taraması ek satırlarında token/secret/private key/CV/KPSS kişisel veri/e-Devlet/TCKN eşleşmesi 0.
+- Merge: squash, 25.11.2026, SHA `fe37be93202442394504f455b4a1caeb31f298cf`. PR #61 head'ine düzeltme girdi; PR #61 açık/taslak kaldı.
+- Post-merge H2 live push: [#45646698179](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179), exact head `fe37be9320`; reader henüz tamamlanmadığı için son kaynak sayımı/artefakt bu kayda eklenmedi.
+- PR #61 genel RED; C1 10/100, cross-feed tekilleştirme ve production Worker GET kapıları devam ediyor.
