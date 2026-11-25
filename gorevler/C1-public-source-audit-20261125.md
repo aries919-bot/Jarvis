@@ -11,7 +11,8 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 | TGA | 13 aday pozisyon; **0 sayıldı** | Arama dizininde 04.12.2026; doğrudan sayfa verisi çelişkili | 03.11.2026 olarak indekslenmiş | Resmî kariyer sayfasının arama özeti 13 pozisyon ve 03.11–04.12 başvuru aralığı gösteriyor; fakat doğrudan açılan aynı sayfa 2 pozisyon ve 25.06–26.07 tarihlerini gösterdi. Resmî kariyer portalı /jobs sayfası da “yayınlanmış açık pozisyon bulunamadı” diyor. Çelişki çözülene kadar Doğrulanamadı; 13 sayısı açık ilana eklenmez. |
 | Balıkesir Üniversitesi | 7 | 04.12.2026 mesai bitimi | 20.11.2026 | İlgili fakülte dekanlığına/üniversite birimine şahsen veya posta. ALES en az 70, yabancı dil en az 50; öğretim görevlisinde tezli yüksek lisans. Araştırma görevlisi kadrolarında ilgili alanda yüksek lisans öğrenciliği şartları var. |
 | Orta Anadolu Kalkınma Ajansı (ORAN) | 7 (6 uzman + 1 destek) | 03.12.2026 | İlan tarihi tabloda 19.10.2026; kurum duyurusu 26.10.2026 | e-Devlet/Kariyer Kapısı üzerinden başvuru. Kayseri, Sivas veya Yozgat'ta görevlendirme kabulü; ileri düzey yabancı dil ve pozisyona özel şartlar. Sözlü sınav. |
-| Atatürk Üniversitesi | 1 | 04.12.2026 | 20.11.2026 | İlgili birime dosya ile başvuru. Hukuk Fakültesi mezunu, Kamu Hukuku alanında yüksek lisans ve doktora şartı. |
+| Atatürk Üniversitesi (20.11 ilanı) | 1 | 04.12.2026 | 20.11.2026 | İlgili birime dosya ile başvuru. Hukuk Fakültesi mezunu, Kamu Hukuku alanında yüksek lisans ve doktora şartı. |
+| Atatürk Üniversitesi (16.11 ilanı) | 70 iddiası; **0 sayıldı** | 30.11.2026 | 16.11.2026 | Resmî kurum sayfası son başvuru tarihini doğruluyor; 70 sayısı yalnız ikincil metin dökümünde görüldü. Resmî PDF içeriği ve robots yolu henüz doğrulanmadı; Doğrulanamadı. |
 | Zafer Kalkınma Ajansı | 2 uzman | 14.12.2026 | 03.11.2026 | Kariyer Kapısı üzerinden 25.11–14.12 başvuru. TR33 (Afyonkarahisar, Kütahya, Manisa, Uşak) bölgesinde görevlendirme; özel şartlar tam ilan metninde. |
 | Doğu Karadeniz Kalkınma Ajansı (DOKA) | 1 uzman | 06.12.2026 | 02.11.2026 | Kariyer Kapısı üzerinden başvuru; Rize Yatırım Destek Ofisi veya TR90 bölgesinde görevlendirme. Lisans mezuniyeti, ilgili KPSS puan türünde en az 80 ve İngilizce YDS/e-YDS C düzeyi (70) şartı. |
 
@@ -26,7 +27,7 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - User-Agent: AriesKaynakTara/1.0
 - Yalnızca her origin için /robots.txt alınır; TLS doğrulaması açıktır, yönlendirme takip edilmez.
 - Exact-head CI: https://github.com/aries919-bot/Jarvis/actions/runs/45532429537 — job 138930761817 SUCCESS; Python syntax check SUCCESS; robots-only ölçüm SUCCESS; artifact 14985447797. collectedAt=2026-11-25T02:22:15.837584Z.
-- Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45532648217 — job 138931501320 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14985038772. collectedAt=2026-11-25T02:24:12.356812Z.
+- Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45532648217 — job 138931501320 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14985038772. Balıkesir PDF eki (baunwebapi subdomain) ve Atatürk 16.11.2026 sayfası için ek robots ölçümü sıradaki çalıştırmaya eklendi. collectedAt=2026-11-25T02:24:12.356812Z.
 - Sonuç: Atatürk 200/ALLOW; Balıkesir 200/ALLOW; Zafer 200/ALLOW; DOKA (duyuru + PDF) 200/ALLOW; TGA (5 sayfa yolu + kariyer portalı) 200/ALLOW; YÖKAK 200/ALLOW. Mardin Artuklu 404/UNKNOWN; DOĞAKA/ORAN 404/UNKNOWN. 404 kaynaklarına hedef sayfa isteği yapılmadı.
 - TGA'nın tga.gov.tr yolları izinli görünse de sayfa içeriği çelişkili; bu, robots izninden bağımsız veri doğrulama sorunudur. TGA kariyer alt alanı için /jobs yolu da robots kontrol listesine eklendi.
 - HTTP 401/403/404/5xx, timeout, redirect veya ağ hatası UNKNOWN sayılır; hedef sayfaya istek yapılmaz.
@@ -45,7 +46,8 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - TGA: https://tga.gov.tr/kariyer
 - Balıkesir Üniversitesi: https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352
 - ORAN duyurusu: https://www.dogaka.gov.tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855
-- Atatürk Üniversitesi: https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/
+- Atatürk Üniversitesi (20.11): https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/
+- Atatürk Üniversitesi (16.11): https://atauni.edu.tr/personel-daire-baskanligi/2026/11/16/ataturk-universitesi-ogretim-uyesi-alim-ilani-16-11-2026/
 - Zafer Kalkınma Ajansı: https://www.zafer.gov.tr/duyurular/227
 - DOKA: https://www.doka.org.tr/announcement-detail.php?id=1221
 - YÖKAK (gelecek başvuru): https://www.yokak.gov.tr/2026/11/13/yuksekogretim-kalite-kurulu-uzman-yardimcisi-alim-ilani-3/
