@@ -18,13 +18,13 @@ Bağımsız Hakem bulunmadığında veya Hakem'in isteğe bağlı AI adımı yet
 ## H2 / C1 — PR #61
 
 - PR: https://github.com/aries919-bot/Jarvis/pull/61
-- Base: `cline/K1` (`f22ba0b9487d88185f9cd277388403b4f8e3ab4d`); head: `is/C1-h2-public-source-feed-20261125` (`8769ece09b1f85fb0326cb38d582c2fa46e70609`).
-- Diff yeniden sayımı: 5 dosya / +967 / -30; yalnız H2 workflow, `career/h2_sources.json`, H2 okuyucu, H2 testleri ve görev notu.
-- Exact-head PR Actions: Python script tests #45540323459 SUCCESS; H2 reader tests #45540323403 SUCCESS; K1-B measurement #45540323455 SUCCESS. Görev kaydındaki test sayıları: Python 160/160, H2 59/59. Live push run #45540249638 SUCCESS, artifact [15028921924](https://github.com/aries919-bot/Jarvis/actions/runs/45540249638/artifacts/15028921924). Son PR head'in live run kodundan farkı yalnız görev notuna 10 satır ekleyen doküman commitidir.
-- Artefaktı açıp JSON'ları yeniden saydım: 19 kaynak kaydı; 17 fresh / 2 stale; 13 doğrulanmış açık ilan kartı / 11 benzersiz kurum / 125 pozisyon. 125 pozisyon 100 ilan kartı eşiği değildir.
-- Kaynak başına doğrulanmış açık kart: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu 1; Marmara 2; ORAN 1; Tarsus 1; TGA 1; Zafer 1. Yeniden sayım: 13 kart / 11 kurum.
+- Base: `cline/K1` (`f22ba0b9487d88185f9cd277388403b4f8e3ab4d`); current head: `is/C1-h2-public-source-feed-20261125` (`fe37be93202442394504f455b4a1caeb31f298cf`). PR #65 BOTAŞ fix'i bu H2 dalına squash merge edildi.
+- PR #61 cumulative diff: 5 dosya / +983 / -33; yalnız H2 workflow, `career/h2_sources.json`, H2 okuyucu, H2 testleri ve görev notu.
+- Önceki exact-head PR actions: Python 160/160; H2 59/59; live #45540249638 artifact 15028921924 (tarihsel). Güncel, PR #65 düzeltmesi sonrası head için H2 PR tests [#45646718610](https://github.com/aries919-bot/Jarvis/actions/runs/45646718610) 60/60; Python [#45646718628](https://github.com/aries919-bot/Jarvis/actions/runs/45646718628) 161/161; K1-B [#45646718308](https://github.com/aries919-bot/Jarvis/actions/runs/45646718308) 24/24. PR Hakem [#45646718328](https://github.com/aries919-bot/Jarvis/actions/runs/45646718328) RED.
+- Post-merge live reader [#45646698179](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179), artifact [15037029949](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179/artifacts/15037029949), exact head `fe37be93202442394504f455b4a1caeb31f298cf`, `collectedAt=2026-11-25T15:34:38Z`. Artifact JSON'larını yeniden saydım: 19 kaynak kaydı; 17 fresh / 2 stale; 13 doğrulanmış açık ilan kartı / 11 benzersiz kurum / 125 pozisyon. 125 pozisyon 100 ilan kartı eşiği değildir.
+- Kaynak başına doğrulanmış açık kart: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu öğretim görevlisi 1; Marmara 2; ORAN 1; Tarsus 1; TGA 1; Zafer 1. Yeniden sayım: 13 kart / 11 kurum. Stale: BOTAŞ timeout, Mardin Artuklu öğretim üyesi deadline kanıtı yok. ATK başvuru açılışı 30.11.2026 09:00 +03; iki Munzur başvurusu 25.11.2026 mesai saati kesin olmadığından Doğrulanamadı; YHGM geçmiş kura.
 - Stale: BOTAŞ (timeout; kaynak başına last-good izolasyonu) ve Mardin Artuklu öğretim üyesi (açık başvuru aralığı kanıtı yok). YHGM eski kura; ATK başvurusu 30.11.2026 09:00 +03'te açılacağı için henüz açık değil. Munzur'un 2 duyurusu 25.11.2026 mesai bitimi deadline'ı kesin saat içermediğinden Doğrulanamadı; 2 kart sayaç dışı. Yayın tarihi olmayan Balıkesir ve TGA kartlarında `publishedAt=null`.
-- **Öz-QA düzeltmesi (PR #65):** BOTAŞ job/result parser kategorileri `Kamu bağlı şirket` yapıldı; `İlanlar` deadline bağlamı Türkçe büyük İ ile eşleştirildi. H2 60/60, bütün scripts 161/161, K1-B 24/24 ve Hakem #45646136859 ONAY; PR #65 squash merge SHA `fe37be93202442394504f455b4a1caeb31f298cf`. Yeni head push reader #45646698179 bu notta henüz in_progress.
+- **Öz-QA düzeltmesi (PR #65):** BOTAŞ job/result parser kategorileri `Kamu bağlı şirket` yapıldı; `İlanlar` deadline bağlamı Türkçe büyük İ ile eşleştirildi. H2 60/60, tüm scripts 161/161, K1-B 24/24; Hakem #45646136859 ONAY; squash merge SHA `fe37be93202442394504f455b4a1caeb31f298cf`.
 - Hakem job #45540323511 Cloudflare AI bootstrap eksikliği nedeniyle başarısız; bu bağımsız insan incelemesi değildir. Formal review sayısı 0.
 - **Karar: RED; PR #61 birleştirilmez.** Önce iki BOTAŞ parser kategorisi H1 enum'una eşitlenmeli ve her iki çıktı için regresyon testi eklenmeli; ardından exact-head H2 + Python CI ve live reader yeniden çalışmalı. Ayrıca 13/100 kart eşiği, çapraz e-Şube/H2 tek-feed tekilleştirmesi ve production authenticated GET hâlâ eksik.
 - PR #61 H2 sayımı e-Şube ile tek feed değildir. e-Şube snapshot `2026-11-25T13:49:08Z`: 1 kamu kaynağı / 42 ham / 42 benzersiz / 42 açık kart / 0 geçmiş, `publishedAt=null`. Bu sayı H2'nin 13 kartına eklenerek birleşik kabul sayısı diye sunulamaz; cross-feed dedup/Worker kanıtı yok.
@@ -38,7 +38,7 @@ Bağımsız Hakem bulunmadığında veya Hakem'in isteğe bağlı AI adımı yet
 
 ## Sıradaki birleştirme sırası
 
-1. PR #61 BOTAŞ kategori/çıktı test açığını ayrı, dar düzeltmeyle kapat; exact HEAD CI + yeniden canlı ölçüm.
+1. PR #61'in H2 reader kapsamı, BOTAŞ parser kusuru PR #65 ile kapatıldı; current live H2 sayımı 13 verified card /11 institution. PR #61 global eşik sebebiyle RED kalır.
 2. H2/e-Şube feed'lerini C1 collector'a bağla; kurum ve ilan kartı başına tekilleştir; source-specific last-good ve `firstSeenAt` korumasını test et.
 3. 10 kaynak / 100 doğrulanmış açık ilanı gerçek kaynak sayılarıyla yeniden ölç. Altındaysa RED; arayüz/deploy yok.
 4. Production authenticated GET-only ve D1 kalıcılık kanıtını al. Worker secret değerlerini loglama veya sohbete isteme.
@@ -55,5 +55,5 @@ Bağımsız Hakem bulunmadığında veya Hakem'in isteğe bağlı AI adımı yet
 - Başarılı exact-head: H2 Reader #45646136860 60/60; Python Script Tests #45646137068 161/161; K1-B #45646137091 24/24; K1-B ölçümü 28 URL /12 ÇALIŞIYOR /16 ENGELLİ /0 ÖLÜ; deterministic Hakem #45646136859 ONAY.
 - Güvenlik taraması ek satırlarında token/secret/private key/CV/KPSS kişisel veri/e-Devlet/TCKN eşleşmesi 0.
 - Merge: squash, 25.11.2026, SHA `fe37be93202442394504f455b4a1caeb31f298cf`. PR #61 head'ine düzeltme girdi; PR #61 açık/taslak kaldı.
-- Post-merge H2 live push: [#45646698179](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179), exact head `fe37be9320`; reader henüz tamamlanmadığı için son kaynak sayımı/artefakt bu kayda eklenmedi.
+- Post-merge live #45646698179 başarıyla tamamlandı ve yeni source counts yukarıdaki tabloda kayıtlıdır. BOTAŞ parser düzeltmesi testlerde doğrulandı; bu koşuda BOTAŞ kaynağı timeout sebebiyle stale kaldı. PR #61 Hakem [#45646718328](https://github.com/aries919-bot/Jarvis/actions/runs/45646718328) RED.
 - PR #61 genel RED; C1 10/100, cross-feed tekilleştirme ve production Worker GET kapıları devam ediyor.
