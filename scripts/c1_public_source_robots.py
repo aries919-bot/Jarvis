@@ -23,7 +23,7 @@ SOURCES = [
             "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-uyesi-alim-ilani-profdr-docdr-drogruyesi-20112026-04122026",
             "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
             "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20KASIM%202026%20%C3%96%C3%9C%20%C4%B0LAN%20METN%C4%B0%20WEEBBBBB.pdf",
-            "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20%20KASIM%20%202026%20%20TAR%C4%B0HL%C4%B0%20%20%C4%B0LAN%20METN%C4%B0%20%C3%96E%20WEBBB.pdf",
+            "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20%20KASIM%20%202026%20%20TAR%C4%B0HL%C4%B0%20%C4%B0LAN%20METN%C4%B0%20%C3%96E%20WEBBB.pdf",
         ],
     },
     {
