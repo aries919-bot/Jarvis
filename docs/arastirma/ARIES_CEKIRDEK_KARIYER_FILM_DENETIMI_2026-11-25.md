@@ -162,6 +162,23 @@ Chrome Web Store tanımı, web'deki iş fırsatlarını yakalama, başvuru notu/
 
 Ders: Aries'te durumlar Kaydedildi → Hazırlanıyor → Başvuruldu → Sınav/Mülakat → Sonuç şeklinde, hatırlatıcı ve notlarla tek bir başvuru kaydı üzerinde yürümeli. Form gönderme ve kişisel veri paylaşımı kullanıcı kontrolünde kalmalı.
 
+### Türkiye ve büyük genel iş platformları
+
+Kariyer.net yardım dokümanı, CV'deki pozisyon bilgisi, önceki başvurular, aramalar ve kaydedilmiş iş alarmlarından "Sana Uygun İlanlar" ürettiğini; ayrıca kayıtlı arama kriterlerine göre yeni ilan bildirimi verdiğini anlatıyor. Bu, yalnız anahtar kelime araması yerine kullanıcının davranışını ve tercihlerini kullanan bir eşleştirme katmanı.
+
+Eleman.net'in kendi 06.10.2026 tarihli yazısı iş alarmı, AI CV analizi, videolu özgeçmiş ve aday ilanı araçlarını tanımlıyor. Platformun kendi beyanına göre mavi/gri yaka ve ara kademe işlerde konum/ilçe odaklı arama ile telefonla başvuru da önemli bir ürün farkı.
+
+Indeed mobil uygulaması "My Jobs" altında Saved / Applied / Interviews / Archived aşamalarını; iş kaydetme, işverene mesaj ve uygulama üzerinden takip özelliklerini tanımlıyor. LinkedIn'in resmî yardım sayfaları günlük/haftalık iş alarmı ve profil/tercih bazlı tavsiye mekanizmasını açıklıyor. Bunlar Aries için yalnız UX kıyaslamasıdır: NOT_C1 gereği Indeed/LinkedIn kaynağı taranmaz, entegrasyon yapılmaz.
+
+Aries'e ders: yerel kullanıcı için şehir/ilçe/servis/shift/meslek alanı; ön lisans/lise ayrımı; KPSS puan türü ve nitelik kodu; başvuru son tarihi; kaydedilen arama alarmı; başvuru takip aşamaları tek bir kişisel iş panosunda birleştirilmeli. CV/puan/e-Devlet verisi sunucuya gönderilmemeli.
+
+Kaynaklar:
+- Kariyer.net eşleşme ve iş alarmı: https://www.kariyer.net/yardim/
+- Eleman.net aday araçları: https://www.eleman.net/is-rehberi/bizden-haberler/is-bulma-surecinde-kullanabileceginiz-araclar-h24496
+- Indeed mobil uygulama ve başvuru akışı: https://www.indeed.com/career-advice/finding-a-job/how-to-use-the-indeed-app
+- Indeed My Jobs aşamaları: https://indeed.zendesk.com/hc/en-us/articles/205332490-What-Is-My-Jobs
+- LinkedIn iş alarmı (yalnız UX kıyaslaması): https://www.linkedin.com/help/linkedin/answer/a511279
+
 ### ATS API'leri — açık kaynak ve resmî dokümanlarla doğrulanan model
 
 Greenhouse Job Board API, şirketin yayımlanmış pozisyonlarını JSON olarak listeler; content=true tam açıklama, departman ve ofis bilgisi ekler. Başvuru POST'u ayrı kimlik doğrulama ister.
