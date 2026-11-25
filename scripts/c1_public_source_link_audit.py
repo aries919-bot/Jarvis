@@ -121,14 +121,19 @@ def robots_decision(page_url: str, requester=request_once) -> dict:
     origin = f"{parsed.scheme}://{parsed.netloc}"
     robots_url = origin + "/robots.txt"
     response = requester(robots_url, 256 * 1024)
-    result = {"robots_url": robots_url, "robots_status": response.get("status"), "allowed": None}
-    if response.get("error") or response.get("status") != 200 or not response.get("body"):
+    result = {"robots_url": robots_url, "robots_status": response.get("status"), "allowed": None, "robots_policy": "UNKNOWN"}
+    if response.get("status") == 404:
+        result["allowed"] = True
+        result["robots_policy"] = "NO_ROBOTS_FILE"
+        return result
+    if response.get("error") or response.get("status") != 200:
         result["robots_error"] = response.get("error") or f"ROBOTS_HTTP_{response.get('status')}"
         return result
     parser = RobotFileParser()
     parser.set_url(robots_url)
-    parser.parse(response["body"].decode("utf-8", "replace").splitlines())
+    parser.parse((response.get("body") or b"").decode("utf-8", "replace").splitlines())
     result["allowed"] = parser.can_fetch(UA, page_url)
+    result["robots_policy"] = "ALLOW" if result["allowed"] else "DISALLOW"
     return result
 
 
@@ -247,7 +252,7 @@ def main():
     print("\nSUMMARY")
     for source in report["sources"]:
         for page in source["pages"]:
-            allow = "ALLOW" if page["allowed"] is True else "DENY" if page["allowed"] is False else "UNKNOWN"
+            allow = page.get("robots_policy", "UNKNOWN")
             print(f'{source["source_id"]}: robots={page["robots_status"]}/{allow}; page_requested={page["page_requested"]}; page_http={page.get("page_http_status")}; links={len(page.get("official_links", []))}')
     return 0
 
