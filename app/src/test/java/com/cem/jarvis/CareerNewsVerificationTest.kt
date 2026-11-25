@@ -211,17 +211,28 @@ class CareerNewsVerificationTest {
     }
 
     @Test
-    fun stableStoryIdIgnoresFragmentAndTrailingSlash() {
+    fun stableStoryIdIgnoresFragmentTrailingSlashAndHeadlineChanges() {
         val first = CareerNewsVerificationRecord.stableStoryId(
             "https://kurum.gov.tr/duyuru/1#detay",
-            "  Kurum   personel alımı  "
+            "Kurum yeni personel alımı"
         )
-        val second = CareerNewsVerificationRecord.stableStoryId(
-            "https://kurum.gov.tr/duyuru/1/",
+        val normalizedUrl = CareerNewsVerificationRecord.stableStoryId(
+            "https://KURUM.gov.tr/duyuru/1/",
             "kurum personel alımı"
         )
-        assertEquals(first, second)
+        val revisedHeadline = CareerNewsVerificationRecord.stableStoryId(
+            "https://kurum.gov.tr/duyuru/1",
+            "Kurum personel alımı — güncellenmiş başlık"
+        )
+        val differentStory = CareerNewsVerificationRecord.stableStoryId(
+            "https://kurum.gov.tr/duyuru/2",
+            "Kurum personel alımı"
+        )
+        assertEquals(first, normalizedUrl)
+        assertEquals(first, revisedHeadline)
+        assertFalse(first == differentStory)
     }
+
     @Test
     fun rejectsImpossibleDatesAndEvidenceExcerptsWithPersonalIdentifiers() {
         assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-02-30T14:00:00Z"))
