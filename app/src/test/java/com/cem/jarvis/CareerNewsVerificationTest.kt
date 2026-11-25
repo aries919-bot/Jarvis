@@ -328,4 +328,52 @@ class CareerNewsVerificationTest {
         assertFalse(oversized.validationErrors().isEmpty())
     }
 
+
+    @Test
+    fun replacingHumanReviewArchivesPreviousDecisionAndEvidenceSnapshot() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt,
+                "İlk resmî inceleme gerekçesi.")!!
+        val updated = reviewed.reviewClaim(
+            "claim-1",
+            CareerHumanReviewDecision.INCONCLUSIVE,
+            "2026-11-25T14:20:00Z",
+            "Yeni değerlendirme kararsız kaldı."
+        )!!
+
+        val current = updated.claims.single()
+        assertEquals(CareerHumanReviewDecision.INCONCLUSIVE, current.reviewDecision)
+        assertEquals(1, current.reviewHistory.size)
+        assertEquals(CareerHumanReviewDecision.CONFIRM, current.reviewHistory.single().decision)
+        assertEquals(reviewedAt, current.reviewHistory.single().reviewedAt)
+        assertEquals("İlk resmî inceleme gerekçesi.", current.reviewHistory.single().note)
+        assertEquals(listOf("evidence-1"), current.reviewHistory.single().evidenceIds)
+
+        val restored = CareerNewsVerificationRecord.fromJson(updated.toJson().toString())
+        assertEquals(updated, restored)
+    }
+
+    @Test
+    fun addingEvidenceArchivesPriorReviewBeforeResettingIt() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt,
+                "İlk resmî inceleme gerekçesi.")!!
+        val updated = reviewed.addEvidence(
+            "claim-1",
+            evidence(
+                id = "evidence-2",
+                stance = CareerEvidenceStance.CONTRADICTS,
+                url = "https://resmigazete.gov.tr/duyuru/duzeltme"
+            )
+        )!!
+
+        val current = updated.claims.single()
+        assertNull(current.reviewDecision)
+        assertEquals(1, current.reviewHistory.size)
+        assertEquals(CareerHumanReviewDecision.CONFIRM, current.reviewHistory.single().decision)
+        assertEquals(listOf("evidence-1"), current.reviewHistory.single().evidenceIds)
+        assertEquals(CareerClaimVerdict.CONFLICTING_EVIDENCE, current.verdict())
+    }
 }
