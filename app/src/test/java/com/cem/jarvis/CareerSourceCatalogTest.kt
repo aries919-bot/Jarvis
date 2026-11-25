@@ -13,7 +13,7 @@ class CareerSourceCatalogTest {
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.bel.tr/"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://sub.dsi.gov.tr/duyurular"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://engelsiz.iskur.gov.tr/faaliyetlerimiz/iskur-genclik-programi"))
-        assertTrue(CareerSourceCatalog.isTrustedUrl("https://example.edu.tr/staj"))
+        assertFalse(CareerSourceCatalog.isTrustedUrl("https://example.edu.tr/staj"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("HTTPS://WWW.DSI.GOV.TR/duyurular"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("http://www.dsi.gov.tr/"))
         assertFalse(CareerSourceCatalog.isTrustedUrl("https://www.dsi.gov.tr.evil.example/"))
@@ -260,7 +260,7 @@ class CareerSourceCatalogTest {
         val url = "https://memur365.com/kamu-personel-alimi"
         assertTrue(CareerSourceCatalog.isNewsDiscoverySource(url))
         assertFalse(CareerSourceCatalog.isTrustedUrl(url))
-        assertFalse(CareerSourceCatalog.isSecondary(url))
+        assertTrue(CareerSourceCatalog.isSecondary(url))
         assertTrue(CareerSourceCatalog.categoryFor(url).contains("Haber"))
         assertEquals(
             "Memur 365 – kamu personel haberleri",
