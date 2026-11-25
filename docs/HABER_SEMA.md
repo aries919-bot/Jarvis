@@ -266,3 +266,9 @@ PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt
 - Yeni exact-head testler 11 @Test'tir. İlk compile hatası Locale string escape'inden geldi; gerçek Kotlin literal'i düzeltildi. Yeni exact-head CI #45657661662 (#685) IN_PROGRESS; henüz PASS yok.
 - PR #69 model/şema + testtir; Haber ekranı ve yerel kalıcı arşivle entegrasyonu değildir. Eski Haber kayıtları otomatik doğrulanmışa çevrilmez.
 - Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
+### 10.1 H1 insan gerekçesi ve tam düzeltme izi — 25.11.2026
+- İnsan CONFIRM/REFUTE kararının geçerli olması için UTC reviewedAt ve boş olmayan reviewNote zorunludur; gerekçe yoksa reviewClaim reddedilir. Verdict final sayılmaz.
+- CorrectionHistory önceki reviewNote'u da saklar. Düzeltme sonrası aktif kanıt ve review sıfırlanır. Önceki kanıtlar ve karar geçmişte korunur.
+- İddia metni aynıysa no-op correction reddedilir.
+- Test sayısı 13 @Test; exact-head PR #69 run #45659231791 (#695) queued/in progress; final PASS bekleniyor.
+- Şema ayrıntısı ve CI: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
