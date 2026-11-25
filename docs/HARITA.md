@@ -1214,3 +1214,12 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Manuel kamu envanteri: **26 açık ana duyuru /20 kurum**; future/opening-soon **5**, deadline-null/Doğrulanamadı **5**, süresi geçmiş **5**. Özel havuz 7 aday/duyuru olarak ayrı kalır.
 - Feed sayısı farklıdır: **12 kurum /55 açık doğrulanmış kart**. Manuel 26/20 ile feed 12/55 birleştirilmez; önce canonical URL/ilan kesişimi çıkarılır.
 - Sonraki iş, 26 manuel duyurunun H2 13 kartıyla tam eşleştirilmesi; yalnız eksik, robots-izinli, deadline'ı açık kaynakların eklenmesidir. Production Worker GET/D1 ise ayrı blokerdir.
+
+
+## 26.11.2026 — H1 exact-head APK PASS; emulator beklemede
+- PR #71 exact HEAD `9532d04343d1934dc01015f7dc78c7ec1ffc8e68` için [APK/unit run #45723550139](https://github.com/aries919-bot/Jarvis/actions/runs/45723550139) SUCCESS.
+- Logda `gradle testDebugUnitTest --no-daemon` **BUILD SUCCESSFUL (2m 1s)**; test sayısı logda raporlanmadığından sayı uydurulmadı. `gradle assembleDebug --no-daemon` **BUILD SUCCESSFUL (1m 18s)**.
+- APK artifact [#15072653517](https://github.com/aries919-bot/Jarvis/actions/runs/45723550139/artifacts/15072653517), 14,198,043 byte, archive SHA-256 `d19ec40189e6ca5466109ca654adad78f2629a501cb568c15c7bac5ec8dc67dc`.
+- Exact-head [emulator run #45723550345](https://github.com/aries919-bot/Jarvis/actions/runs/45723550345) son kontrolde `Run Android emulator instrumentation tests` adımında `in_progress`; XML doğrulama ve upload başlamadı. Dört testin sonucu henüz **0 rapor**; PASS/FAIL sayılmaz.
+- PR #71 açık/taslak, 14 dosya, formal review 0. APK PASS, emulator PASS değildir; merge yok.
+**KARAR:** H1 RED/BLOCKED — emulator XML 4/4 ve screenshot/logcat artefaktı bekleniyor.
