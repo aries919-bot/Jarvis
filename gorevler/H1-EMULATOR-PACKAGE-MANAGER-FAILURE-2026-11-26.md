@@ -42,3 +42,34 @@ Bu çalışma önceki 0-test sahte PASS riskini kapatmıştır. Yeni runner/AVD 
 - Sentetik 4 testcase, 0 failure/error/skipped XML'i: PASS. Bu yalnız validator'ın pozitif/negatif mantığını doğrular; gerçek Android UI testlerinin geçtiğini göstermez.
 - Yeni exact-head run #45711684280 son API sorgusunda hâlâ instrumentation adımında IN_PROGRESS; #45711684204 APK/unit run da unit test adımında IN_PROGRESS. Sonuç alınmadan kabul kararı verilmez.
 - Container ortamında GitHub'a doğrudan `git clone` denemesi DNS nedeniyle başarısız oldu; Cloud PR #12 yerel test komutları bu oturumda çalıştırılamadı. Bu yüzden PR #12 için yeni CI/yerel PASS iddiası yoktur.
+
+
+## 26.11.2026 — Framework-generation araştırması ve PID-aware düzeltme
+
+### Araştırma bulgusu
+- FUTO Notes'taki gerçek CI olay raporu, Android emülatöründe 283 koşunun 33'ünde APK kurulumunda "cmd: Failure calling service package: Broken pipe (32)" ve benzer Package Manager hataları görüldüğünü bildiriyor.
+- Rapordaki kök neden: sys.boot_completed=1 olduktan sonra system_server yeniden başlayabiliyor; property eski değerde kaldığı için basit boot ve servis kontrolleri eski framework neslini yanlışlıkla hazır sanabiliyor.
+- Oradaki düzeltme, çalışan system_server PID'sinin kendi boot_progress_enable_screen olayını yazdığını doğrulamak, Package Manager durumunu tam eşleşmeyle kontrol etmek ve yeniden başlatma penceresini beklemek. Bu başka bir projedeki kanıtlanmış Android hata sınıfıdır; Aries run'ında aynı kök neden olduğu henüz logla kanıtlanmadı.
+- Kaynak: https://gitlab.futo.org/futo-notes/futo-notes/-/blob/papercuts-bridge-guidance-close-round10/scripts/ci-android-sync-leg.test.mjs
+
+### Aries değişikliği
+- Commit 29aaa17e532c13a394d1ed7dd7c53bc613d0bec9: runner artık aktif system_server PID'sini ve boot_progress_enable_screen olayındaki PID'yi eşleştiriyor; Package Manager çıktısını tam "Service package: found" olarak doğruluyor; kararlılık penceresinden sonra tekrar kontrol ediyor.
+- Commit e390e05e1485717c3a07ce3af06db6b3840062f3: boş paket listesi artık RED; başarılı preflight PID dosyası için dizin oluşturma düzeltildi. Teşhis artifact'i events log, crash buffer, process listesi ve services çıktısını kapsıyor.
+- Komut kanıtı: bash -n run-h1-emulator-tests.sh PASS.
+- Mock ADB/Gradle entegrasyon kontrolü: kararlı framework + gerçek paket kaydı senaryosu exit 0; Package Manager bulunamadı exit 21; eski system_server PID işaretçisi exit 21; boş paket listesi exit 21. Sonuçlar yerel simülasyondur; Android emülatör PASS değildir.
+
+### Exact-head CI durumu
+- PR #71 current HEAD: e390e05e1485717c3a07ce3af06db6b3840062f3; diff 14 dosya / +3.492 / -26.
+- Önceki HEAD b6feff4 APK run [#45711684204](https://github.com/aries919-bot/Jarvis/actions/runs/45711684204) SUCCESS oldu; bu önceki HEAD'in unit/APK derleme kanıtıdır, son HEAD'e taşınamaz.
+- Aynı eski HEAD emulator run [#45711684280](https://github.com/aries919-bot/Jarvis/actions/runs/45711684280) yeni commit nedeniyle CANCELLED; 4 UI testi çalışmadı.
+- Aradaki HEAD 29aaa17 emulator run [#45712393809](https://github.com/aries919-bot/Jarvis/actions/runs/45712393809) da sonraki commit ile CANCELLED; APK run [#45712393814](https://github.com/aries919-bot/Jarvis/actions/runs/45712393814) CANCELLED.
+- Current exact-head emulator [#45712459718](https://github.com/aries919-bot/Jarvis/actions/runs/45712459718) ve APK [#45712459742](https://github.com/aries919-bot/Jarvis/actions/runs/45712459742) son kontrolde IN_PROGRESS. Emulator job henüz Set up job aşamasındaydı; APK hattı unit test aşamasındaydı. Bu iki run bitmeden H1 PASS yok.
+- Saat düzeltmesi: önceki mesajda 17 saat varsayımı yanlıştı. GitHub UTC kayıtları ilk run'ın yaklaşık 22:15'te başladığını ve yaklaşık 22:20'de tamamlandığını gösteriyor; yaklaşık 5 dakika sürmüştür. 20/35 dakika timeout henüz aşılmamıştı.
+
+### Kabul ve karar
+- H1 emulator PASS için son HEAD'de XML tam 4 testcase; failure=0, errors=0, skipped=0; XML gate PASS ve artifact kontrolü gereklidir.
+- Mock kontrolleri, unit/APK success veya 0 testcase H1 PASS sayılmaz.
+- PR #71 draft/açık; merge/deploy yok.
+- C1 bağımsız RED: kamu feed son iyi veri 6 kaynak /47 kart; 6 kaynağın hepsi stale, 10 kaynak/100 doğrulanmış ilan ve production authenticated GET/D1 kanıtı yok.
+
+**KARAR:** H1 yeni PID-aware düzeltme CI bekliyor; C1 RED.
