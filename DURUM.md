@@ -20,12 +20,12 @@
 - PR #69, #71 ile 6 dosyada çakıştığı ve eski SharedPreferences mimarisi taşıdığı için merge dışı bekletiliyor; #71 kabul edilirse superseded olarak kapatılabilir.
 
 ## Aktif iş — Aries İş & Kariyer Question Answering / RAG
-- Cloud PR #12 açık/taslak; HEAD d49de634b9e07030c0117039b62027b76405b435; base PR #11 HEAD b1415d6a76fd3856c60cfec891a575c3bef0341e; 4 dosya / +992 / -20.
-- Test dosyasında 24 test tanımı var; **çalıştırılmış test sayısı 0**. GitHub CI job başlatılamadığı için geçiş kanıtı bulunmuyor.
-- Tasarım: Türkçe normalize + BM25 + Cloudflare BGE-M3 embedding + RRF; seçilmiş kaynak kayıtları üzerinden Gemma 4. Son tarih/şart/başvuru yolu gibi kesin alanlar deterministik; kanıt yoksa veya konu dışıysa abstain; AI kapasite doluysa BM25 fallback.
+- Cloud PR #12 açık/taslak; HEAD a80e557d1dc8373446a3a41b15d50f998d5e3e46; base PR #11 HEAD b1415d6a76fd3856c60cfec891a575c3bef0341e; 4 dosya / +1043 / -20.
+- Test dosyasında 26 test tanımı var; **çalıştırılmış test sayısı 0**. GitHub CI job başlatılamadığı için geçiş kanıtı bulunmuyor.
+- Tasarım: Türkçe normalize + BM25 + Cloudflare BGE-M3 embedding + RRF; seçilmiş kaynak kayıtları üzerinden Gemma 4. Son tarih/şart/başvuru yolu gibi kesin alanlar deterministik; positionCount/city yalnız kaynakta varsa döner, yoksa belirtilmemiş; kanıt yoksa veya konu dışıysa abstain; AI kapasite doluysa BM25 fallback.
 - Provider allowlist: kamu kategorileri yalnız iskur-esube-json / h2-official-announcement; Büyük özel yalnız jobs.lever.co Lever / jobs.ashbyhq.com Ashby. Stale, expired, unknown deadline ve possibleDuplicate kayıtlar cevap dışında.
 - Gizlilik: CV/özgeçmiş, kişisel KPSS puanı, kimlik, telefon, e-posta, bearer/API token desenleri AI çağrısından önce engellenir. Kullanıcı profili/sohbet geçmişi/e-Devlet verisi D1 veya modele gönderilmez; soru/token loglanmaz.
-- Son 7 CI run #45692460706, #45692517637, #45692608933, #45692642608, #45692792848, #45692810534, #45692919011: hepsi failure; her job steps=[] ve 2–3 saniyede kapanıyor. Log BlobNotFound; annotation içeriğine erişilemiyor. Bu kod testi sonucu değil; runner/job-start engeli. Tekrarlı commit/rerun döngüsü durduruldu. PR #12 merge/deploy yok.
+- Son 7 CI run #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527, #45694369322: hepsi failure; her job steps=[] ve 2–3 saniyede kapanıyor. Son run #45694369322/job 139487790097: 20:22:41Z–20:22:42Z. Log BlobNotFound; annotation içeriğine erişilemiyor. Bu kod testi sonucu değil; runner/job-start engeli. Tekrarlı commit/rerun döngüsü durduruldu. PR #12 merge/deploy yok.
 - Backend QA henüz Android ekranına bağlanmadı. H1 haber SQLite verisi için ayrı News QA servisi/ekranı tasarlanacak; kariyer feed'iyle birleştirilmeyecek.
 
 ## Kaynak politikası / C1
