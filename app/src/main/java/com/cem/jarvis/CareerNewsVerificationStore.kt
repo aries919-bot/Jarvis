@@ -56,10 +56,10 @@ class CareerNewsVerificationStore(
     fun load(storyId: String): CareerNewsVerificationRecord? {
         if (storyId.isBlank()) return null
         val primary = storage.get(recordKey(storyId))
-            ?.let(CareerNewsVerificationRecord::fromJson)
+            ?.let { CareerNewsVerificationRecord.fromJson(it) }
         if (primary != null && primary.storyId == storyId) return primary
         return storage.get(backupKey(storyId))
-            ?.let(CareerNewsVerificationRecord::fromJson)
+            ?.let { CareerNewsVerificationRecord.fromJson(it) }
             ?.takeIf { it.storyId == storyId }
     }
 
@@ -74,9 +74,9 @@ class CareerNewsVerificationStore(
         val backup = backupKey(record.storyId)
         val primaryRaw = storage.get(key)
         val backupRaw = storage.get(backup)
-        val previous = primaryRaw?.let(CareerNewsVerificationRecord::fromJson)
+        val previous = primaryRaw?.let { CareerNewsVerificationRecord.fromJson(it) }
             ?.takeIf { it.storyId == record.storyId }
-            ?: backupRaw?.let(CareerNewsVerificationRecord::fromJson)
+            ?: backupRaw?.let { CareerNewsVerificationRecord.fromJson(it) }
                 ?.takeIf { it.storyId == record.storyId }
 
         if ((primaryRaw != null || backupRaw != null) && previous == null) {
@@ -108,13 +108,13 @@ class CareerNewsVerificationStore(
         var corrupt = 0
         keys.forEach { key ->
             val storyId = key.removePrefix(RECORD_PREFIX)
-            val primary = storage.get(key)?.let(CareerNewsVerificationRecord::fromJson)
+            val primary = storage.get(key)?.let { CareerNewsVerificationRecord.fromJson(it) }
                 ?.takeIf { it.storyId == storyId }
             if (primary != null) {
                 records += primary
             } else {
                 val backup = storage.get(backupKey(storyId))
-                    ?.let(CareerNewsVerificationRecord::fromJson)
+                    ?.let { CareerNewsVerificationRecord.fromJson(it) }
                     ?.takeIf { it.storyId == storyId }
                 if (backup != null) {
                     records += backup
