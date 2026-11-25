@@ -138,3 +138,12 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 4. Test/CI başarısızsa, diff kapsam dışıysa, statik incelemede kusur varsa, veri/robots/tarih kanıtı yetersizse veya görevin kendi kabul eşiği geçilmediyse RED verilir ve merge yapılmaz. Öz-QA, C1'in 10 kaynak/100 doğrulanmış ilan, kamu 0=RED ve production GET kapılarını gevşetmez.
 5. Öz-QA ONAY yalnız ilgili PR kapsamını kabul eder. H1 şema düzeltmesinin ONAY'ı tüm H1 kaynaklarını; H2 reader ONAY'ı C1 global hedefini; local D1 testi production'ı; Actions live artifact'i Android telefon davranışını kabul etmez.
 6. Önceden verilen koşullu merge yetkisi gereği, exact-head testler yeşil, diff yalnız kapsam içi, öz-QA/Hakem ONAY ve görevin diğer tüm zorunlu kabul kapıları sağlanmışsa ayrıca kullanıcı onayı sorulmadan birleştirilir. Aksi durumda PR açık/RED kalır.
+
+
+## 13. P0 kaynak politikası ve H1 arayüz entegrasyonu — 25.11.2026
+- C1 P0 için aktif PR #70: https://github.com/aries919-bot/Jarvis/pull/70. Exact head `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`; 4 dosya /+46 /-13; Android unit tests ve APK [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) SUCCESS. Indeed/LinkedIn kaldırıldı; genel .edu.tr trusted değil; UA `AriesKaynakTara/1.0`.
+- Haber H1 için aktif PR #69: https://github.com/aries919-bot/Jarvis/pull/69. 8 dosya /+1.572 /-35; 18 yeni test. Local archive, append-only correctionHistory, claim/evidence/review UI ve Custom Tabs bağlandı.
+- Browser 1.10.0 mevcut compileSdk34/AGP8.5.2 ile uyumsuz çıktı; Browser 1.8.0'a sabitlendi. Güncel exact-head #45665491590'da unit test task SUCCESS, APK assemble adımı son kontrol sırasında çalışıyordu.
+- PR #67/#68 kapatıldı (unmerged) ve #70/#69 ile değiştirildi. Hiçbir PR merge/deploy edilmedi.
+- Bu işler C1'in kaynak sayısı kapısını değiştirmez. 10 kaynak/100 doğrulanmış ilan, kamu ayrı raporu, üretim Worker GET ve e-Şube/H2 cross-feed dedup kapıları hâlâ zorunlu. Kaynaklardan herhangi biri sıfırsa/başvuru süresi geçmişse kurallar gevşetilmez.
+- Eski Haber arşivi otomatik VERIFIED yapılmaz; source publishedAt yoksa null kalır. Telefon doğrulaması ve Full App QA henüz yok.
