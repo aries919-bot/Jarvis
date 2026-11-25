@@ -99,3 +99,23 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 - e-Şube ayrı feed snapshot 42 açık kayıt; collectedAt 2026-11-24T23:51:48Z ve fresh-until 2026-11-25T11:51:48Z. H2 ölçümünde fresh. H2 + e-Şube ham ayrı-feed toplamı 53 karttır; çapraz-feed dedup/tek Worker feed henüz doğrulanmadığından nihai birleşik sayım değildir.
 - H2 source freshness ve card/position summary code PR #61 head 9cadd652ea2bb7c12d23aa6887956d0585fa535d; live workflow code head 518a95f27d7b20fbe32c7c5ae72d3bf28f51b85f. PR #61 test suite 154/154; H2 PR checks pass; formal GitHub reviews 0.
 - Karar: RED. 10 kaynak eşiği H2 kurum sayısında karşılandı, 100 ayrı doğrulanmış ilan kartı ve Worker/D1/production GET şartları karşılanmadı.
+
+## Beşinci exact-head live ölçüm — Marmara iki yeni duyurusu sonrası
+- Run: https://github.com/aries919-bot/Jarvis/actions/runs/45539131064
+- Job: 138953507700 SUCCESS; artifact 14987669118; collectedAt=2026-11-25T03:20:36Z.
+- 17 source kaydı; 15 fresh / 2 stale; 15 toplam kaynak kartı.
+- Güncel açık H2 kamu: 11 benzersiz kurum / 13 doğrulanmış açık ilan kartı / 125 pozisyon.
+- Marmara 24.11.2026 duyuruları ayrı iki kart: öğretim elemanı 4 kadro + öğretim üyesi 7 kadro = 2 kart / 11 pozisyon. İkisi de deadline 08.12.2026, başvuru Marmara personel başvuru sistemi üzerinden.
+- Kaynak kartları: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Marmara 2; Mardin Artuklu öğretim görevlisi 1; ORAN 1; Tarsus 1; TGA 1; Zafer 1 = 13 kart / 11 kurum.
+- Pozisyonlar: Anadolu 1; Atatürk 71; Balıkesir 7; DOKA 1; Düzce 5; Marmara 11; Mardin Artuklu 4; ORAN 7; Tarsus 3; TGA 13; Zafer 2 = 125.
+- Stale: BOTAŞ (timeout), Mardin Artuklu öğretim üyesi (deadline kanıtı yok). YHGM kura/sonuç; ATK future-open; bunlar açık işe dahil değil.
+- e-Şube snapshot 42 kart (collectedAt 2026-11-24T23:51:48Z, fresh-until 2026-11-25T11:51:48Z). H2+e-Şube ham ayrı feed toplamı 55; cross-feed dedup / tek Worker feed kanıtı yok.
+- Bu canlı run HEAD a08676419bea194891b87b79cff37cf922d829ec; Marmara iki duyurusu dahildi, Munzur iki kaydı henüz eklenmemişti.
+- C1 eşiği kart sayısıyla: H2 13/100 RED. 125 pozisyon kart eşiğinin yerine geçmez.
+
+## Munzur Üniversitesi — iki günlük duyuru adayının sınıflandırılması
+- Resmî PDF: https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf ; exact robots ön denetimi run #45538589906, robots HTTP 404 / NO_ROBOTS_FILE (erişim serbest). Web PDF metni açıldı; screenshot denemesi cache miss verdi.
+- Öğretim üyesi bölümü: İlan Tarihi 10.11.2026, Son Başvuru Tarihi 25.11.2026 mesai bitimine kadar; 2026/18–2026/28 satırları, her biri 1 kadro = 11 pozisyon.
+- Öğretim görevlisi bölümü: 2026/29 tek kadro; sınav takvimi 10.11.2026–25.11.2026 başvuru, 27.11 ön değerlendirme, 30.11 sınav; deadline 25.11.2026.
+- Bu iki ayrı duyuru H2 kaynağı olarak geçici eklenmiştir (source config 19). Ancak deadline mesai bitimine kadar şeklinde, kesin saat yayımlanmadı; date-only otomatik sayaç aynı gün mesai sonrası yanlış açık gösterebileceği için canlı doğrulamada Doğrulanamadı / açık sayaca eklenmez kuralı uygulanmalı. PublishedAt öğretim görevlisi bölümünde açık yayın tarihi kanıtı yoksa null kalır.
+- İlan PDF sayımını yeniden say: 11 profesör/doçent/doktor öğretim üyesi pozisyonu + 1 öğretim görevlisi pozisyonu; 2 kart, 12 pozisyon. Son başvuru tarihi bugün olduğundan, exact saat bilinmeden açık kart eşiğine ekleme.
