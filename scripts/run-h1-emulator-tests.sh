@@ -34,7 +34,7 @@ snapshot_adb() {
   shift
   timeout 10s adb "$@" > "$output" 2>&1 || {
     local status="$?"
-    printf '\\nCOMMAND_EXIT=%s\\n' "$status" >> "$output"
+    printf '\nCOMMAND_EXIT=%s\n' "$status" >> "$output"
   }
 }
 
