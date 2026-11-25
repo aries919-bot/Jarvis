@@ -219,3 +219,10 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Paralel hız kuralı: bağımsız dosya/depodaki QA aynı anda; aynı branch/dosya yazımı sıralı; exact-head CI bitmeden ilgili PR merge edilmez.
 - **KARAR: RED / genel kabul yok.** Açık kapılar: emülatör + telefon, izin kullanım haritası, kamu 100 ilan eşiği ve Worker GET/D1.
 
+## 17. Android izin akışı QA bulgusu — 25.11.2026
+- MainActivity.onCreate satır 140–145 ilk açılışta RECORD_AUDIO, CALL_PHONE, READ_CONTACTS ve POST_NOTIFICATIONS izinlerini tek seferde istiyor.
+- MainActivity kaynak taramasında CALL_PHONE ve READ_CONTACTS yalnız bu izin listesinde; ACTION_CALL, ACTION_DIAL, Phone.CONTENT_URI/Phone.query çağrısı bulunamadı. ContactsContract Phone import'u da kullanılmıyor görünüyor.
+- RECORD_AUDIO sesli komut, BLUETOOTH_CONNECT kullanıcı ses çıkışı seçimi, POST_NOTIFICATIONS bildirim akışı için kullanılıyor. Reminders.kt setAlarmClock çağırıyor; exact alarm izin gereksinimi ayrıca doğrulanmalı.
+- CALL_PHONE ve READ_CONTACTS gereksiz açılış izinleri adayı. Tam repo araması ve regresyon testi sonrası ayrı PR açılacak; henüz kod değiştirilmedi.
+- H1 emülatör #45679523114 `in_progress`, conclusion `null`; timeout dolmadan sonuç varsayılmayacak.
+
