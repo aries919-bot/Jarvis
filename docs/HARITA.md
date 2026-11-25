@@ -657,10 +657,10 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - **KARAR: RED.** 12 kaynak kapısı geçiyor; 55/100 kart eşiği 45 eksik. Production GET/D1 ve şehir kanıtlı cross-feed dedup eksik. PR #11 merge yok.
 - Ayrıntı: `gorevler/C1-H2-FEED-QA-2026-11-25.md`.
 ## 20) C1 PR #70 — resmî olmayan kaynakların ikincil kalması / 25.11.2026
-- PR #70 exact HEAD `35ed88ccaed08e14d0164a835e7f9fe49f692d8f`, 4 dosya, diff +70/-19.
-- Önceki HEAD #45658875411 APK/unit CI PASS; fakat öz-QA'da SecretCV, Yenibiriş ve İşbul'un `isSecondary` listesinden çıkarılması nedeniyle trusted kaynak olarak primary alert üretebilmesi bulundu.
-- Düzeltme: `isSecondary()` katalogdaki `official=false` metadata'sından türetiliyor; bütün non-official kaynaklar secondary. Tüm non-official katalog kaynakları + SecretCV/Yenibiriş/İşbul için regresyon testi eklendi.
-- Yeni exact-head Android APK/unit [#45676772911](https://github.com/aries919-bot/Jarvis/actions/runs/45676772911) son kontrolde IN_PROGRESS; önceki CI bu yeni HEAD'i kapsamaz.
+- PR #70 exact HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`, 4 dosya, diff +70/-19.
+- Önceki HEAD #45658875411 APK/unit CI PASS; öz-QA'da SecretCV, Yenibiriş ve İşbul'un `isSecondary` listesinden çıkarılması nedeniyle trusted kaynak olarak primary alert üretebilmesi bulundu.
+- Düzeltme: `isSecondary()` katalogdaki `official=false` metadata'sından türetiliyor; tüm non-official kaynaklar secondary. Host seti cache ediliyor. Katalogdaki bütün non-official kaynaklar ve SecretCV/Yenibiriş/İşbul/Memur365 için regresyon beklentileri düzeltildi.
+- Ara HEAD #45676772911 FAILED: 98 testten 2 assertion (test beklentisi hatası: İşbul trust statüsü ve Memur365 secondary statüsü). İki test beklentisi düzeltildi.
+- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) son kontrolde IN_PROGRESS.
 - **KARAR: RED / beklemede.** Yeni exact-head CI PASS olmadan PR #70 merge yok.
 - Ayrıntı: `gorevler/C1-SOURCE-POLICY-2026-11-25.md`.
-
