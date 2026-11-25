@@ -112,3 +112,14 @@
 - Workflow `.github/workflows/h1-android-ui-smoke.yml` içindeki pull_request.paths listesi `scripts/run-h1-emulator-tests.sh` ve `scripts/verify_h1_emulator_xml.py` dosyalarını kapsamıyor. Bu iki betikten biri tek başına değişirse PR event'i bu workflow'u tetiklemeyebilir; mevcut run tetiklendi çünkü aynı PR'da workflow dosyası da değişti.
 - Mevcut emulator koşusu tamamlanmadan workflow dosyasına dokunulmadı; aksi halde concurrency `cancel-in-progress: true` mevcut kanıt koşusunu iptal eder. Sonuç alındıktan sonraki kontrollü düzeltmede iki script yolu trigger listesine eklenmeli.
 - FUTO'nun daha yeni CI olayı ayrıca `pm install-create`/abandon preflight ile PackageInstaller + StorageManager yolunun hazır oluşunu doğruluyor. Bu sadece mevcut Aries artifact'inde aynı storage/installer hatası görülürse uygulanacak; şimdilik tahminle commit yok.
+
+
+## 26.11.2026 — H1 Espresso focus failure
+- [Emulator #45712459718](https://github.com/aries919-bot/Jarvis/actions/runs/45712459718) XML yeniden sayımı: 4 test /3 failure /0 error /0 skipped; 1 SQLite recovery passed. 3 UI failure `RootViewWithoutFocusException`, root `has-window-focus=false`. PM/system_server preflight bu run'da geçti.
+- Benzer API34 Android CI issue #372, boot-time Pixel Launcher ANR dialogunun Espresso focus'u tuttuğunu ve build sonrası CLOSE_SYSTEM_DIALOGS + HOME ile kapatılabildiğini kanıtlayan başka proje raporunu içeriyor: https://github.com/RizzoG99/PersonalFinanceTracker/issues/372. Aries loglarında launcher top-resumed timeout ve diğer system ANR izleri var; kendi failure anı mCurrentFocus kaydı olmadığından aynı dialog Aries için henüz kuvvetli hipotezdir.
+- Fix commit `b51c53a5797c19d4e18ed81b679024fc14fa3723`: build APKs first; inspect focused system window; only if ANR/Application Error dialog holds focus send CLOSE_SYSTEM_DIALOGS + HOME; fail closed if it remains. UI testleri aynen kaldı.
+- Local mocked integration: clear=0, recovered ANR=0, persistent ANR=22; 3/3. Bash syntax PASS; no emulator claim.
+- Exact-head emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004), APK [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) IN_PROGRESS.
+- C1 6/47 last-good public; 6 stale; 10/100 + production GET/D1 RED.
+
+**SONRAKİ:** Yeni CI sonucunu al; window-focus preflight logunu ve 4-test XML raporunu incele; gerekirse gerçek mCurrentFocus kaydına göre bir sonraki çözümü seç.
