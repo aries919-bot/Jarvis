@@ -46,6 +46,7 @@ object Net {
     fun newsTitles(topic: String): List<String> {
         val url = "https://news.google.com/rss/search?q=" + URLEncoder.encode(topic, "UTF-8") + "&hl=tr&gl=TR&ceid=TR:tr"
         val c = URL(url).openConnection() as HttpURLConnection
+        c.setRequestProperty("User-Agent", "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)")
         c.connectTimeout = 8000
         c.readTimeout = 15000
         if (c.responseCode !in 200..299) throw IOException("Haber hatası: " + c.responseCode)
@@ -111,7 +112,7 @@ object Net {
         connection.readTimeout = 11000
         connection.setRequestProperty(
             "User-Agent",
-            "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36"
+            "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)"
         )
         connection.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9,en;q=0.7")
         connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
@@ -294,7 +295,7 @@ object Net {
         connection.requestMethod = "GET"
         connection.setRequestProperty(
             "User-Agent",
-            "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36"
+            "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)"
         )
         return try {
             val code = connection.responseCode
@@ -317,7 +318,7 @@ object Net {
         val connection = URL(address).openConnection() as HttpURLConnection
         connection.connectTimeout = 7000
         connection.readTimeout = 10000
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0 Aries/1.12")
+        connection.setRequestProperty("User-Agent", "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)")
         val raw = ArrayList<Hit>()
         try {
             if (connection.responseCode !in 200..299) throw IOException("Google Haberler RSS yanıt vermedi.")
