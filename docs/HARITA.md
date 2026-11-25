@@ -1156,7 +1156,7 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 
 ## 26.11.2026 — H1 CI tanısı: timeout ve ekran görüntüsü
 - Genel teknik planın §9 maddeleri H1 ile eşleştirildi. Logcat + screenshot eklendi; izin otomasyonu/HoloView kapatma H1 CareerNewsVerificationActivity için uygulanabilir olmadığı için eklenmedi; dört gerçek UI/SQLite testi korunuyor.
-- Önceki tanı run #45723036152 16+ saat `in_progress` kaldı, yeni commit gelince concurrency ile iptal oldu; artefakt yok. Sonuç olarak kullanılamaz.
+- Önceki tanı run #45723036152 yeni script commit'i geldiğinde hâlâ `in_progress` idi; PR concurrency kuralı yeni HEAD'i çalıştırırken önceki run'ı `cancelled` yaptı. Bu normal supersede davranışıdır; 16 saatlik takılma/timeout kanıtı değildir.
 - Script HEAD `9532d04343d1934dc01015f7dc78c7ec1ffc8e68`: ADB tanı komutları 15s sınırlandı, hata anında screenshot, logcat ve process-group cleanup eklendi; Gradle instrumentation'a 1500s internal timeout + 30s kill-after eklendi. Workflow step/job timeout ve XML 4/4 kapısı değiştirilmedi.
 - Yeni [H1 run #45723550345](https://github.com/aries919-bot/Jarvis/actions/runs/45723550345) ve [APK/unit #45723550139](https://github.com/aries919-bot/Jarvis/actions/runs/45723550139) son kontrolde devam ediyor; henüz test sonucu yok.
 - Ayrıntı: [H1 tanı görevi](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
