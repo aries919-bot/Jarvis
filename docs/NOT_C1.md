@@ -494,3 +494,14 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Ayrıntılı kanıt: gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md; artifact SHA-256 f9d848088c2ad8ca49985c0aeb44279f2e94202a1b1ecb8e9069e09ba97628d7.
 - Sonraki iş: yalnız androidTest harness'inde focus bağımlılığını azaltan deterministik onActivity/UI-thread view interaction; dört test ve bütün assertion'lar korunacak; gerçek tap/focus testi ayrıca kalacak. Aynı head'i kör rerun etme, XML gate'i gevşetme.
 **KARAR:** H1 RED; instrumentation 1/4 PASS, 3/4 FAIL. APK/unit SUCCESS H1 kabulü değildir. PR #71 merge/deploy yok. C1 RED; Worker 6/47 last-good stale, manuel 12/55 ayrı, 10/100 ve production GET/D1 sağlanmadı.
+
+## 26.11.2026 — H1 focus hatası incelemesi
+- Exact HEAD `e390e05...` emulator [#45712459718](https://github.com/aries919-bot/Jarvis/actions/runs/45712459718): XML tests=4, failures=3, errors=0, skipped=0. 1 SQLite last-good testi geçti; 3 Activity/Espresso testi `RootViewWithoutFocusException` (root has-window-focus=false) ile düştü.
+- System_server PID 552 + Package Manager preflight geçti; bu kez PM Broken pipe değil. Artifact loglarında Nexus Launcher top-resumed/pause timeout ve sistem ANR kayıtları mevcut; failure anında dumpsys window alınmadığı için Aries'te ANR dialogu kesin teşhis değil.
+- Benzer API34 Pixel/Google APIs CI vakasında Pixel Launcher ANR dialogunun Espresso focus'u tuttuğu, APK build sonrası `CLOSE_SYSTEM_DIALOGS + HOME` ile kapatılınca testlerin değişmeden geçtiği raporlanmış: https://github.com/RizzoG99/PersonalFinanceTracker/issues/372 ve fix PR https://github.com/RizzoG99/PersonalFinanceTracker/pull/373.
+- Aries runner commit `b51c53a5797c19d4e18ed81b679024fc14fa3723`: önce app/androidTest APK build, sonra ANR/Application Error focus preflight; yalnız dialog odaktaysa kapat; kalırsa fail-closed exit 22. Window/activity/process diagnostics eklendi. Espresso testleri değiştirilmedi.
+- Yerel mock: temiz focus PASS; ANR kapanınca PASS; kapanmayan ANR RED/exit22; 3/3. Bash syntax PASS. Emulator PASS değildir.
+- Exact current HEAD emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) ve APK [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) IN_PROGRESS.
+- C1: 6 kaynak/47 last-good kamu kartı; 6 stale; 10/100 ve production GET/D1 eksik. RED.
+
+**KARAR:** H1 RED/BLOCKED — yeni exact-head CI bekleniyor. C1 RED. Merge/deploy yok.
