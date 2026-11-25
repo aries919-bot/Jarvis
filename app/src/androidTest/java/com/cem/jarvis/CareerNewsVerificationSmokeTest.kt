@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -79,6 +80,58 @@ class CareerNewsVerificationSmokeTest {
             assertEquals(0, store.snapshot().corruptRecords)
         } finally {
             storage.close()
+        }
+    }
+
+    @Test
+    fun displaysArchivedHumanReviewHistoryFromSqlite() {
+        val sourceUrl = "https://www.dsi.gov.tr/duyurular"
+        val headline = "Kurum personel alım duyurusu"
+        val storyId = CareerNewsVerificationRecord.stableStoryId(sourceUrl, headline)
+        val evidence = CareerNewsEvidence(
+            id = "evidence-1",
+            publisher = "Devlet Su İşleri",
+            sourceUrl = sourceUrl,
+            sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+            stance = CareerEvidenceStance.SUPPORTS,
+            excerpt = "Kurum personel alımı yapacağını duyurdu.",
+            publishedAt = null,
+            checkedAt = "2026-11-25T14:00:00Z"
+        )
+        val archived = CareerNewsVerificationRecord(
+            storyId = storyId,
+            headline = headline,
+            publisher = "Devlet Su İşleri",
+            originalSourceUrl = sourceUrl,
+            publishedAt = null,
+            collectedAt = null,
+            firstSeenAt = null
+        ).addClaim(CareerNewsClaim(id = "claim-1", text = "Kurum personel alımı yapacak."))!!
+            .addEvidence("claim-1", evidence)!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM,
+                "2026-11-25T14:05:00Z", "İlk inceleme arşivde saklanmalı.")!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.INCONCLUSIVE,
+                "2026-11-25T14:10:00Z", "İkinci inceleme kararsız kaldı.")!!
+
+        val storage = SQLiteCareerNewsStorage(context)
+        try {
+            assertTrue(CareerNewsVerificationStore(storage).save(archived).saved)
+        } finally {
+            storage.close()
+        }
+
+        val intent = Intent(context, CareerNewsVerificationActivity::class.java).apply {
+            putExtra(CareerNewsVerificationActivity.EXTRA_STORY_ID, storyId)
+            putExtra(CareerNewsVerificationActivity.EXTRA_TITLE, headline)
+            putExtra(CareerNewsVerificationActivity.EXTRA_URL, sourceUrl)
+            putExtra(CareerNewsVerificationActivity.EXTRA_PUBLISHER, "Devlet Su İşleri")
+        }
+        val scenario = ActivityScenario.launch<CareerNewsVerificationActivity>(intent)
+        try {
+            onView(withText("ÖNCEKİ İNCELEMELER")).check(matches(isDisplayed()))
+            onView(withText("İlk inceleme arşivde saklanmalı.")).check(matches(isDisplayed()))
+        } finally {
+            scenario.close()
         }
     }
 }
