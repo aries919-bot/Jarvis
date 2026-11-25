@@ -239,3 +239,8 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Android build workflow iki ayrı Gradle çağrısı kullanıyor; sonraki workflow değişikliğinde testDebugUnitTest + assembleDebug tek çağrı olarak çalıştırılabilir. H1 emülatör job timeout 35 dk, run #45679523114 step 5 hâlâ IN_PROGRESS ve log endpoint BlobNotFound.
 - **KARAR:** Diff güvenlik taraması PASS; CI hız optimizasyonu takip işi, mevcut koşu bitmeden workflow değiştirilmez.
 
+## 20. H1 emülatör uzun koşu — 25.11.2026 19:12Z
+- Exact HEAD #45679523114 18:52:22Z'de başladı; 19:12:37Z'de hâlâ IN_PROGRESS. Job timeout 35 dk, teorik sınır 19:27:22Z.
+- Log endpoint BlobNotFound; bu test sonucu değildir. APK/unit #45679523180 aynı HEAD SUCCESS.
+- **KARAR:** H1 emülatör ve gerçek telefon testi kapanana kadar RED/beklemede.
+
