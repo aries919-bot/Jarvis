@@ -427,3 +427,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - CI exact-head henüz başlamadı: workflow run listesi 0, commit status 0. **KABUL DEĞİL.**
 - Kalan: mobil DDG/Bing/Brave HTML fallback kapatılmadı; Worker production GET kanıtı yok. Custom Tabs ve H1 claim/evidence modeli ayrı görev.
 - Ayrıntı: [C1-P0-source-policy-ua-2026-11-25.md](../gorevler/C1-P0-source-policy-ua-2026-11-25.md).
+
+
+### 17.1 PR #66 taban ve CI tetikleme güncellemesi — 25.11.2026
+- PR #66 HEAD güncel: `dc71e10dac04f17d0608678376d3ad38a3e1edf2`.
+- Actions workflow dosyasındaki pull_request taban filtresi `is/c3-ilan-semasi-ai-kaynak-kaniti` dalını içerdiği için PR hedefi bu dala alındı.
+- Bu nedenle güncel compare, C3 PR #30 değişikliklerini de içerir: 11 commit / 9 dosya / +207 / -41. Bu toplamın tamamı C1 P0 değişikliği değildir; C3 taban değişiklikleri de vardır.
+- Yeni HEAD için Actions run listesi ve commit status listesi hâlâ 0. Test PASS iddiası yok. Tetikleme nedeni ayrıca incelenecek.
+- PR #66 taslak ve birleştirilmedi; C3 PR #30 ile çakışma riski nedeniyle ana dala taşınamaz.
