@@ -116,3 +116,16 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - Production authenticated GET BLOCKED; JARVIS_WORKER_URL / JARVIS_WORKER_TOKEN yapılandırması kanıtlanmadı. PR #5/#6/#8 ve #35/#57 merge edilmedi.
 
 Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yalnız kaynak son başvuru tarihi; robots unknown/401'de hedef API çağrısı yok; deadline unknown kayıtlar doğrulanmış sayılmaz.
+
+## 11. H2'nin C1 Actions feed'ine entegrasyonu — 25.11.2026 03:25 TRT
+- jarvis-cloud PR #9: `fix/c1-h2-official-feed` → PR #8 tabanı `fix/c1-source-category-after-timestamp`, açık/taslak; HEAD `8a43b99981db601de3442e8394b71d0651d0e34e`; 5 dosya / +442 / -10 / 22.465 bayt. Ayrıntı: `gorevler/C1-H2-entegrasyon-25-11.md`.
+- H2 reader exact source pin `ae51188ff2bb7c55ef813be7205825b0c5b05db0`; Actions'ta pypdf 5.4.0, robots-first H2 reader, last-good cache/firstSeenAt seed çalıştı. H2 parser+seed testi SUCCESS.
+- Public-runner exact-head [#45517626605](https://github.com/aries919-bot/Jarvis/actions/runs/45517626605): preflight PASS; 46/46 Node test PASS; 11/11 local Wrangler+D1 PASS; 17/17 regresyon matrisi PASS; e-Şube date contract PASS; 5 dosyalı security/diff PASS (22.465 bayt, 0 forbidden-pattern match, doğru UA).
+- Live collector: 26 kaynak /17 fresh /9 stale; özel ATS 114 deadline-unknown; kamu 6 source /47 current verified cards; threshold 10/100 RED. Kaynak başına sayım görev notundadır. H2 beş açık kart + e-Şube 42 tek Actions collector çıktısında birleştirildi.
+- e-Şube: snapshot `2026-11-24T23:51:48Z`, 42/42 unique/open, publishedAt=null.
+- H2: 10 source /7 fresh/3 stale; açık kartlar Anadolu, Düzce, Tarsus, Marmara, Zafer. ATK henüz açılmadı; YHGM kura. BOTAŞ timeout, ÇOMÜ robots UNKNOWN ve Bilecik robots timeout; hedeflere izin belirsizken ek istek yok.
+- Özel kaynak sayıları: Trendyol 35, Midas 16, Commencis 5, Dream Games 17, Aleph 5, Ajax Systems 13, Insider One 22, Binance 0, Picus 1 =114; 114/114 deadline unknown. Altı Ashby robots HTTP 401 stale.
+- Hakem [#45517626605](https://github.com/aries919-bot/Jarvis/actions/runs/45517626605) RED; report JSON `qa-reports/c1/latest.json` güncellendi. Public gate 6/47 pozitif ama 10/100 sabit eşiği karşılanmadı.
+- Production authenticated GET BLOCKED; Worker URL/token secret çifti yapılandırılmamış. Publish SKIPPED, POST/deploy yok. Worker/Android canlı entegrasyon kanıtı yok.
+- PR #9 formal GitHub reviews 0; bot yorumları bağımsız onay sayılmaz; hiçbir PR merge edilmedi.
+- Tarih kuralları değişmedi: yayın tarihi yoksa null; collectedAt yayın tarihi değildir; deadline unknown kayıtlar sayılmaz; gelecekteki applicationOpensAt açık ilan değildir; kura/sonuç iş ilanı değildir.
