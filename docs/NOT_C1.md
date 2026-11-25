@@ -605,3 +605,11 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Kamu 10 kaynak eşiği manuel envanterde aşılmıştır (17 kurum), ancak 100 ilan kartı eşiğine 77 kart eksiktir (23/100); manuel araştırma Worker'a ingest edilmemiştir.
 - Worker last-good 6 kaynak/47 kart, 6/6 stale; production authenticated GET/D1 kanıtı yok. H2 live 11 kaynak/13 kart ve e-Şube 1 kaynak/42 kayıt ayrı ölçümlerdir; çapraz-feed dedup/production doğrulaması olmadan toplanmaz.
 **KARAR:** Kamu C1 RED; 23/17 yalnız manuel doğrulanmış aday araştırmasıdır. 100 kart ve production Worker kanıtı sağlanmadı.
+
+
+## 26.11.2026 — Nişantaşı private notice correction
+- İstanbul Nişantaşı Üniversitesi'nin 24.11.2026 duyurusu resmî dokuz sayfalık PDF ve İK portalıyla doğrulandı. Tek karma akademik Öğretim Elemanı Alım İlanı: professor/associate/dr faculty member/lecturer/research assistant roles in one source notice; position rows do not multiply notice count.
+- `publishedAt=2026-11-24`, `deadline=2026-12-08`. Applications digital only at https://insankaynaklari.nisantasi.edu.tr/akademisyen-ilanlari; role/program-specific qualifications under 2547, degrees/specialty/publication/experience; ALES and language thresholds vary (examples 70/50 or English-language YDS 85); research assistant under 2547/50-d.
+- Official notice: https://www.nisantasi.edu.tr/duyuru/24112026-akademik-ilan-236481 ; full PDF https://www.nisantasi.edu.tr/Uploads/Akademisyenler/ik-kadro/24_11.2026%20tarihli%20resmi%20gazete%20%C4%B0lan%C4%B1.pdf . All nine PDF pages screenshot-reviewed.
+- Supersedes prior `deadline=null / Doğrulanamadı` Nişantaşı entry. It was already one item in private pool of 7, so private pool total unchanged; public total remains 23/17.
+- Full source note update commit `fe3e038211db43efab0effa95b62f9ee6f4633c7`; HARITA commit `5e3477e700e4d45e26599131b75c3a4f0b3a7bda`.
