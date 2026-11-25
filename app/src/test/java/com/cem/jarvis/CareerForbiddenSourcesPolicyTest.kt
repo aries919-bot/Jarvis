@@ -34,12 +34,13 @@ class CareerForbiddenSourcesPolicyTest {
         }
         listOf(
             "https://www.secretcv.com/",
-            "https://www.yenibiris.com/",
-            "https://www.isbul.net/"
+            "https://www.yenibiris.com/"
         ).forEach { url ->
             assertTrue(CareerSourceCatalog.isTrustedUrl(url))
             assertTrue(CareerSourceCatalog.isSecondary(url))
         }
+        assertFalse(CareerSourceCatalog.isTrustedUrl("https://www.isbul.net/"))
+        assertTrue(CareerSourceCatalog.isSecondary("https://www.isbul.net/"))
     }
 
     @Test
