@@ -23,7 +23,65 @@ collect_diagnostics() {
   adb logcat -b events -d -v brief > "$dir/events-log.txt" 2>&1 || true
   adb logcat -b crash -d > "$dir/crash-buffer.txt" 2>&1 || true
   adb logcat -d -t 3000 > "$dir/logcat.txt" 2>&1 || true
+  adb shell pm list instrumentation > "$dir/instrumentation-packages.txt" 2>&1 || true
+  adb shell dumpsys activity instrumentation > "$dir/instrumentation-state.txt" 2>&1 || true
+  adb shell pm path com.cem.jarvis > "$dir/app-apk-path.txt" 2>&1 || true
+  adb shell pm path com.cem.jarvis.test > "$dir/test-apk-path.txt" 2>&1 || true
 }
+
+snapshot_adb() {
+  local output="$1"
+  shift
+  timeout 10s adb "$@" > "$output" 2>&1 || {
+    local status="$?"
+    printf '\\nCOMMAND_EXIT=%s\\n' "$status" >> "$output"
+  }
+}
+
+start_instrumentation_watchdog() {
+  local root="h1-emulator-diagnostics/instrumentation-live"
+  mkdir -p "$root"
+  date -u +%Y-%m-%dT%H:%M:%SZ > "$root/started-at.txt"
+
+  adb logcat -v threadtime -T 1 > "$root/logcat-live.txt" 2>&1 &
+  H1_LOGCAT_PID="$!"
+
+  (
+    local sample=0
+    while true; do
+      sample=$((sample + 1))
+      local dir
+      dir="$(printf '%s/sample-%03d' "$root" "$sample")"
+      mkdir -p "$dir"
+      date -u +%Y-%m-%dT%H:%M:%SZ > "$dir/collected-at.txt"
+      snapshot_adb "$dir/adb-devices.txt" devices -l
+      snapshot_adb "$dir/boot-completed.txt" shell getprop sys.boot_completed
+      snapshot_adb "$dir/package-service.txt" shell service check package
+      snapshot_adb "$dir/instrumentation-packages.txt" shell pm list instrumentation
+      snapshot_adb "$dir/instrumentation-state.txt" shell dumpsys activity instrumentation
+      snapshot_adb "$dir/activity-state.txt" shell dumpsys activity activities
+      snapshot_adb "$dir/window-state.txt" shell dumpsys window
+      snapshot_adb "$dir/system-server-pid.txt" shell pidof system_server
+      snapshot_adb "$dir/app-apk-path.txt" shell pm path com.cem.jarvis
+      snapshot_adb "$dir/test-apk-path.txt" shell pm path com.cem.jarvis.test
+      sleep 90
+    done
+  ) &
+  H1_WATCH_PID="$!"
+  echo "Started instrumentation diagnostics watchdog (sample interval: about 90 seconds)."
+}
+
+stop_instrumentation_watchdog() {
+  for pid in "${H1_WATCH_PID:-}" "${H1_LOGCAT_PID:-}"; do
+    if [[ -n "$pid" ]]; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    fi
+  done
+  H1_WATCH_PID=""
+  H1_LOGCAT_PID=""
+}
+trap stop_instrumentation_watchdog EXIT
 
 on_error() {
   local status="$?"
@@ -166,4 +224,8 @@ if ! recover_boot_focus_dialog; then
 fi
 
 echo "Starting H1 instrumentation tests..."
+date -u +%Y-%m-%dT%H:%M:%SZ > h1-emulator-diagnostics/instrumentation-started-at.txt
+start_instrumentation_watchdog
 gradle connectedDebugAndroidTest --no-daemon --stacktrace --console=plain
+date -u +%Y-%m-%dT%H:%M:%SZ > h1-emulator-diagnostics/instrumentation-finished-at.txt
+collect_diagnostics after-instrumentation
