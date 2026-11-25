@@ -77,3 +77,11 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 - Mardin Artuklu öğretim üyesi deadline başlık aralığından çıkarılmadı; 36 kadro sayılmıyor. BOTAŞ timeout/stale.
 - Atatürk başvuru yöntemi resmî PDF'ye göre elektronik başvuru sistemine düzeltildi; Balıkesir şahsen/posta ve son gün mesai bitimi talimatı netleştirildi.
 - Son ORAN düzeltmesi ve talimat güncellemesi sonrası exact-head live run bekleniyor.
+
+## Eşik sayacı düzeltmesi — 25.11.2026
+- C1'nin `10 kaynak / 100 doğrulanmış ilan` eşiği **ilan kartı** üzerinden hesaplanır. `positionCount` bir ilandaki kadro sayısını gösterir; tek kartı birden fazla ilana dönüştürmez. Örneğin 70 profesör kadrolu Atatürk duyurusu = 1 doğrulanmış ilan kartı + 70 pozisyon.
+- Üçüncü live run #45535597812 artifact 14986608285, collectedAt=2026-11-25T02:49:15Z: 15 duyuru kaydı, 12 fresh / 3 stale. Yeniden sayım: **10 doğrulanmış açık ilan kartı / 9 benzersiz kurum / 107 pozisyon**. 100 ilan eşiği 107 pozisyonla sağlanmış olmaz.
+- Kaynak kart sayımı: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu öğretim görevlisi 1; Tarsus 1; TGA 1; Zafer 1. Toplam 10 kart / 9 kurum. ORAN, Mardin öğretim üyesi ve BOTAŞ stale; ATK future-open; YHGM süresi geçmiş kura.
+- e-Şube ayrı feed snapshot: 2026-11-24T23:51:48Z; 42 benzersiz/açık kayıt; 12 saatlik tazelik sınırı 2026-11-25T11:51:48Z. H2 ölçüm zamanında e-Şube snapshot fresh idi. Ham ayrı-feed toplamı 42 + 10 = 52 kart; çapraz-feed eşleştirme ve Worker tek-feed kanıtı henüz olmadığı için bunu tekil birleşik toplam diye sunma.
+- PR #61 içinde `verifiedOpenListings` kart sayısını, `verifiedOpenPositions` pozisyon sayısını ayrı sayacak şekilde değiştirildi. Özet açıkça 100 eşiğinin kart sayısına göre hesaplandığını yazar. Testte iki Atatürk kartı = 2 ilan kartı, 71 kadro = 71 pozisyon olarak doğrulanır.
+- Son ORAN slash-format düzeltmesi ve sayaç güncellemesinden sonra yeni exact-head live run zorunlu; 10/100 kararı eski 9/107 ölçümünden türetilmez.
