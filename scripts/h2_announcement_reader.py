@@ -706,6 +706,7 @@ def collect_yhgm(source: dict[str,Any], requester: Callable[[str,int],FetchRespo
                  now: str, previous: dict[str,Any] | None, today: date) -> dict[str,Any]:
     body,_,headers = fetch_public_url(source["url"],requester,{},MAX_HTML_BYTES)
     items = [parse_yhgm(body,headers,now,now,today)]
+    items[0]["positionCount"] = source.get("positionCount")
     assign_first_seen(items,previous,now)
     return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,"sourceStatus":"fresh","items":items}
 
@@ -748,6 +749,8 @@ def collect_botas(source: dict[str,Any], requester: Callable[[str,int],FetchResp
         parse_botas_job(job_body,job_headers,pdf_text,now,now,today),
         parse_botas_result(result_body,result_headers,now,now,today),
     ]
+    items[0]["positionCount"] = source.get("positionCount")
+    items[1]["positionCount"] = 0
     assign_first_seen(items,previous,now)
     return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,"sourceStatus":"fresh","items":items}
 
