@@ -213,9 +213,28 @@ class CareerNewsVerificationActivity : Activity() {
                     addView(text(correction.explanation, 12f))
                     addView(text(
                         "Önceki kanıt: " + correction.previousEvidence.size +
-                            " · Önceki insan kararı: " + (correction.previousReviewDecision?.name ?: "Yok"),
+                            " · Önceki insan kararı: " + (correction.previousReviewDecision?.let(::reviewDecisionLabel) ?: "Yok"),
                         11f
                     ))
+                    if (correction.previousEvidence.isNotEmpty()) {
+                        addView(text("Önceki kanıt ayrıntıları", 10f, true))
+                        correction.previousEvidence.forEach { evidence ->
+                            addView(text(
+                                evidence.publisher + " · " + sourceTypeLabel(evidence.sourceType) +
+                                    " · " + stanceLabel(evidence.stance),
+                                11f, true
+                            ))
+                            addView(text(evidence.excerpt, 12f))
+                            addView(text(
+                                "Kaynak yayın tarihi: " + (evidence.publishedAt ?: "Bilinmiyor") +
+                                    " · Kontrol zamanı: " + evidence.checkedAt,
+                                10f
+                            ))
+                            addView(button("Önceki kanıt kaynağını aç") {
+                                openExternal(evidence.sourceUrl)
+                            })
+                        }
+                    }
                     if (correction.previousReviewNote.isNotBlank()) {
                         addView(text("Önceki inceleme notu: " + correction.previousReviewNote, 11f))
                     }
@@ -283,6 +302,7 @@ class CareerNewsVerificationActivity : Activity() {
         }
         val url = field("HTTPS kaynak bağlantısı")
         val publisher = field("Kaynak kurum / yayıncı")
+        val publishedAt = field("Kaynak yayın tarihi (UTC, isteğe bağlı)")
         val excerpt = field("Kaynakta görülen kısa kanıt alıntısı", true)
         val sourceType = Spinner(this).apply {
             adapter = ArrayAdapter(
@@ -304,6 +324,7 @@ class CareerNewsVerificationActivity : Activity() {
         layout.addView(stance)
         layout.addView(url)
         layout.addView(publisher)
+        layout.addView(publishedAt)
         layout.addView(excerpt)
         layout.addView(text(
             "Birincil kaynak seçimi yalnız izinli/resmî kurum veya işveren alanlarında kabul edilir. Haber sitesi ve iş panosu birincil kaynak sayılmaz.",
@@ -324,7 +345,7 @@ class CareerNewsVerificationActivity : Activity() {
                     sourceType = CareerEvidenceSourceType.values()[sourceType.selectedItemPosition],
                     stance = CareerEvidenceStance.values()[stance.selectedItemPosition],
                     excerpt = excerpt.text.toString().trim(),
-                    publishedAt = null,
+                    publishedAt = publishedAt.text.toString().trim().takeIf { it.isNotBlank() },
                     checkedAt = utcNow()
                 )
                 val updated = record.addEvidence(claimId, item)
