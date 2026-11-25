@@ -123,3 +123,10 @@ Bu çalışma önceki 0-test sahte PASS riskini kapatmıştır. Yeni runner/AVD 
 - C1 bağımsız RED: kamu feed 6 kaynak /47 last-good; 6/6 stale; 10/100 eşiği ve production authenticated GET/D1 kanıtı yok.
 
 **KARAR:** Eski HEAD'de 3/4 UI test failure; root-focus için kontrollü CI düzeltmesi commit edildi. Yeni exact-head CI bekleniyor; H1 RED/BLOCKED, C1 RED.
+
+
+## 26.11.2026 — PID/focus fix HEAD APK CI sonucu
+- HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` APK/unit run [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) **SUCCESS**. Unit tests, APK build, artifact upload ve post steps tamamlandı.
+- Artifact ID `15069888409`, size 14,198,084 byte, digest `sha256:8f98ae33b42003beb70851e5b596e0b6354f7d24559b9585219e1f0ae46fbb79`.
+- Aynı HEAD emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) son kontrolde IN_PROGRESS; instrumentation step devam ediyor, XML/artifact pending.
+- Bu APK SUCCESS son HEAD için geçerlidir; H1 UI kapısını geçirmez.
