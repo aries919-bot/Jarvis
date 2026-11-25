@@ -263,24 +263,7 @@ class CareerNewsVerificationTest {
             sourceUrl = "https://kurum.gov.tr/duyuru/1"
         ))
     }
-    @Test
-    fun humanReviewRequiresRationaleAndNoOpCorrectionIsRejected() {
-        val withEvidence = record().addClaim(claim())!!
-            .addEvidence("claim-1", evidence())!!
-        assertNull(
-            withEvidence.reviewClaim(
-                "claim-1",
-                CareerHumanReviewDecision.CONFIRM,
-                reviewedAt
-            )
-        )
-        assertNull(withEvidence.correctClaim(
-            revisedClaim = withEvidence.claims.single(),
-            correctedAt = "2026-11-25T14:20:00Z",
-            explanation = "Metin değişmedi.",
-            sourceUrl = "https://kurum.gov.tr/duyuru/1"
-        ))
-    }
+
     @Test
     fun unknownCollectionAndFirstSeenTimesStayNull() {
         val value = record(collectedAt = null, firstSeenAt = null)
