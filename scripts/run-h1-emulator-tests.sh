@@ -14,6 +14,9 @@ collect_diagnostics() {
   adb shell ps -A -o PID,NAME > "$dir/process-list.txt" 2>&1 || true
   adb shell service check package > "$dir/package-service.txt" 2>&1 || true
   adb shell service list > "$dir/services.txt" 2>&1 || true
+  adb shell dumpsys window > "$dir/window-state.txt" 2>&1 || true
+  adb shell dumpsys activity activities > "$dir/activity-state.txt" 2>&1 || true
+  adb shell dumpsys activity processes > "$dir/process-state.txt" 2>&1 || true
   adb shell cmd package list packages -3 > "$dir/third-party-packages.txt" 2>&1 || true
   adb shell df -h /data > "$dir/data-space.txt" 2>&1 || true
   adb shell dumpsys diskstats > "$dir/diskstats.txt" 2>&1 || true
@@ -114,6 +117,52 @@ fi
 
 if ! wait_for_android_framework_ready; then
   exit 21
+fi
+
+# Build before checking focus: the emulator runner sends a MENU key shortly after boot.
+# On API 34 this can race Pixel Launcher startup and leave an ANR dialog focused.
+echo "Building app and instrumentation APKs before the window-focus preflight..."
+gradle :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain
+
+current_window_state() {
+  adb shell dumpsys window 2>&1 |
+    grep -E 'mCurrentFocus|mFocusedApp' || true
+}
+
+system_error_dialog_focused() {
+  current_window_state | grep -qE 'mCurrentFocus=.*Application (Not Responding|Error)'
+}
+
+recover_boot_focus_dialog() {
+  local attempts="${H1_FOCUS_RECOVERY_ATTEMPTS:-6}"
+  local interval="${H1_FOCUS_RECOVERY_INTERVAL_SECONDS:-5}"
+  local dir="h1-emulator-diagnostics/pre-instrumentation"
+  mkdir -p "$dir"
+
+  for attempt in $(seq 1 "$attempts"); do
+    current_window_state | tee "$dir/window-focus-attempt-$attempt.txt"
+    if system_error_dialog_focused; then
+      echo "Boot-time Android ANR/Application Error dialog owns window focus; closing the system dialog."
+      adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null
+      adb shell input keyevent KEYCODE_HOME
+    fi
+    sleep "$interval"
+  done
+
+  current_window_state | tee "$dir/window-focus-final.txt"
+  if system_error_dialog_focused; then
+    echo "ERROR: a system ANR/Application Error dialog still owns window focus; Espresso would fail."
+    adb shell dumpsys window > "$dir/window-state-blocked.txt" 2>&1 || true
+    adb shell dumpsys activity activities > "$dir/activity-state-blocked.txt" 2>&1 || true
+    return 22
+  fi
+
+  echo "Window-focus preflight passed: no system ANR/Application Error dialog is focused."
+}
+
+if ! recover_boot_focus_dialog; then
+  collect_diagnostics focus-preflight-blocked
+  exit 22
 fi
 
 echo "Starting H1 instrumentation tests..."
