@@ -14,5 +14,8 @@ class CareerForbiddenSourcesPolicyTest {
             assertFalse(CareerSourceCatalog.isTrustedUrl(url))
             assertFalse(CareerSourceCatalog.isSecondary(url))
         }
+        assertFalse(CareerSourceCatalog.isTrustedUrl("https://example.edu.tr/staj"))
+        assertFalse(CareerSourceCatalog.isTrustedUrl("https://personel.vakifuni.edu.tr/duyurular"))
+        assertTrue(CareerSourceCatalog.isTrustedUrl("https://personel.ozal.edu.tr/announcements-all"))
     }
 }
