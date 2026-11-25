@@ -119,5 +119,41 @@ class LinkAuditTests(unittest.TestCase):
         self.assertEqual(2, len(calls))
 
 
+    def test_robots_500_and_empty_response_never_request_page(self):
+        for response in (
+            {"status": 500, "body": b"", "error": "HTTP_500"},
+            {"status": 200, "body": b"", "error": None},
+        ):
+            calls = []
+
+            def requester(url, limit, response=response):
+                calls.append(url)
+                return response
+
+            result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
+            self.assertFalse(result["page_requested"])
+            self.assertIsNone(result["allowed"])
+            self.assertEqual(1, len(calls))
+            self.assertTrue(calls[0].endswith("/robots.txt"))
+
+    def test_page_500_and_empty_response_are_reported(self):
+        for response in (
+            {"status": 500, "body": b"", "error": "HTTP_500"},
+            {"status": 200, "body": b"", "error": None},
+        ):
+            calls = []
+
+            def requester(url, limit, response=response):
+                calls.append(url)
+                if url.endswith("/robots.txt"):
+                    return {"status": 200, "body": b"User-agent: *\\nAllow: /", "error": None}
+                return response
+
+            result = audit.audit_page("https://example.gov.tr/notice", ["example.gov.tr"], requester)
+            self.assertFalse(result["page_requested"])
+            self.assertIn("page_error", result)
+            self.assertEqual(2, len(calls))
+
+
 if __name__ == "__main__":
     unittest.main()
