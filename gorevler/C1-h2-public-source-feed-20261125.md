@@ -55,3 +55,14 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 - BOTAŞ kaynağı TIMEOUT_RETRY_FAILED; yalnız BOTAŞ stale kaldı.
 - Yeni kaynak düzeltmeleri: TGA expectedText `13 (onüç) adet pozisyon`; ORAN `6 (altı) Uzman` / `1 (bir) Destek Personeli`; Mardin başlık metni eşleşmesi sadeleştirildi; Mardin öğretim görevlisi PDF URL'sindeki fazla boşluk düzeltildi; Balıkesir beklenen metni resmî sayfadaki `Son Başvuru Tarihi` metnine çekildi.
 - Bu ölçüm düzeltme öncesidir; yeni exact-head live run bekleniyor. 10 kaynak / 100 pozisyon henüz sağlanmadığından RED.
+
+## İkinci exact-head live ölçüm (TGA/ORAN/Balıkesir düzeltmelerinden önce)
+- Run: https://github.com/aries919-bot/Jarvis/actions/runs/45535116804
+- Job: 138939715351 SUCCESS; artifact 14986582434; collectedAt=2026-11-25T02:44:48Z.
+- 15 kaynak kaydı; 10 fresh / 5 stale; 10 kart.
+- Güncel açık doğrulanmış: **7 kurum / 87 pozisyon**: Atatürk 71, Zafer 2, DOKA 1, Mardin Artuklu öğretim görevlisi 4, Anadolu 1, Düzce 5, Tarsus 3.
+- TGA deadline metni `Başvurular ... tarihinde başlayıp ... tarihinde sona erecektir` biçiminde; bu cümle biçimi için parser eklendi.
+- ORAN tarih metni `03 Aralık 2026`; expectedText düzeltildi.
+- Balıkesir'de publishedAt metaverisi bulunmadı; tarih uydurulmayıp `publishedAt:null` kabul edildi; deadline tekil `Son Başvuru Tarihi` etiketinden okunur.
+- Mardin öğretim üyesi sayfasında 04.12.2026 yalnız başlık aralığında göründüğünden, sınav tarihi/başvuru deadline karışıklığı riskine karşı sayılmadı. Mardin öğretim görevlisi PDF'si ise açıkça 04.12.2026 son başvuru tarihini ve 4 kadroyu doğruluyor.
+- BOTAŞ timeout; Mardin öğretim üyesi deadline kanıtı yok; yalnız ilgili kaynaklar stale/doğrulanamadı kaldı.
