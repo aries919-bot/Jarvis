@@ -238,6 +238,11 @@ class CareerNewsVerificationStoreTest {
         val storedClaim = store.load(reviewed.storyId)!!.claims.single()
         assertEquals(CareerHumanReviewDecision.CONFIRM, storedClaim.reviewHistory.single().decision)
         assertEquals(CareerHumanReviewDecision.INCONCLUSIVE, storedClaim.reviewDecision)
+
+        val erasedHistory = store.load(reviewed.storyId)!!.let { saved ->
+            saved.copy(claims = listOf(saved.claims.single().copy(reviewHistory = emptyList())))
+        }
+        assertFalse(store.save(erasedHistory).saved)
     }
 
     @Test
