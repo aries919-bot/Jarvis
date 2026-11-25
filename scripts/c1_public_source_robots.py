@@ -138,6 +138,25 @@ SOURCES = [
         ],
     },
     {
+        "id": "university-notice-pdfs",
+        "name": "Resmî Gazete ve üniversite ilan ekleri — exact PDF robots",
+        "page_urls": [
+            "https://www.beykoz.edu.tr/uploads/2026/11/g452sgzpw1brh-resmi-gazete-ilan-metni-pdf.pdf",
+            "https://pdb.marmara.edu.tr/dosya/pdb/ilanlar/24.11.2026%20%C3%96%C4%9Fr.G%C3%B6r.%20%C4%B0lan%C4%B1.pdf",
+            "https://pdb.marmara.edu.tr/dosya/pdb/ilanlar/24.11.2026_%C3%96%C4%9Fretim%20%C3%9Cyesi.pdf",
+            "https://www.biruni.edu.tr/content/files/uploads/10341/%C3%96%C4%9Fretim%20%C3%9Cyesi.pdf",
+            "https://www.biruni.edu.tr/content/files/uploads/10340/%C3%96%C4%9Fretim%20Eleman%C4%B1.pdf",
+            "https://www.biruni.edu.tr/content/files/uploads/10345/%C3%96%C4%9Fretim%20%C3%9Cyesi%20%281%29.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-1.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-8.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-9.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-10.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-11.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261123-4-11.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261120-4-14.pdf",
+        ],
+    },
+    {
         "id": "yokak_upcoming",
         "name": "Yükseköğretim Kalite Kurulu (başvuru 01.12.2026'da açılıyor)",
         "page_urls": [
