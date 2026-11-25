@@ -592,7 +592,9 @@
       "tags": [
         "Akademik",
         "KPSS'siz"
-      ]
+      ],
+      "deadlineTimeUnknown": true,
+      "deadlineTimeText": "mesai bitimine kadar (kesin saat belirtilmemiş)"
     },
     {
       "id": "munzur-ogretim-gorevlisi-2026-11-10",
@@ -628,7 +630,9 @@
         "Akademik",
         "ALES",
         "KPSS'siz"
-      ]
+      ],
+      "deadlineTimeUnknown": true,
+      "deadlineTimeText": "mesai bitimine kadar (kesin saat belirtilmemiş)"
     }
   ]
 }
