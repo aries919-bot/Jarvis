@@ -125,4 +125,53 @@ class CareerNewsVerificationStoreTest {
         assertFalse(store.save(record()).saved)
         assertTrue(storage.values.isEmpty())
     }
+    @Test
+    fun storeRejectsSilentEvidenceAndCorrectionHistoryDeletion() {
+        val storage = MemoryStorage()
+        val store = CareerNewsVerificationStore(storage)
+        val claim = CareerNewsClaim(id = "claim-1", text = "Kurum 12 teknisyen alacak.")
+        val sourceEvidence = CareerNewsEvidence(
+            id = "evidence-1",
+            publisher = "Devlet Su İşleri",
+            sourceUrl = "https://www.dsi.gov.tr/duyurular",
+            sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+            stance = CareerEvidenceStance.SUPPORTS,
+            excerpt = "Kurum 12 teknisyen alımı yapacağını duyurdu.",
+            publishedAt = null,
+            checkedAt = "2026-11-25T14:00:00Z"
+        )
+        val reviewed = record()
+            .addClaim(claim)!!
+            .addEvidence("claim-1", sourceEvidence)!!
+            .reviewClaim(
+                "claim-1",
+                CareerHumanReviewDecision.CONFIRM,
+                "2026-11-25T14:05:00Z",
+                "Resmî kurum duyurusu kontrol edildi."
+            )!!
+        assertTrue(store.save(reviewed).saved)
+
+        val erasedEvidence = reviewed.copy(
+            claims = listOf(
+                reviewed.claims.single().copy(
+                    evidence = emptyList(),
+                    reviewDecision = null,
+                    reviewedAt = null,
+                    reviewNote = ""
+                )
+            )
+        )
+        assertFalse(store.save(erasedEvidence).saved)
+
+        val corrected = reviewed.correctClaim(
+            revisedClaim = reviewed.claims.single().copy(text = "Kurum 10 teknisyen alacak."),
+            correctedAt = "2026-11-25T14:10:00Z",
+            explanation = "Kurumun düzeltme duyurusu kontenjanı değiştirdi.",
+            sourceUrl = "https://www.dsi.gov.tr/duyurular"
+        )!!
+        assertTrue(store.save(corrected).saved)
+        assertFalse(store.save(corrected.copy(correctionHistory = emptyList())).saved)
+        assertEquals(1, store.load(reviewed.storyId)!!.correctionHistory.size)
+    }
+
 }
