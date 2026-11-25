@@ -326,4 +326,18 @@ class CareerNewsVerificationTest {
         ))
     }
 
+    @Test
+    fun rejectsOversizedEvidenceRecords() {
+        val oversized = record().addClaim(claim())!!.copy(
+            claims = listOf(
+                claim().copy(
+                    evidence = (1..10).map { index ->
+                        evidence(id = "evidence-" + index).copy(excerpt = "A".repeat(2000))
+                    }
+                )
+            )
+        )
+        assertFalse(oversized.validationErrors().isEmpty())
+    }
+
 }
