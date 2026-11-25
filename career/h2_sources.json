@@ -156,6 +156,316 @@
         "KPSS'siz"
       ],
       "pdfUrlPremeasured": true
+    },
+    {
+      "id": "tga-personel-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
+      "itemId": "tga-personel-2026-11-13-pozisyon",
+      "title": "TGA personel alımı — 13 pozisyon",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://tga.gov.tr/kariyer",
+      "publicationMode": "labelled",
+      "allowNullPublishedAt": true,
+      "deadlineContext": "başvuru tarihleri",
+      "expectedText": [
+        "13 pozisyon",
+        "04 Aralık 2026",
+        "Türkiye Turizm Tanıtım ve Geliştirme Ajansı"
+      ],
+      "positionCount": 13,
+      "howToApply": {
+        "method": "TGA kariyer sayfasından çevrimiçi",
+        "url": "https://tga.gov.tr/kariyer",
+        "instructions": "Başvurular yalnızca TGA kariyer sayfası üzerinden çevrimiçi yapılır; şahsen, posta, faks veya e-posta ile başvuru kabul edilmez."
+      },
+      "conditions": [
+        "13 pozisyon 6 rol türüne dağıtılmıştır.",
+        "Genel şartlar: T.C. vatandaşı olmak, 18 yaşını doldurmuş olmak, kamu haklarından mahrum olmamak ve göreve engel sağlık sorunu bulunmamak.",
+        "Pozisyona göre ilgili lisans mezuniyeti, mesleki deneyim ve son iki yıl içinde YDS/e-YDS İngilizce en az B veya eşdeğer belge şartı bulunur; %100 yabancı dille eğitim veren lisans programı mezunları için ilandaki muafiyet uygulanır.",
+        "Her pozisyonun özel eğitim/deneyim şartı resmi kariyer sayfasındaki pozisyon detayında kontrol edilmelidir."
+      ],
+      "tags": [
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "oran-personel-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Orta Anadolu Kalkınma Ajansı (ORAN)",
+      "itemId": "oran-personel-2026-11-7-pozisyon",
+      "title": "ORAN personel alımı — 6 uzman + 1 destek personeli",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://www.oran.org.tr/haber/t-c--orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani",
+      "pdfUrl": "https://www.oran.org.tr/dokuman/fcff3eca-5f37-4a33-890d-822aa9bec77f.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "oran-table-date",
+      "deadlineContext": "başvuru tarihleri",
+      "expectedText": [
+        "6 Uzman Personel",
+        "1 Destek Personeli",
+        "03.12.2026"
+      ],
+      "positionCount": 7,
+      "howToApply": {
+        "method": "e-Devlet / Kariyer Kapısı üzerinden çevrimiçi",
+        "url": "https://www.oran.org.tr/haber/t-c--orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani",
+        "instructions": "Başvurular 09.11.2026–03.12.2026 tarihleri arasında e-Devlet/Kariyer Kapısı üzerinden yapılır; Kariyer Kapısı ilanı kazınmaz."
+      },
+      "conditions": [
+        "Toplam 7 pozisyon: 6 uzman personel ve 1 destek personeli.",
+        "Uzman ve destek kadroları için öğrenim alanı, KPSS puan türü/alt sınırı ve varsa yabancı dil şartı resmî PDF ekinde pozisyon bazında belirtilmiştir.",
+        "Başvuru ve değerlendirme koşulları için resmî duyuru ve PDF birlikte okunmalıdır."
+      ],
+      "tags": [
+        "KPSS"
+      ]
+    },
+    {
+      "id": "zafer-personel-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Zafer Kalkınma Ajansı",
+      "itemId": "zafer-personel-2026-11-2-uzman",
+      "title": "Zafer Kalkınma Ajansı uzman personel alımı — 2 pozisyon",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://www.doka.org.tr/announcement-detail.php?id=1222",
+      "officialUrl": "https://www.zafer.gov.tr/duyurular/227",
+      "pdfUrl": "https://www.doka.org.tr/assets/dosyalar/announcement_1222/files/E1_Ek-1_ZAFERPersonelAl%C4%B1mI_lan%C4%B1_6Sayfa-7bf499c2eb57.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "zafer-page-date",
+      "deadlineContext": "başvuru tarihleri",
+      "expectedText": [
+        "Zafer Kalkınma Ajansı",
+        "2 (iki) Uzman Personel",
+        "14.12.2026"
+      ],
+      "positionCount": 2,
+      "howToApply": {
+        "method": "Kariyer Kapısı üzerinden çevrimiçi",
+        "url": "https://www.zafer.gov.tr/duyurular/227",
+        "instructions": "Başvurular 25.11.2026–14.12.2026 döneminde Kariyer Kapısı üzerinden yapılır; başvuru ekranına resmî Zafer duyurusundan gidilir."
+      },
+      "conditions": [
+        "2 uzman personel alınacaktır; görev yeri TR33 Bölgesi illerindeki ajans birimleridir.",
+        "Seyahat engeli bulunmaması ve pozisyona özgü eğitim/mesleki yeterlilik koşulları aranır.",
+        "Ayrıntılı bölüm, mezuniyet, puan ve değerlendirme koşulları resmî PDF ekindedir."
+      ],
+      "tags": [
+        "KPSS"
+      ]
+    },
+    {
+      "id": "doka-personel-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Doğu Karadeniz Kalkınma Ajansı (DOKA)",
+      "itemId": "doka-personel-2026-11-1-uzman",
+      "title": "DOKA uzman personel alımı — 1 pozisyon",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://www.doka.org.tr/announcement-detail.php?id=1221",
+      "pdfUrl": "https://www.doka.org.tr/assets/dosyalar/announcement_1221/files/DOKA_Personel_ALIMI.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "doka-page-date",
+      "deadlineContext": "başvuru tarihleri",
+      "expectedText": [
+        "Doğu Karadeniz Kalkınma Ajansı",
+        "1 (Bir) Uzman",
+        "06.12.2026"
+      ],
+      "positionCount": 1,
+      "howToApply": {
+        "method": "Kariyer Kapısı üzerinden çevrimiçi",
+        "url": "https://www.doka.org.tr/announcement-detail.php?id=1221",
+        "instructions": "Başvurular 23.11.2026–06.12.2026 tarihleri arasında Kariyer Kapısı üzerinden yapılır; ajansın resmî duyurusundaki başvuru bağlantısı kullanılır."
+      },
+      "conditions": [
+        "1 uzman personel alınacaktır; görev yeri DOKA hizmet bölgesidir.",
+        "İlgili lisans programlarından mezuniyet, KPSS P12/P14/P24/P29/P34 puan türlerinden en az 80 ve İngilizce YDS/e-YDS en az C (veya eşdeğer 70) şartları aranır.",
+        "Ayrıntılı alan ve değerlendirme koşulları resmî PDF ekindedir."
+      ],
+      "tags": [
+        "KPSS"
+      ]
+    },
+    {
+      "id": "ataturk-20-11-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Atatürk Üniversitesi",
+      "itemId": "ataturk-2026-11-20-ogretim-uyesi",
+      "title": "Atatürk Üniversitesi öğretim üyesi alımı — 1 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/",
+      "pdfUrl": "https://atauni.edu.tr/personel-daire-baskanligi/wp-content/uploads/sites/219/2026/11/20.11.2026-tarihli-ilan.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "ataturk-page-date",
+      "deadlineContext": "son başvuru",
+      "expectedText": [
+        "Atatürk Üniversitesi",
+        "ÖĞRETİM ÜYESİ ALIM İLANI",
+        "04.12.2026"
+      ],
+      "positionCount": 1,
+      "allowNullPublishedAt": true,
+      "howToApply": {
+        "method": "Üniversitenin ilgili birimine başvuru",
+        "url": "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/",
+        "instructions": "Başvuru yöntemi, teslim edilecek belgeler ve ilgili birim resmî ilan PDF'sinde belirtilmiştir."
+      },
+      "conditions": [
+        "1 öğretim üyesi kadrosu; ilgili akademik unvan, doktora/alan ve bölüm özel şartları PDF ekindedir.",
+        "Başvuru öncesi kadro satırındaki unvan, bilim alanı ve belge şartları kontrol edilmelidir."
+      ],
+      "tags": [
+        "Akademik",
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "ataturk-16-11-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Atatürk Üniversitesi",
+      "itemId": "ataturk-2026-11-16-profesor",
+      "title": "Atatürk Üniversitesi profesör alımı — 70 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/16/ataturk-universitesi-ogretim-uyesi-alim-ilani-16-11-2026/",
+      "pdfUrl": "https://atauni.edu.tr/personel-daire-baskanligi/wp-content/uploads/sites/219/2026/11/16.11.2026-Profesor-Ilani.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "ataturk-page-date",
+      "deadlineContext": "son başvuru",
+      "expectedText": [
+        "Atatürk Üniversitesi",
+        "Profesör İlanı",
+        "30.11.2026"
+      ],
+      "positionCount": 70,
+      "allowNullPublishedAt": true,
+      "howToApply": {
+        "method": "Üniversitenin ilgili birimine başvuru",
+        "url": "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/16/ataturk-universitesi-ogretim-uyesi-alim-ilani-16-11-2026/",
+        "instructions": "Başvuru yöntemi, teslim edilecek belgeler ve ilgili birim resmî ilan PDF'sinde belirtilmiştir."
+      },
+      "conditions": [
+        "70 profesör kadrosu olduğu ilan/PDF tablosundan teyit edilmelidir; her bölüm için özel bilim alanı ve akademik şartlar farklıdır.",
+        "Profesörlük unvanı ve ilgili birimin PDF'de yazılı özel koşulları aranır."
+      ],
+      "tags": [
+        "Akademik",
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "mardin-artuklu-ogretim-uyesi-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Mardin Artuklu Üniversitesi",
+      "itemId": "mardin-artuklu-2026-11-ogretim-uyesi-36",
+      "title": "Mardin Artuklu Üniversitesi öğretim üyesi alımı — 36 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-uyesi-alim-ilani-profdr-docdr-drogruyesi-20112026-04122026",
+      "pdfUrl": "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20KASIM%202026%20%C3%96%C3%9C%20%C4%B0LAN%20METN%C4%B0%20WEEBBBBB.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "added",
+      "deadlineContext": "başvuru",
+      "expectedText": [
+        "Mardin Artuklu Üniversitesi",
+        "ÖĞRETİM ÜYESİ ALIM İLANI",
+        "04.12.2026"
+      ],
+      "positionCount": 36,
+      "howToApply": {
+        "method": "İlgili akademik birime şahsen/posta",
+        "url": "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-uyesi-alim-ilani-profdr-docdr-drogruyesi-20112026-04122026",
+        "instructions": "Başvuru belgeleri ve teslim adresi resmî PDF'de kadro bazında belirtilmiştir."
+      },
+      "conditions": [
+        "36 öğretim üyesi kadrosu; profesör, doçent ve doktor öğretim üyesi unvanları için bölüm/ana bilim dalına özel koşullar vardır.",
+        "Doktora/uzmanlık, akademik yayın, ALES ve yabancı dil koşulları kadro bazında resmî PDF'de listelenir."
+      ],
+      "tags": [
+        "Akademik",
+        "ALES",
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "mardin-artuklu-ogretim-elemani-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Mardin Artuklu Üniversitesi",
+      "itemId": "mardin-artuklu-2026-11-ogretim-gorevlisi-4",
+      "title": "Mardin Artuklu Üniversitesi öğretim görevlisi alımı — 4 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
+      "pdfUrl": "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20%20KASIM%20%202026%20%20TAR%C4%B0HL%C4%B0%20%20%C4%B0LAN%20METN%C4%B0%20%C3%96E%20WEBBB.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "added",
+      "deadlineContext": "başvuru",
+      "expectedText": [
+        "Mardin Artuklu Üniversitesi",
+        "ÖĞRETİM ELEMANI ALIM İLANI",
+        "04.12.2026"
+      ],
+      "positionCount": 4,
+      "howToApply": {
+        "method": "İlgili akademik birime şahsen/posta",
+        "url": "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
+        "instructions": "Başvuru belgeleri ve teslim adresi resmî PDF'de kadro bazında belirtilmiştir."
+      },
+      "conditions": [
+        "4 öğretim görevlisi kadrosu; alan/mezuniyet, ALES, yabancı dil ve varsa deneyim koşulları kadro bazında resmî PDF'dedir."
+      ],
+      "tags": [
+        "Akademik",
+        "ALES",
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "balikesir-ogretim-elemani-2026-11",
+      "reader": "official",
+      "format": "html",
+      "institution": "Balıkesir Üniversitesi",
+      "itemId": "balikesir-2026-11-ogretim-elemani-7",
+      "title": "Balıkesir Üniversitesi öğretim elemanı alımı — 7 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352",
+      "pdfUrl": "https://baunwebapi.balikesir.edu.tr/uploads/1795172124974.pdf",
+      "pdfUrlPremeasured": true,
+      "publicationMode": "meta",
+      "deadlineContext": "başvuru",
+      "expectedText": [
+        "Balıkesir Üniversitesi",
+        "ÖĞRETİM ELEMANI",
+        "04.12.2026"
+      ],
+      "positionCount": 7,
+      "howToApply": {
+        "method": "İlgili akademik birime şahsen/posta",
+        "url": "https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352",
+        "instructions": "Başvuru birimi, teslim yöntemi ve belgeler resmî PDF ekinde belirtilmiştir."
+      },
+      "conditions": [
+        "7 öğretim elemanı kadrosu; bölüm, mezuniyet, ALES ve yabancı dil asgari koşulları kadro bazında resmî PDF'dedir."
+      ],
+      "tags": [
+        "Akademik",
+        "ALES",
+        "KPSS'siz"
+      ]
     }
   ]
 }
