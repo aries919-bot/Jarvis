@@ -260,7 +260,7 @@ class CareerSourceCatalogTest {
         val url = "https://memur365.com/kamu-personel-alimi"
         assertTrue(CareerSourceCatalog.isNewsDiscoverySource(url))
         assertFalse(CareerSourceCatalog.isTrustedUrl(url))
-        assertFalse(CareerSourceCatalog.isSecondary(url))
+        assertTrue(CareerSourceCatalog.isSecondary(url))
         assertTrue(CareerSourceCatalog.categoryFor(url).contains("Haber"))
         assertEquals(
             "Memur 365 – kamu personel haberleri",
