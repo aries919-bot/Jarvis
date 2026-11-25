@@ -119,3 +119,15 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 - Öğretim görevlisi bölümü: 2026/29 tek kadro; sınav takvimi 10.11.2026–25.11.2026 başvuru, 27.11 ön değerlendirme, 30.11 sınav; deadline 25.11.2026.
 - Bu iki ayrı duyuru H2 kaynağı olarak geçici eklenmiştir (source config 19). Ancak deadline mesai bitimine kadar şeklinde, kesin saat yayımlanmadı; date-only otomatik sayaç aynı gün mesai sonrası yanlış açık gösterebileceği için canlı doğrulamada Doğrulanamadı / açık sayaca eklenmez kuralı uygulanmalı. PublishedAt öğretim görevlisi bölümünde açık yayın tarihi kanıtı yoksa null kalır.
 - İlan PDF sayımını yeniden say: 11 profesör/doçent/doktor öğretim üyesi pozisyonu + 1 öğretim görevlisi pozisyonu; 2 kart, 12 pozisyon. Son başvuru tarihi bugün olduğundan, exact saat bilinmeden açık kart eşiğine ekleme.
+
+
+## Munzur deadline saat koruması ve PR61 son kod testleri — 25.11.2026
+- PR #61 H2 source config toplamı 19 duyuru kaydı: Marmara'nın 2 ilanı ve Munzur PDF'sinden 2 ayrı ilan eklendi.
+- Munzur resmi PDF exact robots path run #45538589906 içinde HTTP 404/NO_ROBOTS_FILE; RFC 9309 kapsamında erişim serbest. PDF metni web'den okunup kontrol edildi; screenshot çağrısı cache miss verdi.
+- Aynı PDF: 2026/18–2026/28 öğretim üyesi satırları 11 kadro; 2026/29 öğretim görevlisi satırı 1 kadro. İki ayrı duyuru / iki H2 kartı; toplam 12 pozisyon.
+- Her iki duyurunun son başvuru tarihi 25.11.2026 mesai bitimine kadar; kesin saat yok. `deadlineTimeUnknown=true`, `deadlineTimeText=mesai bitimine kadar (kesin saat belirtilmemiş)` alanları eklendi. Aynı gün `Doğrulanamadı` sayılır; ertesi gün `Süresi geçti` olur. Böylece çalışma saati uydurulmaz ve kart sayacına girmez.
+- İlan tarihinin açık olduğu öğretim üyesi bölümünde publishedAt=2026-11-10; öğretim görevlisi bölümünde tarih ayrı ve kesin kanıtlanmadığından publishedAt null opt-in.
+- Deadline-time parser regression: aynı gün Doğrulanamadı ve ertesi gün Süresi geçti doğrulanır.
+- Son H2 PR tests exact HEAD `2a9618e63c63e4d025a5192ae6df34927fdc665c`: [Python Script Tests #45539934341](https://github.com/aries919-bot/Jarvis/actions/runs/45539934341) SUCCESS, `Ran 160 tests / OK`; [H2 PR test #45539934288](https://github.com/aries919-bot/Jarvis/actions/runs/45539934288) SUCCESS, `Ran 59 tests / OK`.
+- [Deterministik Hakem #45539934310](https://github.com/aries919-bot/Jarvis/actions/runs/45539934310): test alt işi SUCCESS; formal GitHub review kaydı 0 olduğundan bağımsız onay yok.
+- Son exact-head live push: [#45539925550](https://github.com/aries919-bot/Jarvis/actions/runs/45539925550), job `138955831007`, o güncel kayıtta hâlâ `Read measured official announcements` adımında in_progress; nihai kaynak sayımı/artifact henüz yok.
