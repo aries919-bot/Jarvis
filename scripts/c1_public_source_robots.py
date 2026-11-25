@@ -116,6 +116,28 @@ SOURCES = [
         ],
     },
     {
+        "id": "munzur",
+        "name": "Munzur Üniversitesi",
+        "page_urls": [
+            "https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
+        ],
+    },
+    {
+        "id": "resmigazete-25-11",
+        "name": "Resmî Gazete 25.11.2026 Çeşitli İlanlar",
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4.htm",
+        ],
+    },
+    {
+        "id": "resmigazete-13-11",
+        "name": "Resmî Gazete 13.11.2026",
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/eskiler/2026/11/20261113.pdf",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261113-4-15.pdf",
+        ],
+    },
+    {
         "id": "yokak_upcoming",
         "name": "Yükseköğretim Kalite Kurulu (başvuru 01.12.2026'da açılıyor)",
         "page_urls": [
