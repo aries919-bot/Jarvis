@@ -505,3 +505,13 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - C1: 6 kaynak/47 last-good kamu kartı; 6 stale; 10/100 ve production GET/D1 eksik. RED.
 
 **KARAR:** H1 RED/BLOCKED — yeni exact-head CI bekleniyor. C1 RED. Merge/deploy yok.
+
+
+## 26.11.2026 — Kamu kaynak adayları: 10 kurum / 10 duyuru
+- Resmî kurum araştırması ayrı görev dosyasına yazıldı: [gorevler/C1-KAMU-KAYNAK-ADAYLARI-2026-11-26.md](../gorevler/C1-KAMU-KAYNAK-ADAYLARI-2026-11-26.md).
+- Adaylar: Sahil Güvenlik (10 pozisyon), Bursa Teknik Üniversitesi (1), YÖKAK (5), Adli Tıp Kurumu (181), Anadolu Üniversitesi (1), Zafer Kalkınma Ajansı (2), ORAN (7), Dicle Kalkınma Ajansı (4), Bartın Üniversitesi (1), TGA (13). Toplam 10 farklı kurum / 10 duyuru kartı / 225 pozisyon; pozisyon sayısı ilan kartı sayısı değildir.
+- Her kurum için kaynak başına 1 duyuru kartı. Resmî kaynak sayfaları ve başvuru sonları görev dosyasında; başvuru hedefleri kazınmaz.
+- Sayıştay (16 pozisyon, son başvuru 25.11.2026), OKA (5, son başvuru 22.11.2026), MEVKA (1, son başvuru 13.11.2026) geçmiş tarihli olduğu için aktif sayaç dışında bırakıldı.
+- Bu manuel keşif Worker'a aktarılmış değildir: gerçek feed ölçümü hâlâ 6 kaynak /47 last-good kart, 6/6 stale, 0 fresh; production authenticated GET/D1 yok. Kamu eşiği 10 kaynak/100 doğrulanmış ilan: pipeline ölçümünde RED; manuel aday listesinde 10 kaynak ama yalnız 10 kart (90 eksik).
+
+**KARAR:** Kaynak keşfi 10 kuruma genişletildi; canlı feed/100 kart kanıtı yok, kamu C1 RED.
