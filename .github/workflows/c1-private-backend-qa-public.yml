@@ -671,3 +671,5 @@ jobs:
         run: |
           echo "Hakem decision: ${DECISION:-RED}"
           test "${DECISION:-RED}" = "ONAY"
+
+# Triggered exact-head C1 refresh audit from fresh durum/e-sube snapshot 2026-11-25T13:49:08Z
