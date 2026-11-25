@@ -171,6 +171,12 @@ class CareerNewsVerificationTest {
         )
         assertNull(revised.claims.single().reviewedAt)
         assertEquals(0, reviewed.correctionHistory.size)
+        val restored = CareerNewsVerificationRecord.fromJson(revised.toJson().toString())
+        assertNotNull(restored)
+        assertEquals(revised, restored)
+        assertEquals("Kurum 12 teknisyen alımı yapacağını duyurdu.", restored!!.correctionHistory.single().previousText)
+        assertEquals(1, restored.correctionHistory.single().previousEvidence.size)
+        assertEquals(CareerHumanReviewDecision.CONFIRM, restored.correctionHistory.single().previousReviewDecision)
     }
 
     @Test
