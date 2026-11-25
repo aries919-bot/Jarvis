@@ -615,5 +615,37 @@ class H2ReaderTests(unittest.TestCase):
 
 
 
+
+    def test_same_day_mesai_deadline_without_time_is_not_claimed_open(self):
+        item={
+            "itemId":"munzur-deadline-test","institution":"Munzur Üniversitesi",
+            "title":"Munzur akademik ilan","category":"Kamu","contentType":"job",
+            "url":"https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
+            "publicationMode":"munzur-ilan-date","deadlineContext":"son başvuru",
+            "expectedText":["Munzur Üniversitesi Rektörlüğünden","Son Başvuru Tarihi : 25.11.2026"],
+            "positionCount":11,"deadlineTimeUnknown":True,
+            "deadlineTimeText":"mesai bitimine kadar (kesin saat belirtilmemiş)",
+            "howToApply":{"method":"Şahsen veya posta","url":"https://www.munzur.edu.tr/","instructions":"Mesai bitimine kadar."},
+            "conditions":["Resmî PDF'deki kadro koşulları uygulanır."]
+        }
+        raw="Munzur Üniversitesi Rektörlüğünden İlan Tarihi : 10.11.2026 Son Başvuru Tarihi : 25.11.2026"
+        same_day=h2.parse_official_notice(item,raw,"", "2026-11-25T03:30:00Z","2026-11-25T03:30:00Z",date(2026,11,25))
+        self.assertEqual("Doğrulanamadı",same_day["freshnessStatus"])
+        self.assertEqual("mesai bitimine kadar (kesin saat belirtilmemiş)",same_day["deadlineTimeText"])
+        later_day=h2.parse_official_notice(item,raw,"", "2026-11-26T03:30:00Z","2026-11-25T03:30:00Z",date(2026,11,26))
+        self.assertEqual("Süresi geçti",later_day["freshnessStatus"])
+
+    def test_munzur_same_day_time_unknown_is_excluded_from_verified_listing_count(self):
+        rows=[
+            {"sourceId":"munzur","institution":"Munzur Üniversitesi","sourceStatus":"fresh",
+             "items":1,"positions":11,"verifiedOpenListings":0,"verifiedOpenPositions":0,
+             "verifiedInstitutions":[],"error":None}
+        ]
+        summary=h2.make_summary(rows,"2026-11-25T03:30:00Z")
+        self.assertIn("Güncel açık doğrulanmış ilan kartı: **0**",summary)
+        self.assertIn("Kartlardaki güncel açık pozisyon toplamı: **0**",summary)
+
+
+
 if __name__ == "__main__":
     unittest.main()
