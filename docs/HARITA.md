@@ -14,10 +14,10 @@
 | K1-E1 | KABUL | Actions #45388925995 SUCCESS; 3 sayfa/43 benzersiz kamu ilanı/8 kurum; Cem 3 kaydı e-Şube'de doğruladı. Sayım: 1 kamu kaynağı/43 ilan. |
 | K1-F | İPTAL | v3 gereği iptal; K1-F2 ile değiştirildi. |
 | K1-F2 | TEST KABUL — MERGE BEKLİYOR | PR #33; Actions #45403456464 SUCCESS; 46/46 geçti, 0 hata. PR diff'i yalnız 2 dosya silme. Test workflow PR #34 ve hedef dalı `is/K1-test-workflow`. |
-| H1 | PR HAZIRLANIYOR | `docs/HABER_SEMA.md`; H1 JSON sözleşmesi ve her kategoriye 2–3 resmî sayfa adayı. Adayların robots/erişim ölçümü yapılmadı. |
+| H1 | ŞEMA KABUL — PR #63 MERGED / GENEL H1 DEVAM | Exact-head #45628989453: 12/12 test; ChatGPT öz-QA ONAY; 4 dosya +43/-20; `durum` merge SHA `4145ce5`. Bu yalnız şema sözleşmesi; kaynak envanteri/ilan kabulü değil. |
 | K1-B | YAPILMADI | ilan.gov.tr ve Resmî Gazete HTTP/TLS/robots ölçümü. |
 | K1-C | YAPILMADI | Ölçülen kaynak denetimi ve aday listesi. |
-| H2 | YAPILMADI | Ölçülmüş sayfalardan H1 JSON okuyucu. |
+| H2 | PR #61 ÖZ-QA RED | 19 kaynak /17 fresh /2 stale; 11 kurum /13 açık ilan kartı /125 pozisyon. BOTAŞ parser çıktısı kategori enum'unu ihlal ediyor; 10/100, cross-feed tekilleştirme ve production GET eksik. PR birleştirilmedi. |
 | C1-1 | DEVAM — KOD QA PASS / GENEL RED | PR #5 diff'i 60 KB sınırını aşıyor; Worker production GET BLOCKED; son exact-head QA #45634071990: 46/46 test, 11/11 local D1, 17/17 senaryo; kamu 6 kaynak/47 açık ilan, 10/100 RED. Ayrıntı: [gorevler/C1-1.md](../gorevler/C1-1.md). |
 | C1-2 | RAPOR HAZIR — RED | Son exact-head rapor #45634071990: kamu 6 kaynak/47 doğrulanmış açık kart; özel deadline-unknown kayıtlar sayılmaz; 10/100 eşik sağlanmadı. [gorevler/C1-2.md](../gorevler/C1-2.md). |
 | K1-M | YAPILMADI | Temiz workflow/betik PR'si; film commitleri hariç. Görev tanımı: [gorevler/K1-M.md](../gorevler/K1-M.md). |
@@ -387,3 +387,13 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Production authenticated GET **BLOCKED**: `JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN` yok; POST/deploy yapılmadı. Private PR #5 patch yeniden sayımı 114.958 UTF-8 bayt ve Hakem 60 KB sınırının üstünde. PR #5/#6/#8/#9 açık/taslak, merge yok.
 - Bu bölüm, yukarıdaki 25.11 eski snapshot (2026-11-24T23:51:48Z) ve eski 3/44 sayımını günceller. Güncel veri 2026-11-25T13:49:08Z snapshot'ına aittir. Günlük schedule'ın `main` üzerinden çalıştığı henüz kanıtlanmadı.
 - Ayrıntı: [gorevler/C1-1.md](../gorevler/C1-1.md). K1-M görev metni: [gorevler/K1-M.md](../gorevler/K1-M.md).
+
+## 13. Hakem yokken öz-QA ve son birleştirme durumu — 25.11.2026
+
+- Kullanıcı talimatı: bağımsız Hakem bulunmadığında ChatGPT exact-head QA yapar, ONAY/RED kararını PR yorumuna ve `gorevler/C1-SELF-QA-VE-BIRLESTIRME-PLANI-2026-11-25.md` dosyasına kaydeder. Bu bağımsız dış inceleme değildir. Kural `docs/NOT_C1.md` §12'ye eklendi.
+- H1 PR #63: öz-QA ONAY; Actions #45628989453 12/12 test; 4 dosya +43/-20; 25.11.2026'da `durum` dalına squash merge, SHA `4145ce51398c796e61a95305cc6d39d2779dbbec`. H1'in tüm kaynak/ilan hedefi ayrıca kabul edilmiş değildir.
+- H2 PR #61: öz-QA RED. 13 kart / 11 kurum; 125 pozisyon kart sayısı değildir. BOTAŞ parser çıktıları H1 enum dışı `Kamu bağlı büyük şirket` etiketi veriyor; çıktı testi eksik. Düzeltme ve exact-head yeniden test olmadan merge yok.
+- e-Şube ayrı ölçümü: 42/42 benzersiz/açık kayıt, `collectedAt=2026-11-25T13:49:08Z`; `publishedAt=null`. H2 13 kart ile cross-feed birleşimi/tekilleştirme kanıtı bulunmuyor.
+- C1 exact-head Hakem #45634071990: 46/46 test, local D1 11/11, senaryo 17/17 PASS; karar RED: kamu 6 kaynak/47 doğrulanmış kart, 10/100 sağlanmadı; production authenticated GET BLOCKED. H2 PR #61 genişletilmiş feed'i bu C1 raporuna dahil değildir.
+- PR #58 tek seferlik e-Şube tetik dalı; geçici workflow değişikliği kalıcı olarak merge edilmez. PR #59/#60 robots/link-audit açık; bu turda merge kararı verilmedi.
+- SONRAKİ ADIM: BOTAŞ kategori sözleşmesini düzelt ve parser çıktı testi ekle; H2 exact-head test/live ölçümünü yenile; C1 collector'a e-Şube + H2 feed'lerini kaynak bazında tekilleştirerek entegre et; 10/100 ve production GET kapılarını yeniden çalıştır.
