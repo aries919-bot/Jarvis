@@ -182,3 +182,17 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Ek takip: evidence formu yayın tarihi girişi sunmuyor (`publishedAt=null` sabit); correction UI eski evidence detaylarını göstermiyor. PR #70 kaynak politikası PR #71'den ayrı ve entegrasyon bağımlılığı.
 - C1 global gate değişmedi: kamu ayrı raporu, 10 kaynak/100 doğrulanmış ilan, Worker production authenticated GET ve cross-feed dedup hâlâ ayrı RED/BLOCKED. H1 testleri C1 kaynak eşiği yerine geçmez.
 - PR #71 hakem kararı RED; merge/deploy yok. Gerçek telefon testi yok.
+
+## 14. H1 UI kanıt tarihi ve emülatör devamı — 25.11.2026
+- H1 PR #71 güncel HEAD: `6b392a3aa02d42700743657350d081d7f7ad6aeb`; 10 dosya / +2.578 / -26.
+- Review geçmişi append-only: her önceki kararın UTC zamanı, gerekçesi ve evidence ID listesi korunur. Yeni kanıt kararı arşivleyerek sıfırlar; yeni review eski kararı arşivler; Store geçmiş silme/yeniden yazmayı reddeder.
+- Evidence formu isteğe bağlı `publishedAt` UTC alanı içerir; boşsa null, geçersiz tarih reddedilir. Correction geçmişi eski kanıtların publisher/sourceType/stance/excerpt/publishedAt/checkedAt ve kaynak linkini gösterir.
+- Android UI instrumentation gerçek akışı yürütür: claim ekle → publishedAt'li evidence → human review → yeni evidence ile review arşivi → correction → previous evidence ayrıntısı.
+- Test sayımı yeniden: 20 model +10 store +4 Android instrumentation = **34 test**.
+- Exact-head APK/unit [#45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) ve emulator/SQLite [#45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) son kontrolde IN_PROGRESS.
+- Önceki emulator #45675851473 yeni commit nedeniyle CANCELLED; PASS değildir. Önceki APK/unit #45675851347 SUCCESS ama yeni UI akışını kapsamıyor.
+- **H1 KARAR: RED / beklemede.** Güncel iki exact-head CI PASS ve gerçek telefon testi olmadan merge yok.
+- C1 source policy PR #70 exact-head #45677312902 SUCCESS ve öz-QA ONAY; H1 sırasından sonra merge edilecek.
+- C1 H2/e-Şube PR #11 hâlâ RED: 12 kamu kaynağı /55 doğrulanmış açık ilan (100 eşiğine 45 eksik); Worker authenticated production GET/D1 ve şehir kanıtlı cross-feed dedup yok. Kamu ayrı raporu ve 10 kaynak/100 ilan kapısı değişmez.
+- Ayrıntılı görev: `gorevler/H1-UI-PUBLISHEDAT-EMULATOR-2026-11-25.md`.
+
