@@ -835,3 +835,15 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Test verilerindeki Bearer örneği fake şeklinde kısaltıldı; gerçek/token biçimine benzeyen test fixture kaldırıldı.
 - CI logu BlobNotFound; test adımı hiç başlamadı. PR #12 draft, merge/deploy yok. Yeni commit/rerun döngüsü durduruldu.
 - Ayrıntı `gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md`; son rapor commiti 6ba88e0992e370733d0ce303621d5047d4eb4c8b.
+
+## 37) H1 Haber QA ve C1/Worker QA güncel notu — 25.11.2026
+- H1 PR #71 current HEAD `0eaaa74153dd3eacdd66c701b9727c2b8978983f`; yeni yerel Haber QA `CareerNewsQuestionAnswer.kt` + Activity'de soru düğmesi + 17 JUnit testi.
+- Haber QA cihaz içi deterministic; LLM/ağ/Worker/kariyer feed çağrısı yok. Sadece aynı haberin claim/evidence/stance/sourceType/reviewHistory/correctionHistory ve ayrı yayın/toplama/ilk görülme zamanlarından cevap verir. PII soruları abstain; belirsiz çoklu claim sorusu clarification.
+- İlk exact-head run #45698403489: 142 total /138 pass /4 fail. Hata sınıfları: ilk görülme test beklentisi yanlış, asıl kaynağı Türkçe çekimi eksik, aynı URL'deki ayrı kanıt tekilleme hatası, CONTEXT_MISSING açıklamasında açık etiket eksik. Fix commit `0eaaa741...`; QA test tanımı 14 → 17.
+- Yeni APK/unit run #45699134292 ve merge-ref emulator #45699134296 son sorguda IN_PROGRESS. Eski b8a7812 exact-head CI PASS yeni QA kodunu kapsamaz. Güncel sonuçlar gelmeden H1 ONAY/merge yok.
+- PR #71 son diff: 12 file / +3.308 / -26. Secret/PII-token pattern 0; LinkedIn/Indeed URL 0; fake browser UA 0. Diff, PR dosyaları listesinden yeniden sayıldı.
+- H1 ilk açılış SQLite I/O P2 işi PR #71 içinde daha önce düzeltildi: tek FIFO executor ile async load; mevcut kayıtta no-op save; close işi queue sonuna alındı. Ayrıntı `gorevler/H1-SQLITE-ASYNC-OPEN-2026-11-25.md`.
+- Cloud QA/RAG PR #12: runner-start engeli nedeniyle test adımı çalışmıyor (private repo 0-step job); yerel pure QA 18/18 ve route 7/7 sonuçları ayrı notlandı. PR #12 taslak, merge/deploy yok.
+- C1 kamu kapısı değişmedi: 12 resmî kaynak /55 doğrulanmış açık ilan /45 eksik; Worker production GET/D1 ve city/dedup halen RED.
+- Haber QA raporu: `gorevler/H1-NEWS-QA-2026-11-25.md`.
+**KARAR:** H1 yeni exact-head CI beklemede, gerçek telefon testi zorunlu; C1 RED; QA/RAG backend private Worker PR #12 merge/deploy yok.
