@@ -1,0 +1,142 @@
+name: C1 H2 mapper exact-head public QA
+
+on:
+  push:
+    branches: [qa/c1-private-runner]
+    paths:
+      - '.github/workflows/c1-h2-mapper-public-qa.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: c1-h2-mapper-public-qa
+  cancel-in-progress: false
+
+jobs:
+  exact-head-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PRIVATE_SHA: cd893cdde5d5d461ce68b93821371295fd07d4a5
+      H2_READER_SHA: fe37be93202442394504f455b4a1caeb31f298cf
+      C1_READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - name: Check out public QA harness
+        uses: actions/checkout@v4
+
+      - name: Check out exact private C1 integration head (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_SHA }}
+          path: private-c1
+          token: ${{ env.C1_READ_TOKEN }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify exact private SHA
+        shell: bash
+        run: |
+          test -n "$C1_READ_TOKEN"
+          actual="$(git -C private-c1 rev-parse HEAD)"
+          test "$actual" = "$PRIVATE_SHA"
+          echo "Exact private C1 SHA: $actual"
+
+      - name: Load current e-Şube JSON from durum (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: durum
+          path: private-c1/public-input/upstream
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Load exact latest H2 reader and official source catalog
+        uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: ${{ env.H2_READER_SHA }}
+          path: private-c1/public-input/h2-reader
+          persist-credentials: false
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned H2 PDF parser
+        run: python -m pip install --disable-pip-version-check pypdf==5.4.0
+
+      - name: Test exact H2 reader and last-good seed
+        working-directory: private-c1/public-input/h2-reader
+        run: python -m unittest scripts/test_h2_announcement_reader.py scripts/test_h2_last_good_seed.py -v
+
+      - name: Seed and read measured H2 public sources
+        run: |
+          mkdir -p private-c1/public-input/h2-reader/reports/h2-last-good
+          python private-c1/public-input/h2-reader/scripts/h2_last_good_seed.py \
+            --seed private-c1/public-input/h2-reader/career/h2_last_good_seed.json \
+            --previous-dir private-c1/public-input/h2-reader/reports/h2-last-good
+          python private-c1/public-input/h2-reader/scripts/h2_announcement_reader.py \
+            --config private-c1/public-input/h2-reader/career/h2_sources.json \
+            --out-dir private-c1/public-input/h2-reader/reports/h2 \
+            --previous-dir private-c1/public-input/h2-reader/reports/h2-last-good \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run all C1 unit and regression tests on exact private head
+        working-directory: private-c1
+        run: npm run test:c1
+
+      - name: Run local Worker and D1 smoke (not production)
+        working-directory: private-c1
+        run: node scripts/c1-worker-d1-smoke.mjs
+
+      - name: Run combined e-Şube + H2 + employer source collector (no production credentials)
+        working-directory: private-c1
+        env:
+          JARVIS_WORKER_URL: ''
+          JARVIS_WORKER_TOKEN: ''
+        run: |
+          node scripts/career-feed-live.mjs | tee career-feed-live.txt
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          const feed = JSON.parse(await readFile("career-feed-live.json", "utf8"));
+          const rows = feed.sources.map(source => ({
+            id: source.id, name: source.name, category: source.category,
+            status: source.status, stale: Boolean(source.stale),
+            listings: source.listingCount ?? 0, lastError: source.lastError || source.error || null
+          }));
+          const publicRows = rows.filter(row =>
+            row.category === "Kamu" || row.category === "Kamu bağlı şirket"
+          );
+          console.log(JSON.stringify({
+            collectedAt: feed.collectedAt,
+            sourceCount: feed.sourceCount,
+            freshSourceCount: feed.freshSourceCount,
+            staleSourceCount: feed.staleSourceCount,
+            verifiedSourceCount: feed.successfulSourceCount,
+            verifiedListingCount: feed.verifiedListingCount,
+            publicSourceCount: feed.publicSourceCount,
+            publicListingCount: feed.publicListingCount,
+            unknownDeadlineCount: feed.unknownDeadlineCount,
+            expiredCount: feed.pastDeadlineCount,
+            threshold: feed.threshold,
+            publicSources: publicRows
+          }, null, 2));
+          NODE
+
+      - name: Upload exact-head QA results and live JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-h2-mapper-exact-head-qa
+          path: |
+            private-c1/career-feed-live.json
+            private-c1/career-feed-live.txt
+          if-no-files-found: warn
+          retention-days: 30
