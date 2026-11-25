@@ -747,3 +747,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Report upload adımı zaten `if: always()` kullanıyor; önceki QA-08 notundaki bu öneri uygulanmış durumda, açık eksik değil.
 - Checkout `github.event.pull_request.head.sha` kullanıyor; PR #70 merge commit'i emulator testine dahil değil. Mevcut run bittikten sonra checkout `github.sha` (PR merge ref) olacak şekilde tek workflow değişikliği yapılacak.
 - Ana `android.yml` içinde testDebugUnitTest ve assembleDebug iki ayrı Gradle çağrısı; birleştirme olası hız optimizasyonu olarak ayrı iş.
+
+## 30) Android izin taraması düzeltmesi — 25.11.2026
+- Tüm 21 ana Kotlin dosyasında permission API taraması yapıldı.
+- CALL_PHONE ve READ_CONTACTS gerçekten kullanılıyor: Commands.kt satır 89'da ACTION_CALL/ACTION_DIAL, satır 92–94'te ContactsContract Phone.CONTENT_URI. Bu nedenle kaldırma kararı yok.
+- Sorun zamanlama: MainActivity onCreate satır 140–145 ilk açılışta RECORD_AUDIO, CALL_PHONE, READ_CONTACTS ve POST_NOTIFICATIONS izinlerini birlikte istiyor. Bunlar sesli komut, arama ve kişi bulma özelliği ilk kullanıldığında ayrı ayrı istenmeli; POST_NOTIFICATIONS bildirim bağlamında istenmeli.
+- BLUETOOTH_CONNECT zaten ses çıkış seçimi sırasında just-in-time isteniyor.
+- Reminders.kt satır 85 `AlarmManager.setAlarmClock` çağırıyor. Android resmi belgeleri setAlarmClock için exact alarm izni gerektiğini söylüyor; `USE_EXACT_ALARM` otomatik verilir fakat esasen çalar saat/takvim uygulamaları için sınırlı. Jarvis'in ana işlevi alarm değilse Play policy riski doğar; kullanıcı kontrollü `SCHEDULE_EXACT_ALARM` veya inexact alarm/WorkManager alternatifi değerlendirilmelidir. [Android exact alarm policy](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms).
+- **KARAR:** İzinler kullanılmıyor diye silinmeyecek. Just-in-time izin akışı ve exact alarm ürün/policy değerlendirmesi ayrı güvenlik PR'ı.
