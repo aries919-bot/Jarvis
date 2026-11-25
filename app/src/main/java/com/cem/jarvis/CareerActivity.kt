@@ -1592,7 +1592,13 @@ class CareerActivity : Activity() {
             return
         }
 
-        filtered.take(100).forEach { item ->
+        val visibleItems = filtered.take(100)
+        val verificationByStory = newsVerificationStore.loadMany(
+            visibleItems.map { item ->
+                CareerNewsVerificationRecord.stableStoryId(item.optString("url"), item.optString("title"))
+            }
+        )
+        visibleItems.forEach { item ->
             val title = item.optString("title")
             val url = item.optString("url")
             val snippet = item.optString("snippet")
@@ -1625,7 +1631,7 @@ class CareerActivity : Activity() {
                 ))
             }
             val storyId = CareerNewsVerificationRecord.stableStoryId(url, title)
-            val verification = newsVerificationStore.load(storyId)
+            val verification = verificationByStory[storyId]
             card.addView(label(
                 "Haber doğrulama: " + verificationStatusLabel(verification?.verdict()),
                 11f, true, if (verification?.verdict() == CareerNewsVerdict.VERIFIED) successColor else warningColor
