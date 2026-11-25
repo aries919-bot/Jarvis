@@ -52,9 +52,9 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - İmkânsız tarih ve kimlik numarası barındıran excerpt reddedilir.
 
 ## CI / güvenlik sınırları
-- PR #68 exact-head workflow run listesi: 0 kayıt.
-- Commit combined status listesi: 0 kayıt.
-- CI sonucu PASS değildir; çalıştırılmadı/kanıt yok.
+- Önceki PR #68 için pull_request workflow tetiklenmedi; hedef dal filtresi uyuşmazlığı bulundu.
+- PR #69 ilk test koşusu #45657242423, yeni HEAD'e göre eski SHA `d09786662a6ca26bd548a0a947282b0e775e5dd5` üzerinde başladı; concurrency tarafından yeni commit gelince iptal edildi. Bu koşu exact-head kanıtı değildir.
+- Son HEAD `c3cd6e65f46c35e996fed30d4d45b0352b307d70` için Actions run ve status henüz doğrulanmadı. CI PASS değildir.
 - Kaynak URL'leri otomatik açılmaz veya kazınmaz; model yalnız referansları saklar.
 - Bu PR haber kartında kullanıcıya gösterilen yeni arayüz sunmaz; henüz UI/SharedPreferences entegrasyonu yok.
 - Merge/deploy yapılmadı.
@@ -65,3 +65,9 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 3. Haber kartına iddia ekle, kaynak kanıtı ekle, karşıt kanıt ekle, insan incelemesi ve düzeltme geçmişi görüntüleme eylemleri ekle.
 4. Dış bağlantıları Custom Tabs ile aç; C1 worker JSON ve 10/100 kapıları kapanmadan mobil HTML arama motoru fallback'ini kapatma.
 5. H1 UI PR'si için ayrıca Full App QA workflow eklenmesi veya mevcut kariyer-modulu dalında UI test workflow'unun varlığı doğrulanmalı; PR #69 yalnız Android APK workflow'unu tetikler. Telefon testinde eski haber arşivi korunumu, kullanıcı onayı, link geri dönüşü ve offline/empty/error davranışını doğrula.
+
+## 25.11.2026 CI hata analizi / düzeltme
+- İlk H1 test koşusunda model Kotlin derlemesi ve test Kotlin derlemesi tamamlandı; test çalıştırmada JSON round-trip çağrıları Android'in local unit test mock JSON sınıflarında RuntimeException verdi. Bu nedenle test scope'a `org.json:json:20240303` eklendi; app runtime'a yeni bağımlılık eklenmedi.
+- Aynı eski koşuda düzeltme geçmişi testindeki verdict assertion da başarısızdı; güncel HEAD'de correction kaydı önceki metin/kanıt/review alanlarını saklar ve düzeltilmiş claim'in kanıtını sıfırlar. Bu düzeltme exact-head testle doğrulanacak.
+- PR #69 latest HEAD: `c3cd6e65f46c35e996fed30d4d45b0352b307d70`; exact-head CI sonucu henüz bekleniyor.
+- Bu PR'da otomatik kaynak fetch yoktur. PRIMARY_SOURCE etiketi, UI katmanında yalnız gerçek resmî/orijinal kaynağı seçme ve insan incelemesiyle sunulmalıdır; bu model kendi başına URL'nin resmîliğini kanıtlamaz.
