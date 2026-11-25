@@ -338,3 +338,14 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Sabit eşik 10 kaynak /100 doğrulanmış açık ilan; fiilî 6/47: RED. Production authenticated GET BLOCKED (`JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN` yok), publish SKIPPED; production deploy/POST yok. Yerel D1 production kanıtı değildir.
 - Hakem raporu `qa-reports/c1/latest.json` exact run #45517626605'tir. HAKEM RED, çünkü 10/100 ve production GET şartları sağlanmadı; kod QA PASS bu RED'i kaldırmaz.
 - PR #9 taslak/açık; PR #5/#6/#8 ve H1/H2 PR #35/#57 birleştirilmedi. Android entegrasyonu yok. `qa-reports/c1/latest.json` run #45517626605 çıktısıdır.
+
+
+## C1 günlük sayım düzeltmesi — 25.11.2026
+- Yeni denetim notu: [gorevler/C1-GUNLUK-SAYIM-25-11.md](../gorevler/C1-GUNLUK-SAYIM-25-11.md), durum commit `56e68c2a4e7ff0348d56ad7b29ab8c4f583a6bc3`.
+- 25.11.2026 03:25 TRT Actions #45517626605 sayımı tarihsel olarak 26 kaynak /17 fresh /9 stale, 6 kamu kaynağı /47 doğrulanmış açık kart idi. Current-day sayı değildir.
+- e-Şube snapshot `2026-11-24T23:51:48Z`; 12 saatlik fresh-until `2026-11-25T11:51:48Z` (14:51:48 TRT). Bu eşikten sonra yeni başarılı snapshot bulunmadığından 42 e-Şube kartı current toplamdan çıkarılmalı; yeni çekim olmadan kamu toplamı güncel diye raporlanmaz.
+- Düzce'nin 23.11 öğretim üyesi ilanı ayrı yeni duyuru (4 kadro, deadline 07.12.2026); öğretim elemanı ilanı (5 kadro) H2'de zaten tek kart, tekrar sayılmaz. Bartın (1 sözleşmeli ilan, 05.12.2026 13:00) robots ölçümü erişilemediği için reader'a eklenmedi. TGA 13 pozisyon tek ana duyuru; kartı çoğaltma ve kategori teyidi bekliyor.
+- PR #9 exact-head Actions #45517626605 kod QA 46/46, local D1 11/11 ve regresyon 17/17 PASS; karar RED: production GET BLOCKED ve 10/100 eşiği karşılanmadı. PR açık/taslak, formal review 0; merge/deploy yok.
+- Workflow e-Şube'yi canlı çekmiyor; durum dalındaki statik JSON'u okuyor. Schedule yalnız default branch'te işler; PR #9 merge edilmediğinden otomatik günlük canlı yenileme kanıtı yok.
+- **Güncel C1 kararı: RED / bugünkü canlı kaynak sayımı henüz kanıtlanmadı.** 6/47 yalnız geçmiş run sonucu; 114 özel ATS adayı deadline unknown olduğu için doğrulanmış açık sayılmaz.
+- SONRAKİ ADIM: C1 Actions'a e-Şube'nin robots-uyumlu canlı okuyucusunu entegre et; Düzce öğretim üyesi kartını mevcut kurum kaynağı altında ayır; Bartın robots'u ölçmeden ekleme; exact-head CI ve her kaynağın fresh sayımı geçmeden eşiği yeniden değerlendir.
