@@ -1,0 +1,74 @@
+name: C1 final H2 mapper exact-head QA
+
+on:
+  push:
+    branches: [qa/c1-private-runner]
+    paths: ['.github/workflows/c1-h2-mapper-final-public-qa.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PRIVATE_SHA: 86fdd9c6fff4cbd7a5f4e217c68a8d293df79fbc
+      H2_SHA: fe37be93202442394504f455b4a1caeb31f298cf
+      READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/jarvis-cloud
+          ref: ${{ env.PRIVATE_SHA }}
+          path: private-c1
+          token: ${{ env.READ_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: durum
+          path: private-c1/public-input/upstream
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: aries919-bot/Jarvis
+          ref: ${{ env.H2_SHA }}
+          path: private-c1/public-input/h2-reader
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check pypdf==5.4.0
+      - name: Verify exact revisions
+        run: |
+          test -n "$READ_TOKEN"
+          test "$(git -C private-c1 rev-parse HEAD)" = "$PRIVATE_SHA"
+          echo "PRIVATE_SHA=$PRIVATE_SHA H2_SHA=$H2_SHA"
+      - name: H2 tests and fresh source reader
+        run: |
+          cd private-c1/public-input/h2-reader
+          python -m unittest scripts/test_h2_announcement_reader.py scripts/test_h2_last_good_seed.py -v
+          mkdir -p reports/h2-last-good
+          python scripts/h2_last_good_seed.py --seed career/h2_last_good_seed.json --previous-dir reports/h2-last-good
+          python scripts/h2_announcement_reader.py --config career/h2_sources.json --out-dir reports/h2 --previous-dir reports/h2-last-good --summary "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: C1 tests, local D1, and combined live feed
+        working-directory: private-c1
+        run: |
+          npm run test:c1
+          node scripts/c1-worker-d1-smoke.mjs
+          JARVIS_WORKER_URL='' JARVIS_WORKER_TOKEN='' node scripts/career-feed-live.mjs | tee career-feed-live.txt
+          node --input-type=module -e 'import {readFile} from "node:fs/promises"; const f=JSON.parse(await readFile("career-feed-live.json","utf8")); console.log(JSON.stringify(Object.fromEntries(["collectedAt","sourceCount","freshSourceCount","staleSourceCount","successfulSourceCount","verifiedListingCount","publicSourceCount","publicListingCount","unknownDeadlineCount","pastDeadlineCount","threshold"].map(k=>[k,f[k]])),null,2))'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c1-h2-mapper-final-exact-head-qa
+          path: |
+            private-c1/career-feed-live.json
+            private-c1/career-feed-live.txt
+          if-no-files-found: warn
+          retention-days: 30
