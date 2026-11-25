@@ -116,3 +116,12 @@ PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` için:
 - Önceki #45716694004 logunda build SUCCESSFUL, window-focus preflight PASS, fakat `connectedDebugAndroidTest` 30 dakika timeout; XML yok. Bu nedenle mevcut test sonuç sayısı 0 raporlanmıştır; dört test PASS/FAIL diye sayılmaz.
 - Bu değişiklik bir tanı enstrümantasyonudur; emülatör kaynaklı olduğu kesinleşmiş değildir. Dört test, XML 4/4 kapısı, timeout sınırı ve güvenlik politikası değişmedi.
 **KARAR:** H1 RED/BLOCKED; yeni tanı CI'sı tamamlanana ve XML bağımsız yeniden sayılana kadar ONAY/merge/deploy yok.
+
+
+## 26.11.2026 — CI tanı kapsamı sertleştirildi; GENEL_DUZELTME_PLANI.md eşlemesi
+- `docs/GENEL_DUZELTME_PLANI.md` §9 önerileri kontrol edildi: logcat ve ekran görüntüsü artefaktı H1 tanısına uygulanabilir; izin otomasyonu ve HoloView animasyon kapatma bu H1 ekranı için gerekli değil (CareerNewsVerificationActivity özelinde ilgili runtime izni yok; HoloView bu activity akışında kullanılmıyor). Smoke testi yalnız package açılışına indirgenmedi; mevcut dört H1 UI/SQLite testi korunuyor.
+- Önceki tanı koşusu #45723036152 API'de 16+ saat `in_progress` kaldı; yeni head gelince concurrency nedeniyle `cancelled` oldu. Artefakt listesi boştu. Bu nedenle önceki run'dan tanı sonucu çıkarılmadı.
+- Script commit `9532d04343d1934dc01015f7dc78c7ec1ffc8e68`: ADB tanı komutları 15 saniye ile sınırlandı; başarısızlık anında screenshot `screenshot.png` olarak toplanıyor; logcat de tutuluyor. Watchdog ve logcat ayrı process group ile başlatılıp EXIT'te process group kapatılıyor. Instrumentation Gradle komutu 1500 saniye iç timeout + 30 saniye kill-after ile çalışıyor; workflow step 30 dakika, job 35 dakika sınırı değişmedi. Böylece hata tanısı için kalan zaman korunuyor ve arka plan alt süreçlerinin runner'ı açık tutma riski azaltılıyor.
+- Yeni exact-head [H1 run #45723550345](https://github.com/aries919-bot/Jarvis/actions/runs/45723550345) son kontrolde job setup aşamasında; [APK/unit #45723550139](https://github.com/aries919-bot/Jarvis/actions/runs/45723550139) Gradle setup aşamasında. Sonuç/artefakt henüz yok.
+- PR #71 HEAD `9532d04343d1934dc01015f7dc78c7ec1ffc8e68`, 14 dosya; PR açık/taslak. Formal review 0. Bu run tamamlanmadan ONAY/merge yok.
+**KARAR:** H1 RED/BLOCKED. Sonraki değerlendirme yeni run'ın gerçek step sonuçları, XML ve screenshot/logcat artefaktı üzerinden yapılacak.
