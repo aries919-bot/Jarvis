@@ -115,6 +115,11 @@ data class CareerNewsCorrection(
     val correctedAt: String,
     val previousVerdict: CareerClaimVerdict,
     val newVerdict: CareerClaimVerdict,
+    val previousText: String,
+    val revisedText: String,
+    val previousEvidence: List<CareerNewsEvidence>,
+    val previousReviewDecision: CareerHumanReviewDecision?,
+    val previousReviewedAt: String?,
     val explanation: String,
     val sourceUrl: String
 )
@@ -202,6 +207,11 @@ data class CareerNewsVerificationRecord(
             correctedAt = correctedAt,
             previousVerdict = previous,
             newVerdict = resetReview.verdict(),
+            previousText = claims[index].text,
+            revisedText = resetReview.text,
+            previousEvidence = claims[index].evidence,
+            previousReviewDecision = claims[index].reviewDecision,
+            previousReviewedAt = claims[index].reviewedAt,
             explanation = explanation.trim(),
             sourceUrl = sourceUrl.trim()
         )
@@ -272,6 +282,19 @@ data class CareerNewsVerificationRecord(
             if (!CareerNewsVerificationPolicy.isUtcTimestamp(correction.correctedAt)) {
                 errors += "Düzeltme zamanı geçersiz."
             }
+            if (correction.previousText.isBlank() || correction.revisedText.isBlank()) {
+                errors += "Düzeltme öncesi ve sonrası iddia metni gerekli."
+            }
+            if (correction.previousEvidence.any {
+                    CareerNewsVerificationPolicy.validateHttpsUrl(it.sourceUrl) != null ||
+                        !CareerNewsVerificationPolicy.isUtcTimestamp(it.checkedAt)
+                }) errors += "Düzeltme geçmişindeki önceki kanıt geçersiz."
+            if (correction.previousReviewDecision == null && correction.previousReviewedAt != null) {
+                errors += "Önceki inceleme zamanı karar olmadan kaydedilemez."
+            }
+            if (correction.previousReviewDecision != null &&
+                !CareerNewsVerificationPolicy.isUtcTimestamp(correction.previousReviewedAt)
+            ) errors += "Önceki inceleme zamanı geçersiz."
             if (correction.explanation.isBlank() || correction.explanation.length > 2000) {
                 errors += "Düzeltme gerekçesi boş veya çok uzun."
             }
@@ -287,15 +310,7 @@ data class CareerNewsVerificationRecord(
         claims.forEach { claim ->
             val evidenceArray = JSONArray()
             claim.evidence.forEach { evidence ->
-                evidenceArray.put(JSONObject()
-                    .put("id", evidence.id)
-                    .put("publisher", evidence.publisher)
-                    .put("sourceUrl", evidence.sourceUrl)
-                    .put("sourceType", evidence.sourceType.name)
-                    .put("stance", evidence.stance.name)
-                    .put("excerpt", evidence.excerpt)
-                    .put("publishedAt", evidence.publishedAt ?: JSONObject.NULL)
-                    .put("checkedAt", evidence.checkedAt))
+                evidenceArray.put(evidence.toJson())
             }
             claimArray.put(JSONObject()
                 .put("id", claim.id)
@@ -307,12 +322,19 @@ data class CareerNewsVerificationRecord(
         }
         val corrections = JSONArray()
         correctionHistory.forEach { correction ->
+            val previousEvidence = JSONArray()
+            correction.previousEvidence.forEach { previousEvidence.put(it.toJson()) }
             corrections.put(JSONObject()
                 .put("id", correction.id)
                 .put("claimId", correction.claimId)
                 .put("correctedAt", correction.correctedAt)
                 .put("previousVerdict", correction.previousVerdict.name)
                 .put("newVerdict", correction.newVerdict.name)
+                .put("previousText", correction.previousText)
+                .put("revisedText", correction.revisedText)
+                .put("previousEvidence", previousEvidence)
+                .put("previousReviewDecision", correction.previousReviewDecision?.name ?: JSONObject.NULL)
+                .put("previousReviewedAt", correction.previousReviewedAt ?: JSONObject.NULL)
                 .put("explanation", correction.explanation)
                 .put("sourceUrl", correction.sourceUrl))
         }
@@ -349,16 +371,7 @@ data class CareerNewsVerificationRecord(
                 val evidenceArray = item.optJSONArray("evidence") ?: JSONArray()
                 for (j in 0 until evidenceArray.length()) {
                     val evidence = evidenceArray.getJSONObject(j)
-                    evidenceItems += CareerNewsEvidence(
-                        id = evidence.getString("id"),
-                        publisher = evidence.getString("publisher"),
-                        sourceUrl = evidence.getString("sourceUrl"),
-                        sourceType = CareerEvidenceSourceType.valueOf(evidence.getString("sourceType")),
-                        stance = CareerEvidenceStance.valueOf(evidence.getString("stance")),
-                        excerpt = evidence.getString("excerpt"),
-                        publishedAt = nullableString(evidence, "publishedAt"),
-                        checkedAt = evidence.getString("checkedAt")
-                    )
+                    evidenceItems += evidenceFromJson(evidence)
                 }
                 val reviewName = nullableString(item, "reviewDecision")
                 claims += CareerNewsClaim(
@@ -374,12 +387,23 @@ data class CareerNewsVerificationRecord(
             val correctionArray = root.optJSONArray("correctionHistory") ?: JSONArray()
             for (i in 0 until correctionArray.length()) {
                 val item = correctionArray.getJSONObject(i)
+                val previousEvidence = mutableListOf<CareerNewsEvidence>()
+                val previousEvidenceArray = item.optJSONArray("previousEvidence") ?: JSONArray()
+                for (j in 0 until previousEvidenceArray.length()) {
+                    previousEvidence += evidenceFromJson(previousEvidenceArray.getJSONObject(j))
+                }
+                val previousReviewName = nullableString(item, "previousReviewDecision")
                 corrections += CareerNewsCorrection(
                     id = item.getString("id"),
                     claimId = item.getString("claimId"),
                     correctedAt = item.getString("correctedAt"),
                     previousVerdict = CareerClaimVerdict.valueOf(item.getString("previousVerdict")),
                     newVerdict = CareerClaimVerdict.valueOf(item.getString("newVerdict")),
+                    previousText = item.getString("previousText"),
+                    revisedText = item.getString("revisedText"),
+                    previousEvidence = previousEvidence,
+                    previousReviewDecision = previousReviewName?.let { CareerHumanReviewDecision.valueOf(it) },
+                    previousReviewedAt = nullableString(item, "previousReviewedAt"),
                     explanation = item.getString("explanation"),
                     sourceUrl = item.getString("sourceUrl")
                 )
@@ -452,6 +476,18 @@ object CareerNewsVerificationPolicy {
         return null
     }
 }
+
+
+private fun evidenceFromJson(json: JSONObject): CareerNewsEvidence = CareerNewsEvidence(
+    id = json.getString("id"),
+    publisher = json.getString("publisher"),
+    sourceUrl = json.getString("sourceUrl"),
+    sourceType = CareerEvidenceSourceType.valueOf(json.getString("sourceType")),
+    stance = CareerEvidenceStance.valueOf(json.getString("stance")),
+    excerpt = json.getString("excerpt"),
+    publishedAt = nullableString(json, "publishedAt"),
+    checkedAt = json.getString("checkedAt")
+)
 
 private fun nullableString(json: JSONObject, key: String): String? {
     if (!json.has(key) || json.isNull(key)) return null
