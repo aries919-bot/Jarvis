@@ -6,11 +6,11 @@ Bu iş, Aries İş & Kariyer için kaynaklı soru-cevap katmanı kurar. Film/tem
 ## PR
 - PR #12: https://github.com/aries919-bot/jarvis-cloud/pull/12
 - Branch: `feat/career-qa-rag-20261125`
-- Son HEAD: `d49de634b9e07030c0117039b62027b76405b435`
+- Son HEAD: `4b010df6fbd30229ec1868cf12e86a03b3eab055`
 - Base: `fix/c1-h2-final-integration-20261125` / PR #11 HEAD `b1415d6a76fd3856c60cfec891a575c3bef0341e`
 - Draft, açık, deploy yok.
-- GitHub diff yeniden sayımı: 4 dosya / +992 / -20 (PR API); dosyalar `src/career-qa.js`, `src/index.js`, `tests/career-qa.test.mjs`, `.github/workflows/validate.yml`.
-- Test dosyası tanım sayımı: `grep /^test(/ tests/career-qa.test.mjs` karşılığı 24 test. Bu sayı testlerin geçtiği anlamına gelmez.
+- GitHub diff yeniden sayımı: 4 dosya / +1045 / -20 (PR API); dosyalar `src/career-qa.js`, `src/index.js`, `tests/career-qa.test.mjs`, `.github/workflows/validate.yml`.
+- Test dosyası tanım sayımı: `grep /^test(/ tests/career-qa.test.mjs` karşılığı 26 test. Bu sayı testlerin geçtiği anlamına gelmez.
 
 ## Uygulanan mimari
 1. `POST /kariyer-sor`: mevcut Worker Bearer `JARVIS_TOKEN` doğrulaması; yalnız `{question}` alanını kabul eder. CV/KPSS profili/sohbet geçmişi gövdesi kullanılmaz.
@@ -34,13 +34,13 @@ Bu iş, Aries İş & Kariyer için kaynaklı soru-cevap katmanı kurar. Film/tem
 - Resmî belgeler: https://developers.cloudflare.com/workers-ai/models/bge-m3/ ; https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/ ; https://developers.cloudflare.com/workers-ai/features/reject-if-busy/
 
 ## CI kanıtı ve engel
-- PR #12 son HEAD `d49de634b9e07030c0117039b62027b76405b435`.
-- Son yedi workflow koşusu: #45692460706, #45692517637, #45692608933, #45692642608, #45692792848, #45692810534, #45692919011.
-- GitHub REST her koşuda tek job ve `steps=[]` döndürüyor; job 2–3 saniyede FAILURE. Örnek son run #45692919011 job `139482779972`, start 20:13:48Z, end 20:13:50Z, step count 0.
+- PR #12 son HEAD `4b010df6fbd30229ec1868cf12e86a03b3eab055`.
+- Son yedi workflow koşusu: #45692642608, #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527.
+- GitHub REST her koşuda tek job ve `steps=[]` döndürüyor; job 2–3 saniyede FAILURE. En son run #45693834527 job `139485957163`, start 20:19:25Z, end 20:19:27Z, step count 0.
 - Log indirici BlobNotFound döndürüyor; check-run yalnız 1 annotation sayısı bildiriyor, annotation içeriği bağlı GitHub aracıyla alınamıyor.
 - Sonuç: CI test koduna ulaşmıyor; bu nedenle kod testi başarısızlığı veya başarı şeklinde sınıflandırılamaz. Kod testleri çalıştırılmış sayılmaz. Tekrarlı commit/rerun döngüsü durduruldu; runner/job başlangıç engeli ayrıca çözümlenmeden PR merge/deploy yok.
 
-## Test tanımları — 24
+## Test tanımları — 26
 Kapsam: provider/source eligibility, private Lever allowlist, public provider red, kaynak bazlı stale izolasyonu, geçersiz tarih, Türkçe BM25, unrelated abstention, RRF, embedding response parsing, deadline null publishedAt, şartların deterministik çıkarımı, kişisel ID/telefon/email/token/CV/KPSS blokları, AI capacity fallback, Worker auth, route body validation, stale feed, unsupported method, stored feed citation.
 
 ## Bağımlılık
@@ -57,3 +57,12 @@ Bu haber QA henüz uygulanmadı.
 
 ## KARAR
 **PR #12: RED / test runner engeli.** Kod prototipi ve 24 test tanımı var; GitHub CI adım başlatmadığından test kanıtı yok. Merge/deploy yok.
+
+
+## 25.11.2026 ilave QA — son kapsam
+- Son PR HEAD: 4b010df6fbd30229ec1868cf12e86a03b3eab055; GitHub API diff: 4 dosya / +1045 / -20.
+- Test tanımı tekrar sayımı: 26 adet test(...). İçerik: approved source provider, Lever/Ashby board host, public third-party provider red, stale isolation, valid deadline, BM25, RRF, embedding parser, personal PII/secret/CV/KPSS block, off-topic abstain, deterministic deadline/requirements/application/count/location, route auth/validation/stale feed.
+- Son iki committe kontenjan ve şehir alanları için açık cevap eklendi. positionCount kaydı yoksa bilinmiyor; city null ise görev yeri/şehir belirtilmemiş denir. Kurum merkezi/hostname üzerinden lokasyon tahmini yapılmaz.
+- Son yedi koşu steps=0 doğrulaması: #45692642608, #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527. Her birinde 1 job / 0 steps / failure / 2–3 saniye. Son örnek run #45693834527 job 139485957163: 20:19:25Z → 20:19:27Z.
+- Kaynak doğrulama için sağlayıcı allowlist kullanılır: public provider esube/H2, Büyük özel provider Lever/Ashby; generic HTML sağlayıcı reddedilir. H1 haber ve kariyer feed'leri ayrı tutulur.
+- **KARAR DEĞİŞMEDİ:** CI runner job adımı hiç başlamadığı için kod testlerinin çalıştığına dair kanıt yok; 26 test tanımı geçiş kanıtı değil. PR #12 draft, no merge/deploy.
