@@ -226,6 +226,8 @@ data class CareerNewsVerificationRecord(
     fun validationErrors(): List<String> {
         val errors = mutableListOf<String>()
         if (schemaVersion != 1) errors += "Desteklenmeyen şema sürümü."
+        if (claims.size > 50) errors += "Bir haber için en fazla 50 iddia saklanabilir."
+        if (correctionHistory.size > 100) errors += "Düzeltme geçmişi sınırı aşıldı."
         if (storyId.isBlank() || storyId.length > 160) errors += "Hikâye kimliği geçersiz."
         if (headline.isBlank() || headline.length > 1000) errors += "Başlık boş veya çok uzun."
         if (publisher.isBlank() || publisher.length > 300) errors += "Yayıncı/kurum boş veya çok uzun."
@@ -244,6 +246,7 @@ data class CareerNewsVerificationRecord(
 
         claims.forEach { claim ->
             if (claim.id.isBlank() || claim.id.length > 160) errors += "İddia kimliği geçersiz."
+            if (claim.evidence.size > 25) errors += "Bir iddia için en fazla 25 kanıt saklanabilir."
             if (claim.text.isBlank() || claim.text.length > 1500 || claim.text.contains('\n')) {
                 errors += "İddia tek ve okunabilir bir ifade olmalı."
             }
@@ -269,6 +272,8 @@ data class CareerNewsVerificationRecord(
                 if (evidence.id.isBlank() || evidence.id.length > 160) errors += "Kanıt kimliği geçersiz."
                 if (evidence.publisher.isBlank() || evidence.publisher.length > 300) {
                     errors += "Kanıt yayıncısı boş veya çok uzun."
+                } else if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(evidence.publisher) != evidence.publisher) {
+                    errors += "Kanıt yayıncısı kişisel veri işareti içeriyor."
                 }
                 if (CareerNewsVerificationPolicy.validateHttpsUrl(evidence.sourceUrl) != null) {
                     errors += "Kanıt URL'si geçerli HTTPS adresi değil."
@@ -333,6 +338,9 @@ data class CareerNewsVerificationRecord(
                 errors += "Düzeltme kaynak URL'si geçerli HTTPS adresi değil."
             }
         }
+        if (toJson().toString().length > MAX_JSON_CHARS) {
+            errors += "Haber doğrulama kaydı 16 KB sınırını aşıyor."
+        }
         return errors.distinct()
     }
 
@@ -384,6 +392,8 @@ data class CareerNewsVerificationRecord(
     }
 
     companion object {
+        const val MAX_JSON_CHARS = 16_000
+
         fun stableStoryId(sourceUrl: String, headline: String): String {
             val normalizedUrl = sourceUrl.substringBefore('#').trimEnd('/').lowercase(Locale.ROOT)
             val normalizedTitle = headline.trim().lowercase(Locale("tr", "TR"))
