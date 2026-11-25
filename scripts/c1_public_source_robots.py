@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -187,17 +188,29 @@ class NoRedirect(HTTPRedirectHandler):
 
 def probe_origin(origin: str) -> dict:
     robots_url = origin.rstrip("/") + "/robots.txt"
-    req = Request(robots_url, headers={"User-Agent": UA, "Accept": "text/plain"})
-    opener = build_opener(NoRedirect())
-    try:
-        with opener.open(req, timeout=TIMEOUT_SECONDS) as response:
-            status = response.status
-            body = response.read(256 * 1024)
-            return {"robots_url": robots_url, "http_status": status, "body": body.decode("utf-8", "replace")}
-    except HTTPError as exc:
-        return {"robots_url": robots_url, "http_status": exc.code, "error": "HTTP_ERROR"}
-    except (URLError, TimeoutError, OSError) as exc:
-        return {"robots_url": robots_url, "http_status": None, "error": type(exc).__name__}
+    last_error = None
+    for attempt in range(2):
+        req = Request(robots_url, headers={"User-Agent": UA, "Accept": "text/plain"})
+        opener = build_opener(NoRedirect())
+        try:
+            with opener.open(req, timeout=TIMEOUT_SECONDS) as response:
+                status = response.status
+                body = response.read(256 * 1024)
+                return {"robots_url": robots_url, "http_status": status, "body": body.decode("utf-8", "replace")}
+        except HTTPError as exc:
+            # Only transient service responses get one retry. 401/403 remain fail-closed;
+            # 404 is handled as NO_ROBOTS_FILE by the caller.
+            if exc.code not in {429, 500, 502, 503, 504} or attempt == 1:
+                return {"robots_url": robots_url, "http_status": exc.code, "error": "HTTP_ERROR"}
+            last_error = f"HTTP_{exc.code}"
+        except (URLError, TimeoutError, OSError) as exc:
+            last_error = type(exc).__name__
+            if attempt == 1:
+                return {"robots_url": robots_url, "http_status": None, "error": last_error}
+        # A single bounded retry for transport/transient failures; no redirect or TLS bypass.
+        if attempt == 0:
+            time.sleep(0.25)
+    return {"robots_url": robots_url, "http_status": None, "error": last_error or "UNKNOWN"}
 
 
 def main() -> int:
