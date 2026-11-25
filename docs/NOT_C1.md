@@ -575,3 +575,10 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723`. APK/unit [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) SUCCESS; APK artifact #15069888409, SHA-256 `96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab`.
 - Emülatör [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) son sorguda IN_PROGRESS; job #139564450544, step1–6 SUCCESS, step7 instrumentation/preflight running, XML/artifact henüz yok. Önceki #45712459718 kesin FAILURE (4 test/1 pass/3 fail/0 error/0 skipped).
 - Yeni PR commit'i launcher ANR/window focus preflight + dumpsys ekledi; aynı dört UI testini ve XML gate'ini korur. H1 kabul/merge için yeni exact-head XML 4/4 PASS ve gerçek telefon kontrolü beklenir; PR #71 draft/open.
+
+## 26.11.2026 — H1 emulator run lifecycle anomaly (new finding)
+- Exact-head PR #71 run [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) still reports `in_progress`; run start recorded as `2026-11-25T22:51:13Z`, last update `22:51:16Z`.
+- Workflow `.github/workflows/h1-android-ui-smoke.yml` sets job timeout 35 minutes and emulator step timeout 30 minutes. Yet latest job #139564450544 still reports step 7 “Run Android emulator instrumentation tests” in progress, with steps 1–6 successful and XML/artifact steps pending.
+- Job metadata returned by GitHub connector has `logs_url=null`, no runner identity/timestamps; run artifact list is empty. The status has exceeded configured timeout by a wide margin, but this does not prove whether runner is alive, lost, or GitHub status is stale.
+- No XML means no test pass/fail conclusion. Do not start an overlapping identical emulator run. Inspect Actions UI run annotation/runner state; preserve logs, then cancel once only if UI confirms a live stuck run. Task: [H1-EMULATOR-RUN-LIFECYCLE-ANOMALY-2026-11-26.md](../gorevler/H1-EMULATOR-RUN-LIFECYCLE-ANOMALY-2026-11-26.md).
+**KARAR:** H1 remains BLOCKED/UNKNOWN; APK/unit CI success does not substitute for emulator 4/4 XML or referee review.
