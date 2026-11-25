@@ -280,3 +280,10 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Önceki #45679523114 FAILURE 1/4 PASS,3/4 FAIL; 3 UI test RootViewWithoutFocusException. Yeni koşu eski başarısız sonucu kapatmadan kabul edilmeyecek.
 - Diff scan 10 dosya / secret pattern 0 / LinkedIn-Indeed URL 0 / browser UA 0.
 - **KARAR:** APK/unit PASS; emulator sonuçlanmadı; gerçek telefon yok; PR #71 merge yok. C1 hâlâ 12 kamu kaynağı/55 ilan, 45 eksik; Worker GET/D1 ve şehirli dedup yok.
+
+## 26. H2 city alanı upstream kanıtı — 25.11.2026
+- H2 reader sabit commit `fe37be93202442394504f455b4a1caeb31f298cf`; career/h2_sources.json 19 source record / city-location alanı eksik 19/19.
+- scripts/h2_announcement_reader.py make_item() city/location parametresi almıyor ve output JSON'a eklemiyor; parse_official_notice() kaynak kayıtlarından da city çıkarmıyor. Cloud mapper tek başına upstream city field oluşturamaz.
+- Şehir yalnız resmi PDF/sayfada pozisyon satırına bağlı duty location olarak kanıtlanırsa yazılmalı. Kurum merkez adresi, kaynak hostname veya başlıktan tahmin yasak. Çok lokasyon varsa ayrı pozisyonlar ya da location array; bulunmazsa null + possible duplicate ve benzersiz ilan sayısının dışında.
+- Ayrıntı: `gorevler/C1-H2-CITY-FIELD-AUDIT-2026-11-25.md`; commit `99055f2b5ecee19a2b3936443f8d9fefd375548c`.
+- C1 sayımı değişmedi: 12 kamu kaynağı /55 doğrulanmış ilan /45 eksik; Worker production GET/D1 halen SKIPPED. **RED**.
