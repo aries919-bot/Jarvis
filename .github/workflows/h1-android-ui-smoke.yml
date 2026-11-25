@@ -10,6 +10,8 @@ on:
       - "app/src/main/java/com/cem/jarvis/CareerActivity.kt"
       - "app/src/main/java/com/cem/jarvis/CareerNewsVerification*.kt"
       - "app/src/androidTest/**"
+      - "scripts/run-h1-emulator-tests.sh"
+      - "scripts/verify_h1_emulator_xml.py"
       - ".github/workflows/h1-android-ui-smoke.yml"
 
 permissions:
