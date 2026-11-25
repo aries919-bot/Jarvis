@@ -54,6 +54,7 @@ android {
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    implementation("androidx.browser:browser:1.10.0")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.webkit:webkit:1.18.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
