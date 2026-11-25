@@ -251,3 +251,8 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - PR #71 hâlâ merge edilmedi; emülatör + telefon testi zorunlu.
 - C1 genel 10/100, public feed ve production GET/D1 kabulü değişmedi; RED.
 
+## 22. H1 workflow QA düzeltmesi
+- H1 emulator workflow rapor upload adımı zaten `if: always()`; fail/timeout rapor koruması mevcut.
+- H1 emulator workflow checkout exact PR head yapıyor; PR #70 merge sonrası entegrasyon için yeni koşuda `github.sha` merge ref test edilmeli.
+- Ana Android APK workflow iki ayrı Gradle çağrısı çalıştırıyor; tek çağrıda birleştirme hız optimizasyonu olarak incelenecek.
+
