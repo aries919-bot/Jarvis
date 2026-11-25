@@ -362,7 +362,7 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
         if match:
             return parse_date(match.group(1))
     if mode == "oran-table-date":
-        match = re.search(r"İlan Tarihi\s*(?:\||:)\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
+        match = re.search(r"İlan Tarihi\s*(?:\||:)?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
         if match:
             return parse_date(match.group(1))
     if mode == "ataturk-page-date":
@@ -374,7 +374,7 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
         if match:
             return parse_date(match.group(1))
     if mode == "zafer-page-date":
-        match = re.search(r"(\d{1,2}\s+Kas\s+2026)\s+T\.C Zafer Kalkınma Ajansı",page_text,re.I)
+        match = re.search(r"(\d{1,2}\s+Kas\s+2026)\s+T\.C\.?\s+Zafer Kalkınma Ajansı",page_text,re.I)
         if match:
             return parse_date(match.group(1))
     # A named publication field is stronger evidence than a date in a title.
