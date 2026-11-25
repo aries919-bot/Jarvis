@@ -95,3 +95,16 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Android Full App QA workflow dosyası `kariyer-modulu` tabanında bulunmadığından emülatör UI QA koşusu yok; CI yalnız Android APK + unit test workflow'u.
 - Önceki H1 PR #68 kapatıldı (unmerged); #69 onun yerini alır.
 - Telefon testi yapılmadı; merge/deploy yok.
+
+## 3. PR #71 SQLite tam entegrasyonu — 25.11.2026
+- PR #71: https://github.com/aries919-bot/Jarvis/pull/71, branch `feat/h1-news-store-ui-20261125`, base `kariyer-modulu`.
+- Güncel HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`; compare base/head 52 commit /8 dosya /+1.979 /-26 /0 behind.
+- Yeni test sayımı: model 17 @Test + store 8 @Test =25.
+- SQLite `career_news_verification_v1.db`: primary + last-good per story, atomik transaction, corrupt-primary fallback, two-copy corruption blocks writes, capacity/no-eviction, commit failure reporting.
+- Append-only store guard: old story URL/firstSeenAt, claim IDs, old evidence, review decision, previous review note and correctionHistory prefix are protected. A claim text/evidence reset requires an actual appended correction record containing prior state.
+- Story ID now uses canonical URL (fragment/trailing slash/host/scheme normalization); same URL with changed headline retains same identity.
+- News list now uses one `loadMany()` SQLite IN query for up to 100 cards instead of one SQLite query per card. Regression test counts exactly one batch read and verifies last-good fallback.
+- Previous run #45663064814 failed because duplicate test function was declared twice. Duplicate removed. Intermediate HEAD `2597f36210d077a19b0e8e4ec100713d6736e141` run #45666479386 SUCCESS.
+- Current exact HEAD [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387): started for HEAD 3a10175; final status pending at report time. Do not claim PASS until complete.
+- PR #71 includes the tested H1 core and UI integration and is the current SQLite candidate; PR #69 remains separately open/draft, both unmerged. PR #70 C1 source-policy P0 remains open/draft and has exact-head Android PASS (#45658875411).
+- No Full App QA workflow / emulator or real-phone test on `kariyer-modulu`; no merge/deploy.
