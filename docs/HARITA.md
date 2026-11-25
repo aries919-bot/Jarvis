@@ -615,3 +615,14 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - This is Android unit-test + debug APK evidence only. No Full App QA/emulator workflow on `kariyer-modulu`; no real phone test.
 - PR #71 remains open/draft, unmerged. PR #69 and #70 remain open/draft; no PR merged/deployed.
 - C1 10/100, public-source evidence, Worker authenticated production GET and e-Şube/H2 dedup counts unchanged; still separate RED/BLOCKED gates.
+
+### 20.4 PR #71 Android emülatör smoke workflow — 25.11.2026
+- Current PR #71 HEAD `0a376b4c7355a5a6822252da4d9286606ce23bde`; base `kariyer-modulu`; compare 57 commit /10 dosya /+2.132 /-26 /0 behind.
+- Test yeniden sayımı: 17 model +8 SQLite store +2 Android instrumentation = **27 @Test**.
+- Yeni `.github/workflows/h1-android-ui-smoke.yml`: `pull_request` + `workflow_dispatch`; duplicate branch `push` trigger kaldırıldı; concurrency key PR numarası; checkout `github.event.pull_request.head.sha || github.sha` ile exact head'e açıkça sabitlendi.
+- Android emulator runner immutable commit `a421e43855164a8197daf9d8d40fe71c6996bb0d`; API 34 / Google APIs / x86_64. CI sadece H1 Activity + SQLite yerel davranışını test eder.
+- Instrumentation iki test: Haber doğrulama Activity açılır, başlık ve iddia/kaynak düğmeleri görünür, `publishedAt=null` SQLite'a kaydolur; ikinci test bozuk primary'den last-good kurtarmayı doğrular.
+- Exact-head normal Android APK run [#45669708914](https://github.com/aries919-bot/Jarvis/actions/runs/45669708914): SUCCESS; JUnit, assembleDebug ve artifact upload SUCCESS. Artifact `aries-apk`, ID `15049965420`, 14,176,024 bytes.
+- Exact-head emulator run [#45669709252](https://github.com/aries919-bot/Jarvis/actions/runs/45669709252): son kontrolde `Run Android emulator instrumentation tests` IN_PROGRESS; final conclusion/artifact yok. Önceki emulator koşuları push/PR concurrency düzenlemesi sırasında iptal edildi; bunlar PASS sayılmaz.
+- Smokescreen yalnız Activity görünümü + SQLite create/last-good kurtarmayı doğrular; claim/evidence/review düğmelerinin tamamı uçtan uca UI tıklama testinden geçmedi. Bu ayrı takip işidir.
+- PR #71 open/draft/unmerged. PR #70 source-policy P0 ayrı ve exact-head Android test+APK PASS; #71 base'de bu değişiklikler henüz birleştirilmedi. Merge sırası/entegrasyon ayrıca ele alınmalı. Real phone test yok; merge/deploy yok.
