@@ -1049,3 +1049,12 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - C1: 6 kaynak/47 last-good kamu kartı; 6 stale; 10/100 ve production GET/D1 eksik. RED.
 
 **KARAR:** H1 RED/BLOCKED — yeni exact-head CI bekleniyor. C1 RED. Merge/deploy yok.
+
+## 26.11.2026 — H1 yeni HEAD: emulator launcher-focus preflight
+- PR #71 head b51c53a5797c19d4e18ed81b679024fc14fa3723; önceki exact-head e390e05 koşusu #45712459718 FAILURE olarak kalır (4 test /1 pass /3 focus failure /0 error /0 skipped).
+- Eski logcat'te NexusLauncherActivity için top-resumed state loss timeout ve Activity pause timeout kayıtları saptandı. Kesin ANR dialog kanıtı eski artefact'te yok; bu yüzden kök neden halen hipotezdir.
+- Yeni PR commit'i scripts/run-h1-emulator-tests.sh içine window/activity/process dumpsys ve instrumentation öncesi Application Not Responding/Application Error focus preflight/recovery ekledi. Espresso testleri ve 4/4 XML gate aynen duruyor; test atlama veya beklenti düşürme yok.
+- Yeni exact-head emulator #45716694004 IN_PROGRESS, job #139564450544 step 1–6 SUCCESS, step7 preflight/instrumentation running; XML/artefact henüz yok: https://github.com/aries919-bot/Jarvis/actions/runs/45716694004
+- Yeni APK/unit #45716694105 IN_PROGRESS, unit step SUCCESS, APK build running: https://github.com/aries919-bot/Jarvis/actions/runs/45716694105
+- Ayrıntılı test-kök neden kaydı: [H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
+**KARAR:** H1 RED/beklemede; yeni head için exact XML 4/4 PASS yok. PR #71 merge/deploy yok.
