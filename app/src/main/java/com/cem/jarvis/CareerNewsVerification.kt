@@ -79,10 +79,10 @@ data class CareerNewsClaim(
 
         if (hasSupport && hasContradiction) return CareerClaimVerdict.CONFLICTING_EVIDENCE
         if (hasPrimarySupport && reviewDecision == CareerHumanReviewDecision.CONFIRM &&
-            reviewedAt != null && hasContradiction.not()
+            reviewedAt != null && reviewNote.isNotBlank() && hasContradiction.not()
         ) return CareerClaimVerdict.VERIFIED
         if (hasPrimaryContradiction && reviewDecision == CareerHumanReviewDecision.REFUTE &&
-            reviewedAt != null && hasSupport.not()
+            reviewedAt != null && reviewNote.isNotBlank() && hasSupport.not()
         ) return CareerClaimVerdict.REFUTED
         if (hasPrimarySupport) return CareerClaimVerdict.SUPPORTS_PENDING_REVIEW
         if (hasPrimaryContradiction) return CareerClaimVerdict.CONTRADICTION_PENDING_REVIEW
@@ -120,6 +120,7 @@ data class CareerNewsCorrection(
     val previousEvidence: List<CareerNewsEvidence>,
     val previousReviewDecision: CareerHumanReviewDecision?,
     val previousReviewedAt: String?,
+    val previousReviewNote: String,
     val explanation: String,
     val sourceUrl: String
 )
@@ -191,7 +192,7 @@ data class CareerNewsVerificationRecord(
         sourceUrl: String
     ): CareerNewsVerificationRecord? {
         val index = claims.indexOfFirst { it.id == revisedClaim.id }
-        if (index < 0) return null
+        if (index < 0 || revisedClaim.text.trim() == claims[index].text.trim()) return null
         val previous = claims[index].verdict()
         val resetReview = revisedClaim.copy(
             evidence = emptyList(),
@@ -212,6 +213,7 @@ data class CareerNewsVerificationRecord(
             previousEvidence = claims[index].evidence,
             previousReviewDecision = claims[index].reviewDecision,
             previousReviewedAt = claims[index].reviewedAt,
+            previousReviewNote = claims[index].reviewNote,
             explanation = explanation.trim(),
             sourceUrl = sourceUrl.trim()
         )
@@ -245,11 +247,14 @@ data class CareerNewsVerificationRecord(
             if (claim.text.isBlank() || claim.text.length > 1500 || claim.text.contains('\n')) {
                 errors += "İddia tek ve okunabilir bir ifade olmalı."
             }
+            if (claim.reviewNote.length > 1000) errors += "İnsan inceleme gerekçesi çok uzun."
             if (claim.reviewDecision == null && claim.reviewedAt != null) {
                 errors += "İnsan inceleme zamanı karar olmadan kaydedilemez."
             }
-            if (claim.reviewDecision != null && !CareerNewsVerificationPolicy.isUtcTimestamp(claim.reviewedAt)) {
-                errors += "İnsan inceleme kararı için geçerli zaman gerekli."
+            if (claim.reviewDecision != null &&
+                (!CareerNewsVerificationPolicy.isUtcTimestamp(claim.reviewedAt) || claim.reviewNote.isBlank())
+            ) {
+                errors += "İnsan inceleme kararı için geçerli zaman ve gerekçe gerekli."
             }
             if (claim.evidence.map { it.id }.distinct().size != claim.evidence.size) {
                 errors += "İddia içinde tekrarlanan kanıt kimliği."
@@ -297,9 +302,11 @@ data class CareerNewsVerificationRecord(
             if (correction.previousReviewDecision == null && correction.previousReviewedAt != null) {
                 errors += "Önceki inceleme zamanı karar olmadan kaydedilemez."
             }
+            if (correction.previousReviewNote.length > 1000) errors += "Önceki inceleme gerekçesi çok uzun."
             if (correction.previousReviewDecision != null &&
-                !CareerNewsVerificationPolicy.isUtcTimestamp(correction.previousReviewedAt)
-            ) errors += "Önceki inceleme zamanı geçersiz."
+                (!CareerNewsVerificationPolicy.isUtcTimestamp(correction.previousReviewedAt) ||
+                    correction.previousReviewNote.isBlank())
+            ) errors += "Önceki inceleme zamanı veya gerekçesi geçersiz."
             if (correction.explanation.isBlank() || correction.explanation.length > 2000) {
                 errors += "Düzeltme gerekçesi boş veya çok uzun."
             }
@@ -340,6 +347,7 @@ data class CareerNewsVerificationRecord(
                 .put("previousEvidence", previousEvidence)
                 .put("previousReviewDecision", correction.previousReviewDecision?.name ?: JSONObject.NULL)
                 .put("previousReviewedAt", correction.previousReviewedAt ?: JSONObject.NULL)
+                .put("previousReviewNote", correction.previousReviewNote)
                 .put("explanation", correction.explanation)
                 .put("sourceUrl", correction.sourceUrl))
         }
@@ -409,6 +417,7 @@ data class CareerNewsVerificationRecord(
                     previousEvidence = previousEvidence,
                     previousReviewDecision = previousReviewName?.let { CareerHumanReviewDecision.valueOf(it) },
                     previousReviewedAt = nullableString(item, "previousReviewedAt"),
+                    previousReviewNote = item.optString("previousReviewNote"),
                     explanation = item.getString("explanation"),
                     sourceUrl = item.getString("sourceUrl")
                 )
