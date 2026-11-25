@@ -68,3 +68,8 @@ The current PR #71 contains the H1 change set; this task note adds no applicatio
 - Yeni run artefact listesi son sorguda boştu; log endpoint henüz BlobNotFound döndürdü. Bu, PASS/FAIL değil; yeni CI'nın gerçek sonucunu bekleyen bir durum.
 - Google AndroidX 18.09.2026 EmptyActivity/focus düzeltmesi analog araştırma notu olarak kalır. Yeni PR çözümünün etkisi sadece yeni head XML ve preflight window/activity diagnostics ile belirlenecek.
 **Güncel KARAR:** H1 hâlâ RED/beklemede; #45712459718 failure kapandı, yeni b51c53a runları in_progress. Merge/deploy yok.
+## 26.11.2026 — b51c53a exact-head APK result
+- APK/unit run #45716694105 is now **SUCCESS** on exact PR HEAD b51c53a5797c19d4e18ed81b679024fc14fa3723: https://github.com/aries919-bot/Jarvis/actions/runs/45716694105. All unit/build/upload steps passed.
+- APK artifact #15069888409 (name aries-apk), archive digest sha256:8f98ae33b42003beb70851e5b596e0b6354f7d24559b9585219e1f0ae46fbb79; downloaded app-debug.apk is 14,960,717 bytes, SHA-256 96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab.
+- Emulator run #45716694004 remains IN_PROGRESS; job #139564450544, step 7 instrumentation/preflight still running; XML/artifact list empty. No emulator PASS/FAIL yet.
+- APK build success is separate from H1 emulator criterion. No merge/deploy until current exact-head emulator XML has 4 tests /0 failures /0 errors /0 skipped and real-device checklist is completed.
