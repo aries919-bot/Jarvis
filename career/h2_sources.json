@@ -572,15 +572,17 @@
       "expectedText": [
         "Munzur Üniversitesi Rektörlüğünden",
         "ÖĞRETİM ÜYESİ ALIM İLANI",
-        "İlan Tarihi : 10.11.2026",
-        "Son Başvuru Tarihi : 25.11.2026",
+        "İlan Tarihi",
+        "10.11.2026",
+        "Son Başvuru Tarihi",
+        "25.11.2026",
         "2026/18",
         "2026/28"
       ],
       "positionCount": 11,
       "howToApply": {
         "method": "İlgili akademik birime şahsen veya posta yoluyla",
-        "url": "https://www.munzur.edu.tr/",
+        "url": "https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
         "instructions": "Profesör ve doçent başvuruları Personel Daire Başkanlığına; doktor öğretim üyesi başvuruları ilan edilen fakülte veya meslek yüksekokuluna şahsen ya da posta ile yapılır. Posta ile gönderilen dosyanın 25.11.2026 mesai bitimine kadar ilgili birime ulaşması gerekir."
       },
       "conditions": [
@@ -617,7 +619,7 @@
       "positionCount": 1,
       "howToApply": {
         "method": "İlgili meslek yüksekokuluna şahsen veya posta yoluyla",
-        "url": "https://www.munzur.edu.tr/",
+        "url": "https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
         "instructions": "Başvuru Tıbbi Dokümantasyon ve Sekreterlik programının bağlı olduğu ilgili meslek yüksekokuluna şahsen veya posta ile yapılır. Dosyanın son başvuru tarihi 25.11.2026 mesai bitimine kadar ulaşması gerekir."
       },
       "conditions": [
