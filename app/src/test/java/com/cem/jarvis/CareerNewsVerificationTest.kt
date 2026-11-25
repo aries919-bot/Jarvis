@@ -81,7 +81,8 @@ class CareerNewsVerificationTest {
             .reviewClaim(
                 "claim-1",
                 CareerHumanReviewDecision.CONFIRM,
-                reviewedAt
+                reviewedAt,
+                "İkincil kaynak resmî kaynağın yerini tutmuyor."
             )!!
         assertEquals(CareerClaimVerdict.CONTEXT_MISSING, reviewed.claims.single().verdict())
         assertEquals(CareerNewsVerdict.CONTEXT_MISSING, reviewed.verdict())
@@ -99,7 +100,7 @@ class CareerNewsVerificationTest {
                     url = "https://resmigazete.gov.tr/duyuru/duzeltme"
                 )
             )!!
-            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt, "Kanıtlar karşılaştırıldı; çelişki kaydedildi.")!!
         assertEquals(
             CareerClaimVerdict.CONFLICTING_EVIDENCE,
             reviewed.claims.single().verdict()
@@ -121,7 +122,8 @@ class CareerNewsVerificationTest {
         val reviewed = withEvidence.reviewClaim(
             "claim-1",
             CareerHumanReviewDecision.REFUTE,
-            reviewedAt
+            reviewedAt,
+            "Resmî düzeltme duyurusu bu iddiayı açıkça çürütüyor."
         )!!
         assertEquals(CareerClaimVerdict.REFUTED, reviewed.claims.single().verdict())
         assertEquals(CareerNewsVerdict.REFUTED, reviewed.verdict())
@@ -178,6 +180,7 @@ class CareerNewsVerificationTest {
         assertEquals("Kurum 12 teknisyen alımı yapacağını duyurdu.", restored!!.correctionHistory.single().previousText)
         assertEquals(1, restored.correctionHistory.single().previousEvidence.size)
         assertEquals(CareerHumanReviewDecision.CONFIRM, restored.correctionHistory.single().previousReviewDecision)
+        assertEquals("İddia resmî metinle karşılaştırıldı.", restored.correctionHistory.single().previousReviewNote)
     }
 
     @Test
@@ -238,4 +241,22 @@ class CareerNewsVerificationTest {
         assertFalse(value.validationErrors().isEmpty())
     }
 
+    @Test
+    fun humanReviewRequiresRationaleAndNoOpCorrectionIsRejected() {
+        val withEvidence = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+        assertNull(
+            withEvidence.reviewClaim(
+                "claim-1",
+                CareerHumanReviewDecision.CONFIRM,
+                reviewedAt
+            )
+        )
+        assertNull(withEvidence.correctClaim(
+            revisedClaim = withEvidence.claims.single(),
+            correctedAt = "2026-11-25T14:20:00Z",
+            explanation = "Metin değişmedi.",
+            sourceUrl = "https://kurum.gov.tr/duyuru/1"
+        ))
+    }
 }
