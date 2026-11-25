@@ -216,6 +216,11 @@ class CareerNewsVerificationTest {
     fun rejectsImpossibleDatesAndEvidenceExcerptsWithPersonalIdentifiers() {
         assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-02-30T14:00:00Z"))
         assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-11-25T25:00:00Z"))
+        assertFalse(CareerNewsVerificationPolicy.validateHttpsUrl("https://192.168.1.20/").isNullOrBlank())
+        assertFalse(CareerNewsVerificationPolicy.validateHttpsUrl("https://trusted.gov.tr@evil.example/").isNullOrBlank())
+        assertTrue(CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(
+            "İletişim: test@example.com, 12345678901"
+        ).contains("[KIMLIK NUMARASI]"))
 
         val personalDataEvidence = evidence().copy(
             excerpt = "Aday kimlik numarası 12345678901 listede yayımlandı."
