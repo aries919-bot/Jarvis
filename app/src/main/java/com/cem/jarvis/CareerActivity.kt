@@ -1402,6 +1402,12 @@ class CareerActivity : Activity() {
                         item.optString("firstSeenAt")
                     ).filter { CareerNewsVerificationPolicy.isUtcTimestamp(it) }.minOrNull()
                     if (firstSeen != null) winner.put("firstSeenAt", firstSeen)
+                    val publicationDates = listOf(
+                        existing.optString("publishedAt"),
+                        item.optString("publishedAt")
+                    ).filter { CareerNewsVerificationPolicy.isUtcTimestamp(it) }.distinct()
+                    if (publicationDates.size == 1) winner.put("publishedAt", publicationDates.single())
+                    else winner.remove("publishedAt")
                     winner.put("lastSeenAt", maxOf(
                         existing.optLong("lastSeenAt", 0L),
                         item.optLong("lastSeenAt", 0L)
