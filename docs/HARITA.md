@@ -1199,7 +1199,7 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 ### H2 alt kümesi ve manuel envanter ayrımı
 - H2 canlı okuyucu [run #45646698179](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179), artifact [#15037029949](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179/artifacts/15037029949): **19 kaynak kaydı /17 fresh /2 stale**, **13 açık kart /11 kurum**. H2 kartları ORAN, DOKA ve Zafer'i zaten içeriyor.
 - İŞKUR e-Şube ayrı kaynakta **1 kaynak /42 kayıt**. Birleşik Worker feed bu iki ölçümü tek JSON içinde 12 kurum/55 kart olarak sayıyor; eski 6/47 baseline artık bu exact-head entegrasyon ölçümünün yerine kullanılmaz.
-- Manuel kamu envanteri 23/17'den **26 açık ana duyuru /20 kurum** düzeyine güncellendi: ORAN, DOKA ve Zafer üç ana duyurusu önceki manuel tabloda eksikti; bunlar H2 feed'de zaten bulunduğu için yeniden eklenmez. Manuel envanter ile Worker feed arasındaki tam URL/ilan kesişim eşlemesi henüz tamamlanmadı; 26 ve 55 toplanmaz.
+- Manuel kamu envanterinin son belgelenmiş toplamı **23 ana duyuru /17 kurum** olarak korunur. ORAN, DOKA ve Zafer H2 feed'de mevcuttur; bu üç kaynağın 23/17 manuel sayımına dahil olup olmadığı satır bazlı eşleştirme olmadan söylenemez. Bu nedenle 26/20 gibi yeni bir manuel toplam üretilmez. Manuel envanter ile Worker feed arasındaki tam URL/ilan kesişimi henüz tamamlanmadı; sayılar toplanmaz.
 - Yeni manuel aktif duyuruların alanları H2 JSON'da: ORAN `publishedAt=2026-10-19`, `deadline=2026-12-03`, `collectedAt/firstSeenAt=2026-11-25T16:09:42Z`; DOKA `publishedAt=2026-11-02`, `deadline=2026-12-06`, aynı source collection/first-seen; Zafer `publishedAt=2026-11-03`, `deadline=2026-12-14`, aynı source collection/first-seen. Pozisyon sayıları kart adedini artırmaz.
 - Dicle Kalkınma Ajansı (DİKA) 4 uzman duyurusu ayrıca **future/opening-soon**: resmi kurum sayfası 16.11.2026'da yayımlanmış; PDF'de Resmî Gazete ilan tarihi 14.11.2026; başvuru 04.12.2026–18.12.2026. `applicationOpensAt=2026-12-04`, `deadline=2026-12-18`; 26 açık kart/20 kurum sayısına eklenmez. Kaynak: https://www.dika.org.tr/duyuru/ajansimiza-dort-uzman-personel-alimi/322 .
 
@@ -1211,9 +1211,9 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 
 ### C1-3 sıradaki iş
 - Görev açıldı: [C1-3 — 100 doğrulanmış açık ilan + production feed kapısı](../gorevler/C1-3-100-OPEN-LISTINGS-2026-11-26.md) (yalnız `durum` dokümantasyonu).
-- Manuel kamu envanteri: **26 açık ana duyuru /20 kurum**; future/opening-soon **5**, deadline-null/Doğrulanamadı **5**, süresi geçmiş **5**. Özel havuz 7 aday/duyuru olarak ayrı kalır.
+- Manuel kamu envanterinin son kesin belgelenmiş toplamı **23 açık ana duyuru /17 kurum**; future/opening-soon önceki 4'e yeni DİKA duyurusu eklenince **5 aday** (crosswalk teyidi bekliyor), deadline-null/Doğrulanamadı 5, süresi geçmiş 5. Özel havuz 7 aday/duyuru olarak ayrı kalır.
 - Feed sayısı farklıdır: **12 kurum /55 açık doğrulanmış kart**. Manuel 26/20 ile feed 12/55 birleştirilmez; önce canonical URL/ilan kesişimi çıkarılır.
-- Sonraki iş, 26 manuel duyurunun H2 13 kartıyla tam eşleştirilmesi; yalnız eksik, robots-izinli, deadline'ı açık kaynakların eklenmesidir. Production Worker GET/D1 ise ayrı blokerdir.
+- Sonraki iş, 23 manuel duyurunun H2 13 kartıyla tam eşleştirilmesi; yalnız eksik, robots-izinli, deadline'ı açık kaynakların eklenmesidir. Production Worker GET/D1 ise ayrı blokerdir.
 
 
 ## 26.11.2026 — H1 exact-head APK PASS; emulator beklemede
