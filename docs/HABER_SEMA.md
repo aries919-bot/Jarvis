@@ -305,3 +305,10 @@ PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt
 - Haber listesi en çok 100 kart için storyId listesini bir defa üretir; Store `loadMany` ile primary ve last-good değerlerini tek SQLite `IN` sorgusunda alır. Kart başına ayrı DB sorgusu yapılmaz.
 - Exact-head test sayımı: 17 model +8 store =25 @Test; en yeni CI [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387) beklemede. Ara head #45666479386 success olsa da güncel commit'e PASS aktarılmaz.
 - Full App QA/emulator ve gerçek telefon testi yapılmadı; haber ekranı gerçek cihazda denenmeden H1 kabul edilmiş sayılmaz.
+
+### 11.1 PR #71 exact-head Android doğrulaması — 25.11.2026
+- Exact HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`; Actions [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387) SUCCESS.
+- `testDebugUnitTest` SUCCESS; `assembleDebug` SUCCESS; `upload-artifact` SUCCESS. Log görevleri BUILD SUCCESSFUL: test 1m31s, APK 50s.
+- Test dosyası sayımı 17 model +8 store =25 @Test. Batch read testi tek `getMany` çağrısında iki kaydı ve bozuk primary için last-good fallback'i doğrular.
+- APK artifact `aries-apk`, ID `15049240153`, 14,176,012 bytes.
+- CI yalnız JVM unit tests + debug APK derlemesini kanıtlar; Android emulator/Full App QA ve gerçek telefon testi yapılmadı. H1 bu nedenle CI teknik olarak PASS, telefon kabulü bekliyor.
