@@ -81,3 +81,17 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Yeni modelin 11 @Test anotasyonu ve 38 assert çağrısı; JUnit görevi exact HEAD'de PASS. Eski başarısız/iptal koşular latest-head sonucu değildir.
 - Sınır: bu CI yalnız unit test + debug APK derlemesini kanıtlar. Full App QA, Haber UI/store entegrasyonu, gerçek telefon, canlı kaynak doğrulaması ve kullanıcı akışı henüz kanıtlanmadı.
 - Karar: model çekirdeği teknik olarak CI PASS; PR açık/taslak. H1 haber ürünü tamamlandı veya production-ready demek değildir.
+
+
+## 2. H1 yerel arşiv + Haber kartı entegrasyonu — 25.11.2026
+- Aktif PR: #69 https://github.com/aries919-bot/Jarvis/pull/69, taban `kariyer-modulu`, dal `feat/h1-story-claim-evidence-ci-20261125`.
+- Exact HEAD: `b095528b9bb7974578c564be9e84791fa300ff55`; compare base/head: 29 commit /8 dosya /+1.572 /-35 /0 behind. 8 dosya: app/build.gradle.kts, CareerActivity.kt, CareerExternalLinks.kt, CareerNewsVerification.kt, CareerNewsVerificationStore.kt, CareerNewsVerificationUi.kt, CareerNewsVerificationStoreTest.kt, CareerNewsVerificationTest.kt.
+- Test yeniden sayımı: CareerNewsVerificationTest 13 @Test + CareerNewsVerificationStoreTest 5 @Test = **18 yeni test**.
+- Haber kartından iddia oluşturma, kanıt ve karşıt kanıt ekleme, insan CONFIRM/REFUTE/INCONCLUSIVE gerekçesi, iddia düzeltme ve düzeltme geçmişi okuma bağlandı. AI tek başına doğrulama üretmez.
+- Ayrı H1 SharedPreferences anahtarı kullanılır; mevcut `career_news_items` arşivi silinmez veya üstüne yazılmaz. Arşiv 1.5 MB sınırını aşar ya da bozuk JSON içerirse sessiz temizleme yerine kayıt reddedilir. Önceki iddialar, kanıtlar ve correctionHistory sessizce silinemez.
+- `firstSeenAt` tarama cache'inde ilk kez kaydedilir; eski kayıt ilk yeniden görüldüğünde başlatılır. Kaynakta yayın tarihi yoksa `publishedAt=null`; `collectedAt` kaynak tarama zamanı, `firstSeenAt` ilk kayıt zamanı olarak ayrı kalır.
+- Birincil kanıt için izinli kurum/işveren alan adı kontrolü eklendi. Genel .edu.tr, LinkedIn/Indeed ve ikincil iş ilanı platformları PRIMARY_SOURCE olamaz.
+- Kaynak bağlantıları için AndroidX Custom Tabs eklendi. Browser 1.10.0 denemesi AAR metadata kontrolünde reddedildi (compileSdk 36 + AGP 8.9.1 gerektiriyor); proje altyapısı yükseltilmeden Browser 1.8.0'a sabitlendi. Güncel #45665491590 koşusunda AAR metadata kontrolü ve Android birim testleri SUCCESS; APK derlemesi IN_PROGRESS.
+- Android Full App QA workflow dosyası `kariyer-modulu` tabanında bulunmadığından emülatör UI QA koşusu yok; CI yalnız Android APK + unit test workflow'u.
+- Önceki H1 PR #68 kapatıldı (unmerged); #69 onun yerini alır.
+- Telefon testi yapılmadı; merge/deploy yok.
