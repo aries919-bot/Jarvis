@@ -12,7 +12,11 @@ class CareerNewsVerificationTest {
     private val checkedAt = "2026-11-25T14:05:00Z"
     private val reviewedAt = "2026-11-25T14:10:00Z"
 
-    private fun record(publishedAt: String? = null) = CareerNewsVerificationRecord(
+    private fun record(
+        publishedAt: String? = null,
+        collectedAt: String? = this.collectedAt,
+        firstSeenAt: String? = this.collectedAt
+    ) = CareerNewsVerificationRecord(
         storyId = CareerNewsVerificationRecord.stableStoryId(
             "https://kurum.gov.tr/duyuru/1",
             "Kurum yeni personel alımını duyurdu"
@@ -22,7 +26,7 @@ class CareerNewsVerificationTest {
         originalSourceUrl = "https://kurum.gov.tr/duyuru/1",
         publishedAt = publishedAt,
         collectedAt = collectedAt,
-        firstSeenAt = collectedAt
+        firstSeenAt = firstSeenAt
     )
 
     private fun claim() = CareerNewsClaim(
@@ -277,4 +281,15 @@ class CareerNewsVerificationTest {
             sourceUrl = "https://kurum.gov.tr/duyuru/1"
         ))
     }
+    @Test
+    fun unknownCollectionAndFirstSeenTimesStayNull() {
+        val value = record(collectedAt = null, firstSeenAt = null)
+        assertTrue(value.validationErrors().isEmpty())
+        val restored = CareerNewsVerificationRecord.fromJson(value.toJson().toString())
+        assertNotNull(restored)
+        assertNull(restored!!.publishedAt)
+        assertNull(restored.collectedAt)
+        assertNull(restored.firstSeenAt)
+    }
+
 }
