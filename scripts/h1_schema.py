@@ -7,7 +7,7 @@ from typing import Any
 
 CATEGORIES = {
     "Kamu", "Kura", "KPSS", "KPSS'siz",
-    "Büyük özel şirket", "Kamu bağlı büyük şirket",
+    "Büyük özel", "Kamu bağlı şirket",
 }
 CONTENT_TYPES = {"job", "lottery", "result", "internship", "exam", "other"}
 FRESHNESS = {"Doğrulandı", "Süresi geçti", "Doğrulanamadı"}
@@ -165,8 +165,6 @@ def validate_feed(feed: Any, today: date) -> list[str]:
         if content_type == "job" and status == "Doğrulandı":
             if deadline_date is None:
                 errors.append(f"{prefix}.deadline: doğrulanmış iş için son başvuru tarihi gerekli")
-            if published_date is None:
-                errors.append(f"{prefix}.publishedAt: doğrulanmış iş için yayın tarihi kanıtı gerekli")
             if item.get("sourceStatus") != "fresh":
                 errors.append(f"{prefix}.sourceStatus: stale ilan doğrulandı gösterilemez")
             if opens_at is not None and collected_at is not None and collected_at < opens_at:
@@ -239,12 +237,10 @@ def count_verified_open_jobs(
                 or record.get("sourceStatus") != "fresh"
                 or record.get("freshnessStatus") != "Doğrulandı"
                 or record.get("deadline") is None
-                or record.get("publishedAt") is None
             ):
                 continue
             try:
                 deadline = _parse_date_or_datetime(record["deadline"], "deadline")
-                _parse_date_or_datetime(record["publishedAt"], "publishedAt")
                 if deadline < today:
                     continue
                 collected_at = _parse_datetime(record.get("collectedAt"), "collectedAt")
