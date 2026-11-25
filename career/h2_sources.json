@@ -7,7 +7,8 @@
       "reader": "yhgm",
       "institution": "T.C. Sağlık Bakanlığı — Yönetim Hizmetleri Genel Müdürlüğü",
       "category": "Kura",
-      "url": "https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html"
+      "url": "https://yhgm.saglik.gov.tr/TR-111525/tasra-teskilati-hizmet-birimlerinde-istihdam-edilmek-uzere-2764-surekli-isci-alim-kurasi-hakkinda-duyuru.html",
+      "positionCount": 2764
     },
     {
       "id": "botas-duyurular",
@@ -17,7 +18,8 @@
       "listingUrl": "https://www.botas.gov.tr/Kategori/duyurular/2",
       "jobUrl": "https://www.botas.gov.tr/Icerik/223-kisilik-personel-alim-duyu/1203",
       "jobPdfUrl": "https://www.botas.gov.tr/uploads/dosyaYoneticisi/559215-lan-tablo.pdf",
-      "resultUrl": "https://www.botas.gov.tr/Icerik/10-kasim-2025-14-kasim-2025/1233"
+      "resultUrl": "https://www.botas.gov.tr/Icerik/10-kasim-2025-14-kasim-2025/1233",
+      "positionCount": 223
     },
     {
       "id": "atk-personel-2026-2",
@@ -59,7 +61,8 @@
         "KPSS P3"
       ],
       "pdfUrlPremeasured": true,
-      "applicationOpensAt": "2026-11-30T09:00:00+03:00"
+      "applicationOpensAt": "2026-11-30T09:00:00+03:00",
+      "positionCount": 181
     },
     {
       "id": "anadolu-sozlesmeli-2026",
@@ -89,7 +92,8 @@
       ],
       "tags": [
         "KPSS"
-      ]
+      ],
+      "positionCount": 1
     },
     {
       "id": "duzce-ogretim-elemani-2026",
@@ -121,7 +125,8 @@
       "tags": [
         "KPSS'siz",
         "ALES"
-      ]
+      ],
+      "positionCount": 5
     },
     {
       "id": "tarsus-ogretim-elemani-2026",
@@ -155,7 +160,8 @@
         "ALES",
         "KPSS'siz"
       ],
-      "pdfUrlPremeasured": true
+      "pdfUrlPremeasured": true,
+      "positionCount": 3
     },
     {
       "id": "tga-personel-2026-11",
