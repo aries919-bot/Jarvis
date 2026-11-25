@@ -92,7 +92,7 @@ class CareerNewsVerificationStore(
         }
 
         val values = linkedMapOf(key to record.toJson().toString())
-        if (previous != null) values[backup] = previous.toJson().toString()
+        values[backup] = (previous ?: record).toJson().toString()
         val saved = storage.putAtomically(values)
         return if (saved) {
             CareerNewsVerificationSaveResult(true)
