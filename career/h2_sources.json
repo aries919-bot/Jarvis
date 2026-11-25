@@ -480,6 +480,82 @@
         "KPSS'siz"
       ],
       "allowNullPublishedAt": true
+    },
+    {
+      "id": "marmara-ogretim-elemani-2026-11-24",
+      "reader": "official",
+      "format": "html",
+      "institution": "Marmara Üniversitesi",
+      "itemId": "marmara-2026-11-24-ogretim-elemani",
+      "title": "Marmara Üniversitesi öğretim elemanı alımı — 4 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-gorevlisi-alim-ilani-1",
+      "pdfUrl": "https://pdb.marmara.edu.tr/dosya/pdb/ilanlar/24.11.2026%20%C3%96%C4%9Fr.G%C3%B6r.%20%C4%B0lan%C4%B1.pdf",
+      "pdfUrlPremeasured": true,
+      "officialUrl": "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-gorevlisi-alim-ilani-1",
+      "publicationMode": "marmara-pdb",
+      "deadlineContext": "son başvuru",
+      "expectedText": [
+        "Yayın Tarihi: 24 Kasım 2026",
+        "SON BAŞVURU TARİHİ: 08.12.2026",
+        "26.02.008",
+        "26.02.010"
+      ],
+      "positionCount": 4,
+      "howToApply": {
+        "method": "Marmara Üniversitesi personel başvuru sistemi üzerinden çevrimiçi",
+        "url": "https://basvuru.marmara.edu.tr/personel",
+        "instructions": "Başvurular istenen belgeler yüklenerek Marmara Üniversitesi personel başvuru sistemi üzerinden çevrimiçi yapılır. Aynı tarihli ilanlarda aday yalnızca tek ilana başvurabilir."
+      },
+      "conditions": [
+        "Toplam 4 öğretim görevlisi kadrosu: Almanca Hazırlık 1, Fransızca Hazırlık 1, İngilizce Hazırlık 2.",
+        "657 sayılı Kanun'un 48. maddesindeki genel şartlar ve Devlet Hizmeti Yükümlülüğü bulunmaması şartı aranır.",
+        "Özel şartlarda başka puan belirtilmemişse ALES en az 70; yabancı dil sınavından ilgili dilde en az 85 veya ÖSYM eşdeğeri aranır.",
+        "İlgili dil alanında lisans ve tezli yüksek lisans şartları vardır; Fransızca kadrosunda kamu kurumunda ilgili alanda en az 1 yıl tecrübe de istenir. Ayrıntılar resmî PDF'deki kadro satırlarına göre kontrol edilmelidir."
+      ],
+      "tags": [
+        "Akademik",
+        "ALES",
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "marmara-ogretim-uyesi-2026-11-24",
+      "reader": "official",
+      "format": "html",
+      "institution": "Marmara Üniversitesi",
+      "itemId": "marmara-2026-11-24-ogretim-uyesi",
+      "title": "Marmara Üniversitesi öğretim üyesi alımı — 7 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-uyesi-alim-ilani-28",
+      "pdfUrl": "https://pdb.marmara.edu.tr/dosya/pdb/ilanlar/24.11.2026_%C3%96%C4%9Fretim%20%C3%9Cyesi.pdf",
+      "pdfUrlPremeasured": true,
+      "officialUrl": "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-uyesi-alim-ilani-28",
+      "publicationMode": "marmara-pdb",
+      "deadlineContext": "son başvuru",
+      "expectedText": [
+        "Yayın Tarihi: 24 Kasım 2026",
+        "Son Başvuru Tarihi: 08.12.2026",
+        "26.01.136",
+        "26.01.142"
+      ],
+      "positionCount": 7,
+      "howToApply": {
+        "method": "Marmara Üniversitesi personel başvuru sistemi üzerinden çevrimiçi",
+        "url": "https://basvuru.marmara.edu.tr/personel",
+        "instructions": "Başvurular 24.11.2026–08.12.2026 arasında Marmara Üniversitesi personel başvuru sistemi üzerinden çevrimiçi yapılır. Aynı ilan döneminde şartları taşıyan aday yalnızca bir ilana başvurabilir."
+      },
+      "conditions": [
+        "Toplam 7 öğretim üyesi kadrosu; profesör, doçent ve doktor öğretim üyesi unvanları ilgili bölüm satırlarında ayrı belirtilmiştir.",
+        "2547 sayılı Kanun ve Öğretim Üyeliğine Yükseltilme ve Atanma Yönetmeliği ile Marmara Üniversitesi atama kriterleri uygulanır.",
+        "Her kadro için alan, doktora/yan dal, yayın ve İngilizce ders verme yeterliği şartları farklıdır; başvurulacak kadronun resmî PDF satırı esas alınmalıdır."
+      ],
+      "tags": [
+        "Akademik",
+        "KPSS'siz"
+      ]
     }
   ]
 }
