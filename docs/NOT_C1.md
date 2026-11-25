@@ -196,3 +196,14 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - C1 H2/e-Şube PR #11 hâlâ RED: 12 kamu kaynağı /55 doğrulanmış açık ilan (100 eşiğine 45 eksik); Worker authenticated production GET/D1 ve şehir kanıtlı cross-feed dedup yok. Kamu ayrı raporu ve 10 kaynak/100 ilan kapısı değişmez.
 - Ayrıntılı görev: `gorevler/H1-UI-PUBLISHEDAT-EMULATOR-2026-11-25.md`.
 
+## 15. Aries mimari ve dosya düzeni QA — 25.11.2026
+- Envanter: `kariyer-modulu` 79 kayıt/30 Kotlin; H1 #71 HEAD 91 kayıt/36 Kotlin.
+- CareerActivity yaklaşık 2.795 satır, CareerMonitor 2.049, MainActivity 1.802, Ai.kt 735. CareerMonitor içinde SourceCatalog, Eligibility, ListingParser, SearchEngine, RecruitmentTracker ve WorkManager scheduler/worker birlikte.
+- `denetle.py` diff'in ilk 12 KB'sini Groq'a yollar; bu işte çalıştırılmadı. `AGENTS.md` eski Groq/Claude/Cline iş akışındaydı; `DURUM.md` 31 Ekim tarihliydi. İkisi `durum` dalında güncellendi.
+- Media altında beş eski kaynak yedeği bulunuyor; H1/C1 kapsam dışı olduğundan değişiklik yapılmadı. `.gitignore` içindeki `gorevler/` ve `HARITA.md` ignore desenleri ayrıca düzeltilmeli.
+- Gerçek ayrı ajan aracı mevcut değil; mimari, güvenlik, veri ve CI olarak dört öz-QA geçişi yapıldı; ajan kullanıldığı iddia edilmedi.
+- Refaktör sırası: H1 emulator PASS + telefon; sonra PR #70; sonra CareerMonitor sınıf sınırlarına göre küçük dosya bölmeleri; ardından CareerActivity için repository ve page controller ayrımı.
+- H1 exact-head APK/unit #45679523180 SUCCESS; emulator #45679523114 son kontrolde IN_PROGRESS. C1 #11 RED: 12 kamu kaynağı/55 doğrulanmış açık ilan; 45 eksik; Worker production GET/D1 ve city dedup eksik.
+- **KARAR: RED / mimari temizlik tamamlanmadı.** Envanter ve iş planı kayda girdi; hiçbir kaynak dosyası topluca taşınmadı veya silinmedi.
+- Ayrıntı: `gorevler/ARIES-MIMARI-DAGINIKLIK-2026-11-25.md`.
+
