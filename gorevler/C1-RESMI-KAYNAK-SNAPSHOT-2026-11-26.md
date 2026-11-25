@@ -376,5 +376,5 @@ PDF ekran görüntüleri sayfalar 1–9 için alındı ve tablo/giriş metni gö
 ### C1-3 sıradaki iş
 - Görev açıldı: [C1-3 — 100 doğrulanmış açık ilan + production feed kapısı](../gorevler/C1-3-100-OPEN-LISTINGS-2026-11-26.md) (yalnız `durum` dokümantasyonu).
 - Manuel kamu envanterinin son kesin belgelenmiş toplamı **23 açık ana duyuru /17 kurum**; future/opening-soon önceki 4'e yeni DİKA duyurusu eklenince **5 aday** (crosswalk teyidi bekliyor), deadline-null/Doğrulanamadı 5, süresi geçmiş 5. Özel havuz 7 aday/duyuru olarak ayrı kalır.
-- Feed sayısı farklıdır: **12 kurum /55 açık doğrulanmış kart**. Manuel 26/20 ile feed 12/55 birleştirilmez; önce canonical URL/ilan kesişimi çıkarılır.
+- Feed sayısı farklıdır: **12 kurum /55 açık doğrulanmış kart**. Manuel 23/17 ile feed 12/55 birleştirilmez; önce canonical URL/ilan kesişimi çıkarılır.
 - Sonraki iş, 23 manuel duyurunun H2 13 kartıyla tam eşleştirilmesi; yalnız eksik, robots-izinli, deadline'ı açık kaynakların eklenmesidir. Production Worker GET/D1 ise ayrı blokerdir.
