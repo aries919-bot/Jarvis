@@ -29,6 +29,7 @@ SOURCES = [
         "name": "Atatürk Üniversitesi",
         "page_urls": [
             "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/",
+            "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/16/ataturk-universitesi-ogretim-uyesi-alim-ilani-16-11-2026/",
         ],
     },
     {
@@ -36,6 +37,7 @@ SOURCES = [
         "name": "Balıkesir Üniversitesi",
         "page_urls": [
             "https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352",
+            "https://baunwebapi.balikesir.edu.tr/uploads/1795172124974.pdf",
         ],
     },
     {
