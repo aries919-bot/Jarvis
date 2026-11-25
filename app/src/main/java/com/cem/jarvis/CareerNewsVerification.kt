@@ -483,6 +483,16 @@ object CareerNewsVerificationPolicy {
 }
 
 
+private fun CareerNewsEvidence.toJson(): JSONObject = JSONObject()
+    .put("id", id)
+    .put("publisher", publisher)
+    .put("sourceUrl", sourceUrl)
+    .put("sourceType", sourceType.name)
+    .put("stance", stance.name)
+    .put("excerpt", excerpt)
+    .put("publishedAt", publishedAt ?: JSONObject.NULL)
+    .put("checkedAt", checkedAt)
+
 private fun evidenceFromJson(json: JSONObject): CareerNewsEvidence = CareerNewsEvidence(
     id = json.getString("id"),
     publisher = json.getString("publisher"),
