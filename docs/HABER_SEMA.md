@@ -5,15 +5,15 @@ Kapsam: İş & Kariyer haberleri. Kaynak adayı olmak, kazıma izni veya canlı 
 
 ## 1. Filtreler ve kategori sınıflandırması
 
-Arayüz filtreleri (sıra sabit): **Tümü**, **Kamu**, **Kura**, **KPSS**, **KPSS'siz**, **Büyük özel şirket**, **Kamu bağlı büyük şirket**.
+Arayüz filtreleri (sıra sabit): **Tümü**, **Kamu**, **Kura**, **KPSS**, **KPSS'siz**, **Büyük özel**, **Kamu bağlı şirket**.
 
 Kartın `category` alanı Tümü olamaz; aşağıdaki değerlerden tam biri olmalıdır:
 - `Kamu`: bakanlık, genel müdürlük, üniversite, belediye ve doğrudan kamu kurumu ilanı.
 - `Kura`: noter kurası/çekiliş süreciyle ilgili duyuru. İlanın kendisi ayrıca Kamu veya ilgili işveren kategorisinde sınıflandırılabilir; kura haberi `contentType=lottery` olur.
 - `KPSS`: ilanın açıkça KPSS puanı/puan türü şartı koyduğu alım.
 - `KPSS'siz`: resmî ilan metninde KPSS şartı bulunmadığı doğrulanmış alım. Şartlar okunamıyorsa bu etiket verilmez.
-- `Büyük özel şirket`: özel hukuk tüzel kişisi olan büyük ölçekli şirketin kendi kariyer/duyuru kanalı.
-- `Kamu bağlı büyük şirket`: kamu sermayeli/bağlı büyük şirket (ör. PTT, BOTAŞ, TPAO). Şirket statüsü teyit edilmeden bu kategori kullanılmaz.
+- `Büyük özel`: özel hukuk tüzel kişisi olan büyük ölçekli şirketin kendi kariyer/duyuru kanalı.
+- `Kamu bağlı şirket`: kamu sermayeli/bağlı büyük şirket (ör. PTT, BOTAŞ, TPAO). Şirket statüsü teyit edilmeden bu kategori kullanılmaz.
 
 Bir ilanda birden fazla sınıflandırma anlamlıysa kartta bir ana kategori ve `tags` alanında ikincil etiketler tutulur. KPSS/KPSS'siz ayrımı ilan metnindeki şartlardan türetilir; kurumun geçmiş alımlarından tahmin edilmez.
 
@@ -32,7 +32,7 @@ Her `items[]` kaydı:
 | `id` | string | Kaynak ilan numarası varsa o; yoksa kanonik resmî URL + kurum/başlık kararlı özeti. |
 | `institution` | string | İlanı veren kurum/işveren; aracı haber sitesi değil. |
 | `title` | string | Resmî duyurudaki başlık; başlıkta geçen tarih sınav tarihi olabilir. |
-| `category` | enum | Kamu / Kura / KPSS / KPSS'siz / Büyük özel şirket / Kamu bağlı büyük şirket. |
+| `category` | enum | Kamu / Kura / KPSS / KPSS'siz / Büyük özel / Kamu bağlı şirket. |
 | `contentType` | enum | `job`, `lottery`, `result`, `internship`, `exam`, `other`. |
 | `officialSourceUrl` | HTTPS URL | İlan/duyurunun resmî asıl sayfası; arama sonucu veya haber kopyası olmaz. |
 | `howToApply` | object | `method`, `url`, `instructions`. Başvuru yeri/yöntemi resmî metinden aktarılır. |
@@ -87,7 +87,7 @@ Her `items[]` kaydı:
 4. Duyuru başlığındaki tarih çoğunlukla sınav/kura tarihidir. Yayın tarihi kabul edilmez.
 5. `deadline < bugün` ise `Süresi geçti`; güncel listede gösterilmez, arşive alınır.
 6. `deadline` yoksa veya tarih kanıtlanamıyorsa başvuru süresi açık kabul edilmez: `Doğrulanamadı`.
-7. `Doğrulandı` için yayın tarihi kanıtı, son başvuru tarihi ve başvuru döneminin başlamış olması gerekir. Kaynak `applicationOpensAt` veriyorsa bu an gelmeden `Doğrulandı` denmez; `Doğrulanamadı` kalır. Saat dilimi Türkiye yerel saatiyle yorumlanır; saklama UTC'dir.
+7. `Doğrulandı` için resmî ilan içeriği, son başvuru tarihi ve başvuru döneminin başlamış olması gerekir. Kaynak yayın tarihini açıkça veriyorsa `publishedAt` doldurulur; vermiyorsa `publishedAt=null` kalır, çekim zamanı veya ilk görülme tarihi yayın tarihi yerine kullanılamaz. Kaynak `applicationOpensAt` veriyorsa bu an gelmeden `Doğrulandı` denmez; `Doğrulanamadı` kalır. Saat dilimi Türkiye yerel saatiyle yorumlanır; saklama UTC'dir.
 8. Geçmiş tarihli ilan yeni ilan gibi yeniden yayınlanmaz. Kaynak güncellenmişse değişiklik geçmişi saklanır.
 
 ## 4. İçerik türü / yeni iş ilanı ayrımı
@@ -162,14 +162,14 @@ Her `items[]` kaydı:
 2. **İzmir Büyükşehir Belediyesi Kariyer Kapısı yönlendirmesi** — https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim  
    K1-B: robots izinli, HTTP 200, 15.953 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. e-Devlet oturumuna bağlıdır; yalnız dış bağlantı/Custom Tabs yönlendirmesi, kazıma yok. KPSS koşulu her ilanda ayrıca resmî metinden doğrulanır.
 
-### Büyük özel şirket
+### Büyük özel
 
 1. **Turkcell Kariyer Fırsatları** — https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay  
    K1-B: robots izinli, HTTP 200, 132.486 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. Sayfa erişilebilir; bu ölçüm açık pozisyon veya tarihli ilan bulunduğunu kanıtlamaz. İlan alt sayfaları ayrıca incelenmeli.
 2. **Koç Kariyerim ilan listesi** — https://www.kockariyerim.com/jobAd/list  
    K1-B: robots izinli, HTTP 200, 707.465 bayt, tarihli duyuru HAYIR, ÇALIŞIYOR. Sayfa erişilebilir; pozisyonların içeriği, başvuru durumu ve son tarihleri ayrı doğrulanmadan iş ilanı sayılmaz.
 
-### Kamu bağlı büyük şirket
+### Kamu bağlı şirket
 
 1. **BOTAŞ duyurular** — https://www.botas.gov.tr/Kategori/duyurular/2  
    K1-B: robots izinli, HTTP 200, 55.753 bayt, tarihli duyuru EVET, ÇALIŞIYOR. Personel alımı/sınav/sonuç içerikleri ayrı türlere ayrılır; sınav tarihi yayın tarihi olarak alınmaz.
@@ -202,12 +202,12 @@ Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını kar�
 2. Malatya Su ve Kanalizasyon İdaresi Kariyer Kapısı — https://www.turkiye.gov.tr/msvk-kariyer-kapisi-kamu-ise-alim — K1-B'de HTTP 200, fakat kimlik doğrulama gerektiren e-Devlet yönlendirmesi; içerik kazınmaz, Custom Tabs.
 3. İzmir Büyükşehir Belediyesi Kariyer Kapısı — https://www.turkiye.gov.tr/bb-kariyer-kapisi-kamu-ise-alim — K1-B'de HTTP 200, fakat kimlik doğrulama gerektiren e-Devlet yönlendirmesi; içerik kazınmaz, Custom Tabs.
 
-### Büyük özel şirket
+### Büyük özel
 1. Turkcell Kariyer Fırsatları — https://www.turkcell.com.tr/hakkimizda/insankaynaklari/kariyer-firsatlari/detay — K1-B'de robots izinli, HTTP 200; tarihli ilan sinyali yok.
 2. Koç Kariyerim ilan listesi — https://www.kockariyerim.com/jobAd/list — K1-B'de robots izinli, HTTP 200; tarihli ilan sinyali yok.
 3. Alarko Kariyer Fırsatları — https://alarko.com.tr/kariyer-ve-yasam/kariyer-firsatlari/ — Resmî şirket kariyer sayfası adayı; K1-B'de ölçülmedi, robots/TLS ölçümü bekler.
 
-### Kamu bağlı büyük şirket
+### Kamu bağlı şirket
 1. BOTAŞ Personel Alımı — https://www.botas.gov.tr/Sayfa/personel-alimi/124 — Resmî personel alım süreci sayfası adayı; K1-B'de bu özel URL ölçülmedi. İŞKUR'a yönlendirdiği ilanlar kazınmaz; resmî İŞKUR sayfasına yönlendirme yapılır.
 2. PTT Personel Alımı Hakkında Duyuru — https://www.ptt.gov.tr/duyurular/sirketimiz-personel-alimi-hakkinda-duyuru-9c2abed7a9a6486a97a474e9f73286c3 — Resmî duyuru örneği; ilan geçici ertelenmiştir, güncel açık iş olarak gösterilmez. Bu tam URL K1-B'de ölçülmedi; PTT duyuru ana sayfasında TLS issuer hatası görüldüğü için yeni istek öncesi ölçüm gerekir.
 3. TPAO 33 personel alımı PDF — https://www.tpao.gov.tr/file/2512/sinav-ilani-33-personel-alimi-29-12-2025-37736953d2e834d07.pdf — K1-B'de timeout/robots belirsiz; PDF'ye erişim yapılmadı ve yeniden denenmeyecek.
