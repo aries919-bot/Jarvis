@@ -66,6 +66,8 @@ SOURCES = [
         "page_urls": [
             "https://www.zafer.gov.tr/duyurular/227",
             "https://doka.org.tr/assets/dosyalar/announcement_1222/files/E2_Ek-2_ZAFERPersonelAl__m__lanMetni_1Sayfa_.pdf",
+            "https://www.doka.org.tr/assets/dosyalar/announcement_1222/files/E1_Ek-1_ZAFERPersonelAl%C4%B1mI_lan%C4%B1_6Sayfa-7bf499c2eb57.pdf",
+            "https://www.doka.org.tr/assets/dosyalar/announcement_1222/files/E2_Ek-2_ZAFERPersonelAl__m__lanMetni_1Sayfa_.pdf",
         ],
     },
     {
@@ -74,6 +76,16 @@ SOURCES = [
         "page_urls": [
             "https://www.doka.org.tr/announcement-detail.php?id=1221",
             "https://doka.org.tr/assets/dosyalar/announcement_1221/files/DOKA_Personel_ALIMI.pdf",
+            "https://www.doka.org.tr/assets/dosyalar/announcement_1221/files/DOKA_Personel_ALIMI.pdf",
+        ],
+    },
+    {
+        "id": "doka_zafer_mirror",
+        "name": "DOKA üzerinde yayımlanan Zafer Kalkınma Ajansı ilan kopyası",
+        "page_urls": [
+            "https://www.doka.org.tr/announcement-detail.php?id=1222",
+            "https://www.doka.org.tr/assets/dosyalar/announcement_1222/files/E1_Ek-1_ZAFERPersonelAl%C4%B1mI_lan%C4%B1_6Sayfa-7bf499c2eb57.pdf",
+            "https://www.doka.org.tr/assets/dosyalar/announcement_1222/files/E2_Ek-2_ZAFERPersonelAl__m__lanMetni_1Sayfa_.pdf",
         ],
     },
     {
