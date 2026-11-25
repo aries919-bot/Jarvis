@@ -457,3 +457,14 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Yeni exact-head [emulator run #45711684280](https://github.com/aries919-bot/Jarvis/actions/runs/45711684280) ve [APK run #45711684204](https://github.com/aries919-bot/Jarvis/actions/runs/45711684204) son kontrolde IN_PROGRESS idi. H1 henüz PASS değil.
 - Tam kanıt ve sonraki alternatif: [H1-EMULATOR-PACKAGE-MANAGER-FAILURE-2026-11-26.md](gorevler/H1-EMULATOR-PACKAGE-MANAGER-FAILURE-2026-11-26.md).
 **KARAR:** H1 RED/BLOCKED; 0 testcase olan XML başarı sayılamaz. Yeni AVD denemesi bekleniyor. PR #71 merge/deploy yok.
+
+
+## 26.11.2026 — H1 teknik blokaj güncellemesi
+- FUTO Notes CI vakası, Android system_server sürecinin sys.boot_completed=1 sonrasında yeniden başlayabildiğini ve boot_progress_enable_screen olayının güncel PID ile eşleştirilmesi gerektiğini gösteriyor: https://gitlab.futo.org/futo-notes/futo-notes/-/blob/papercuts-bridge-guidance-close-round10/scripts/ci-android-sync-leg.test.mjs
+- PR #71 runner düzeltmeleri: 29aaa17e532c13a394d1ed7dd7c53bc613d0bec9, fail-closed düzeltmesi e390e05e1485717c3a07ce3af06db6b3840062f3.
+- Yerel mock kontrolleri: 1 pozitif exit 0; 3 negatif (Package Manager yok, PID marker eski, paket listesi boş) exit 21. Bash syntax PASS. Bunlar cihaz/emulator testi değildir.
+- Exact HEAD e390e05: emulator [#45712459718](https://github.com/aries919-bot/Jarvis/actions/runs/45712459718) ve APK [#45712459742](https://github.com/aries919-bot/Jarvis/actions/runs/45712459742) henüz IN_PROGRESS. H1 XML 4/4 kanıtı yok.
+- Önceki HEAD APK run #45711684204 SUCCESS; emulator #45711684280 sonraki commit nedeniyle CANCELLED. Aradaki HEAD 29aaa CI koşuları da yeni commit nedeniyle iptal edildi; bu koşular test sonucu olarak sayılmaz.
+- C1: 6 kaynak /47 last-good kamu ilanı; 6 kaynak stale; eşik 10/100 ve production GET/D1 yok.
+
+**KARAR:** H1 RED/BLOCKED — current exact-head CI bekleniyor. C1 RED. Merge/deploy yok.
