@@ -113,7 +113,7 @@ class CareerNewsVerificationActivity : Activity() {
                 maxLines = 6
                 gravity = Gravity.TOP
             } else {
-                singleLine = true
+                setSingleLine(true)
             }
         }
 
