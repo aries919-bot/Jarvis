@@ -58,3 +58,10 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 - Ai.kt 737 satır; Mozilla/Chrome browser-UA kalıbı yok; `ARIES_SOURCE_USER_AGENT` bir sabit tanımı + dört istek kullanımıyla yer alıyor.
 - Regresyon testleri: `CareerForbiddenSourcesPolicyTest` 2 @Test; `CareerSourceCatalogTest` 13 @Test mevcut, genel edu.tr pozitif beklentisi negatif olarak değiştirildi.
 - Sonuç: exact-head CI henüz tamamlanmadı; PR #70 RED/BEKLEME, merge yok.
+
+## 25.11.2026 — exact-head UA sabiti CI sonucu
+- Son HEAD: bf8ca39c1dee78b8436069e5cfabcbbd3afbc146.
+- Exact compare: 8 commit / 4 dosya / +46 / -13 / 0 behind.
+- Android APK run #45658875411 (#692): job SUCCESS; Birim testleri SUCCESS; APK derle SUCCESS; artifact upload SUCCESS.
+- Artifact ID 15044212711; 14.061.515 bayt; SHA-256 zip digest 2a8f2183f474b907ee9345266b75c7a6d483c0982939073b2667f6560ce0b9de.
+- Bu exact head için CI yeşil; bağımsız statik inceleme/öz-QA ve PR karar kaydı henüz yazılmadı. PR açık/taslak, merge yok.
