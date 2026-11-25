@@ -1,10 +1,12 @@
 import sys
 import unittest
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+import hakem_gate
 from hakem_gate import deterministic_findings, deterministic_only_fallback, test_log_is_successful
 
 
@@ -123,6 +125,23 @@ class HakemGateTests(unittest.TestCase):
             "@@ -1 +1 @@\n+        " + pattern_line + "\n"
         )
         self.assertFalse(any("Tarayıcı" in item for item in deterministic_findings(diff, "cline/K1")))
+
+    def test_get_diff_accepts_response_at_byte_limit(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b"x" * 8
+        with patch.object(hakem_gate, "MAX_DIFF_BYTES", 8), patch(
+            "hakem_gate.urllib.request.urlopen", return_value=response
+        ):
+            self.assertEqual(hakem_gate.get_diff("owner/repo", 61, "test-token"), "x" * 8)
+
+    def test_get_diff_rejects_response_over_byte_limit(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b"x" * 9
+        with patch.object(hakem_gate, "MAX_DIFF_BYTES", 8), patch(
+            "hakem_gate.urllib.request.urlopen", return_value=response
+        ):
+            with self.assertRaisesRegex(RuntimeError, "8 bayt sınırını aştı"):
+                hakem_gate.get_diff("owner/repo", 61, "test-token")
 
 
 if __name__ == "__main__":
