@@ -515,3 +515,12 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Bu manuel keşif Worker'a aktarılmış değildir: gerçek feed ölçümü hâlâ 6 kaynak /47 last-good kart, 6/6 stale, 0 fresh; production authenticated GET/D1 yok. Kamu eşiği 10 kaynak/100 doğrulanmış ilan: pipeline ölçümünde RED; manuel aday listesinde 10 kaynak ama yalnız 10 kart (90 eksik).
 
 **KARAR:** Kaynak keşfi 10 kuruma genişletildi; canlı feed/100 kart kanıtı yok, kamu C1 RED.
+
+
+## 26.11.2026 — PR #71 launcher-focus preflight HEAD
+- Yeni PR head: b51c53a5797c19d4e18ed81b679024fc14fa3723. Önceki e390e05 koşusu #45712459718 FAILURE olarak kalır; XML 4/1/3/0/0.
+- Eski logcat'te NexusLauncherActivity top-resumed state loss timeout ve Activity pause timeout görüldü. Eski artefact'te ANR penceresinin doğrudan dumpsys kanıtı yok; kök neden kesinlenmedi.
+- Yeni commit script'e WindowManager/ActivityManager/process dumpsys ve instrumentation öncesi Application Not Responding/Application Error window-focus preflight/recovery ekledi. Bu environment fix denemesi; UI testlerini atlamaz, H1_EXPECTED_TESTS=4 şartını değiştirmez.
+- Emulator run #45716694004 IN_PROGRESS; job #139564450544, ilk 6 adım SUCCESS, step7 çalışıyor; artifact/XML yok: https://github.com/aries919-bot/Jarvis/actions/runs/45716694004
+- APK/unit #45716694105 IN_PROGRESS; unit step SUCCESS, APK derlemesi sürüyor: https://github.com/aries919-bot/Jarvis/actions/runs/45716694105
+- Sonuçlar tamamlanmadan H1 RED/beklemede; merge/deploy yok. Ayrıntı: gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md.
