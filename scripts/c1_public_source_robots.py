@@ -65,6 +65,7 @@ SOURCES = [
         "name": "Zafer Kalkınma Ajansı",
         "page_urls": [
             "https://www.zafer.gov.tr/duyurular/227",
+            "https://doka.org.tr/assets/dosyalar/announcement_1222/files/E2_Ek-2_ZAFERPersonelAl__m__lanMetni_1Sayfa_.pdf",
         ],
     },
     {
