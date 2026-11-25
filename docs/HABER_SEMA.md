@@ -258,3 +258,11 @@ Düzeltmeler append-only tutulur: claimId, önceki verdict, yeni verdict, açık
 
 ### Entegrasyon sınırı
 PR #68 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt ve kullanıcı akışı henüz bağlanmadı. Mevcut arşivdeki eski haberler otomatik doğrulanmışa çevrilmez. UI/SharedPreferences entegrasyonu ayrı PR ve geriye dönük koruma testiyle yapılır.
+
+## 10. H1 çekirdeği CI tabanı ve correction snapshot güncellemesi — 25.11.2026
+- İlk PR #68 is/c3-ilan-semasi-ai-kaynak-kaniti tabanındaydı; Android workflow'un pull_request.branches filtresi bu tabanı dinlemedi. #68 kapatıldı (unmerged).
+- Doğru CI tabanında PR #69 açıldı: https://github.com/aries919-bot/Jarvis/pull/69, hedef kariyer-modulu, HEAD fdfdd539a2e81826e53898aa07004ee21a0bd55b.
+- CorrectionHistory sadece önceki verdict değil; önceki iddia metni, düzeltilmiş metin, eski kanıtların tümü, önceki review kararı/zamanı, açıklama ve kaynak linkini korur. Aktif claim'in kanıt ve review alanları sıfırlanır; yeni kanıt/insan incelemesi gerekir.
+- Yeni exact-head testler 11 @Test'tir. İlk compile hatası Locale string escape'inden geldi; gerçek Kotlin literal'i düzeltildi. Yeni exact-head CI #45657661662 (#685) IN_PROGRESS; henüz PASS yok.
+- PR #69 model/şema + testtir; Haber ekranı ve yerel kalıcı arşivle entegrasyonu değildir. Eski Haber kayıtları otomatik doğrulanmışa çevrilmez.
+- Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
