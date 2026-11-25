@@ -71,3 +71,13 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Aynı eski koşuda düzeltme geçmişi testindeki verdict assertion da başarısızdı; güncel HEAD'de correction kaydı önceki metin/kanıt/review alanlarını saklar ve düzeltilmiş claim'in kanıtını sıfırlar. Bu düzeltme exact-head testle doğrulanacak.
 - PR #69 latest HEAD: `c3cd6e65f46c35e996fed30d4d45b0352b307d70`; exact-head CI sonucu henüz bekleniyor.
 - Bu PR'da otomatik kaynak fetch yoktur. PRIMARY_SOURCE etiketi, UI katmanında yalnız gerçek resmî/orijinal kaynağı seçme ve insan incelemesiyle sunulmalıdır; bu model kendi başına URL'nin resmîliğini kanıtlamaz.
+
+
+## Exact-head CI sonucu — 25.11.2026
+- PR #69 exact HEAD `c3cd6e65f46c35e996fed30d4d45b0352b307d70`.
+- Android APK run [#45658340086](https://github.com/aries919-bot/Jarvis/actions/runs/45658340086): **SUCCESS**.
+- Job adımları: JUnit `gradle testDebugUnitTest --no-daemon` SUCCESS; APK `gradle assembleDebug --no-daemon` SUCCESS; artifact upload SUCCESS.
+- APK artifact ID `15043163794`, 14,082,661 bytes; SHA-256 `514af7cdba04e162f0bfd065cfad22afa257c5b158b90cc1f6dcf15578bce38f`.
+- Yeni modelin 11 @Test anotasyonu ve 38 assert çağrısı; JUnit görevi exact HEAD'de PASS. Eski başarısız/iptal koşular latest-head sonucu değildir.
+- Sınır: bu CI yalnız unit test + debug APK derlemesini kanıtlar. Full App QA, Haber UI/store entegrasyonu, gerçek telefon, canlı kaynak doğrulaması ve kullanıcı akışı henüz kanıtlanmadı.
+- Karar: model çekirdeği teknik olarak CI PASS; PR açık/taslak. H1 haber ürünü tamamlandı veya production-ready demek değildir.
