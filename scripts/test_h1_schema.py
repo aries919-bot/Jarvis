@@ -51,6 +51,18 @@ class H1SchemaTests(unittest.TestCase):
     def test_valid_feed_passes(self):
         self.assertEqual([], validate_feed(feed([item()]), TODAY))
 
+    def test_exact_user_categories_are_accepted_and_legacy_aliases_rejected(self):
+        for category in ("Büyük özel", "Kamu bağlı şirket"):
+            self.assertEqual([], validate_feed(feed([item(category=category)]), TODAY))
+        for category in ("Büyük özel şirket", "Kamu bağlı büyük şirket"):
+            errors = validate_feed(feed([item(category=category)]), TODAY)
+            self.assertTrue(any(".category:" in error for error in errors))
+
+    def test_verified_open_job_with_unknown_publication_date_stays_null_and_counts(self):
+        record = item(publishedAt=None, freshnessStatus="Doğrulandı")
+        self.assertEqual([], validate_feed(feed([record]), TODAY))
+        self.assertEqual(1, count_verified_open_jobs({"ornek-kaynak": [record]}, TODAY))
+
     def test_null_published_and_deadline_never_become_verified(self):
         record = item(
             deadline=None,
@@ -99,7 +111,7 @@ class H1SchemaTests(unittest.TestCase):
             for error in validate_feed(feed([not_open]), TODAY)
         ))
 
-    def test_verified_open_job_count_requires_fresh_published_open_job(self):
+    def test_verified_open_job_count_requires_fresh_deadline_open_job(self):
         records = [
             item(id="fresh-open"),
             item(id="stale", sourceStatus="stale"),
@@ -111,7 +123,7 @@ class H1SchemaTests(unittest.TestCase):
                 applicationOpensAt="2026-11-30T09:00:00+03:00",
             ),
         ]
-        self.assertEqual(1, count_verified_open_jobs({"source": records}, TODAY))
+        self.assertEqual(2, count_verified_open_jobs({"source": records}, TODAY))
 
     def test_first_seen_is_preserved_for_same_source_item_id(self):
         previous = [{"id": "job-1", "firstSeenAt": "2026-11-20T09:00:00Z"}]
