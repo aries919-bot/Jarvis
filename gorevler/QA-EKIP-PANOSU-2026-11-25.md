@@ -162,3 +162,10 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - APK/unit #45692016951 SUCCESS; unit + assemble + upload steps SUCCESS.
 - Emulator #45692017824 last observed IN_PROGRESS; checkout/merge-parent verify + AndroidX dependencyInsight PASS, instrumentation step 7 running; no XML artifact yet. No 4/4 pass evidence, no physical phone test, PR #71 no merge.
 - Correction: older #45685959506 GitHub SUCCESS was false green due missing set -e. Artifact 15057322360 XML: 4 tests /1 PASS /3 FAIL /0 ERROR /0 SKIP; three UI RootViewWithoutFocusException. Wrapper fixed with set -euo pipefail commit 8d560a7; Activity SQLite moved off main thread commit b8a7812.
+
+### QA-10 exact-head son düzeltme — 25.11.2026 20:22Z
+- PR #12 current HEAD a80e557d1dc8373446a3a41b15d50f998d5e3e46; diff 4 files / +1043 / -20; 26 test definitions / 0 executed.
+- New run #45694369322 / job 139487790097: failure, zero steps, 20:22:41Z–20:22:42Z. It did not reach Node setup or tests.
+- Test fixtures no longer contain long token-like sample values; test still checks short Bearer placeholder blocking.
+- PositionCount/city QA fields are exact-source-only; absent values are stated as unspecified and never inferred.
+- Status unchanged: PR #12 draft/no merge/no deploy; no more branch pushes until CI runner start issue is diagnosed.
