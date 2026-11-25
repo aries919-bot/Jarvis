@@ -178,3 +178,9 @@ Bu üç özel üniversite kaydı kamu kaynağı sayımına girmez. Antalya Belek
 - Ayrıntılı hata dosyası: gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md (commit e1faa2eea61c3a4bcbd59d9f89f3a6a6a4141ff6).
 - Sonraki adım test harness'i dar kapsamla düzeltmek: ActivityScenario lifecycle + focus gözlemi, UI thread doğrudan view click/readiness; dört test ve iddiaları koru, ayrıca gerçek tap/focus kapsamını bırakma. Aynı HEAD'i kör rerun etme; XML gate gevşetme yok.
 **KARAR:** H1 RED; APK/unit SUCCESS yalnız build/unit kanıtı, emulator 4 testten 3 fail. PR #71 merge/deploy yok.
+## H1 yeni exact-head kontrolü — 26.11.2026
+- Bir önceki emulator run #45712459718 hâlâ FAILURE (4 test /1 PASS /3 FAIL); sonuç silinmez.
+- PR #71 yeni HEAD b51c53a5797c19d4e18ed81b679024fc14fa3723; scripts/run-h1-emulator-tests.sh içine window/activity/process diagnostics ve instrumentation öncesi ANR/Application Error focus preflight/recovery eklendi.
+- Eski logcat'te NexusLauncherActivity top-resumed state loss timeout ve pause timeout bulundu; doğrudan ANR dialog snapshot'ı yok. Yeni preflight bunu ölçmeyi amaçlar.
+- H1 emulator #45716694004 ve APK/unit #45716694105 IN_PROGRESS; ilkinde job #139564450544 step1–6 success, step7 running; ikincide unit success, APK build running. Henüz XML/artifact yok.
+- Ayrıntılı takip: gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md. H1 RED/beklemede, merge/deploy yok.
