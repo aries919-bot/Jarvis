@@ -1,6 +1,7 @@
 package com.cem.jarvis
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,4 +25,14 @@ class CareerForbiddenSourcesPolicyTest {
         assertFalse(CareerSourceCatalog.isTrustedUrl("https://personel.vakifuni.edu.tr/duyurular"))
         assertTrue(CareerSourceCatalog.isTrustedUrl("https://personel.ozal.edu.tr/announcements-all"))
     }
+    @Test
+    fun networkRequestsUseTheDeclaredAriesUserAgent() {
+        assertEquals(
+            "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)",
+            Net.ARIES_SOURCE_USER_AGENT
+        )
+        assertFalse(Net.ARIES_SOURCE_USER_AGENT.contains("Mozilla", ignoreCase = true))
+        assertFalse(Net.ARIES_SOURCE_USER_AGENT.contains("Chrome", ignoreCase = true))
+    }
+
 }
