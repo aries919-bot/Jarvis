@@ -251,6 +251,9 @@ data class CareerNewsVerificationRecord(
                 errors += "İddia metni kişisel veri işareti içeriyor; kaydetmeden önce maskele."
             }
             if (claim.reviewNote.length > 1000) errors += "İnsan inceleme gerekçesi çok uzun."
+            if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(claim.reviewNote) != claim.reviewNote) {
+                errors += "İnsan inceleme gerekçesi kişisel veri işareti içeriyor."
+            }
             if (claim.reviewDecision == null && claim.reviewedAt != null) {
                 errors += "İnsan inceleme zamanı karar olmadan kaydedilemez."
             }
@@ -314,12 +317,17 @@ data class CareerNewsVerificationRecord(
                 errors += "Önceki inceleme zamanı karar olmadan kaydedilemez."
             }
             if (correction.previousReviewNote.length > 1000) errors += "Önceki inceleme gerekçesi çok uzun."
+            if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(correction.previousReviewNote) != correction.previousReviewNote) {
+                errors += "Önceki inceleme gerekçesi kişisel veri işareti içeriyor."
+            }
             if (correction.previousReviewDecision != null &&
                 (!CareerNewsVerificationPolicy.isUtcTimestamp(correction.previousReviewedAt) ||
                     correction.previousReviewNote.isBlank())
             ) errors += "Önceki inceleme zamanı veya gerekçesi geçersiz."
             if (correction.explanation.isBlank() || correction.explanation.length > 2000) {
                 errors += "Düzeltme gerekçesi boş veya çok uzun."
+            } else if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(correction.explanation) != correction.explanation) {
+                errors += "Düzeltme gerekçesi kişisel veri işareti içeriyor."
             }
             if (CareerNewsVerificationPolicy.validateHttpsUrl(correction.sourceUrl) != null) {
                 errors += "Düzeltme kaynak URL'si geçerli HTTPS adresi değil."
