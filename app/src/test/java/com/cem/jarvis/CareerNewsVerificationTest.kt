@@ -166,9 +166,10 @@ class CareerNewsVerificationTest {
         assertEquals(1, revised.correctionHistory.size)
         assertEquals(CareerClaimVerdict.VERIFIED, revised.correctionHistory.single().previousVerdict)
         assertEquals(
-            CareerClaimVerdict.SUPPORTS_PENDING_REVIEW,
+            CareerClaimVerdict.NEEDS_EVIDENCE,
             revised.correctionHistory.single().newVerdict
         )
+        assertTrue(revised.claims.single().evidence.isEmpty())
         assertNull(revised.claims.single().reviewedAt)
         assertEquals(0, reviewed.correctionHistory.size)
         val restored = CareerNewsVerificationRecord.fromJson(revised.toJson().toString())
