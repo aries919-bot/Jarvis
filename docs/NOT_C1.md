@@ -322,3 +322,14 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - PR #12 draft, merge/deploy yok; runner başlangıç engeli çözülmeden yeniden deneme döngüsü yok.
 - H1 #71 HEAD b8a78126cbc6713cb4d42838027a6189274f19e7. APK/unit #45692016951 SUCCESS; emulator #45692017824 son kontrolde IN_PROGRESS, rapor XML yok. 4/4 pass/telefon yok; merge yok.
 - Kamu C1 12 kaynak /55 doğrulanmış açık ilan /45 eksik; Worker GET/D1 + city dedup RED.
+
+
+## 30. H1 Haber QA / mevcut test kapısı — 25.11.2026
+- H1 PR #71 yeni HEAD 0eaaa74153dd3eacdd66c701b9727c2b8978983f. Yeni CareerNewsQuestionAnswer.kt cihaz içi deterministic soru-cevap; yalnız mevcut haber SQLite kaydındaki claim/evidence/review/correction ve ayrı yayın/toplama/ilk görülme alanlarından cevap verir. LLM, ağ, Worker, kariyer feed çağrısı yok.
+- Activity'ye "Haber hakkında soru sor" düğmesi ve kaynakları açan cevap penceresi eklendi. 17 JUnit testi tanımı var.
+- İlk run #45698403489: 142 test /138 pass /4 fail. Hata sınıfları düzeltildi: firstSeen test beklentisi, Türkçe "asıl kaynağı" eşleşmesi, aynı URL altında farklı kanıt kayıtlarının korunması, context-missing açık etiketi. Yeni HEAD 0eaaa741 üzerinde 17 QA testi.
+- Güncel exact-head APK/unit #45699134292 ve emulator merge-ref #45699134296 son kontrolde IN_PROGRESS; sonucu gelmeden merge yok. Önceki #45692016951/#45692017824 PASS yalnız b8a7812 HEAD'ini kapsar.
+- H1 SQLite onCreate async load + existing record no-op save işi PR #71 içinde bulunuyor; P2 uygulandı. Ayrıntı gorevler/H1-SQLITE-ASYNC-OPEN-2026-11-25.md.
+- H1 Haber QA raporu: gorevler/H1-NEWS-QA-2026-11-25.md; güncel harita: docs/HARITA.md bölüm 37.
+- Cloud Career QA/RAG PR #12: local pure tests 18/18, route tests 7/7; private repo Actions job 0 step runner-start blocker. CI PASS değildir; PR #12 draft/no merge/no deploy.
+- C1 kamu sayımı değişmedi: 12 resmî kaynak /55 doğrulanmış açık ilan /45 eksik. Worker GET/D1 + city dedup RED.
