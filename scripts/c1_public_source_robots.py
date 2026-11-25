@@ -59,6 +59,21 @@ SOURCES = [
         ],
     },
     {
+        "id": "zafer",
+        "name": "Zafer Kalkınma Ajansı",
+        "page_urls": [
+            "https://www.zafer.gov.tr/duyurular/227",
+        ],
+    },
+    {
+        "id": "doka",
+        "name": "Doğu Karadeniz Kalkınma Ajansı (DOKA)",
+        "page_urls": [
+            "https://www.doka.org.tr/announcement-detail.php?id=1221",
+            "https://doka.org.tr/assets/dosyalar/announcement_1221/files/DOKA_Personel_ALIMI.pdf",
+        ],
+    },
+    {
         "id": "yokak_upcoming",
         "name": "Yükseköğretim Kalite Kurulu (başvuru 01.12.2026'da açılıyor)",
         "page_urls": [
