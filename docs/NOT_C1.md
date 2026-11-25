@@ -6,9 +6,9 @@
 ## 0. Rol ve ilk tur
 
 - Cline KULLANILMIYOR. Kod, test, PR ve denetim işlerini ChatGPT yürütür.
-- Cem'in tek işi telefonda elle doğrulama ve açıkça “birleştir” onayı vermektir. Cem'den komut, Termux veya yapıştırma istenmez.
+- Cem'den komut, Termux veya yapıştırma istenmez. Telefon doğrulaması yalnız gerçek cihaz gerektiren adımlarda kalır. Her PR için ayrıca merge onayı istenmez; daha önce verilen koşullu birleştirme yetkisi uygulanır.
 - İlk turda şu yetkiler ayrı ayrı sınanır ve raporlanır: (a) dal açma + dosya yazma, (b) PR açma, (c) Actions sonucunu okuma. Biri başarısızsa durulur; yetki sorunu ve tüm işlerin durum/sonraki adım bloğu verilir.
-- Kendi PR'ını sıfırdan ve şüpheci biçimde incele. `main`'e doğrudan yazma. Her iş ayrı dalda yapılır, PR açılır, CI yeşil olana kadar düzeltilir. Merge için Cem'in onayı beklenir.
+- Kendi PR'ını sıfırdan ve şüpheci biçimde incele. `main`'e doğrudan yazma. Her iş ayrı dalda yapılır, PR açılır, CI yeşil olana kadar düzeltilir. Hakem yoksa/erişilemiyorsa ChatGPT öz-QA yapıp açık karar kaydeder; koşulların tümü geçerse daha önce verilmiş koşullu yetkiyle merge eder.
 
 ## 1. Sert kurallar
 
@@ -71,7 +71,7 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - Her iş ayrı dal + PR ile yürütülür; `main`'e doğrudan yazılmaz. PR diff'i sıfırdan incelenir; gerekli testler ve Actions yeşil olmadan kabul edilmez.
 - Her iş için kanıt: komut/test çıktısı, kaynak başına ilan sayısı (ilgiliyse), CI bağlantısı ve yeniden sayım.
 - Kamu ilanı 0 ise RED. 10 kaynak/100 doğrulanmış ilan eşiği sağlanmadıysa gerçek sayılar raporlanır ve arayüze geçilmez.
-- Cem'in telefon doğrulaması ve “birleştir” onayı beklenmeden PR birleştirilmez.
+- Gerçek cihaz gerektiren telefon doğrulaması tamamlanmadan telefon kabulü verilmez. Ancak her PR için ayrıca “birleştir” onayı sorulmaz; exact-head CI, kapsam, öz-QA/Hakem ONAY ve tüm görev kapıları geçince koşullu birleştirme yetkisi kullanılır.
 - Sonuç biçimi:
   - KARAR: KABUL/RED
   - Kanıt:
@@ -129,3 +129,12 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Production authenticated GET BLOCKED; Worker URL/token secret çifti yapılandırılmamış. Publish SKIPPED, POST/deploy yok. Worker/Android canlı entegrasyon kanıtı yok.
 - PR #9 formal GitHub reviews 0; bot yorumları bağımsız onay sayılmaz; hiçbir PR merge edilmedi.
 - Tarih kuralları değişmedi: yayın tarihi yoksa null; collectedAt yayın tarihi değildir; deadline unknown kayıtlar sayılmaz; gelecekteki applicationOpensAt açık ilan değildir; kura/sonuç iş ilanı değildir.
+
+## 12. Hakem yoksa ChatGPT öz-QA — 25.11.2026
+
+1. Bağımsız Hakem/Claude yoksa veya Hakem CI yalnız isteğe bağlı AI erişimi eksik olduğu için çalışmıyorsa ChatGPT exact HEAD üzerinden kendi QA ve hakem kararını verir. Bu karar **öz-QA** olarak yazılır; bağımsız insan/Claude onayıymış gibi gösterilmez.
+2. Öz-QA; PR tabanını ve head SHA'yı, diff dosya/adet/ekleme-silme sayılarını, yalnız görev kapsamındaki dosyaları, test komut ve Actions sonuçlarını, robots/TLS/403/500/timeout/boş yanıt/stale senaryolarını, kaynak başına açık ilan ve kurum sayısını, tarih sözleşmesini, güvenlik desenlerini ve kaynak kodunu baştan inceler.
+3. Sonuç PR yorumuna ve `gorevler/<id>.md` + HARITA'ya `ChatGPT öz-QA: ONAY/RED` biçiminde yazılır. Dış hakem yok bilgisi açıkça belirtilir.
+4. Test/CI başarısızsa, diff kapsam dışıysa, statik incelemede kusur varsa, veri/robots/tarih kanıtı yetersizse veya görevin kendi kabul eşiği geçilmediyse RED verilir ve merge yapılmaz. Öz-QA, C1'in 10 kaynak/100 doğrulanmış ilan, kamu 0=RED ve production GET kapılarını gevşetmez.
+5. Öz-QA ONAY yalnız ilgili PR kapsamını kabul eder. H1 şema düzeltmesinin ONAY'ı tüm H1 kaynaklarını; H2 reader ONAY'ı C1 global hedefini; local D1 testi production'ı; Actions live artifact'i Android telefon davranışını kabul etmez.
+6. Önceden verilen koşullu merge yetkisi gereği, exact-head testler yeşil, diff yalnız kapsam içi, öz-QA/Hakem ONAY ve görevin diğer tüm zorunlu kabul kapıları sağlanmışsa ayrıca kullanıcı onayı sorulmadan birleştirilir. Aksi durumda PR açık/RED kalır.
