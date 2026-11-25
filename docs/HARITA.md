@@ -17,7 +17,7 @@
 | H1 | ŞEMA KABUL — PR #63 MERGED / GENEL H1 DEVAM | Exact-head #45628989453: 12/12 test; ChatGPT öz-QA ONAY; 4 dosya +43/-20; `durum` merge SHA `4145ce5`. Bu yalnız şema sözleşmesi; kaynak envanteri/ilan kabulü değil. |
 | K1-B | YAPILMADI | ilan.gov.tr ve Resmî Gazete HTTP/TLS/robots ölçümü. |
 | K1-C | YAPILMADI | Ölçülen kaynak denetimi ve aday listesi. |
-| H2 | PR #61 ÖZ-QA RED | 19 kaynak /17 fresh /2 stale; 11 kurum /13 açık ilan kartı /125 pozisyon. BOTAŞ parser çıktısı kategori enum'unu ihlal ediyor; 10/100, cross-feed tekilleştirme ve production GET eksik. PR birleştirilmedi. |
+| H2 | PR #61 AÇIK/TASLAK — GENEL RED | BOTAŞ kategori + deadline parser kusuru PR #65 ile düzeltildi, H2 head'e alındı. H2 reader 60/60; scripts 161/161; Hakem #45646136859 ONAY. Yeni post-merge live #45646698179 sürüyor; 10/100, cross-feed ve production GET kapıları ayrı. |
 | C1-1 | DEVAM — KOD QA PASS / GENEL RED | PR #5 diff'i 60 KB sınırını aşıyor; Worker production GET BLOCKED; son exact-head QA #45634071990: 46/46 test, 11/11 local D1, 17/17 senaryo; kamu 6 kaynak/47 açık ilan, 10/100 RED. Ayrıntı: [gorevler/C1-1.md](../gorevler/C1-1.md). |
 | C1-2 | RAPOR HAZIR — RED | Son exact-head rapor #45634071990: kamu 6 kaynak/47 doğrulanmış açık kart; özel deadline-unknown kayıtlar sayılmaz; 10/100 eşik sağlanmadı. [gorevler/C1-2.md](../gorevler/C1-2.md). |
 | K1-M | YAPILMADI | Temiz workflow/betik PR'si; film commitleri hariç. Görev tanımı: [gorevler/K1-M.md](../gorevler/K1-M.md). |
@@ -397,3 +397,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - C1 exact-head Hakem #45634071990: 46/46 test, local D1 11/11, senaryo 17/17 PASS; karar RED: kamu 6 kaynak/47 doğrulanmış kart, 10/100 sağlanmadı; production authenticated GET BLOCKED. H2 PR #61 genişletilmiş feed'i bu C1 raporuna dahil değildir.
 - PR #58 tek seferlik e-Şube tetik dalı; geçici workflow değişikliği kalıcı olarak merge edilmez. PR #59/#60 robots/link-audit açık; bu turda merge kararı verilmedi.
 - SONRAKİ ADIM: BOTAŞ kategori sözleşmesini düzelt ve parser çıktı testi ekle; H2 exact-head test/live ölçümünü yenile; C1 collector'a e-Şube + H2 feed'lerini kaynak bazında tekilleştirerek entegre et; 10/100 ve production GET kapılarını yeniden çalıştır.
+## 14. BOTAŞ parser düzeltmesi — PR #65 merged / H2 live yenileme sürüyor (25.11.2026)
+
+- PR #65: https://github.com/aries919-bot/Jarvis/pull/65; base H2 `is/C1-h2-public-source-feed-20261125`; 2 dosya / +16 / -3. BOTAŞ iş ve sonuç parser çıktıları `Kamu bağlı şirket`; deadline bağlamı `İlanlar` Türkçe büyük İ biçimiyle eşleştirilir.
+- İlk CI koşusu #45645955364/#45645955473 RED: yeni regression test `İlanlar` / `ilanlar` Türkçe küçük harf uyuşmazlığını ortaya çıkardı; H2 60 testin 1'i hata, scripts 161 testin 1'i hata. Parser çağrı bağlamı düzeltildi.
+- Başarılı exact-head kontrolleri head `3020790f3b450f6e0f0cf04cfb4df598b749a6a7`: H2 Reader #45646136860 60/60 PASS; Python Script Tests #45646137068 161/161 PASS; K1-B #45646137091 24/24 PASS ve 28 URL için 12 ÇALIŞIYOR /16 ENGELLİ /0 ÖLÜ; Hakem #45646136859 ONAY.
+- PR #65 squash merge: 25.11.2026; SHA `fe37be93202442394504f455b4a1caeb31f298cf`; PR #61 head'i güncellendi. Bu PR H2 geliştirme dalına düzeltmeyi aldı; `cline/K1`, `main` veya production'a merge değildir.
+- Post-merge exact H2 push live reader #45646698179 yeni head `fe37be9320` için başlatıldı; bu HARITA güncellemesinde reader adımı sürüyor ve son artefakt/sayım bekleniyor.
+- PR #61 genel kararı hâlâ RED: 10 kaynak/100 doğrulanmış ilan kartı eşiği, e-Şube/H2 cross-feed tekilleştirme ve production Worker GET/D1 kapıları kapanmadı.
