@@ -104,3 +104,15 @@ PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` için:
 - Bir sonraki H1-CI işi, uygulama kodunu değiştirmeden, emülatör bağlantısı ve instrumentation başlatma safhasını ayıran tanı kanıtı üretmelidir: `adb devices -l`, `getprop sys.boot_completed`, Package Manager yanıtı, kurulu test APK/runner kaydı, `dumpsys activity instrumentation`, ilgili logcat ve instrumentation komutunun başlangıç/son durumları.
 - Tek kontrollü emülatör denemesinde ilk testin gerçekten başlayıp başlamadığı ayrıştırılır; testler atlanmaz, dört testlik XML kapısı gevşetilmez.
 - PR #71 draft/open kalır. Bu run için emülatör PASS yok; formal GitHub review yok; merge/deploy yok.
+
+
+## 26.11.2026 — kontrollü instrumentation başlatma tanısı eklendi
+- Hedef: aynı timeout'u körlemesine tekrarlamak yerine, `connectedDebugAndroidTest` sırasında ADB/emülatör durumunun ve test runner'ın gerçekten başlayıp başlamadığının zaman çizelgesini toplamak.
+- PR #71 mevcut H1 dalında yalnız iki CI dosyası güncellendi; üretim Kotlin kodu ve dört instrumentation testi değiştirilmedi:
+  - `scripts/run-h1-emulator-tests.sh`: instrumentation komutundan önce başlangıç işareti; komut çalışırken yaklaşık 90 saniyede bir `adb devices -l`, `sys.boot_completed`, Package Manager, `pm list instrumentation`, `dumpsys activity instrumentation`, Activity/window state, system_server PID ve app/test APK path snapshots; eşzamanlı canlı logcat; komut sonu işareti ve son durum tanısı.
+  - `.github/workflows/h1-android-ui-smoke.yml`: iki tanı betiği path filtresine eklendi; böylece yalnız betik değişikliği de H1 workflow'unu tetikler.
+- Değişiklik commitleri: `3039a965bfec674602a08bbeb5956bccfa68a814`, `62b57ba38ef37a01ebb0dab18315b79c0934076a2` değil, gerçek workflow commit `62b57ba38ef37a01ebb0dab18315b79e2d86bf9c`, ardından printf tanı çıktısı düzeltmesi `65095a5420d80b6c8cbf9a48eb36f3a5d803fcf6`. PR head API'den yeniden okundu: `65095a5420d80b6c8cbf9a48eb36f3a5d803fcf6`.
+- Exact-head Actions [emulator #45723036152](https://github.com/aries919-bot/Jarvis/actions/runs/45723036152) ve [APK/unit #45723036154](https://github.com/aries919-bot/Jarvis/actions/runs/45723036154) son kontrolde in_progress; sonuç/artefakt henüz yok. Önceki head runları bu yeni HEAD için kanıt değildir.
+- Önceki #45716694004 logunda build SUCCESSFUL, window-focus preflight PASS, fakat `connectedDebugAndroidTest` 30 dakika timeout; XML yok. Bu nedenle mevcut test sonuç sayısı 0 raporlanmıştır; dört test PASS/FAIL diye sayılmaz.
+- Bu değişiklik bir tanı enstrümantasyonudur; emülatör kaynaklı olduğu kesinleşmiş değildir. Dört test, XML 4/4 kapısı, timeout sınırı ve güvenlik politikası değişmedi.
+**KARAR:** H1 RED/BLOCKED; yeni tanı CI'sı tamamlanana ve XML bağımsız yeniden sayılana kadar ONAY/merge/deploy yok.
