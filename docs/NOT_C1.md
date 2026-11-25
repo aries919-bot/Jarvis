@@ -535,3 +535,17 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Artifact #15069888409 (aries-apk), app-debug.apk SHA-256 96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab.
 - Emulator run #45716694004 henüz IN_PROGRESS, job #139564450544 step7; XML/artefact yok. Önceki #45712459718 XML 4/1/3/0/0 FAILURE geçerlidir.
 - H1 ancak yeni exact-head XML 4/4 PASS, 0 fail/error/skipped ve gerçek cihaz doğrulamasıyla kabul edilebilir. APK/unit PASS tek başına yeterli değildir.
+
+## 26.11.2026 — H2 canlı ölçüm ve C1 sayacının doğru ayrımı
+- H2 PR #61 exact HEAD `fe37be93202442394504f455b4a1caeb31f298cf`; [live reader run #45646698179](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179) SUCCESS, artifact [15037029949](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179/artifacts/15037029949), `collectedAt=2026-11-25T15:34:38Z`.
+- H2 ölçümü: 19 duyuru kaydı /17 fresh /2 stale; 11 benzersiz kurum /13 doğrulanmış açık ilan kartı /125 pozisyon. 125 pozisyon, 100 ilan kartı şartının yerine geçmez.
+- Kaynak başına açık kart: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu 1; Marmara 2; ORAN 1; Tarsus 1; TGA 1; Zafer 1. Toplam 13.
+- Stale: BOTAŞ (timeout; last-good korunur), Mardin Artuklu öğretim elemanı (açık başvuru kanıtı yok). Açık sayaca alınmayanlar: ATK başvurusu 30.11.2026 09:00'da açılır; iki Munzur ilanı 25.11 deadline'ını geçti; YHGM eski kura/sonuç kaydıdır. Balıkesir ve TGA için publishedAt=null; collectedAt yayın tarihi yerine kullanılmadı.
+- H2 PR #61 test kanıtları: H2 60/60, Python script suite 161/161, K1-B 24/24; K1-B 28 URL =12 çalışıyor /16 engelli /0 ölü. URL sayısı ilan sayısı değildir. PR #61 hâlâ draft/açık ve RED; 100 kart, cross-feed dedup ve production GET/D1 eksik.
+- e-Şube ayrı ölçüm: Jarvis `durum` SHA `b9a967b0960575f8696c9c0814b97f1aa54a7035`, `collectedAt=2026-11-25T13:49:08Z`, 42 satır /42 benzersiz ilan_no /7 işveren; 42 kaydın deadline'ı 27.11.2026, 26.11 itibarıyla 0 expired. e-Şube 1 source /42 record olarak ayrı kalır.
+- H2 + e-Şube teorik toplamı çapraz-feed dedup olmadan en çok 55 karttır; bu birleşik feed sayımı değildir ve 100 hedefinden en az 45 kart eksiktir. H2 11 source eşiğini tek başına geçer; kart eşiği geçmez.
+- Cloud PR #12 validation [run #45697424481](https://github.com/aries919-bot/jarvis-cloud/actions/runs/45697424481) runner_id=0, steps yok, 2 saniyede failure: kod/test adımı başlamadı. Bu nedenle H2/e-Şube verisi Worker'a yayımlanmadı. Worker last-good snapshot hâlâ 6 source /47 kart, 6/6 stale; production authenticated GET/D1 yok.
+- Manuel kamu aday dosyası 11 kurum/11 duyuru/226 pozisyon; 6 kurum H2 config'te zaten var, yalnız 5'i yeni ek aday. H2 config 19 kayıt/15 kurumdur; config sayısı fresh ölçüm sayısı değildir.
+- Zafer kaydında fetch `url` DOKA domaini id=1222, `officialUrl` Zafer domaini; H2 live run Zafer'i fresh saymış. Bu nedenle kanıtlanmış hata değil, kaynak provenance kontrolü: [görev](../gorevler/C1-H2-ZAFER-URL-PROVENANCE-2026-11-26.md).
+
+**KARAR:** H2 live 11 source/13 card PASS (H2 katmanı); e-Şube 1/42 ayrı; C1 Worker/production RED, 100 kart yok, merge/deploy yok.
