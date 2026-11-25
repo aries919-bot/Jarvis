@@ -283,3 +283,15 @@ PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt
 - Kullanıcı birincil kaynak sayfasını Custom Tabs ile açar, kısa kanıt alıntısı ve yönünü kaydeder; insan inceleme kutusunu ve gerekçeyi tamamlar. AI tek başına VERIFIED vermez.
 - Düzeltme önceki metin, kanıt, karar ve inceleme notunu arşivler; yeni metin için yeni kanıt ve review gerekir.
 - UI ve store testleri: 18 model +6 store =24 @Test; exact-head CI sonucu henüz bekleniyor.
+
+
+## 10. Haber kartı H1 arşiv ve insan incelemesi UI — 25.11.2026
+- PR #69: https://github.com/aries919-bot/Jarvis/pull/69 (taslak/açık), H1 model, yerel depo, Haber kartı UI ve Custom Tabs.
+- Her haber kartında iddia/kanıt inceleme ekranı açılır. Kullanıcı bir iddia ekler; kaynağı, HTTPS bağlantısını, kısa alıntıyı, kaynak türünü, destek/çelişki yönünü ve varsa kaynak yayın tarihini girer.
+- Birincil kaynak sınıfı URL'nin izinli kurum/işveren alan adıyla uyuşmasını gerektirir. Kaynağa göre PRIMARY_SOURCE elle seçilse bile domain policy doğrulamasından geçmeden eklenmez.
+- İnsan inceleme kararı ve gerekçesi gereklidir. Birincil kanıt ve insan kararı olmadan Doğrulandı/Çürütüldü oluşmaz.
+- Düzeltmede eski iddia metni, önceki kanıtlar, önceki karar/gerekçe ve önceki verdict correctionHistory'ye yazılır. Yerel depo eski history öğelerini kaldırmayı veya önceki kanıtı düzeltme kaydı olmadan silmeyi reddeder.
+- Yerel arşiv ayrı SharedPreferences key'inde; mevcut haber arşivi geriye dönük dönüştürülmez. Eski story'ler otomatik doğrulanmış olmaz.
+- Yerel arşiv 1.5 MB üstüne çıkarsa yeni kayıt reddedilir; eski kayıtlar silinmez. Bozuk arşiv de üzerine yazılmaz.
+- Kaynak/kanıt linkleri HTTPS doğrulamasından sonra AndroidX Custom Tabs ile açılır; Browser 1.8.0, mevcut compileSdk 34 / AGP 8.5.2 ile uyum için sabitlendi.
+- Android birim test sayımı: H1 model/policy 13 + yerel depo 5 = 18 yeni test. Exact-head run #45665491590'da unit testler PASS; APK derlemesi halen sürüyor. Henüz genel kabul yok.
