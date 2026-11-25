@@ -31,10 +31,10 @@ SOURCES = [
     {
         "id": "oran",
         "name": "Orta Anadolu Kalkınma Ajansı (ORAN)",
-        "allowed_link_hosts": ["www.dogaka.gov.tr"],
+        "allowed_link_hosts": ["www.oran.org.tr", "oran.org.tr"],
         "page_urls": [
-            "https://www.dogaka.gov.tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855",
-            "https://www.dogaka.gov.tr/tr/duyurular",
+            "https://www.oran.org.tr/haber/t-c--orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani",
+            "https://www.oran.org.tr/duyurular",
         ],
     },
     {
