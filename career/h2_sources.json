@@ -322,13 +322,14 @@
       "positionCount": 1,
       "allowNullPublishedAt": true,
       "howToApply": {
-        "method": "Üniversitenin ilgili birimine başvuru",
-        "url": "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/",
-        "instructions": "Başvuru yöntemi, teslim edilecek belgeler ve ilgili birim resmî ilan PDF'sinde belirtilmiştir."
+        "method": "Atatürk Üniversitesi Öğretim Üyeliği Başvuru Sistemi üzerinden elektronik başvuru",
+        "url": "https://atama.atauni.edu.tr",
+        "instructions": "Başvurular atama.atauni.edu.tr üzerinden elektronik yapılır; şahsen veya posta ile genel başvuru kabul edilmez. E-imzalı olmayan ıslak imzalı dilekçe, ilan PDF'sindeki usule göre başvuru süresi içinde Personel Daire Başkanlığına ulaştırılmalıdır. Aday yalnızca bir kadroya başvurabilir."
       },
       "conditions": [
-        "1 öğretim üyesi kadrosu; ilgili akademik unvan, doktora/alan ve bölüm özel şartları PDF ekindedir.",
-        "Başvuru öncesi kadro satırındaki unvan, bilim alanı ve belge şartları kontrol edilmelidir."
+        "657 sayılı Devlet Memurları Kanunu 48. madde genel şartları ve 2547 sayılı Kanun hükümleri aranır.",
+        "Doktor öğretim üyesi kadrosu için ilgili alanda doktora ve ilanda belirtilen bölüm özel koşulları aranır.",
+        "Adaylar yalnızca bir kadroya başvurabilir; her kadronun özel koşulları resmî PDF'de ayrı ayrı listelenmiştir."
       ],
       "tags": [
         "Akademik",
@@ -357,13 +358,14 @@
       "positionCount": 70,
       "allowNullPublishedAt": true,
       "howToApply": {
-        "method": "Üniversitenin ilgili birimine başvuru",
-        "url": "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/16/ataturk-universitesi-ogretim-uyesi-alim-ilani-16-11-2026/",
-        "instructions": "Başvuru yöntemi, teslim edilecek belgeler ve ilgili birim resmî ilan PDF'sinde belirtilmiştir."
+        "method": "Atatürk Üniversitesi Öğretim Üyeliği Başvuru Sistemi üzerinden elektronik başvuru",
+        "url": "https://atama.atauni.edu.tr",
+        "instructions": "Başvurular atama.atauni.edu.tr üzerinden elektronik yapılır; şahsen veya posta ile genel başvuru kabul edilmez. E-imzalı olmayan ıslak imzalı dilekçe, ilan PDF'sindeki usule göre başvuru süresi içinde Personel Daire Başkanlığına ulaştırılmalıdır. Aday yalnızca bir kadroya başvurabilir."
       },
       "conditions": [
-        "70 profesör kadrosu olduğu ilan/PDF tablosundan teyit edilmelidir; her bölüm için özel bilim alanı ve akademik şartlar farklıdır.",
-        "Profesörlük unvanı ve ilgili birimin PDF'de yazılı özel koşulları aranır."
+        "657 sayılı Devlet Memurları Kanunu 48. madde genel şartları ve 2547 sayılı Kanun hükümleri aranır.",
+        "Profesör kadroları için profesörlük unvanı ve bölüm/ana bilim dalına özgü akademik koşullar aranır.",
+        "Adaylar yalnızca bir kadroya başvurabilir; her kadronun özel koşulları resmî PDF'de ayrı ayrı listelenmiştir."
       ],
       "tags": [
         "Akademik",
@@ -465,9 +467,9 @@
       ],
       "positionCount": 7,
       "howToApply": {
-        "method": "İlgili akademik birime şahsen/posta",
+        "method": "İlgili fakülte dekanlığına şahsen veya posta yoluyla",
         "url": "https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352",
-        "instructions": "Başvuru birimi, teslim yöntemi ve belgeler resmî PDF ekinde belirtilmiştir."
+        "instructions": "Başvurular ilgili fakülte dekanlığına şahsen veya posta yoluyla yapılır. Son gün 04.12.2026 mesai bitimidir. Fakülte/MYO ve rektörlük başvuruları için ayrı resmî başvuru formları bulunur."
       },
       "conditions": [
         "7 öğretim elemanı kadrosu; bölüm, mezuniyet, ALES ve yabancı dil asgari koşulları kadro bazında resmî PDF'dedir."
