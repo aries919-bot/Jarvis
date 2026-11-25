@@ -25,7 +25,7 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - Durum: İLK İNCELEME TAMAM; OPTİMİZASYON TAKİPTE.
 - android.yml iki ayrı Gradle çağrısı kullanıyor: testDebugUnitTest ve assembleDebug; tek Gradle çağrısında birleştirme, aynı compile graph'ını tekrar çalıştırmayı azaltabilir.
 - H1 emülatör workflow job timeout 35 dakika; step 5 yaklaşık 18 dakikadır IN_PROGRESS, log endpoint BlobNotFound. Timeout dolmadan fail/stall kararı yok.
-- Sonraki workflow PR'ında test raporu upload adımı if: always() olmalı; böylece fail/timeout sonrası rapor korunur.
+- H1 workflow test raporu upload adımı zaten if: always() kullanıyor; bu koruma PASS. Ana Android build workflow'unda iki Gradle çağrısını tek çağrıya birleştirme optimizasyonu ayrı takip işi.
 
 ## Atamalar
 
