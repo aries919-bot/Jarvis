@@ -785,3 +785,35 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Kurum merkez adresinden veya alan adı/başlıktan görev şehri çıkarılmayacak. Yalnız resmi sayfa/PDF'de pozisyon satırına bağlı açık işyeri şehri kullanılacak; birden çok şehir için ayrı kayıt veya location array. Yoksa null / possible duplicate / unique public count dışında.
 - İş belgesi: `gorevler/C1-H2-CITY-FIELD-AUDIT-2026-11-25.md` commit `99055f2b5ecee19a2b3936443f8d9fefd375548c`. Kod değişmedi.
 - **KARAR:** C1 RED; 12 kaynak /55 doğrulanmış açık kamu ilanı, 45 eksik. Şehirli cross-feed dedup yok, Worker GET/D1 SKIPPED.
+
+## 34) H1 false-green düzeltmesi, asenkron SQLite ve Aries Career QA — 25.11.2026
+
+### H1 PR #71 — eski emulator PASS geri çekildi
+- Önceki H1 run [#45685959506](https://github.com/aries919-bot/Jarvis/actions/runs/45685959506) GitHub'da SUCCESS görünüyordu; ancak artifact `15057322360` içindeki `TEST-emulator-5554 - 14-_app-.xml` tekrar sayımı **4 test / 1 PASS / 3 FAIL / 0 ERROR / 0 SKIP**. Geçen yalnızca `sqliteLastGoodCopyRecoversCorruptPrimaryWithoutLosingPreviousRecord`.
+- 3 UI test: `opensH1ActivityAndPersistsUnknownPublicationDateAsNull`, `evidenceReviewAndCorrectionFlowPersistsPublicationDateAndAuditDetails`, `displaysArchivedHumanReviewHistoryFromSqlite`; hepsi `RootViewPicker$RootViewWithoutFocusException` / `has-window-focus=false`.
+- Logcat H1 Activity açılışında uzun frame skip/jank ve Android sistem süreçlerinde odak/kaynak baskısı gösteriyor. Önceki workflow scriptinde `set -o pipefail` vardı ama `set -e` yoktu; Gradle başarısız olsa bile action son komut exit code 0 verdiğinden job yeşil görünüyordu. PASS kararı **geri çekildi**.
+- İş akışı `.github/workflows/h1-android-ui-smoke.yml` artık `set -euo pipefail` kullanıyor; gerçek instrumentation failure job'u başarısız yapmalı. Commit: `8d560a7d4e18db6fa6fdd1b131b47a831d6fd4bd`.
+- H1 Activity ilk açılış SQLite `load` ve gereksiz koşulsuz `save` UI thread'deydi. `CareerNewsVerificationActivity.kt` asenkron açılış/yazma, tek FIFO ExecutorService, yalnız kayıt yoksa initial save ve kuyruğun sonunda storage close olacak şekilde düzeltildi. Commit: `b8a78126cbc6713cb4d42838027a6189274f19e7`.
+- Güncel PR #71 HEAD `b8a78126cbc6713cb4d42838027a6189274f19e7`; GitHub diff yeniden sayımı 10 dosya / +2.669 / -26; test tanımları 20 model +10 store +4 instrumentation =34.
+- Güncel APK/unit [#45692016951](https://github.com/aries919-bot/Jarvis/actions/runs/45692016951) **SUCCESS**; GitHub job steps arasında Birim testleri, APK derle ve upload hepsi SUCCESS.
+- Güncel merge-ref emulator [#45692017824](https://github.com/aries919-bot/Jarvis/actions/runs/45692017824) son sorguda **IN_PROGRESS**; merge-ref parent doğrulaması ve AndroidX dependencyInsight SUCCESS; instrumentation step 7 çalışıyor. Artifact XML henüz yok.
+- Gerçek telefonda test yok. **PR #71 RED/beklemede; 4/4 XML test sonucu ve telefon kontrolü olmadan merge yok.** PR #69 ortak 6 dosya/eski SharedPreferences mimarisi nedeniyle merge dışı.
+
+### Aries İş & Kariyer QA/RAG — PR #12
+- Cloud PR #12: https://github.com/aries919-bot/jarvis-cloud/pull/12; branch `feat/career-qa-rag-20261125`; son HEAD `d49de634b9e07030c0117039b62027b76405b435`; base PR #11 HEAD `b1415d6a76fd3856c60cfec891a575c3bef0341e`.
+- GitHub diff son yeniden sayımı 4 dosya / +992 / -20; `tests/career-qa.test.mjs` içinde 24 adet test tanımı. Bunlar çalışmış test değildir.
+- Retrieval/answer tasarımı: Turkish normalize + BM25 + Cloudflare BGE-M3 embedding + RRF; kaynak seçildikten sonra Gemma 4; tarih/şart/başvuru yolu deterministik kayıttan çıkarılır; kanıt/konu dışı ise abstain.
+- Kaynak kapısı: Kamu/Kura/KPSS/KPSS'siz/Kamu bağlı şirket yalnız `iskur-esube-json` veya `h2-official-announcement`; Büyük özel yalnız `jobs.lever.co` Lever veya `jobs.ashbyhq.com` Ashby. Source stale, expired, unknown deadline veya possible duplicate kayıt dışı.
+- Gizlilik: CV/özgeçmiş, kişisel KPSS puanı, T.C. kimlik, telefon, e-posta, bearer/API/token desenleri AI çağrısından önce reddedilir. Soru/Authorization loglanmaz; CV, kişisel profil, geçmiş sohbet veya e-Devlet verisi D1/AI'a gönderilmez. AI capacity `rejectIfBusy` ile hızlıca reddedilirse BM25 fallback.
+- Cloudflare resmî model sayfaları: BGE-M3 https://developers.cloudflare.com/workers-ai/models/bge-m3/ — multilingual embeddings, $0.0118/1M input tokens; Gemma 4 https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/ — multilingual answer model, $0.10/1M input and $0.30/1M output tokens; `rejectIfBusy` https://developers.cloudflare.com/workers-ai/features/reject-if-busy/. Gerçek maliyet/latency/kalite ölçümü henüz yapılmadı.
+- CI engeli: son 7 Cloud run #45692460706, #45692517637, #45692608933, #45692642608, #45692792848, #45692810534, #45692919011 hepsi FAILURE; GitHub jobs API her birinde **0 step** ve 2–3 sn çalışma kaydı döndürdü. Örnek #45692919011/job `139482779972`: 20:13:48Z başladı, 20:13:50Z bitti, `steps=[]`. Log URL BlobNotFound; annotation içerik endpointi bağlı arayüzden alınamıyor. Bu bir kod testi failure/pass kanıtı değil; runner/job başlangıç engeli. PR #12 taslak, merge/deploy yok; tekrarlı rerun/commit döngüsü durduruldu.
+- Rapor: `gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md`, commit `71ddd4a722942113f748c1afc586891ef041ed56`.
+
+### Ayrı takip — H1 News QA
+- H1 yerel SQLite içindeki Claim/Evidence/ReviewHistory kayıtları için ayrı haber soru-cevap servisi tasarlanacak; Kariyer feed'i ile veri birleştirilmez. Yalnız kayıtlı iddia/kanıt/insan kararı, kaynak URL ve checkedAt ile cevap; doğrulama yoksa abstain. Henüz kodlanmadı.
+
+### Kamu C1 kapısı değişmedi
+- C1 PR #11 kamu sayımı **12 resmî kaynak /55 doğrulanmış açık ilan**; 100 hedefine 45 eksik. Worker production GET/D1 ve H2 city kanıtlı cross-feed dedup kapıları halen RED.
+- QA/RAG PR #12 bu açığı ilan uydurarak doldurmaz.
+
+**KARAR:** H1 emulator 4/4 tekrar kanıtı bekliyor ve fiziksel telefon yok; PR #71 merge yok. Career QA/RAG mimarisi kodlandı ancak CI runner adım başlatmadığı için test edilmedi, PR #12 merge/deploy yok. C1 12/55 ve RED.
