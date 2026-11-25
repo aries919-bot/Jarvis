@@ -635,3 +635,25 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Diğer kapsam bulguları: kanıt ekleme formu `publishedAt=null` sabitliyor (tarih alanı yok; kaynak tarihi girilemiyor); correction UI önceki kanıtların yalnız sayısını gösteriyor, yayıncı/URL/alinti detayını göstermiyor. Bunlar ayrı takip işi.
 - PR #71, PR #70 kaynak politikası düzeltmesini içermiyor. #70 merge edilmeden PR #71'in tabanındaki eski `CareerSourceCatalog` ile birincil kaynak sınıflandırması tek başına kabul edilmemeli. #70 exact-head Android CI [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) PASS; PR hâlâ ayrı.
 - **Hakem kararı: RED / değişiklik gerekli.** Normal APK CI önceki HEAD'de PASS olsa da yeni HEAD CI bekliyor; emulator önceki HEAD'de FAIL (altyapı); audit geçmişi açığı P1 blocker. Merge/deploy yok; gerçek telefon testi yok.
+
+## 18) H1 PR #71 — append-only insan inceleme geçmişi düzeltmesi / 25.11.2026
+- Önceki hakem blocker doğrulandı: `CONFIRM/REFUTE/INCONCLUSIVE` kararının yeniden yazılması ve yeni kanıt sonrası reset edilmesi eski review kaydını kaybettirebiliyordu.
+- PR #71 dalında düzeltme uygulandı; exact HEAD `2520b085bdd3e60a9f97ab42406147b1b57f3b07`.
+- `CareerNewsReviewEvent`: karar + UTC zaman + gerekçe + o karardaki kanıt ID'leri append-only tutuluyor. Yeni kanıt eski review'u arşivleyip aktif kararı sıfırlar; yeniden inceleme eski kararı arşivler. Store geçmiş silme/yeniden yazma ve eski kararın yeni kanıtla aktif kalmasını reddeder. Activity geçmiş review'ları gösterir.
+- Regresyonlar: 2 model + 2 store testi; 1 SQLite Activity instrumentation testi eklendi.
+- Exact-head APK/unit run [#45675851347](https://github.com/aries919-bot/Jarvis/actions/runs/45675851347) IN_PROGRESS; exact-head emulator/SQLite [#45675851473](https://github.com/aries919-bot/Jarvis/actions/runs/45675851473) IN_PROGRESS. Önceki HEAD emulator #45673231634 yeni commit nedeniyle CANCELLED; PASS değildir.
+- CI PASS, tam UI uçtan uca testi ve gerçek telefon testi hâlâ gerekli. Kanıt formunda publishedAt alanı ve correction UI'da önceki kanıt ayrıntıları ayrı takip işidir.
+- PR #70 kaynak/UA politikası bu PR'ın tabanında yok; ayrıca denetlenmelidir.
+- **KARAR: RED / beklemede.** Exact-head CI sonuçları gelmeden merge yok.
+- Ayrıntı: `gorevler/H1-REVIEW-HISTORY-2026-11-25.md`.
+
+## 19) C1 PR #11 — H2 + e-Şube exact-head QA / 25.11.2026
+- Private HEAD `b1415d6a76fd3856c60cfec891a575c3bef0341e`; H2 reader SHA `fe37be93202442394504f455b4a1caeb31f298cf`.
+- Public exact-head QA [#45651444155](https://github.com/aries919-bot/Jarvis/actions/runs/45651444155) SUCCESS; artifact [15041491104](https://github.com/aries919-bot/Jarvis/actions/runs/45651444155/artifacts/15041491104) JSON/TXT açılıp sayaçlar yeniden sayıldı.
+- `collectedAt=2026-11-25T16:11:57.566Z`; 35 kaynak /27 fresh /8 stale; 12 benzersiz kamu kaynağı /55 doğrulanmış açık kamu kartı. e-Şube 42 + H2 13. 116 deadline belirsiz kayıt (112 özel +4 H2); geçmiş deadline 0.
+- Stale kaynaklar: 6 Ashby 401 robots, BOTAŞ timeout, Mardin Artuklu öğretim üyesi deadline kanıtı eksik.
+- **Hakem bulgusu:** H2 mapper `city: null` yazıyor; upstream H2 `make_item()` şehir alanı üretmiyor. Bu nedenle exact kurum+pozisyon+şehir+deadline eşleşmesi canlı H2/e-Şube verisinde çalışamaz. Sentetik dedup testi uçtan uca kanıt değildir. Şehir resmî metinde yoksa tahmin edilmez; olası tekrarlar doğrulanmış sayımdan çıkarılır.
+- Artifact `PUBLISH status=SKIPPED`; production authenticated Worker GET/POST ve D1 kalıcılığı kanıtlanmadı.
+- **KARAR: RED.** 12 kaynak kapısı geçiyor; 55/100 kart eşiği 45 eksik. Production GET/D1 ve şehir kanıtlı cross-feed dedup eksik. PR #11 merge yok.
+- Ayrıntı: `gorevler/C1-H2-FEED-QA-2026-11-25.md`.
+
