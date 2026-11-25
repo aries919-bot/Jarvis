@@ -422,3 +422,15 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Tarih kartları: deadline geçen Sayıştay ve benzeri ilanlar güncel listeden çıkar; sınav/ön değerlendirme tarihi deadline alanına yazılmaz. Sahil Güvenlik 27.11.2026 son başvuru tarihidir; resmi metinde saat yok.
 
 **KARAR:** C1 RED. Feed'in son iyi kamu verisi 6 kaynak /47 karttır; 26.11.2026 itibarıyla bu altı kaynağın tümü 12 saat freshness sınırını aştığı için stale durumundadır. Fresh ilan sayısı bu kanıt setinde 0; bu, kamu ilanı olmadığı anlamına gelmez. Yeni 2 kamu +1 özel aday kartı bulundu fakat dedup/Worker ingest yapılmadı. Production authenticated GET/D1 kanıtı ve 10/100 eşiği yok.
+
+
+## 26.11.2026 — H1 XML gate uygulaması ve kapsam ilerlemesi
+- collectedAt: 2026-11-25T21:47:27.094Z
+- H1 PR #71 branch'ine üç commit yazıldı: strict Bash runner `173902ab99b0a267877bf79fe826cfe34eb8fac3`; XML gate `621c57640389221950ade7c6be08ef2e9eee4970`; workflow tek satır runner + always XML doğrulaması `4398073b3759109fa27a8172956cbea13f31ce27`.
+- PR #71 yeni HEAD `4398073b3759109fa27a8172956cbea13f31ce27`; diff 14 dosya / +3.370 / -26. Dosya listesi API'den yeniden alındı.
+- CI tasarımı: Gradle|tee aynı Bash process içinde; XML raporu yoksa/bozuksa, test sayısı 4 değilse veya failure/error/skipped varsa job fail. Artifact upload yine `if: always()`.
+- Exact-head Actions sorgusunda `4398073...` için henüz run yok. Bu nedenle commit var ama CI kanıtı yok; önceki 4 test /3 failure XML bulgusu hâlâ geçerli. H1 RED, PR draft ve merge yok.
+- İş kaydı: `gorevler/H1-CI-XML-GATE-IMPLEMENTATION-2026-11-26.md`.
+- **Kapsam yüzdesi (yalnız H1 + C1; tüm Aries değil): H1 yaklaşık %50, C1 yaklaşık %40, eşit ağırlıklı toplam yaklaşık %45.** Bu planlama tahminidir, ölçülmüş uygulama tamamlama metriği değildir. Tam Aries için tek bir doğrulanmış payda bulunmadığından bütün uygulamaya yüzde verilmedi.
+- C1 son kamu feed ölçümü 6 kaynak/47 last-good kart; tümü stale. Fresh ilan sayısı 0 olarak değil, 0 fresh ölçüm /47 last-good kayıt şeklinde sunulmalı. 10/100 ve production GET/D1 hâlâ RED.
+**KARAR:** H1 RED; C1 RED; merge/deploy yok. Ayrıntı ve hesaplama: `gorevler/H1-CI-XML-GATE-IMPLEMENTATION-2026-11-26.md`.
