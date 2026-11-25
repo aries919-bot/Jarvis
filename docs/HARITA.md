@@ -1134,3 +1134,13 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - `publishedAt=2026-11-24`; `deadline=2026-12-08`; dijital başvuru https://insankaynaklari.nisantasi.edu.tr/akademisyen-ilanlari . Kadro/programma göre doktora/uzmanlık/yayın/tecrübe ve ALES/yabancı dil şartları değişir; örnek tabloda ALES 70, yabancı dil 50 veya İngilizce programlarda 85. Araştırma görevlisi 2547 50/d. Resmî ilan PDF: https://www.nisantasi.edu.tr/Uploads/Akademisyenler/ik-kadro/24_11.2026%20tarihli%20resmi%20gazete%20%C4%B0lan%C4%B1.pdf.
 - Önceki `deadline=null / Doğrulanamadı` notu düzeltilmiştir. Nişantaşı 1 duyurusu zaten özel havuzdaki 7 adayın içindeydi; toplam özel aday sayısı değişmedi. Kamu 23/17 değişmedi.
 - PDF'nin tüm 9 sayfasına screenshot alındı; ana başlık ve kadro tablosu görsel olarak incelendi. Ayrıntılı düzeltme `gorevler/C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md` içindedir; commit `fe3e038211db43efab0effa95b62f9ee6f4633c7`.
+
+## 26.11.2026 — H1 exact-head emulator sonucu güncellendi
+- PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` APK/unit [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) SUCCESS; artifact #15069888409.
+- Aynı HEAD emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) FAILURE. Job #139564450544: setup/dependency 1–6 SUCCESS; instrumentation step 7 timeout; XML step 8 FAILURE; artifact upload step 9 SUCCESS.
+- Logda Android boot `997518 ms`; ColorBuffer/EmulatorConsole hataları; framework/Package Manager hazır ve window-focus preflight PASS. APK + androidTest APK derlemesi BUILD SUCCESSFUL. `connectedDebugAndroidTest` 30 dakika timeout; XML yok.
+- Yeni koşuda dört test için PASS/FAIL sonucu üretilmedi. Bu, uygulama doğrulama hatası olarak sınıflandırılamaz; emulator/ADB/instrumentation hattı BLOCKED/UNKNOWN. Önceki #45712459718 focus failure ayrı tarihsel kayıttır.
+- PR #71 açık/taslak, 14 dosya H1 kapsamı, GitHub formal review 0; merge/deploy yok.
+- Ayrıntılı kanıt ve kontrollü sonraki tanı adımı: [H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
+
+**KARAR:** H1 RED/BLOCKED. Aynı test workflow'u körlemesine tekrarlanmayacak; önce instrumentation launch tanısı izole edilecek.
