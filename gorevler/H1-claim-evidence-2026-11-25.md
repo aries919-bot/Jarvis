@@ -10,7 +10,7 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Taban: kariyer-modulu
 - Taban SHA: 4b270245019ed322dc2dc1c735c715c0934076a2
 - Dal: feat/h1-story-claim-evidence-ci-20261125
-- HEAD: ebaee5c4c30d746ed85191ce5b249925a4181fc0
+- HEAD: 79848e8848653de5fc495e5e35dcc5e305aff545
 - PR #69: https://github.com/aries919-bot/Jarvis/pull/69 (aktif)
 - Eski PR #68 kapatıldı (unmerged), çünkü `is/c3-ilan-semasi-ai-kaynak-kaniti` hedefinin workflow filtresi CI tetiklemiyordu.
 - Durum: açık/taslak; merge yok; kullanıcı/gerçek cihaz doğrulaması yok.
@@ -18,7 +18,7 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 ## Diff yeniden sayımı
 - Compare exact taban/head: 8 commit; 2 dosya; +741 / -0; 0 behind.
 - Yeni production dosyası CareerNewsVerification.kt: 519 ek satır.
-- Yeni test dosyası CareerNewsVerificationTest.kt: 280 ek satır; 13 @Test.
+- Yeni test dosyası CareerNewsVerificationTest.kt: 263 ek satır; 12 @Test.
 - Eski Haber arşivi, SharedPreferences kaydı, CareerActivity UI, C1 feed, Worker ve kaynak okuyucuları bu PR'da değişmedi.
 
 ## Model
