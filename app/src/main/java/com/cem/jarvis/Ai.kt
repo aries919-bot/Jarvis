@@ -18,7 +18,7 @@ class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
 }
 
 object Net {
-    const val ARIES_SOURCE_USER_AGENT = ARIES_SOURCE_USER_AGENT
+    const val ARIES_SOURCE_USER_AGENT = "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)"
     fun get(url: String): Pair<Int, String> {
         val c = URL(url).openConnection() as HttpURLConnection
         c.requestMethod = "GET"
