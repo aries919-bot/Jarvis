@@ -524,3 +524,18 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Artifact [15043163794](https://github.com/aries919-bot/Jarvis/actions/runs/45658340086/artifacts/15043163794), 14,082,661 bytes; SHA-256 `514af7cdba04e162f0bfd065cfad22afa257c5b158b90cc1f6dcf15578bce38f`.
 - Model test source: 11 @Test /38 assert calls. This is exact-head model unit-test + debug APK evidence, not Full App QA or real-phone evidence.
 - PR #69 remains open/draft; no merge/deploy. H1 UI/store integration remains next separate step.
+
+## 21. PR #70 User-Agent tek sabit / exact-head QA — 25.11.2026
+- C1 PR #70 güncel HEAD: `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`; compare 8 commit /4 dosya /+46/-13 /0 behind.
+- `Net.ARIES_SOURCE_USER_AGENT` tek sabit olarak tanımlandı; dört kaynak/RSS isteği bunu kullanır. Regresyon testi sabitin doğru Aries kimliği olduğunu ve Mozilla/Chrome token'ı taşımadığını doğrular.
+- Önceki HEAD #45657731556 (#686) unit test + APK + upload SUCCESS, artifact 15043108366; ancak sabit refaktöründen önceki head'dir.
+- Güncel exact-head [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) (#692): unit test SUCCESS; APK derlemesi IN_PROGRESS (son kontrol). Final SUCCESS henüz yok.
+- Güncel PR70 raporu: [C1-P0-source-policy-ua-2026-11-25.md](../gorevler/C1-P0-source-policy-ua-2026-11-25.md).
+
+## 22. PR #69 H1 gerekçe ve düzeltme izi / yeni exact-head — 25.11.2026
+- H1 PR #69 güncel HEAD: `ebaee5c4c30d746ed85191ce5b249925a4181fc0`; compare 13 commit /3 dosya /+800/-0 /0 behind.
+- Veri modeli 519 satır; testler 280 satır /13 @Test; `app/build.gradle.kts` içinde yalnız testImplementation `org.json` desteği.
+- Human CONFIRM/REFUTE gerekçesi zorunlu; düzeltme kaydı önceki iddia/kanıt/review kararını ve gerekçeyi korur; no-op correction reddedilir.
+- Eski CI #45658340086 (#688) önceki head'de test/APK/upload SUCCESS, ama son gerekçe/no-op testlerini içermiyor.
+- Güncel exact-head [#45659231791](https://github.com/aries919-bot/Jarvis/actions/runs/45659231791) (#695): birim testleri IN_PROGRESS (son kontrol). PASS henüz yok.
+- Haber ekranı/yerel arşiv entegrasyonu yapılmadı; eski haber kayıtları otomatik VERIFIED yapılmaz. [H1 görev raporu](../gorevler/H1-claim-evidence-2026-11-25.md).
