@@ -233,3 +233,9 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Kamu sayımı değişmedi: 12 kaynak/55 ilan; bu araştırmadan feed'e eklenen 0. C1 hâlâ RED, 45 ilan eksiği var.
 - Araştırma belgesi: `gorevler/C1-RESMI-ILAN-ARASTIRMASI-2026-11-25.md`.
 
+## 19. Diff güvenliği ve CI hız QA
+- PR #71: 10 dosya/+2.578/-26; secret pattern 0; LinkedIn/Indeed URL 0; browser impersonation UA 0; publishedAt literal yalnız testlerde.
+- PR #70: 4 dosya/+75/-20; secret pattern 0; fake browser UA 0; AriesKaynakTara/1.0 kullanılıyor; LinkedIn/Indeed dizeleri deny-policy testlerinde.
+- Android build workflow iki ayrı Gradle çağrısı kullanıyor; sonraki workflow değişikliğinde testDebugUnitTest + assembleDebug tek çağrı olarak çalıştırılabilir. H1 emülatör job timeout 35 dk, run #45679523114 step 5 hâlâ IN_PROGRESS ve log endpoint BlobNotFound.
+- **KARAR:** Diff güvenlik taraması PASS; CI hız optimizasyonu takip işi, mevcut koşu bitmeden workflow değiştirilmez.
+
