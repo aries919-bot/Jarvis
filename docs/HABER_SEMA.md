@@ -295,3 +295,13 @@ PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt
 - Yerel arşiv 1.5 MB üstüne çıkarsa yeni kayıt reddedilir; eski kayıtlar silinmez. Bozuk arşiv de üzerine yazılmaz.
 - Kaynak/kanıt linkleri HTTPS doğrulamasından sonra AndroidX Custom Tabs ile açılır; Browser 1.8.0, mevcut compileSdk 34 / AGP 8.5.2 ile uyum için sabitlendi.
 - Android birim test sayımı: H1 model/policy 13 + yerel depo 5 = 18 yeni test. Exact-head run #45665491590'da unit testler PASS; APK derlemesi halen sürüyor. Henüz genel kabul yok.
+
+## 11. PR #71 SQLite son durum ve performans sözleşmesi — 25.11.2026
+- Aktif entegrasyon adayı: PR #71 https://github.com/aries919-bot/Jarvis/pull/71, exact HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`.
+- SQLite veritabanı `career_news_verification_v1.db`; her story için `record.<storyId>` ve `last_good.<storyId>` satırları tek transaction'da yazılır.
+- Primary bozuksa last-good okunur; ikisi de bozuksa write reddedilir. Başarısız commit kullanıcıya hata döndürür. 300 story /16 KB/story /50 claim /25 evidence per claim /100 correction limitlerinde eski kayıt silinmez.
+- Store update, eski story source URL ve firstSeenAt değerlerini korur; correctionHistory yalnızca append edilir; eski claim/evidence/review ve önceki reviewNote, correction objesinde doğrulanabilir şekilde kalır. Kaydedilecek güncelleme eski evidence veya correction öğelerini silmeye çalışırsa reddedilir.
+- Story kimliği canonical HTTPS URL tabanlıdır; URL fragment/trailing slash ve host/scheme normalizasyonu yapılır. Başlık aynı URL'de değişirse storyId değişmez; boş URL'de başlık fallback kimliği olur.
+- Haber listesi en çok 100 kart için storyId listesini bir defa üretir; Store `loadMany` ile primary ve last-good değerlerini tek SQLite `IN` sorgusunda alır. Kart başına ayrı DB sorgusu yapılmaz.
+- Exact-head test sayımı: 17 model +8 store =25 @Test; en yeni CI [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387) beklemede. Ara head #45666479386 success olsa da güncel commit'e PASS aktarılmaz.
+- Full App QA/emulator ve gerçek telefon testi yapılmadı; haber ekranı gerçek cihazda denenmeden H1 kabul edilmiş sayılmaz.
