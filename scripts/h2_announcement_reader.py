@@ -406,7 +406,7 @@ def application_deadline(text: str, context: str) -> str | None:
             return parse_date(match.group(2))
     # Some official notices publish one explicit final date instead of a range.
     single = re.search(
-        r"(?:Son Başvuru Tarihi|Son Başvuru Tarihi|Başvuru Son Tarihi|Başvuruların Son Günü)\\s*[:|]?\\s*(\\d{1,2}[./-]\\d{1,2}[./-]20\\d{2})",
+        r"(?:Son Başvuru Tarihi|Başvuru Son Tarihi|Başvuruların Son Günü)\s*[:|]?\s*(\d{1,2}[./-]\d{1,2}[./-]20\d{2})",
         text, re.I
     )
     if single and (lowered_context in text[max(0,single.start()-80):single.end()+80].lower()
