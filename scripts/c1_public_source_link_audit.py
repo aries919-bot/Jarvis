@@ -49,6 +49,12 @@ SOURCES = [
         "page_urls": ["https://www.doka.org.tr/announcement-detail.php?id=1221"],
     },
     {
+        "id": "doka_zafer_mirror",
+        "name": "DOKA üzerinde yayımlanan Zafer Kalkınma Ajansı ilan kopyası",
+        "allowed_link_hosts": ["www.doka.org.tr", "doka.org.tr"],
+        "page_urls": ["https://www.doka.org.tr/announcement-detail.php?id=1222"],
+    },
+    {
         "id": "tga",
         "name": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
         "allowed_link_hosts": ["tga.gov.tr", "kariyer.tga.gov.tr"],
@@ -134,12 +140,16 @@ class PageParser(HTMLParser):
         self.links = []
         self.title_parts = []
         self.in_title = False
+        self.ignored_depth = 0
         self.current_href = None
         self.current_anchor = []
 
     def handle_starttag(self, tag, attrs):
         values = {key.lower(): value for key, value in attrs if value is not None}
         tag = tag.lower()
+        if tag in {"script", "style", "noscript"}:
+            self.ignored_depth += 1
+            return
         if tag == "title":
             self.in_title = True
         if tag == "meta":
@@ -153,6 +163,8 @@ class PageParser(HTMLParser):
             self.links.append({"kind": tag, "text": "", "href": values["src"]})
 
     def handle_data(self, data):
+        if self.ignored_depth:
+            return
         clean = " ".join(data.split())
         if not clean:
             return
@@ -163,9 +175,13 @@ class PageParser(HTMLParser):
             self.current_anchor.append(clean)
 
     def handle_endtag(self, tag):
-        if tag.lower() == "title":
+        tag = tag.lower()
+        if tag in {"script", "style", "noscript"}:
+            self.ignored_depth = max(0, self.ignored_depth - 1)
+            return
+        if tag == "title":
             self.in_title = False
-        if tag.lower() == "a" and self.current_href is not None:
+        if tag == "a" and self.current_href is not None:
             self.links.append({"kind": "anchor", "text": " ".join(self.current_anchor), "href": self.current_href})
             self.current_href = None
             self.current_anchor = []
