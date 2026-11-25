@@ -1128,3 +1128,9 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Yeni toplam: **23 açık kamu ana duyuru /17 benzersiz kamu kurumu**; 4 gelecek, 5 deadline-null, 5 süresi geçmiş kamu kaydı ayrı. 7 özel üniversite aday/duyurusu özel havuzda; kamuya karıştırılmaz.
 - Resmî Gazete 24.11 günlük PDF screenshot 400/timeout; metin kaydı ve resmi başvuru portalları doğrulandı. 21.11 Medeniyet PDF bağlantısı da timeout. Bunlar `Doğrulanamadı` / deadline null olarak tutuldu.
 **KARAR:** C1 RED. 23/17 sayısı manuel kaynak denetimidir, Worker feed'i değil. Worker/H2 6/47 son iyi veri stale; manuel envanter 12/55 ayrı. Sayılar toplanmaz. 100 doğrulanmış aktif ilan ve production authenticated GET/D1 kapısı yok.
+
+## 26.11.2026 — Nişantaşı özel akademik ilanı doğrulama düzeltmesi
+- İstanbul Nişantaşı Üniversitesi'nin 24.11.2026 ilanı artık `Doğrulandı`: Resmî 9 sayfalık PDF, kurum duyurusu ve İK portalı eşleşti. Tek ana duyuru kartıdır; profesör/doçent/dr. öğretim üyesi/öğretim görevlisi/araştırma görevlisi aynı PDF başlığında birlikte listelenir.
+- `publishedAt=2026-11-24`; `deadline=2026-12-08`; dijital başvuru https://insankaynaklari.nisantasi.edu.tr/akademisyen-ilanlari . Kadro/programma göre doktora/uzmanlık/yayın/tecrübe ve ALES/yabancı dil şartları değişir; örnek tabloda ALES 70, yabancı dil 50 veya İngilizce programlarda 85. Araştırma görevlisi 2547 50/d. Resmî ilan PDF: https://www.nisantasi.edu.tr/Uploads/Akademisyenler/ik-kadro/24_11.2026%20tarihli%20resmi%20gazete%20%C4%B0lan%C4%B1.pdf.
+- Önceki `deadline=null / Doğrulanamadı` notu düzeltilmiştir. Nişantaşı 1 duyurusu zaten özel havuzdaki 7 adayın içindeydi; toplam özel aday sayısı değişmedi. Kamu 23/17 değişmedi.
+- PDF'nin tüm 9 sayfasına screenshot alındı; ana başlık ve kadro tablosu görsel olarak incelendi. Ayrıntılı düzeltme `gorevler/C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md` içindedir; commit `fe3e038211db43efab0effa95b62f9ee6f4633c7`.
