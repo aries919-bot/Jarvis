@@ -73,3 +73,14 @@ Bu çalışma önceki 0-test sahte PASS riskini kapatmıştır. Yeni runner/AVD 
 - C1 bağımsız RED: kamu feed son iyi veri 6 kaynak /47 kart; 6 kaynağın hepsi stale, 10 kaynak/100 doğrulanmış ilan ve production authenticated GET/D1 kanıtı yok.
 
 **KARAR:** H1 yeni PID-aware düzeltme CI bekliyor; C1 RED.
+
+## 26.11.2026 — Exact-head unit/APK sonucu ve yeni test sayımı
+
+- Exact HEAD `e390e05e1485717c3a07ce3af06db6b3840062f3` APK run [#45712459742](https://github.com/aries919-bot/Jarvis/actions/runs/45712459742) **SUCCESS**. Job loglarında `gradle testDebugUnitTest --no-daemon` için `BUILD SUCCESSFUL in 1m 50s`; `gradle assembleDebug --no-daemon` için `BUILD SUCCESSFUL in 1m 10s`; artifact upload SUCCESS.
+- APK artifact ID `15068252085`, 14,197,729 byte; ZIP SHA-256 `d3ceae0d1781cfb0f6ae19cdeb587494ea4f04310d2117f3fe23c46aafb43c91`. ZIP'te tek `app-debug.apk`; çıkarılan APK SHA-256 `045bf135f19f4cac514ad48b05b3c33b374c7f0cc805a2debd4d07cdc3a4fb6d`.
+- Son HEAD test anotasyonu yeniden sayımı: 12 unit test dosyası /142 `@Test`; H1 model 20, store 10, QA 17 = H1/QA alanında 47 unit test tanımı. Android instrumentation dosyası 4 `@Test`; tüm repo sayımı 142 unit +4 instrument =146 test tanımı. Bu statik anotasyon sayımıdır; log, Gradle unit görevinin SUCCESS olduğunu kanıtlar, ayrı XML test-count kanıtı değildir.
+- Exact-head emulator run [#45712459718](https://github.com/aries919-bot/Jarvis/actions/runs/45712459718) son API sorgusunda IN_PROGRESS; checkout/head-base doğrulaması, Java/Gradle ve dependency insight SUCCESS; `Run Android emulator instrumentation tests` IN_PROGRESS; XML gate ve artifact upload henüz başlamadı. Run tamamlanmadan ve XML yeniden sayılmadan H1 PASS yok.
+- FUTO'da sonraki Android CI vakası, Package Manager servisinin bulunmasını tek başına yeterli görmüyor; `pm install-create` ile depolama/installer yolunu gerçek kurulumdan önce sınamayı öneriyor: https://gitlab.futo.org/futo-notes/futo-notes/-/blob/android-fs-picker/scripts/ci-android-emulator.sh. Bu, mevcut Aries koşusu StorageManager hatası üretirse uygulanacak alternatif; henüz Aries loguyla bu kök neden doğrulanmadı.
+- PR #71 açık/taslak; diff 14 dosya /+3.492 /-26. Merge/deploy yok.
+
+**KARAR:** Unit/APK kapısı PASS (exact HEAD); H1 Android UI kapısı RED/BLOCKED — 4/4 instrumentation XML henüz yok. C1 kamu feed 6 kaynak/47 last-good; 6/6 stale, 10/100 ve production authenticated GET/D1 hâlâ RED.
