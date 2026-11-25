@@ -725,3 +725,10 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - H1 emülatör job timeout 35 dk; run #45679523114 step 5 IN_PROGRESS; log endpoint BlobNotFound. Timeout dolmadan FAIL/STALL denmez.
 - Sonraki workflow PR'ında test report upload if: always() yapılmalı.
 - Ayrıntı: `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
+
+## 27) H1 emülatör uzun koşu — 25.11.2026 19:12Z
+- Run #45679523114 exact HEAD `6b392a3aa02d42700743657350d081d7f7ad6aeb`: 18:52:22Z'de başladı; 19:12:37Z'de hâlâ IN_PROGRESS. Step 5 Android instrumentation; önceki setup adımları PASS.
+- Job timeout 35 dk; teorik timeout sınırı 19:27:22Z. Bu sınırdan önce test sonucu uydurulmayacak.
+- Job log isteği BlobNotFound döndürdü; bu PASS/FAIL kanıtı değildir. Test raporu upload adımı henüz başlamadı.
+- APK/unit run #45679523180 SUCCESS aynı exact HEAD.
+- **Karar: H1 RED/beklemede; emülatör ve telefon doğrulaması olmadan merge yok.**
