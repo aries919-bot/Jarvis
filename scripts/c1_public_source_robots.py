@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Robots-only probe for candidate official public recruitment sources.
+"""Robots-only probe for candidate official public recruitment sources (revision 2).
 
 This script fetches ONLY each origin's /robots.txt. It never fetches the
 announcement page, follows redirects, logs in, or bypasses TLS verification.
