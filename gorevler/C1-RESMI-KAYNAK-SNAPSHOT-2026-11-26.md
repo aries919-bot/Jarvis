@@ -168,3 +168,13 @@ Bu üç özel üniversite kaydı kamu kaynağı sayımına girmez. Antalya Belek
 - Bu ek kayıtların tamamı henüz Worker ingest/dedup işleminden geçmedi. collectedAt=null, firstSeenAt=null kalır. Bu elden sayım 6/47 veya 12/55 geçmiş sayılarını geriye dönük güncellemez.
 
 **KARAR:** Yeni PDF araştırması, kamuya 3 tarih/doğrulama koşulunu sağlayan aday duyuru daha buldu; bunun 2'si yeni kurum kaynağıdır. Toplam 10/100 kabulü veya production GET/D1 kanıtı anlamına gelmez. C1 RED kalır.
+
+## Düzeltme — H1 exact-head emulator run tamamlandı (26.11.2026)
+- Önceki H1 in_progress ifadesi bu ekle geçersizdir. Run #45712459718 artık FAILURE: https://github.com/aries919-bot/Jarvis/actions/runs/45712459718.
+- XML artefact bağımsız yeniden sayım: 4 testcase /1 PASS /3 FAIL /0 error /0 skipped. Üç başarısız UI testinin tamamında Espresso RootViewWithoutFocusException ve DecorView has-window-focus=false; SQLite last-good recovery testi PASS.
+- Job 139550204961 step7 instrumentation FAILURE, step8 XML gate FAILURE, step9 artifact upload SUCCESS. Artifact #15069268534, SHA-256 f9d848088c2ad8ca49985c0aeb44279f2e94202a1b1ecb8e9069e09ba97628d7.
+- Diagnostics: emulator bağlı, sys.boot_completed=1, system_server PID preflight/failure 552, Package service bulundu, /data 7.0G boş. WindowManager logunda test EmptyActivity öne alınarak Jarvis task'ının arkaya geçtiği sırada Espresso odağı kayboluyor; slow-dispatch/monitor-contention kayıtları var. Bu focus handoff olasılığını güçlendirir; tek kök neden kesinleşmiş sayılmaz.
+- AndroidX Google commit 18.09.2026 benzer EmptyActivity geçişi sonrası window focus kaybını tarif eder; test helper doğrudan UI thread View.performClick ve focus zorunlu olmayan view readiness yaklaşımına geçmiş: https://android.googlesource.com/platform/frameworks/support/+/36c1b8edfc954907a546e09c7f42e20d39ecb083 . Bu analog kanıttır, Aries kök nedeni kanıtı değildir.
+- Ayrıntılı hata dosyası: gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md (commit e1faa2eea61c3a4bcbd59d9f89f3a6a6a4141ff6).
+- Sonraki adım test harness'i dar kapsamla düzeltmek: ActivityScenario lifecycle + focus gözlemi, UI thread doğrudan view click/readiness; dört test ve iddiaları koru, ayrıca gerçek tap/focus kapsamını bırakma. Aynı HEAD'i kör rerun etme; XML gate gevşetme yok.
+**KARAR:** H1 RED; APK/unit SUCCESS yalnız build/unit kanıtı, emulator 4 testten 3 fail. PR #71 merge/deploy yok.
