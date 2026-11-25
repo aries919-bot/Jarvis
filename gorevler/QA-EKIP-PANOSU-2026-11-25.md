@@ -150,3 +150,15 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - Rapor: gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md, durum commit 71ddd4a722942113f748c1afc586891ef041ed56.
 - H1 Haber QA ayrı bir sonraki iş; kariyer feed ve haber SQLite birbirine karıştırılmayacak.
 
+
+### QA-10 güncel kapsam — 25.11.2026 20:20Z
+- Cloud PR #12 current HEAD 4b010df6fbd30229ec1868cf12e86a03b3eab055; diff 4 files / +1045 / -20; test tanımı yeniden sayımı 26.
+- Son kapsamda explicit provider allowlist, BM25 + BGE-M3 + RRF, Gemma 4 source context, rejectIfBusy, personal CV/KPSS/TCKN/phone/email/token block, off-topic abstention, deterministic deadline/conditions/application/positionCount/city answer, city/positionCount missing values never inferred.
+- Son 7 CI jobs #45692642608, #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527: hepsi steps=0 / failure / 2–3 seconds. Last #45693834527 job #139485957163 20:19:25Z–20:19:27Z. Code test count executed: 0. CI source runner startup blocker; no further rerun loop.
+- PR #12 open/draft, merge/deploy yok. Backend endpoint not wired in Android client. H1 News QA is a separate follow-up; local News SQLite won't be mixed with career D1 feed.
+
+### QA-02 güncel H1 run
+- Current PR #71 HEAD b8a78126cbc6713cb4d42838027a6189274f19e7; GitHub diff 10 files / +2.669 / -26; test definitions 20 model +10 store +4 instrumentation =34.
+- APK/unit #45692016951 SUCCESS; unit + assemble + upload steps SUCCESS.
+- Emulator #45692017824 last observed IN_PROGRESS; checkout/merge-parent verify + AndroidX dependencyInsight PASS, instrumentation step 7 running; no XML artifact yet. No 4/4 pass evidence, no physical phone test, PR #71 no merge.
+- Correction: older #45685959506 GitHub SUCCESS was false green due missing set -e. Artifact 15057322360 XML: 4 tests /1 PASS /3 FAIL /0 ERROR /0 SKIP; three UI RootViewWithoutFocusException. Wrapper fixed with set -euo pipefail commit 8d560a7; Activity SQLite moved off main thread commit b8a7812.
