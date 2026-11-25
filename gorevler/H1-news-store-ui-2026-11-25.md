@@ -6,20 +6,20 @@ Durum: PR #71 AÇIK / TASLAK / exact-head CI düzeltme sonrası bekleniyor.
 - Repo: aries919-bot/Jarvis
 - Base: kariyer-modulu (`4b270245019ed322dc2dc1c735c715c0934076a2`)
 - Branch: feat/h1-news-store-ui-20261125
-- Current HEAD: `a985d9600da7237bd45b954ca5e82a9c850f1944`
+- Current HEAD: `b9abd9433badf90d0cda306c8c81daa001b0a383`
 - PR #71: https://github.com/aries919-bot/Jarvis/pull/71
 - Parent H1 core PR #69: https://github.com/aries919-bot/Jarvis/pull/69 (exact-head unit test + APK PASS, still open/draft).
 - PR #71, PR #69 modelini içerir ve UI/store entegrasyonunun superset PR'ıdır. İkisi de merge edilmedi.
 
 ## Diff yeniden sayımı
-- Compare base/head: 34 commit, 8 dosya, +1725 / -25, 0 behind.
+- Compare base/head: 43 commit, 8 dosya, +1811 / -25, 0 behind.
 - CareerNewsVerification.kt: 564 ek satır.
 - CareerNewsVerificationActivity.kt: 468 ek satır.
 - CareerNewsVerificationStore.kt: 133 ek satır.
 - CareerActivity.kt: +104/-25; haber kartı, firstSeenAt, Custom Tabs ve duplicate merge.
 - Manifest: yalnız private activity kaydı.
 - Gradle: test JSON implementasyonu ve Custom Tabs browser dependency.
-- Testler: CareerNewsVerificationTest 17 @Test; CareerNewsVerificationStoreTest 6 @Test; toplam 23 @Test.
+- Testler: CareerNewsVerificationTest 18 @Test; CareerNewsVerificationStoreTest 6 @Test; toplam 24 @Test.
 
 ## İşlev
 - Haber kartında iddia/kanıt inceleme ekranı açılır.
@@ -28,7 +28,7 @@ Durum: PR #71 AÇIK / TASLAK / exact-head CI düzeltme sonrası bekleniyor.
 - Birincil kaynak kanıtı + insan CONFIRM olmadan VERIFIED yok. Karşıt birincil kanıt + REFUTE olmadan REFUTED yok. Karşıt ve destekleyici kanıt birlikteyse CONFLICTING.
 - Düzeltme eski iddia, kanıt ve review kararını saklar; yeni iddia için kanıt ve insan incelemesi yeniden gerekir.
 - Claim, evidence excerpt, review note ve correction text içindeki bilinen e-posta/telefon/IBAN/11 haneli kimlik örüntüleri reddedilir. Bu tüm PII'yi tespit ettiği garantisi değildir.
-- Ayrı `career_news_verification_v1` SharedPreferences deposu; legacy `career_news_items` anahtarına dokunmaz.
+- Ayrı `career_news_verification_v1.db` SQLite deposu; legacy `career_news_items` anahtarına dokunmaz.
 - Primary + last-good kayıt; iki kopya bozuksa üzerine yazmaz. 300 kayıt sınırında eskisini silmek yerine yeni yazmayı reddeder.
 - Yerel yazma UI thread dışında yapılır.
 - Yeni keşifte firstSeenAt yazılır; eski kayıtta bilinmiyorsa null. collectedAt lastSeenAt'ten alınır; publishedAt yalnız kaynak alanı varsa, aksi null.
@@ -38,7 +38,8 @@ Durum: PR #71 AÇIK / TASLAK / exact-head CI düzeltme sonrası bekleniyor.
 - İlk PR #71 run #45661731482 exact HEAD'de compile başarısızdı:
   1. EditText `singleLine` unresolved → `setSingleLine(true)` yapıldı.
   2. Store validation mesajında kaçışlı string interpolation parser hatası → string concatenation yapıldı.
-- Güncel HEAD `a985d9600da7237bd45b954ca5e82a9c850f1944` için Android run #45662111632: son kontrolde in_progress; birim test/derleme sonucu henüz yok.
+- Önceki HEAD `a985d9600da7237bd45b954ca5e82a9c850f1944` run #45662111632, SQLite/record-limit değişiklikleri gelince eski HEAD oldu.
+- Güncel HEAD `b9abd9433badf90d0cda306c8c81daa001b0a383` için Android run #45663064814: queued; exact-head sonuç bekleniyor.
 - Başarısız eski run güncel HEAD'e PASS sayılmaz. APK build step ilk koşuda skipped.
 - No merge/deploy; gerçek cihaz testi yok.
 
@@ -53,3 +54,10 @@ Durum: PR #71 AÇIK / TASLAK / exact-head CI düzeltme sonrası bekleniyor.
 2. Testler geçerse diff/PII/Custom Tabs/store recovery için üç göz denetimi yap.
 3. Ayrı Android emulator veya telefon smoke testinde eski arşiv korunumu, iddia ekleme, birincil kaynak reddi, karşıt kanıt, insan incelemesi, düzeltme ve offline kayıt kontrol et.
 4. PR #69/#71 için merge tercihini hakem belirler; otomatik merge yok.
+
+
+## SQLite / boyut sınırı ek denetimi
+- SharedPreferences yerine platform SQLite kullanıldı; yeni harici DB bağımlılığı yok.
+- `verification_kv` tablosu; primary ve last-good kayıtları aynı transaction'da yazar.
+- İlk kayıtta da last-good kopya oluşturulur. Her kayıtta 16 KB sınırı, 300 hikâye kapasitesi, 50 claim/hikâye, 25 evidence/claim, 100 correction/hikâye.
+- Store unit testleri fake key-value adapter üzerinden transaction başarı/başarısızlık ve recovery davranışını test eder. Android SQLite adapter'ın gerçek cihaz/emülatör smoke testi hâlâ yapılmadı.
