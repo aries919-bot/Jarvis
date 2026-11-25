@@ -132,8 +132,8 @@ data class CareerNewsVerificationRecord(
     val publisher: String,
     val originalSourceUrl: String,
     val publishedAt: String?,
-    val collectedAt: String,
-    val firstSeenAt: String,
+    val collectedAt: String?,
+    val firstSeenAt: String?,
     val claims: List<CareerNewsClaim> = emptyList(),
     val correctionHistory: List<CareerNewsCorrection> = emptyList()
 ) {
@@ -235,8 +235,8 @@ data class CareerNewsVerificationRecord(
         if (publishedAt != null && !CareerNewsVerificationPolicy.isUtcTimestamp(publishedAt)) {
             errors += "Yayın tarihi ISO-8601 UTC biçiminde değil."
         }
-        if (!CareerNewsVerificationPolicy.isUtcTimestamp(collectedAt)) errors += "collectedAt geçersiz."
-        if (!CareerNewsVerificationPolicy.isUtcTimestamp(firstSeenAt)) errors += "firstSeenAt geçersiz."
+        if (collectedAt != null && !CareerNewsVerificationPolicy.isUtcTimestamp(collectedAt)) errors += "collectedAt geçersiz."
+        if (firstSeenAt != null && !CareerNewsVerificationPolicy.isUtcTimestamp(firstSeenAt)) errors += "firstSeenAt geçersiz."
         if (claims.map { it.id }.distinct().size != claims.size) errors += "Tekrarlanan iddia kimliği."
         if (correctionHistory.map { it.id }.distinct().size != correctionHistory.size) {
             errors += "Tekrarlanan düzeltme kimliği."
@@ -358,8 +358,8 @@ data class CareerNewsVerificationRecord(
             .put("publisher", publisher)
             .put("originalSourceUrl", originalSourceUrl)
             .put("publishedAt", publishedAt ?: JSONObject.NULL)
-            .put("collectedAt", collectedAt)
-            .put("firstSeenAt", firstSeenAt)
+            .put("collectedAt", collectedAt ?: JSONObject.NULL)
+            .put("firstSeenAt", firstSeenAt ?: JSONObject.NULL)
             .put("claims", claimArray)
             .put("correctionHistory", corrections)
     }
@@ -429,8 +429,8 @@ data class CareerNewsVerificationRecord(
                 publisher = root.getString("publisher"),
                 originalSourceUrl = root.getString("originalSourceUrl"),
                 publishedAt = nullableString(root, "publishedAt"),
-                collectedAt = root.getString("collectedAt"),
-                firstSeenAt = root.getString("firstSeenAt"),
+                collectedAt = nullableString(root, "collectedAt"),
+                firstSeenAt = nullableString(root, "firstSeenAt"),
                 claims = claims,
                 correctionHistory = corrections
             ).takeIf { it.validationErrors().isEmpty() }
