@@ -256,3 +256,8 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - H1 emulator workflow checkout exact PR head yapıyor; PR #70 merge sonrası entegrasyon için yeni koşuda `github.sha` merge ref test edilmeli.
 - Ana Android APK workflow iki ayrı Gradle çağrısı çalıştırıyor; tek çağrıda birleştirme hız optimizasyonu olarak incelenecek.
 
+## 23. Android izin envanteri — düzeltme
+- Ana Kotlin kaynakları tarandı. CALL_PHONE/READ_CONTACTS Commands.kt'de gerçek kullanıma sahip; silinmemeli. Ancak MainActivity.onCreate ilk açılışta RECORD_AUDIO, CALL_PHONE, READ_CONTACTS, POST_NOTIFICATIONS topluca istiyor; just-in-time akışa ayrılmalı.
+- Reminders.kt setAlarmClock kullanıyor. Android resmi belgelerine göre exact alarm yetkisi gerekir; USE_EXACT_ALARM otomatik verilir ancak alarm/takvim uygulamaları için sınırlıdır. Jarvis'in ana fonksiyonu alarm değilse policy riski vardır. Kullanıcı onaylı SCHEDULE_EXACT_ALARM veya inexact alarm/WorkManager değerlendirilecek.
+- **KARAR:** Kod henüz değiştirilmedi; ayrı güvenlik PR'ı.
+
