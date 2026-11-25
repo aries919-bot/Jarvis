@@ -313,3 +313,12 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - H1 current PR #71 HEAD b8a78126cbc6713cb4d42838027a6189274f19e7; APK/unit #45692016951 SUCCESS. Emulator #45692017824 son kontrolde IN_PROGRESS; XML yok. Eski run #45685959506 XML 4/1 pass/3 fail; false green wrapper hatası geri alındı; asenkron SQLite init eklendi. H1 merge yok; phone testi yok.
 - Ayrıntılar: docs/HARITA.md bölüm 34–35; gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md; gorevler/QA-EKIP-PANOSU-2026-11-25.md.
 - Kamu C1 sayımı 12 kaynak /55 doğrulanmış açık ilan /45 eksik. Worker production GET/D1 ve city dedup RED.
+
+## 29. QA/RAG exact-head son durum — 25.11.2026 20:22Z
+- Cloud PR #12 HEAD a80e557d1dc8373446a3a41b15d50f998d5e3e46; diff 4 dosya / +1043 / -20; 26 test tanımı / 0 çalıştırılmış.
+- Son yedi CI: #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527, #45694369322. Her job 0 steps, 1–3 saniyede failure; son job 139487790097 20:22:41Z–20:22:42Z. Kodun syntax/unit testleri koşmadı.
+- Yeni QA alanları: positionCount/city yalnız kayıttan; null ise açıkça belirtilmemiş. Public source allowlist esube/H2; büyük özel Lever/Ashby. PII gate, off-topic abstain, rejectIfBusy + BM25 fallback.
+- Testlerdeki Bearer örneği gerçek tokena benzemeyen placeholder'a indirildi; uzun GitHub PAT biçimli fixture kaldırıldı.
+- PR #12 draft, merge/deploy yok; runner başlangıç engeli çözülmeden yeniden deneme döngüsü yok.
+- H1 #71 HEAD b8a78126cbc6713cb4d42838027a6189274f19e7. APK/unit #45692016951 SUCCESS; emulator #45692017824 son kontrolde IN_PROGRESS, rapor XML yok. 4/4 pass/telefon yok; merge yok.
+- Kamu C1 12 kaynak /55 doğrulanmış açık ilan /45 eksik; Worker GET/D1 + city dedup RED.
