@@ -44,3 +44,14 @@ Son C1 Hakem JSON: https://github.com/aries919-bot/Jarvis/blob/durum/qa-reports/
 
 ## Sonraki adım
 Önce H2 ve e-Şube için taze kaynak çekimini tamamla; kaynak başına ilanları ve her ilan için deadline kanıtını yeniden say. Yalnız sonra yeni C1 Hakem raporu üret. Unknown deadline kayıtları doğrulanmış sayılmaz; robots 401/deny durumunda API çağrısı yapılmaz. Production Worker GET kanıtı olmadan ONAY verilmez.
+
+## 25.11.2026 03:03 TRT — güncel manuel kamu sayımı
+
+- e-Şube durum commit c5d1a1d9c105703c3766659e7f9a3be1fbb01b18: çekim 2026-11-24T23:51:48Z, 42/42 benzersiz açık; 0 expired; publishedAt=null.
+- H2 live reader #45512710235 / artifact #14976107324: 10 kaynak tanımı, 7 fresh/3 stale. Anadolu, Düzce, Marmara, Tarsus, Zafer'den beş açık doğrulanmış kart.
+- Ayrı feed'lerin manuel kamu görünümü: 6 kaynak /47 açık iş. Bu tek Worker feed'i değildir.
+- C1 özel ATS son exact-head audit #45504819883: 114 deadline-unknown aday; altı Ashby robots HTTP 401 stale. Unknown adaylar sayılmaz.
+- 10/100 eşiğine karşı 6/47: RED. Production authenticated GET hâlâ BLOCKED.
+- H1 PR #35 exact-head Actions #45514829808: 12/12 PASS. H2 PR #57 reader/Hakem/K1-B koşuları PASS. Her iki PR'da formal bağımsız review yok.
+- Eski qa-reports/c1/latest.json tarihsel Actions raporu olarak korundu; güncel manuel ek qa-reports/c1/manual-recount-2026-11-25.json.
+- PR #5/#6/#8 ve Jarvis PR #35/#57 merge edilmedi; telefon denemesi ve kullanıcının açık birleştirme onayı beklenir.

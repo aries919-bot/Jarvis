@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "reportType": "manual-cross-feed-recount-not-actions-hakem",
+  "collectedAt": "2026-11-25T00:03:07Z",
+  "decision": "RED",
+  "statusBranchCommit": "c5d1a1d9c105703c3766659e7f9a3be1fbb01b18",
+  "h1": {
+    "pr": 35,
+    "headSha": "9785696ac4788805d23ad327e3690a75a521eb2c",
+    "base": "durum",
+    "state": "open",
+    "merged": false,
+    "actionRunId": "45514829808",
+    "actionRunUrl": "https://github.com/aries919-bot/Jarvis/actions/runs/45514829808",
+    "tests": 12,
+    "passed": 12,
+    "failed": 0,
+    "output": "Ran 12 tests in 0.019s / OK",
+    "formalReviewCount": 0
+  },
+  "h2": {
+    "pr": 57,
+    "headSha": "ae51188ff2bb7c55ef813be7205825b0c5b05db0",
+    "base": "cline/K1",
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "liveRunId": "45512710235",
+    "artifactId": "14976107324",
+    "collectedAt": "2026-11-24T23:46:14Z",
+    "catalogSources": 10,
+    "freshSources": 7,
+    "staleSources": 3,
+    "verifiedOpenJobSources": 5,
+    "verifiedOpenJobCards": 5,
+    "sourceResults": [
+      {
+        "sourceId": "anadolu-sozlesmeli-2026",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 1
+      },
+      {
+        "sourceId": "atk-personel-2026-2",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 0,
+        "deadline": "2026-12-06",
+        "applicationOpensAt": "2026-11-30T09:00:00+03:00"
+      },
+      {
+        "sourceId": "bilecik-ogretim-elemani-2026",
+        "status": "stale",
+        "cards": 0,
+        "verifiedOpenJobs": 0,
+        "error": "Resmî Gazete robots timeout"
+      },
+      {
+        "sourceId": "botas-duyurular",
+        "status": "stale",
+        "cards": 0,
+        "verifiedOpenJobs": 0,
+        "error": "Two HTTP read timeouts"
+      },
+      {
+        "sourceId": "comu-akademik-ilanlar-2026",
+        "status": "stale",
+        "cards": 0,
+        "verifiedOpenJobs": 0,
+        "error": "Robots response UNKNOWN; target not requested"
+      },
+      {
+        "sourceId": "duzce-ogretim-elemani-2026",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 1
+      },
+      {
+        "sourceId": "marmara-ogretim-gorevlisi-2026",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 1
+      },
+      {
+        "sourceId": "tarsus-ogretim-elemani-2026",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 1
+      },
+      {
+        "sourceId": "yhgm-kura",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 0,
+        "classification": "expired lottery"
+      },
+      {
+        "sourceId": "zafer-uzman-personel-2026",
+        "status": "fresh",
+        "cards": 1,
+        "verifiedOpenJobs": 1
+      }
+    ],
+    "readerCiRunId": "45513755673",
+    "refereeCiRunId": "45513755686",
+    "k1bRunId": "45513755635",
+    "k1bMeasuredUrls": 28,
+    "k1bWorkingUrls": 11,
+    "k1bBlockedUrls": 17,
+    "k1bDeadUrls": 0,
+    "formalReviewCount": 0
+  },
+  "esube": {
+    "source": "esube.iskur.gov.tr",
+    "statusBranchCommit": "c5d1a1d9c105703c3766659e7f9a3be1fbb01b18",
+    "path": "career/esube_kamu_ilanlari.json",
+    "collectedAt": "2026-11-24T23:51:48Z",
+    "pageCount": 3,
+    "rawRows": 42,
+    "uniqueRows": 42,
+    "duplicates": 0,
+    "verifiedOpenListings": 42,
+    "expiredListings": 0,
+    "deadlinePresent": 42,
+    "publishedAt": null,
+    "freshUntil": "2026-11-25T11:51:48Z"
+  },
+  "privateC1LatestAudit": {
+    "runId": "45504819883",
+    "verifiedPrivateOpenListings": 0,
+    "deadlineUnknownCandidates": 114,
+    "freshPrivateSourceCounts": {
+      "Trendyol": 35,
+      "Midas": 16,
+      "Commencis": 5,
+      "Dream Games": 17,
+      "Aleph": 5,
+      "Ajax Systems": 13,
+      "Insider One": 22,
+      "Binance": 0,
+      "Picus Security": 1
+    },
+    "staleAshbySources": 6,
+    "staleReason": "robots HTTP 401; no target API calls"
+  },
+  "combinedPublicManualRecount": {
+    "sourceCount": 6,
+    "verifiedOpenListings": 47,
+    "feedsIntegratedIntoSingleWorker": false
+  },
+  "globalThreshold": {
+    "requiredSources": 10,
+    "requiredVerifiedOpenListings": 100,
+    "actualSources": 6,
+    "actualVerifiedOpenListings": 47,
+    "met": false
+  },
+  "productionAuthenticatedGet": {
+    "status": "BLOCKED",
+    "reason": "JARVIS_WORKER_URL / JARVIS_WORKER_TOKEN unavailable in QA settings"
+  },
+  "machineHakemReport": {
+    "path": "qa-reports/c1/latest.json",
+    "runId": "45504819883",
+    "unchanged": true,
+    "note": "Historical automated Hakem report; this is a separate manual cross-feed recount."
+  },
+  "notes": [
+    "Manual cross-feed recount from source JSON and Actions artifact; not an Actions Hakem execution.",
+    "H2 is not yet integrated into C1 Worker or Android.",
+    "Private ATS records with unknown deadlines are not counted.",
+    "No PR was merged."
+  ]
+}

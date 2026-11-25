@@ -1,7 +1,7 @@
 # Aries — Durum Haritası
 
 > Tek gerçek durum dosyası. Önce bu dosya ve docs/TALIMAT.md okunur.
-> Son kontrol: 24.11.2026. Repo: `aries919-bot/Jarvis`.
+> Son kontrol: 25.11.2026. Repo: `aries919-bot/Jarvis`.
 > Bu dal yalnızca proje notları içindir; Android kodu burada geliştirilmez.
 > **C1 özel ve öncelikli kurallar:** [docs/NOT_C1.md](NOT_C1.md). TALIMAT.md ile çelişirse NOT_C1.md geçerlidir.
 
@@ -290,3 +290,36 @@
 - Son e-Şube snapshot `2026-11-24T11:57:55Z`; 25.11.2026 itibarıyla 12 saat freshness penceresini aşmıştır. Taze çekim yokken kamu güncel sayımı 0 kabul edilir; önceki 42 açık ilan geçmiş ölçümdür, güncel kanıt değildir.
 - H2 okuyucu run #45489853859 attempt 2 yeniden başlatıldı; reader job `138848189009` son kontrolde resmî sayfaları okuma adımında çalışıyordu. Yeni sayımlar tamamlanmadı.
 - **Merge yok.** Sonraki iş: H2 ve e-Şube taze çekimini doğrula; ardından kamu kaynağı ve ilanlarını yeniden say. Unknown deadline kayıtları sayılmaz.
+
+## Son kanıtlı durum — 25.11.2026 03:03 TRT
+
+> Bu ek, üstteki 24.11 ve daha eski tarihli sayım notlarını günceller. Eski Actions raporları kendi çalışma anlarının tarihsel kaydı olarak korunur.
+
+### H1 Haber şeması
+- PR #35: https://github.com/aries919-bot/Jarvis/pull/35 — is/H1 → durum, HEAD 9785696ac4788805d23ad327e3690a75a521eb2c, açık, birleştirilmedi.
+- Güncel PR Actions #45514829808 SUCCESS; komut python -m unittest scripts.test_h1_schema -v; çıktı Ran 12 tests in 0.019s / OK.
+- Diff: 5 dosya; h1-schema workflow, HABER_SEMA, HARITA, h1_schema.py ve test_h1_schema.py.
+- Son düzeltme: sayım fonksiyonu publishedAt yoksa, stale ise, deadline geçmişse veya applicationOpensAt henüz gelmediyse iş ilanı saymıyor.
+- Formal GitHub review kaydı yok. PR yorum ID 7148071138 kanıt bildirimidir; bağımsız ONAY değildir.
+
+### H2 resmî kaynak okuyucusu
+- PR #57: https://github.com/aries919-bot/Jarvis/pull/57 — review/h2-public-sources-20261125 → cline/K1, HEAD ae51188ff2bb7c55ef813be7205825b0c5b05db0, açık/taslak, birleştirilmedi.
+- H2 canlı veri Actions #45512710235, artifact 14976107324; kaynak collectedAt 2026-11-24T23:46:14Z. Katalog 10 kaynak tanımı, 7 fresh / 3 stale.
+- Doğrulanmış açık iş kartları: Anadolu 1, Düzce 1, Marmara 1, Tarsus 1, Zafer 1. ATK başvurusu 30.11.2026 09:00 +03 öncesi 0 açık; YHGM geçmiş kura; Bilecik, BOTAŞ ve ÇOMÜ stale.
+- H2 açık iş toplamı 5 kart / 5 kurum kaynağı. Kontenjan/pozisyon sayısı kart adedini artırmaz.
+- H2 PR CI: reader #45513755673, Hakem #45513755686, K1-B #45513755635 SUCCESS. K1-B ölçümü 28 URL: 11 ÇALIŞIYOR / 17 ENGELLİ / 0 ÖLÜ; URL sayısı ilan veya kurum sayısı değildir.
+- PR #57'de formal GitHub review kaydı yok. Actions botunun ONAY yorumları bağımsız insan incelemesi sayılmaz.
+
+### Kamu ve C1 birleşik manuel sayımı
+- e-Şube JSON: career/esube_kamu_ilanlari.json; durum commit c5d1a1d9c105703c3766659e7f9a3be1fbb01b18; çekim 2026-11-24T23:51:48Z; 3 sayfa. Yeniden sayım 42 ham / 42 benzersiz / 42 açık / 0 süresi geçmiş / 42 deadline mevcut. Yayın tarihi yok: publishedAt=null.
+- e-Şube 12 saatlik tazelik sınırı: 2026-11-25T11:51:48Z.
+- H2'nin beş açık kartı ayrı feed'dedir; C1 Worker'a bağlandıkları kanıtlanmamıştır.
+- Ayrı feed'lerin manuel birleşik kamu görünümü: 6 kaynak / 47 doğrulanmış açık iş kartı (e-Şube 42 + H2 5). Bu tek bir Worker feed'i değildir.
+- C1 exact-head live audit #45504819883: 9 fresh özel ATS kaynağında 114 aday; tamamı deadline unknown. Kaynak sayıları: Trendyol 35, Midas 16, Commencis 5, Dream Games 17, Aleph 5, Ajax Systems 13, Insider One 22, Binance 0 Türkiye, Picus 1. Altı Ashby robots HTTP 401 nedeniyle stale; API çağrısı yok.
+- Sabit kabul eşiği 10 kaynak / 100 doğrulanmış, deadline'ı açık ve süresi geçmemiş iş. Fiilî birleşik görünüm 6 kaynak / 47 iş: RED.
+- C1 otomatik qa-reports/c1/latest.json, Actions #45504819883'ün eski 43/42 e-Şube görüntüsüdür ve değiştirilmedi. Güncel çapraz-feed sayımı ayrı manuel ek rapor qa-reports/c1/manual-recount-2026-11-25.json dosyasındadır.
+- Production Worker authenticated GET hâlâ BLOCKED; JARVIS_WORKER_URL / JARVIS_WORKER_TOKEN kanıtı yok. Yerel Worker/D1 smoke production değildir. H2 C1 Worker'a ve Android'e entegre değildir.
+- C1 PR #5/#6/#8 ve Jarvis PR #35/#57 birleştirilmedi.
+
+KARAR: C1 RED; H1 şema testleri PASS, bağımsız review ve kabul bekliyor.
+SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı PR hazırla; exact-head QA, kaynak sayımı ve production GET geçmeden ONAY verme.

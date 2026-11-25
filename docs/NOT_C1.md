@@ -103,3 +103,16 @@ Kura, sonuç ve staj Haber'de kalır; “yeni iş ilanı” sayılmaz. Tarihi bu
 - H2 workflow `45489853859` attempt 2 ile yeniden çalıştırıldı. Reader job `138848189009`, son kontrolde `Read measured official announcements` adımında in_progress; yeni sayılar henüz kanıtlanmadı.
 - PR #5/#6/#8 birleştirilmedi. 10/100 eşiği, kamu sıfır RED şartı, robots ve deadline kuralları değişmedi.
 - Sonraki adım: H2 ve e-Şube taze kaynak çekimini bitir; kaynak başına ilan sayısını ve her deadline'ı yeniden doğrula; ardından yeni toplu Hakem çalıştır. Üretim GET doğrulanmadan ONAY yok.
+
+## 10. Güncel H1/H2 + C1 sayımı — 25.11.2026 03:03 TRT
+
+- H1 PR #35 HEAD 9785696ac4788805d23ad327e3690a75a521eb2c; Actions #45514829808 SUCCESS, 12/12 test. Sayaç publishedAt kanıtını, fresh kaynağı, son tarihi ve varsa applicationOpensAt açılışını kontrol eder. PR açık; formal review yok; merge yok.
+- H2 PR #57 HEAD ae51188ff2bb7c55ef813be7205825b0c5b05db0; reader #45512710235/artifact 14976107324. 10 kaynak tanımı, 7 fresh/3 stale; 5 fresh kaynaktan 5 doğrulanmış açık iş kartı: Anadolu, Düzce, Marmara, Tarsus, Zafer. ATK henüz açılmadı; YHGM geçmiş kura; Bilecik/BOTAŞ/ÇOMÜ stale.
+- e-Şube durum commit c5d1a1d9c105703c3766659e7f9a3be1fbb01b18; snapshot 2026-11-24T23:51:48Z, 42 benzersiz açık kayıt, 0 geçmiş, 42 deadline, publishedAt=null. 12 saat stale sınırı 2026-11-25T11:51:48Z.
+- Ayrı feed'lerin manuel birleşik kamu sayımı: 6 kaynak / 47 doğrulanmış açık iş kartı. Bu tek Worker feed'i ve telefon entegrasyonu değildir.
+- C1 özel ATS son denetiminde 114 adayın tamamı deadline unknown; altı Ashby robots HTTP 401 stale. Bu kayıtlar 100 doğrulanmış ilana eklenmez.
+- Global kabul RED: 10 kaynak / 100 ilan eşiğine karşı fiilî 6 / 47.
+- C1 otomatik Hakem latest.json kendi Actions #45504819883 tarihsel görüntüsüdür; eski e-Şube 43/42 sayısını içerir. Yeni manuel ek rapor qa-reports/c1/manual-recount-2026-11-25.json dosyasıdır.
+- Production authenticated GET BLOCKED; JARVIS_WORKER_URL / JARVIS_WORKER_TOKEN yapılandırması kanıtlanmadı. PR #5/#6/#8 ve #35/#57 merge edilmedi.
+
+Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yalnız kaynak son başvuru tarihi; robots unknown/401'de hedef API çağrısı yok; deadline unknown kayıtlar doğrulanmış sayılmaz.
