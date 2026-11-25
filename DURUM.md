@@ -133,3 +133,8 @@
 - Bu manuel keşif Worker'a aktarılmış değildir: gerçek feed ölçümü hâlâ 6 kaynak /47 last-good kart, 6/6 stale, 0 fresh; production authenticated GET/D1 yok. Kamu eşiği 10 kaynak/100 doğrulanmış ilan: pipeline ölçümünde RED; manuel aday listesinde 10 kaynak ama yalnız 10 kart (90 eksik).
 
 **KARAR:** Kaynak keşfi 10 kuruma genişletildi; canlı feed/100 kart kanıtı yok, kamu C1 RED.
+
+
+## 26.11.2026 — H1 latest APK CI
+- HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` [APK/unit #45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105) SUCCESS; artifact 15069888409 (14,198,084 byte; sha256 `8f98ae33b42003beb70851e5b596e0b6354f7d24559b9585219e1f0ae46fbb79`).
+- Exact-head emulator [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004) still IN_PROGRESS; four-test XML not yet available.
