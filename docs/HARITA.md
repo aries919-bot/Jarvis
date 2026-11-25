@@ -544,3 +544,9 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Test dosyası 12 @Test. #45659231791 (#695) iki kez tanımlanmış `humanReviewRequiresRationaleAndNoOpCorrectionIsRejected` nedeniyle compile test aşamasında FAIL oldu; duplicate tanım kaldırıldı.
 - Güncel exact-head run #45660034027 (#696): `Birim testleri` IN_PROGRESS son kontrol; henüz PASS yok.
 - PR açıklaması ve `gorevler/H1-claim-evidence-2026-11-25.md` bu son SHA/sayı/test durumuna güncellendi.
+### 22.2 H1 storyId URL kararlılığı — 25.11.2026
+- StoryId artık headline yerine canonical HTTPS URL'ye dayanır; aynı resmî URL'de başlık değişirse aynı story kaydı korunur. Host/scheme lowercase; fragment ve trailing slash kaldırılır; default port normalize edilir; path case ve query korunur.
+- Regresyon testi: fragment/trailing slash/host case ve headline update aynı storyId; farklı URL farklı storyId.
+- PR #69 latest HEAD `36cba13cb382fb55a8a583c878177429f69c42f6`; exact compare 16 commit /3 dosya /+807/-0 /0 behind; 12 @Test.
+- Önceki head `79848e8` run #45660034027 (#696) 12 tests + APK + artifact SUCCESS; ancak URL-only storyId iyileştirmesini içermiyor.
+- Yeni exact-head run [#45660576132](https://github.com/aries919-bot/Jarvis/actions/runs/45660576132) (#697) IN_PROGRESS; final PASS henüz yok.
