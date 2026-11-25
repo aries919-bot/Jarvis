@@ -56,7 +56,7 @@ Kanıt:
 - Deterministik Hakem: https://github.com/aries919-bot/Jarvis/actions/runs/45536808964 — workflow SUCCESS; formal GitHub review 0, bağımsız insan/Claude onayı yok
 - Kaynak erişim ölçümü: https://github.com/aries919-bot/Jarvis/actions/runs/45536310861 — 28 URL, 12 ÇALIŞIYOR / 16 ENGELLİ / 0 ÖLÜ. URL sayısı kaynak veya ilan sayısı değildir.
 
-**C1 kararı RED.** Eksik: 89 net doğrulanmış ilan kartı; e-Şube/H2 çapraz dedup; tek JSON feed; production Worker GET/D1/kalıcı firstSeenAt; bağımsız inceleme. PR #61 taslak ve merge edilmemiştir. H2 dalı cline/K1 hedeflidir; varsayılan main ile aynı şey değildir.
+**C1 kararı RED.** H2 tek başına 11/100 olduğundan H2 tarafında 89 ek benzersiz doğrulanmış kart açığı var. e-Şube'nin 42 kaydı ayrı feed'dir; global açık eksiği çapraz dedup tamamlanmadan hesaplanamaz. Ayrıca tek JSON feed, production Worker GET/D1/kalıcı firstSeenAt ve bağımsız inceleme eksik. PR #61 taslak ve merge edilmemiştir. H2 dalı cline/K1 hedeflidir; varsayılan main ile aynı şey değildir.
 
 ### Durum belgesi tutarsızlığı
 
@@ -273,7 +273,7 @@ Kaynaklar:
 1. H2 15 kaynak kaydını Actions'ta toplamaya devam et; her satırda publishedAt/null, deadline, collectedAt, firstSeenAt, officialSourceUrl ve freshnessStatus koru.
 2. e-Şube girişsiz okuyucunun 42 kaydını tazele; H2/e-Şube tekilleştirmesini ilan kimliği + kurum + pozisyon + şehir + deadline fingerprint ile yap. Ham kayıtları kaybetme; hangi kaynakların birleştirildiğini provenance olarak sakla.
 3. Worker GET yalnız JSON sunmalı; D1 firstSeenAt kalıcı olmalı; authenticated GET canlı test; boş/403/500/timeout/robots/expired source ve partial-outage matrisi.
-4. 10 kurum kaynağı tamam; ilan kartı 11/100. Gerçek ve açık ilan olmadan kontenjanları kart sayısına çevirmek yasak. 89 ek benzersiz doğrulanmış kart gerekir.
+4. H2 tarafında 10 kurum kaynağı ve 11/100 doğrulanmış kart var; H2 sayımında 89 ek benzersiz kart gerekir. e-Şube'nin ayrı 42 kaydı cross-feed dedup olmadan bu hesaba eklenmez. Gerçek ve açık ilan olmadan kontenjanları kart sayısına çevirmek yasak.
 5. Başarılı exact-head Actions, kaynak başına sayım ve bağımsız hakem/review olmadan RED kalkmaz.
 
 ### P2 — Kariyer deneyimi (C1 kabulünden sonra)
