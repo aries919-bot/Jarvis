@@ -464,3 +464,15 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Yeni test ayrıca katalog içinde Indeed/LinkedIn URL'si bulunmadığını doğrular.
 - Compare: 5 commit / 4 dosya / +32 / -13; 0 behind.
 - Exact-head Actions workflow run listesi ve combined status henüz boş; CI PASS yok.
+
+
+## 18. H1 iddia/kanıt çekirdeği — 25.11.2026
+- PR #68: https://github.com/aries919-bot/Jarvis/pull/68, `feat/h1-story-claim-evidence-20261125` → `is/c3-ilan-semasi-ai-kaynak-kaniti`; açık/taslak, merge yok.
+- HEAD `5f5af96834de429dcb302d939a5fff444a2b01c0`; exact compare 5 commit /2 dosya /+664/-0, 0 behind.
+- Production dosyası `CareerNewsVerification.kt` 435 satır; test dosyası 229 satır /11 @Test.
+- Model story/claim/evidence/review/correction history; publishedAt null korunur; collectedAt/firstSeenAt ayrılır; doğrulama birincil kanıt + insan onayı gerektirir; çelişen kanıt otomatik Çelişkili olur; yeni kanıt/claim düzeltmesi eski insan onayını sıfırlar.
+- PII regex guard: email/phone/IBAN/11 haneli kimlik numarası örüntüsü içeren excerpt kaydedilmez. Bu tüm PII'yi kapsadığı garantisi değildir.
+- Unit tests: 11 yazıldı ve kaynak dosyasında yeniden sayıldı. Actions workflow runs 0; combined statuses 0. **CI PASS yok; KABUL/merge yok.**
+- PR #68 henüz Haber UI/SharedPreferences entegrasyonu yapmıyor; mevcut haber arşivine otomatik doğrulama durumu yazmıyor. Ayrı UI/store PR gerekir.
+- PR #67 (C1 P0) açık/taslak; 4 dosyalı temiz diff; exact-head CI henüz kanıtlanmadı. C1 Worker feed ve 10/100 kapıları bağımsız RED/BLOCKED olarak kalır.
+- Görev raporu: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md); şema: [HABER_SEMA.md](HABER_SEMA.md).
