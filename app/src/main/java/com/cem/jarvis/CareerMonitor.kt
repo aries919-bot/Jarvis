@@ -184,14 +184,17 @@ object CareerSourceCatalog {
         }?.name ?: host
     }
 
-    fun isSecondary(url: String): Boolean {
-        val host = normalizedHost(url) ?: return false
-        // Every catalogued non-official source remains discovery-only/secondary.
-        // Derive this from the source metadata so a new job board cannot become alert-eligible by omission.
-        return sources.asSequence()
+    private val secondarySourceHosts: Set<String> by lazy {
+        sources.asSequence()
             .filterNot { it.official }
             .mapNotNull { normalizedHost(it.url) }
-            .any { host == it || host.endsWith(".$it") }
+            .toSet()
+    }
+
+    fun isSecondary(url: String): Boolean {
+        val host = normalizedHost(url) ?: return false
+        // Cache the metadata-derived set; non-official sources never become alert-eligible by omission.
+        return secondarySourceHosts.any { host == it || host.endsWith(".$it") }
     }
 
     /** Press/news sites are searchable for context, never treated as official employers. */
