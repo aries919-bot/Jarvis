@@ -476,3 +476,25 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #68 henüz Haber UI/SharedPreferences entegrasyonu yapmıyor; mevcut haber arşivine otomatik doğrulama durumu yazmıyor. Ayrı UI/store PR gerekir.
 - PR #67 (C1 P0) açık/taslak; 4 dosyalı temiz diff; exact-head CI henüz kanıtlanmadı. C1 Worker feed ve 10/100 kapıları bağımsız RED/BLOCKED olarak kalır.
 - Görev raporu: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md); şema: [HABER_SEMA.md](HABER_SEMA.md).
+
+
+## 19. PR #70 — C1 P0 kaynak politikası, doğru CI tabanı — 25.11.2026
+- PR #70: https://github.com/aries919-bot/Jarvis/pull/70; `fix/c1-source-policy-ua-ci-20261125` → `kariyer-modulu`; açık/taslak, birleştirilmedi.
+- HEAD `5d15ef30e016a0105cc8e1b62ed05b0405a48c77`; exact compare 4 commit /4 dosya /+33/-13; 0 behind.
+- Indeed/LinkedIn source/trusted/secondary/search kayıtları production dosyasından çıkarıldı; genel edu.tr trusted listeden çıkarıldı; Chrome/Mozilla taklidi yerine AriesKaynakTara/1.0 dört request noktasında kullanılıyor.
+- Yeni policy test 1; mevcut CareerSourceCatalogTest 13 test, eski edu.tr trusted assert'i false oldu.
+- İlk PR #70 CI #45657277644: 96 testten 1 eski assertion RED (example.edu.tr trusted beklentisi). Bu assertion düzeltildi.
+- Güncel HEAD CI [#45657731556](https://github.com/aries919-bot/Jarvis/actions/runs/45657731556) Android APK #686: son kontrolde IN_PROGRESS; PASS kanıtı yok.
+- HTML fallback henüz kaldırılmadı; Worker production GET BLOCKED. C1 kamu 6 kaynak/47 doğrulanmış açık ilan, 10/100 RED.
+- Ayrıntı: [C1-P0-source-policy-ua-2026-11-25.md](../gorevler/C1-P0-source-policy-ua-2026-11-25.md).
+
+## 20. PR #69 — H1 story/claim/evidence/correction çekirdeği — 25.11.2026
+- PR #69: https://github.com/aries919-bot/Jarvis/pull/69; `feat/h1-story-claim-evidence-ci-20261125` → `kariyer-modulu`; açık/taslak, birleştirilmedi.
+- HEAD `fdfdd539a2e81826e53898aa07004ee21a0bd55b`; exact compare 8 commit /2 dosya /+741/-0; 0 behind.
+- Production model `CareerNewsVerification.kt`: 500 satır; unit test dosyası 241 satır /11 @Test.
+- Story fields: nullable publishedAt, collectedAt, firstSeenAt; atomic claims; supporting/contradictory/context evidence; explicit human review; strict UTC timestamp; HTTPS URL and PII guard.
+- Correction history now preserves previous claim text, revised text, full previous evidence list, prior human decision/time and previous/new verdict; active claim's evidence and review reset after correction. Old source evidence is not lost.
+- İlk exact-head CI #45656877300 compile error: escaped Locale string; fixed. Current exact-head run [#45657661662](https://github.com/aries919-bot/Jarvis/actions/runs/45657661662) Android APK #685: IN_PROGRESS at last check; PASS not yet.
+- PR #68, wrong CI-target branch, closed unmerged. PR #67 wrong base closed unmerged. PR #66/#67/#68 merges yok.
+- UI / SharedPreferences integration yok; existing news archive is untouched. UI integration separate PR required.
+- Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
