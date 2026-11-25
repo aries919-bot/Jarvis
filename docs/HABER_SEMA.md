@@ -227,7 +227,7 @@ Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını kar�
 
 ## 9. İddia / kanıt / insan incelemesi / düzeltme geçmişi
 
-H1 Claim Evidence core: PR #68 (açık/taslak; exact-head CI bekliyor). Kod: `CareerNewsVerification.kt`. Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
+H1 Claim Evidence core: PR #69 (açık/taslak; exact-head CI bekliyor). PR #68 eski CI hedefi nedeniyle superseded olarak tutulur. Kod: `CareerNewsVerification.kt`. Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
 
 ### Haber kaydı
 - `storyId`: kanonik kaynak URL'si + başlık üzerinden kararlı kimlik.
@@ -257,7 +257,7 @@ Düzeltmeler append-only tutulur: claimId, önceki verdict, yeni verdict, açık
 - UTC tarih alanları biçim ve takvim aralığı açısından kontrol edilir. Yayın tarihi yoksa null kalır.
 
 ### Entegrasyon sınırı
-PR #68 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt ve kullanıcı akışı henüz bağlanmadı. Mevcut arşivdeki eski haberler otomatik doğrulanmışa çevrilmez. UI/SharedPreferences entegrasyonu ayrı PR ve geriye dönük koruma testiyle yapılır.
+PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt ve kullanıcı akışı henüz bağlanmadı. Mevcut arşivdeki eski haberler otomatik doğrulanmışa çevrilmez. UI/SharedPreferences entegrasyonu ayrı PR ve geriye dönük koruma testiyle yapılır.
 
 ## 10. H1 çekirdeği CI tabanı ve correction snapshot güncellemesi — 25.11.2026
 - İlk PR #68 is/c3-ilan-semasi-ai-kaynak-kaniti tabanındaydı; Android workflow'un pull_request.branches filtresi bu tabanı dinlemedi. #68 kapatıldı (unmerged).
