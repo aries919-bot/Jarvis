@@ -74,7 +74,8 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 ### QA-06 — Güvenlik, izinler ve araç zinciri
 **Sorumluluk:** Manifest izinlerinin gerçek kullanımını doğrulama, kişisel veri, token, diff aktarımı, eski ajan talimatları.
 - Durum: İLK BULGULAR VAR; AYRI GÜVENLİK PR'I GEREKİYOR.
-- Kesin bulgu: MainActivity.kt onCreate satır 140–145 uygulama açılır açılmaz RECORD_AUDIO + CALL_PHONE + READ_CONTACTS + POST_NOTIFICATIONS topluca istiyor. MainActivity taramasında CALL_PHONE / READ_CONTACTS yalnız izin listesinde; ACTION_CALL / ACTION_DIAL / Phone.CONTENT_URI / Phone.query kullanımı bulunamadı. ContactsContract.CommonDataKinds.Phone import'u var ama çağrı yok. Bunlar kaldırılmadan önce tüm proje için ikinci arama yapılmalı; ilk açılışta istenmesi gereksiz ve kullanıcı güvenini zedeleyen bir izin akışı.
+- Kesin bulgu: MainActivity.kt onCreate satır 140–145 uygulama açılır açılmaz RECORD_AUDIO + CALL_PHONE + READ_CONTACTS + POST_NOTIFICATIONS topluca istiyor. Tam Kotlin kaynak taramasında CALL_PHONE ve READ_CONTACTS kullanımı Commands.kt'de bulundu (ACTION_CALL/ACTION_DIAL ve ContactsContract.Phone.CONTENT_URI); izinler kullanılmıyor değil. Sorun, kullanıcı ilgili sesli komut/arama/kişi bulma özelliğini açmadan ilk açılışta istenmeleri. Just-in-time izin PR'ı önerilir.
+- Ek bulgu: Reminders.kt AlarmManager.setAlarmClock çağırıyor; manifest USE_EXACT_ALARM içeriyor. Android resmi dokümanına göre setAlarmClock exact alarm izni gerektirir; USE_EXACT_ALARM otomatik verilir ama esasen çalar saat/takvim uygulamaları için sınırlıdır. Jarvis'in ana işlevi alarm değilse Play policy riski; SCHEDULE_EXACT_ALARM kullanıcı onayı veya inexact alarm/WorkManager alternatifi değerlendirilmeli.
 - Bulgu: `denetle.py` diff'in ilk 12 KB'sini Groq'a gönderiyor; bu araç çalıştırılmayacak.
 - Manifestte RECORD_AUDIO, CALL_PHONE, READ_CONTACTS, INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, SET_ALARM, USE_EXACT_ALARM, BLUETOOTH_CONNECT izinleri var. Her iznin kullanım gerekçesi/gerçek çağrısı tek tek kanıtlanmadı.
 - Kabul: izin envanteri + kod kullanım yeri + kaldırma/regresyon testi; token/CV/KPSS/e-Devlet içeriği hiçbir test/log/harici servise gitmez.
@@ -86,7 +87,7 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - [x] QA-04 H2 city/dedup/Worker ve kamu sayımı denetimi.
 - [x] QA-05 büyük dosya ve sınıf sınırı envanteri.
 - [ ] QA-02 emülatör exact-head PASS ve telefon testi.
-- [x] QA-06 ilk izin kullanım taraması: CALL_PHONE ve READ_CONTACTS açılışta isteniyor; ilgili API kullanım izi bulunamadı. Tam proje çapı son tarama ve güvenli düzeltme ayrı PR.
+- [x] QA-06 Kotlin kaynak taraması: CALL_PHONE/READ_CONTACTS Commands.kt'de kullanılıyor; açılışta toplu istenmeleri UX/privacy sorunu. USE_EXACT_ALARM policy/ürün kategorisi riski; ayrı PR ve policy kontrolü.
 - [ ] QA-04 45 ek kamu ilanı + Worker GET/D1 + city kanıtlı dedup.
 - [ ] QA-05 CareerMonitor extraction PR.
 - [ ] Son PR diff + exact-head CI + test sayımı çapraz kontrolü.
