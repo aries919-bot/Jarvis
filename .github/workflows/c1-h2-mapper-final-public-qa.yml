@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      PRIVATE_SHA: 86fdd9c6fff4cbd7a5f4e217c68a8d293df79fbc
+      PRIVATE_SHA: 979a6725eb804dc1b85eb303fa85ef0eb8524d63
       H2_SHA: fe37be93202442394504f455b4a1caeb31f298cf
       READ_TOKEN: ${{ secrets.JARVIS_CLOUD_READ_TOKEN || secrets.JARVIS_SOURCE_READ_TOKEN }}
     steps:
