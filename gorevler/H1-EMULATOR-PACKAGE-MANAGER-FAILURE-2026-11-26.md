@@ -90,3 +90,11 @@ Bu çalışma önceki 0-test sahte PASS riskini kapatmıştır. Yeni runner/AVD 
 - Workflow `.github/workflows/h1-android-ui-smoke.yml` içindeki pull_request.paths listesi `scripts/run-h1-emulator-tests.sh` ve `scripts/verify_h1_emulator_xml.py` dosyalarını kapsamıyor. Bu iki betikten biri tek başına değişirse PR event'i bu workflow'u tetiklemeyebilir; mevcut run tetiklendi çünkü aynı PR'da workflow dosyası da değişti.
 - Mevcut emulator koşusu tamamlanmadan workflow dosyasına dokunulmadı; aksi halde concurrency `cancel-in-progress: true` mevcut kanıt koşusunu iptal eder. Sonuç alındıktan sonraki kontrollü düzeltmede iki script yolu trigger listesine eklenmeli.
 - FUTO'nun daha yeni CI olayı ayrıca `pm install-create`/abandon preflight ile PackageInstaller + StorageManager yolunun hazır oluşunu doğruluyor. Bu sadece mevcut Aries artifact'inde aynı storage/installer hatası görülürse uygulanacak; şimdilik tahminle commit yok.
+
+
+### İkinci araştırma kolu — CI runner takılması
+- ReactiveCircus/android-emulator-runner açık issue #478, 2026-06-17: GitHub hosted runner üzerinde emulator çalışırken logların emulator adımında/testler başlamadan kesilmesi ve job'ın hata vermeden beklemesi raporlanmış. Yazar, GitHub runner image rollout ihtimalini tartışmış ve Blacksmith runner ile denediğinde de benzer sonuç aldığını belirtmiş: https://github.com/ReactiveCircus/android-emulator-runner/issues/478
+- Bu, Aries için doğrulanmış neden değil; yalnız mevcut in_progress + log paketi henüz indirilemiyor semptomu için ikinci olası sınıf.
+- Ayrım ölçütleri: (1) job sonunda gradle connectedDebugAndroidTest/adb install/system_server/StorageManager tanı logu varsa Android framework/installer kolu; (2) emulator action/runner/Gradle step logları test başlangıcından önce kesilmiş ve Android komutu çıktısı yoksa runner/host kolu. Her iki durumda da XML yoksa H1 RED.
+- Son kontrol: emulator run #45712459718 exact HEAD e390e05... hâlâ in_progress; artifact yok. Log fetch 404 BlobNotFound, bu çalışırken GitHub tarafından log arşivi sunulmadığı anlamına geliyor; test sonucu değildir.
+- Runner kaynaklarına göre StorageManager yarışını ayrıştırmak için gerekirse pm install-create/pm install-abandon preflight kullanılır; yalnız ilgili NPE veya install-session hata kanıtı çıktığında.
