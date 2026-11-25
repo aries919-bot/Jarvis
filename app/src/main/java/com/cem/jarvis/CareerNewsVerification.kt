@@ -481,6 +481,15 @@ object CareerNewsVerificationPolicy {
         ) return false
         val host = runCatching { URI(value.trim()).host.orEmpty().lowercase(Locale.ROOT) }
             .getOrDefault("")
+        if (host.endsWith(".edu.tr")) {
+            val allowedUniversityHosts = CareerSourceCatalog.sources
+                .filter { it.official }
+                .mapNotNull { source ->
+                    runCatching { URI(source.url).host?.lowercase(Locale.ROOT) }.getOrNull()
+                }
+                .filter { it.endsWith(".edu.tr") }
+            if (allowedUniversityHosts.none { host == it || host.endsWith(".$it") }) return false
+        }
         val explicitlySecondary = CareerSourceCatalog.sources
             .filterNot { it.official }
             .mapNotNull { source ->
