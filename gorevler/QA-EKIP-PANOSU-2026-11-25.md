@@ -38,7 +38,7 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 
 ### QA-02 — H1 Android UI / emülatör / cihaz
 **Sorumluluk:** Gerçek Activity akışı, publishedAt formu, eski kanıt ayrıntısı, SQLite round-trip, test runner.
-- Durum: EMÜLATÖR IN_PROGRESS; APK/unit PASS.
+- Durum: EMÜLATÖR IN_PROGRESS; APK/unit PASS. 19:12:37Z kontrolünde job 20 dk sürmüştü; step 5 hâlâ in_progress, log URL BlobNotFound. Job timeout 35 dk; 19:27:22Z öncesi fail varsayılmaz.
 - Kanıt: [APK/unit #45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) SUCCESS; [emülatör #45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) IN_PROGRESS.
 - Kabul: exact HEAD için emülatör PASS; ardından gerçek Android telefonda test. Timeout/runner sorunu PASS sayılmaz.
 - Takip: PR #71 açık/draft; merge yok.
