@@ -1207,3 +1207,10 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - `PUBLISH status=SKIPPED`: `JARVIS_WORKER_URL` / `JARVIS_WORKER_TOKEN` QA ortamında yapılandırılmadı. Production authenticated GET/POST, gerçek Cloudflare D1 ve kalıcı production `firstSeenAt` kanıtı yok.
 - PR #11 formal review 0 ve hâlâ taslak; PR #5 de açık/taslak. Merge/deploy yok.
 **KARAR:** C1 RED/DEVAM. 12 kurum kaynağı eşiği geçti; 55/100 kart eşiği geçmedi; production GET kanıtı eksik.
+
+
+### C1-3 sıradaki iş
+- Görev açıldı: [C1-3 — 100 doğrulanmış açık ilan + production feed kapısı](../gorevler/C1-3-100-OPEN-LISTINGS-2026-11-26.md) (yalnız `durum` dokümantasyonu).
+- Manuel kamu envanteri: **26 açık ana duyuru /20 kurum**; future/opening-soon **5**, deadline-null/Doğrulanamadı **5**, süresi geçmiş **5**. Özel havuz 7 aday/duyuru olarak ayrı kalır.
+- Feed sayısı farklıdır: **12 kurum /55 açık doğrulanmış kart**. Manuel 26/20 ile feed 12/55 birleştirilmez; önce canonical URL/ilan kesişimi çıkarılır.
+- Sonraki iş, 26 manuel duyurunun H2 13 kartıyla tam eşleştirilmesi; yalnız eksik, robots-izinli, deadline'ı açık kaynakların eklenmesidir. Production Worker GET/D1 ise ayrı blokerdir.
