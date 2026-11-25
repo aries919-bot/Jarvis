@@ -85,3 +85,17 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 - e-Şube ayrı feed snapshot: 2026-11-24T23:51:48Z; 42 benzersiz/açık kayıt; 12 saatlik tazelik sınırı 2026-11-25T11:51:48Z. H2 ölçüm zamanında e-Şube snapshot fresh idi. Ham ayrı-feed toplamı 42 + 10 = 52 kart; çapraz-feed eşleştirme ve Worker tek-feed kanıtı henüz olmadığı için bunu tekil birleşik toplam diye sunma.
 - PR #61 içinde `verifiedOpenListings` kart sayısını, `verifiedOpenPositions` pozisyon sayısını ayrı sayacak şekilde değiştirildi. Özet açıkça 100 eşiğinin kart sayısına göre hesaplandığını yazar. Testte iki Atatürk kartı = 2 ilan kartı, 71 kadro = 71 pozisyon olarak doğrulanır.
 - Son ORAN slash-format düzeltmesi ve sayaç güncellemesinden sonra yeni exact-head live run zorunlu; 10/100 kararı eski 9/107 ölçümünden türetilmez.
+
+## Dördüncü exact-code-head live ölçüm — kart/pozisyon ayrımı sonrası
+- Run: https://github.com/aries919-bot/Jarvis/actions/runs/45536720514
+- Job: 138945018271 SUCCESS; artifact 14987278818; collectedAt=2026-11-25T02:59:02Z.
+- H2 parser/last-good/robots/stale/TLS testleri: `Ran 53 tests in 0.017s / OK`.
+- Kaynak kaydı 15; **13 fresh / 2 stale**; toplam kart 13.
+- H2 açık kamu: **10 benzersiz kurum / 11 doğrulanmış ilan kartı / 114 pozisyon**.
+- İlan kartı kaynak başına yeniden sayım: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu 1; ORAN 1; Tarsus 1; TGA 1; Zafer 1. Toplam 11 kart / 10 kurum.
+- Pozisyon toplamı (ayrı bilgi): Anadolu 1; Atatürk 71; Balıkesir 7; DOKA 1; Düzce 5; Mardin Artuklu 4; ORAN 7; Tarsus 3; TGA 13; Zafer 2 = 114.
+- Stale yalnız BOTAŞ (iki timeout) ve Mardin Artuklu öğretim üyesi duyurusu (açık başvuru aralığı kanıtı yok). YHGM eski kura, ATK 181 başvuru açılış zamanı 30.11.2026 olduğundan açık iş sayılmaz.
+- C1'nin 100 ilan kartı eşiği sağlanmadı: H2 11/100. `positionCount=114` bu eşiği sağlamaz.
+- e-Şube ayrı feed snapshot 42 açık kayıt; collectedAt 2026-11-24T23:51:48Z ve fresh-until 2026-11-25T11:51:48Z. H2 ölçümünde fresh. H2 + e-Şube ham ayrı-feed toplamı 53 karttır; çapraz-feed dedup/tek Worker feed henüz doğrulanmadığından nihai birleşik sayım değildir.
+- H2 source freshness ve card/position summary code PR #61 head 9cadd652ea2bb7c12d23aa6887956d0585fa535d; live workflow code head 518a95f27d7b20fbe32c7c5ae72d3bf28f51b85f. PR #61 test suite 154/154; H2 PR checks pass; formal GitHub reviews 0.
+- Karar: RED. 10 kaynak eşiği H2 kurum sayısında karşılandı, 100 ayrı doğrulanmış ilan kartı ve Worker/D1/production GET şartları karşılanmadı.
