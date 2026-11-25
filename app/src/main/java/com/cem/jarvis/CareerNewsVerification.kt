@@ -395,12 +395,27 @@ data class CareerNewsVerificationRecord(
         const val MAX_JSON_CHARS = 16_000
 
         fun stableStoryId(sourceUrl: String, headline: String): String {
-            val normalizedUrl = sourceUrl.substringBefore('#').trimEnd('/').lowercase(Locale.ROOT)
-            val normalizedTitle = headline.trim().lowercase(Locale("tr", "TR"))
-                .replace(Regex("\\s+"), " ")
-            return UUID.nameUUIDFromBytes(
-                (normalizedUrl + "\n" + normalizedTitle).toByteArray(Charsets.UTF_8)
-            ).toString()
+            val uri = runCatching { URI(sourceUrl.trim()).normalize() }.getOrNull()
+            val normalizedUrl = if (uri?.scheme != null && !uri.host.isNullOrBlank()) {
+                val scheme = uri.scheme.lowercase(Locale.ROOT)
+                val host = uri.host.lowercase(Locale.ROOT)
+                val path = uri.rawPath.orEmpty().trimEnd('/').ifBlank { "/" }
+                buildString {
+                    append(scheme).append("://").append(host)
+                    val defaultPort = (scheme == "https" && uri.port == 443) ||
+                        (scheme == "http" && uri.port == 80)
+                    if (uri.port != -1 && !defaultPort) append(':').append(uri.port)
+                    append(path)
+                    uri.rawQuery?.let { append('?').append(it) }
+                }
+            } else {
+                sourceUrl.substringBefore('#').trimEnd('/').lowercase(Locale.ROOT)
+            }
+            val identity = normalizedUrl.ifBlank {
+                headline.trim().lowercase(Locale("tr", "TR"))
+                    .replace(Regex("\\s+"), " ")
+            }
+            return UUID.nameUUIDFromBytes(identity.toByteArray(Charsets.UTF_8)).toString()
         }
 
         fun fromJson(raw: String): CareerNewsVerificationRecord? = runCatching {
