@@ -550,3 +550,9 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #69 latest HEAD `36cba13cb382fb55a8a583c878177429f69c42f6`; exact compare 16 commit /3 dosya /+807/-0 /0 behind; 12 @Test.
 - Önceki head `79848e8` run #45660034027 (#696) 12 tests + APK + artifact SUCCESS; ancak URL-only storyId iyileştirmesini içermiyor.
 - Yeni exact-head run [#45660576132](https://github.com/aries919-bot/Jarvis/actions/runs/45660576132) (#697) IN_PROGRESS; final PASS henüz yok.
+### 21.1 C1 PR #70 scoped öz-QA — 25.11.2026
+- ChatGPT öz-QA karar kaydı: PR #70 kapsamı için ONAY; bu bağımsız Claude/insan review değildir.
+- Diff: Ai.kt + CareerMonitor.kt + 2 test dosyası; başka dosya yok.
+- Kod yeniden taraması: CareerMonitor production'da Indeed/LinkedIn ve generic edu.tr trust kalıbı 0; Ai.kt'te Mozilla/Chrome UA 0; Aries UA tek sabit + dört kullanım.
+- Exact-head #45658875411 (#692) tüm birim test, APK ve artifact upload adımları SUCCESS; artifact 15044212711.
+- PR #70 açık/taslak; merge/deploy yok. C1 genel gate hâlâ 6/47 RED ve production GET BLOCKED.
