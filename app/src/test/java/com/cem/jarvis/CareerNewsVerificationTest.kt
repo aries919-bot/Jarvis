@@ -212,4 +212,18 @@ class CareerNewsVerificationTest {
         )
         assertEquals(first, second)
     }
+    @Test
+    fun rejectsImpossibleDatesAndEvidenceExcerptsWithPersonalIdentifiers() {
+        assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-02-30T14:00:00Z"))
+        assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-11-25T25:00:00Z"))
+
+        val personalDataEvidence = evidence().copy(
+            excerpt = "Aday kimlik numarası 12345678901 listede yayımlandı."
+        )
+        val value = record().addClaim(claim())!!.copy(
+            claims = listOf(claim().copy(evidence = listOf(personalDataEvidence)))
+        )
+        assertFalse(value.validationErrors().isEmpty())
+    }
+
 }
