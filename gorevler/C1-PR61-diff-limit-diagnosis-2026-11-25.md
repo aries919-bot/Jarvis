@@ -46,3 +46,16 @@
 - Compare sonucu: `ahead`, 2 commit; yalnız `scripts/hakem_gate.py` ve `scripts/test_hakem_gate.py`.
 - PR taslak ve açık. Bu kontrol anında PR-triggered Actions run listesi boş; CI henüz kanıtlanmadı. Merge edilebilirlik henüz true değil.
 - Secret scan/test CI/üç göz tamamlana kadar merge yok. PR #64 merge edilmeden PR #61'in hakem job'u eski 60 KB checker ile RED vermeye devam eder.
+
+
+## PR #64 CI ve üç göz denetimi — 2026-11-25
+- Python Script Tests: https://github.com/aries919-bot/Jarvis/actions/runs/45645847443 — SUCCESS; `python3 -m unittest discover -s scripts -p 'test_*.py' -v`; 144/144 PASS.
+- Hakem workflow: https://github.com/aries919-bot/Jarvis/actions/runs/45645847821 — tests SUCCESS, hakem SUCCESS; log sonu `ONAY`. Bu otomatik deterministik kontrol; insan review değildir.
+- K1-B ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45645848245 — bu kayıt anında hâlâ in_progress; sonuç ilan edilmedi.
+- PR #64 güncel HEAD: `7bc95985b870ae0311955221c725140f8904174b`; 2 dosya, +21/-2; mergeable=true, draft=true.
+- PR diff incelemesi: secret/token/private-key pattern taraması false; TLS/robots bypass/browser-UA pattern taraması false. `test-token` yalnız mock test girdisi.
+- Göz 1 (kapsam/secret): yalnız iki hakem kapısı dosyası; taranan ek satırlarda secret veya yasak desen yok.
+- Göz 2 (teknik): 144/144 test; hakem gate ONAY. Yeni iki sınır testi mevcut.
+- Göz 3 (işletim): diff okuması 100 KB üst sınır + 1 ile sınırlandırılmış, HTTP timeout korunmuş. K1-B ölçüm işi hâlâ sürüyor.
+- PR #64 formal review sayısı 0; insan hakem onayı yok. Merge edilmedi. Otomatik ONAY, kullanıcı hakem onayı değildir.
+- Ara sonuç: PR #64 teknik olarak testlerden geçti; ancak taslak ve formal review yok. Kullanıcı onayı olmadan merge yok. PR #61'e etkisi, PR #64 hedef dala kabul edilip checker güncellendikten sonra doğrulanabilir.
