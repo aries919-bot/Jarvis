@@ -22,6 +22,8 @@ SOURCES = [
         "page_urls": [
             "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-uyesi-alim-ilani-profdr-docdr-drogruyesi-20112026-04122026",
             "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
+            "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20KASIM%202026%20%C3%96%C3%9C%20%C4%B0LAN%20METN%C4%B0%20WEEBBBBB.pdf",
+            "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20%20KASIM%20%202026%20%20TAR%C4%B0HL%C4%B0%20%20%C4%B0LAN%20METN%C4%B0%20%C3%96E%20WEBBB.pdf",
         ],
     },
     {
@@ -30,6 +32,8 @@ SOURCES = [
         "page_urls": [
             "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/",
             "https://atauni.edu.tr/personel-daire-baskanligi/2026/11/16/ataturk-universitesi-ogretim-uyesi-alim-ilani-16-11-2026/",
+            "https://atauni.edu.tr/personel-daire-baskanligi/wp-content/uploads/sites/219/2026/11/20.11.2026-tarihli-ilan.pdf",
+            "https://atauni.edu.tr/personel-daire-baskanligi/wp-content/uploads/sites/219/2026/11/16.11.2026-Profesor-Ilani.pdf",
         ],
     },
     {
@@ -44,8 +48,8 @@ SOURCES = [
         "id": "oran",
         "name": "Orta Anadolu Kalkınma Ajansı (ORAN)",
         "page_urls": [
-            "https://www.dogaka.gov.tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855",
-            "https://www.dogaka.gov.tr/tr/duyurular",
+            "https://www.oran.org.tr/haber/t-c--orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani",
+            "https://www.oran.org.tr/duyurular",
         ],
     },
     {
