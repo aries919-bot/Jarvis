@@ -1,0 +1,229 @@
+package com.cem.jarvis
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class CareerNewsVerificationTest {
+    private val collectedAt = "2026-11-25T14:00:00Z"
+    private val checkedAt = "2026-11-25T14:05:00Z"
+    private val reviewedAt = "2026-11-25T14:10:00Z"
+
+    private fun record(publishedAt: String? = null) = CareerNewsVerificationRecord(
+        storyId = CareerNewsVerificationRecord.stableStoryId(
+            "https://kurum.gov.tr/duyuru/1",
+            "Kurum yeni personel alımını duyurdu"
+        ),
+        headline = "Kurum yeni personel alımını duyurdu",
+        publisher = "Örnek kurum",
+        originalSourceUrl = "https://kurum.gov.tr/duyuru/1",
+        publishedAt = publishedAt,
+        collectedAt = collectedAt,
+        firstSeenAt = collectedAt
+    )
+
+    private fun claim() = CareerNewsClaim(
+        id = "claim-1",
+        text = "Kurum 12 teknisyen alımı yapacağını duyurdu."
+    )
+
+    private fun evidence(
+        id: String = "evidence-1",
+        stance: CareerEvidenceStance = CareerEvidenceStance.SUPPORTS,
+        sourceType: CareerEvidenceSourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+        url: String = "https://kurum.gov.tr/duyuru/1"
+    ) = CareerNewsEvidence(
+        id = id,
+        publisher = "Örnek kurum",
+        sourceUrl = url,
+        sourceType = sourceType,
+        stance = stance,
+        excerpt = "Duyuruda 12 teknisyen alımı yapılacağı açıkça yazıyor.",
+        publishedAt = null,
+        checkedAt = checkedAt
+    )
+
+    @Test
+    fun primaryEvidenceAloneNeverProducesVerifiedVerdict() {
+        val withClaim = record().addClaim(claim())!!
+        val withEvidence = withClaim.addEvidence("claim-1", evidence())!!
+        assertEquals(
+            CareerClaimVerdict.SUPPORTS_PENDING_REVIEW,
+            withEvidence.claims.single().verdict()
+        )
+        assertEquals(CareerNewsVerdict.REVIEW_PENDING, withEvidence.verdict())
+    }
+
+    @Test
+    fun verifiedRequiresPrimaryEvidenceAndExplicitHumanConfirmation() {
+        val withEvidence = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+        val reviewed = withEvidence.reviewClaim(
+            "claim-1",
+            CareerHumanReviewDecision.CONFIRM,
+            reviewedAt,
+            "Resmî duyuru metniyle karşılaştırıldı."
+        )!!
+        assertEquals(CareerClaimVerdict.VERIFIED, reviewed.claims.single().verdict())
+        assertEquals(CareerNewsVerdict.VERIFIED, reviewed.verdict())
+    }
+
+    @Test
+    fun secondaryEvidenceCannotVerifyAClaimEvenAfterConfirmation() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence(
+                "claim-1",
+                evidence(sourceType = CareerEvidenceSourceType.SECONDARY)
+            )!!
+            .reviewClaim(
+                "claim-1",
+                CareerHumanReviewDecision.CONFIRM,
+                reviewedAt
+            )!!
+        assertEquals(CareerClaimVerdict.CONTEXT_MISSING, reviewed.claims.single().verdict())
+        assertEquals(CareerNewsVerdict.CONTEXT_MISSING, reviewed.verdict())
+    }
+
+    @Test
+    fun supportingAndContradictingEvidenceAlwaysCreatesConflict() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+            .addEvidence(
+                "claim-1",
+                evidence(
+                    id = "evidence-2",
+                    stance = CareerEvidenceStance.CONTRADICTS,
+                    url = "https://resmigazete.gov.tr/duyuru/duzeltme"
+                )
+            )!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+        assertEquals(
+            CareerClaimVerdict.CONFLICTING_EVIDENCE,
+            reviewed.claims.single().verdict()
+        )
+        assertEquals(CareerNewsVerdict.CONFLICTING_EVIDENCE, reviewed.verdict())
+    }
+
+    @Test
+    fun refutedNeedsPrimaryContradictionAndExplicitHumanReview() {
+        val withEvidence = record().addClaim(claim())!!
+            .addEvidence(
+                "claim-1",
+                evidence(stance = CareerEvidenceStance.CONTRADICTS)
+            )!!
+        assertEquals(
+            CareerClaimVerdict.CONTRADICTION_PENDING_REVIEW,
+            withEvidence.claims.single().verdict()
+        )
+        val reviewed = withEvidence.reviewClaim(
+            "claim-1",
+            CareerHumanReviewDecision.REFUTE,
+            reviewedAt
+        )!!
+        assertEquals(CareerClaimVerdict.REFUTED, reviewed.claims.single().verdict())
+        assertEquals(CareerNewsVerdict.REFUTED, reviewed.verdict())
+    }
+
+    @Test
+    fun addingEvidenceInvalidatesPreviousHumanReview() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+        assertEquals(CareerClaimVerdict.VERIFIED, reviewed.claims.single().verdict())
+
+        val updated = reviewed.addEvidence(
+            "claim-1",
+            evidence(
+                id = "evidence-2",
+                stance = CareerEvidenceStance.CONTRADICTS,
+                url = "https://resmigazete.gov.tr/duyuru/duzeltme"
+            )
+        )!!
+        assertNull(updated.claims.single().reviewedAt)
+        assertEquals(
+            CareerClaimVerdict.CONFLICTING_EVIDENCE,
+            updated.claims.single().verdict()
+        )
+    }
+
+    @Test
+    fun correctionHistoryIsAppendOnlyAndResetsReview() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+        val revised = reviewed.correctClaim(
+            revisedClaim = reviewed.claims.single().copy(
+                text = "Kurum 10 teknisyen alımı yapacağını duyurdu."
+            ),
+            correctedAt = "2026-11-25T14:20:00Z",
+            explanation = "İlk metindeki kontenjan sayısı yanlış okunmuş.",
+            sourceUrl = "https://kurum.gov.tr/duyuru/duzeltme"
+        )!!
+
+        assertEquals(1, revised.correctionHistory.size)
+        assertEquals(CareerClaimVerdict.VERIFIED, revised.correctionHistory.single().previousVerdict)
+        assertEquals(
+            CareerClaimVerdict.SUPPORTS_PENDING_REVIEW,
+            revised.correctionHistory.single().newVerdict
+        )
+        assertNull(revised.claims.single().reviewedAt)
+        assertEquals(0, reviewed.correctionHistory.size)
+    }
+
+    @Test
+    fun publishedAtRemainsNullAndRoundTripsWithEvidenceAndCorrections() {
+        val value = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+            .reviewClaim("claim-1", CareerHumanReviewDecision.CONFIRM, reviewedAt)!!
+        val restored = CareerNewsVerificationRecord.fromJson(value.toJson().toString())
+        assertNotNull(restored)
+        assertNull(restored!!.publishedAt)
+        assertEquals(value, restored)
+    }
+
+    @Test
+    fun rejectsHttpUrlsAndInvalidUtcTimestamps() {
+        val invalidStory = record().copy(originalSourceUrl = "http://kurum.gov.tr/duyuru/1")
+        assertFalse(invalidStory.validationErrors().isEmpty())
+
+        val invalidEvidence = evidence().copy(
+            sourceUrl = "http://kurum.gov.tr/duyuru/1",
+            checkedAt = "not-a-date"
+        )
+        val value = record().addClaim(claim())!!.copy(
+            claims = listOf(claim().copy(evidence = listOf(invalidEvidence)))
+        )
+        assertFalse(value.validationErrors().isEmpty())
+        assertNull(CareerNewsVerificationRecord.fromJson(value.toJson().toString()))
+    }
+
+    @Test
+    fun stableStoryIdIgnoresFragmentAndTrailingSlash() {
+        val first = CareerNewsVerificationRecord.stableStoryId(
+            "https://kurum.gov.tr/duyuru/1#detay",
+            "  Kurum   personel alımı  "
+        )
+        val second = CareerNewsVerificationRecord.stableStoryId(
+            "https://kurum.gov.tr/duyuru/1/",
+            "kurum personel alımı"
+        )
+        assertEquals(first, second)
+    }
+    @Test
+    fun rejectsImpossibleDatesAndEvidenceExcerptsWithPersonalIdentifiers() {
+        assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-02-30T14:00:00Z"))
+        assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-11-25T25:00:00Z"))
+
+        val personalDataEvidence = evidence().copy(
+            excerpt = "Aday kimlik numarası 12345678901 listede yayımlandı."
+        )
+        val value = record().addClaim(claim())!!.copy(
+            claims = listOf(claim().copy(evidence = listOf(personalDataEvidence)))
+        )
+        assertFalse(value.validationErrors().isEmpty())
+    }
+
+}
