@@ -439,14 +439,14 @@ class H2ReaderTests(unittest.TestCase):
 
     def test_config_includes_only_k1b_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(17,len(cfg["sources"]))
+        self.assertEqual(19,len(cfg["sources"]))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
         self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
 
     def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(17,len(cfg["sources"]))
+        self.assertEqual(19,len(cfg["sources"]))
 
 
     def test_source_categories_match_h1_allowed_enum(self):
@@ -472,6 +472,24 @@ class H2ReaderTests(unittest.TestCase):
         self.assertNotEqual(teacher["itemId"],faculty["itemId"])
         self.assertEqual("marmara-pdb",teacher["publicationMode"])
         self.assertEqual("marmara-pdb",faculty["publicationMode"])
+
+
+
+    def test_munzur_official_pdf_publication_and_deadline_dates_are_explicit(self):
+        text="İlan Tarihi : 10.11.2026 Son Başvuru Tarihi : 25.11.2026 mesai bitimine kadar"
+        self.assertEqual("2026-11-10",h2.explicit_published_at(text,mode="munzur-ilan-date"))
+        self.assertEqual("2026-11-25",h2.application_deadline(text,"son başvuru"))
+
+    def test_munzur_two_notices_are_distinct_cards_not_position_multiplier(self):
+        cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
+        faculty=next(s for s in cfg["sources"] if s["id"]=="munzur-ogretim-uyesi-2026-11-10")
+        lecturer=next(s for s in cfg["sources"] if s["id"]=="munzur-ogretim-gorevlisi-2026-11-10")
+        self.assertEqual(11,faculty["positionCount"])
+        self.assertEqual(1,lecturer["positionCount"])
+        self.assertNotEqual(faculty["itemId"],lecturer["itemId"])
+        self.assertEqual(faculty["url"],lecturer["url"])
+        self.assertTrue(lecturer["allowNullPublishedAt"])
+
 
 
     def test_empty_200_robots_file_allows_public_page(self):
