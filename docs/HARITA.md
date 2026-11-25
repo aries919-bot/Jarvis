@@ -636,16 +636,17 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #71, PR #70 kaynak politikası düzeltmesini içermiyor. #70 merge edilmeden PR #71'in tabanındaki eski `CareerSourceCatalog` ile birincil kaynak sınıflandırması tek başına kabul edilmemeli. #70 exact-head Android CI [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) PASS; PR hâlâ ayrı.
 - **Hakem kararı: RED / değişiklik gerekli.** Normal APK CI önceki HEAD'de PASS olsa da yeni HEAD CI bekliyor; emulator önceki HEAD'de FAIL (altyapı); audit geçmişi açığı P1 blocker. Merge/deploy yok; gerçek telefon testi yok.
 
-## 18) H1 PR #71 — append-only insan inceleme geçmişi düzeltmesi / 25.11.2026
-- Önceki hakem blocker doğrulandı: `CONFIRM/REFUTE/INCONCLUSIVE` kararının yeniden yazılması ve yeni kanıt sonrası reset edilmesi eski review kaydını kaybettirebiliyordu.
-- PR #71 dalında düzeltme uygulandı; exact HEAD `2520b085bdd3e60a9f97ab42406147b1b57f3b07`.
-- `CareerNewsReviewEvent`: karar + UTC zaman + gerekçe + o karardaki kanıt ID'leri append-only tutuluyor. Yeni kanıt eski review'u arşivleyip aktif kararı sıfırlar; yeniden inceleme eski kararı arşivler. Store geçmiş silme/yeniden yazma ve eski kararın yeni kanıtla aktif kalmasını reddeder. Activity geçmiş review'ları gösterir.
-- Regresyonlar: 2 model + 2 store testi; 1 SQLite Activity instrumentation testi eklendi.
-- Exact-head APK/unit run [#45675851347](https://github.com/aries919-bot/Jarvis/actions/runs/45675851347) SUCCESS; exact-head emulator/SQLite [#45675851473](https://github.com/aries919-bot/Jarvis/actions/runs/45675851473) IN_PROGRESS (instrumentation step). Önceki HEAD emulator #45673231634 yeni commit nedeniyle CANCELLED; PASS değildir.
-- CI PASS, tam UI uçtan uca testi ve gerçek telefon testi hâlâ gerekli. Kanıt formunda publishedAt alanı ve correction UI'da önceki kanıt ayrıntıları ayrı takip işidir.
-- PR #70 kaynak/UA politikası bu PR'ın tabanında yok; ayrıca denetlenmelidir.
-- **KARAR: RED / beklemede.** Exact-head CI sonuçları gelmeden merge yok.
-- Ayrıntı: `gorevler/H1-REVIEW-HISTORY-2026-11-25.md`.
+## 18) H1 PR #71 — append-only review geçmişi ve UI akışı / 25.11.2026
+- Hakem blocker: önceki `CONFIRM/REFUTE/INCONCLUSIVE` kararı yeni kanıt veya yeniden inceleme sırasında kaybolabiliyordu. `CareerNewsReviewEvent` ile karar + UTC zaman + gerekçe + o anki evidence ID listesi append-only saklanıyor.
+- Yeni kanıt eski review'u arşivler ve aktif kararı sıfırlar; yeniden inceleme önceki kararı arşivler; Store reviewHistory silme/yeniden yazmayı reddeder.
+- PR #71 exact HEAD `6b392a3aa02d42700743657350d081d7f7ad6aeb`; 10 dosya / +2.578 / -26.
+- UI iyileştirmesi: evidence formuna isteğe bağlı publishedAt UTC alanı eklendi (boşsa null; geçersizse reddedilir). Correction geçmişi önceki evidence yayıncı/tür/stance/alinti/yayın-kontrol tarihi ve kaynak linkini gösterir.
+- Test sayımı dosyalardan tekrar: 20 model +10 store +4 Android instrumentation = **34 test**.
+- Gerçek UI akışı instrumentation'a eklendi: claim → evidence + publishedAt → review → yeni evidence ile review arşivi → correction → eski evidence ayrıntısı.
+- Exact-head APK/unit [#45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) IN_PROGRESS; emulator/SQLite [#45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) IN_PROGRESS.
+- Önceki emulator #45675851473 yeni HEAD sebebiyle CANCELLED; PASS değildir. Eski APK/unit #45675851347 SUCCESS, ancak yeni UI testlerini kapsamaz.
+- **KARAR: RED / beklemede.** Güncel exact-head iki CI PASS ve gerçek telefon denemesi olmadan H1 merge yok.
+- Ayrıntı: `gorevler/H1-UI-PUBLISHEDAT-EMULATOR-2026-11-25.md`.
 
 ## 19) C1 PR #11 — H2 + e-Şube exact-head QA / 25.11.2026
 - Private HEAD `b1415d6a76fd3856c60cfec891a575c3bef0341e`; H2 reader SHA `fe37be93202442394504f455b4a1caeb31f298cf`.
@@ -657,10 +658,19 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - **KARAR: RED.** 12 kaynak kapısı geçiyor; 55/100 kart eşiği 45 eksik. Production GET/D1 ve şehir kanıtlı cross-feed dedup eksik. PR #11 merge yok.
 - Ayrıntı: `gorevler/C1-H2-FEED-QA-2026-11-25.md`.
 ## 20) C1 PR #70 — resmî olmayan kaynakların ikincil kalması / 25.11.2026
-- PR #70 exact HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`, 4 dosya, diff +70/-19.
-- Önceki HEAD #45658875411 APK/unit CI PASS; öz-QA'da SecretCV, Yenibiriş ve İşbul'un `isSecondary` listesinden çıkarılması nedeniyle trusted kaynak olarak primary alert üretebilmesi bulundu.
-- Düzeltme: `isSecondary()` katalogdaki `official=false` metadata'sından türetiliyor; tüm non-official kaynaklar secondary. Host seti cache ediliyor. Katalogdaki bütün non-official kaynaklar ve SecretCV/Yenibiriş/İşbul/Memur365 için regresyon beklentileri düzeltildi.
-- Ara HEAD #45676772911 FAILED: 98 testten 2 assertion (test beklentisi hatası: İşbul trust statüsü ve Memur365 secondary statüsü). İki test beklentisi düzeltildi.
-- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902): birim testleri SUCCESS, APK derlemesi IN_PROGRESS.
-- **KARAR: RED / beklemede.** Yeni exact-head CI PASS olmadan PR #70 merge yok.
+- PR #70 exact HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`, 4 dosya; PR metadata diff +75/-20.
+- LinkedIn/Indeed kaynak katalog ve sorgulardan çıkarıldı; genel `.edu.tr` trust kaldırıldı ve açık üniversite allowlist'i korundu; istek UA'sı `AriesKaynakTara/1.0`.
+- Öz-QA'da SecretCV/Yenibiriş/İşbul'un non-official iken primary alert üretme riski bulundu. `isSecondary()` artık katalogdaki `official=false` metadata'sından türetiliyor ve kaynak host seti cache ediliyor.
+- Ara HEAD #45676772911 FAILED: 98 testte 2 assertion testi yanlış varsayımı; beklentiler düzeltildi.
+- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) SUCCESS; `testDebugUnitTest`, `assembleDebug`, APK artifact #15052113398 başarılı.
+- **HAKEM: ONAY.** Yalnız kaynak/UA P0 kapsamı için. H1 kabulünden sonra C1 sırasındaki ilk merge adımı.
 - Ayrıntı: `gorevler/C1-SOURCE-POLICY-2026-11-25.md`.
+
+## 21) H1 UI publishedAt ve emulator akışı — 25.11.2026
+- PR #71 HEAD `6b392a3aa02d42700743657350d081d7f7ad6aeb`; 10 dosya / +2.578 / -26.
+- 20 model +10 store +4 Android instrumentation =34 test. Yeni UI testi iddia/kanıt/yayın tarihi/insan incelemesi/yeni kanıtla arşiv/kart düzeltmesi/önceki evidence ayrıntısı akışını deniyor.
+- Exact-head APK/unit [#45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) ve emulator/SQLite [#45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) son kontrolde IN_PROGRESS.
+- Eski emulator #45675851473 yeni HEAD sebebiyle CANCELLED; eski APK/unit #45675851347 PASS yeni UI akışını kapsamaz.
+- H1 kararı RED/beklemede; güncel iki CI PASS ve gerçek telefon testi gerekir.
+- Sonraki: yeni exact-head CI'ları kontrol et; H1 kabulünden sonra PR #70; ardından C1 PR #11'in 12 kamu kaynağı/55 doğrulanmış ilan sonucundaki 45 ilan açığını, production Worker GET/D1 ve şehir tabanlı dedup eksiklerini gider.
+- Ayrıntı: `gorevler/H1-UI-PUBLISHEDAT-EMULATOR-2026-11-25.md`.
