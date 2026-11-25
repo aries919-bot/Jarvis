@@ -595,3 +595,14 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Eski PR #67 ve #68 kapatıldı (ikisi de unmerged); sırasıyla #70 ve #69 bunların yerini aldı. PR #66 da unmerged kapalıdır.
 - Full App QA workflow'u `kariyer-modulu` tabanında bulunmadığından Android emülatör UI run yok. Gerçek telefon testi yok.
 - C1 kaynak/Worker sayımları bu PR'larla değişmedi; 10 kaynak/100 doğrulanmış ilan gate'i hâlâ ayrı RED/BLOCKED. PR #70'in #69'dan önce ana feature tabanına alınması gerekir; merge yapılmadı.
+
+### 20.2 PR #71 SQLite, append-only ve toplu okuma sağlamlaştırması — 25.11.2026
+- PR #71 exact HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`; compare `kariyer-modulu` tabanına göre 52 commit /8 dosya /+1.979 /-26 /0 behind.
+- Test yeniden sayımı: `CareerNewsVerificationTest.kt` 17 @Test + `CareerNewsVerificationStoreTest.kt` 8 @Test = **25 test**.
+- İlk PR #71 CI #45663064814, test dosyasında aynı fonksiyon iki kez bulunduğu için `compileDebugUnitTestKotlin` aşamasında RED oldu. Yinelenen metot kaldırıldı; ara HEAD `2597f36210d077a19b0e8e4ec100713d6736e141` için run [#45666479386](https://github.com/aries919-bot/Jarvis/actions/runs/45666479386) SUCCESS.
+- Yeni exact-head sağlamlaştırmaları: storyId aynı canonical URL'de başlık değişiminden etkilenmez; store eski evidence/review/correctionHistory öğelerinin sessizce silinmesini reddeder; önceki reviewNote düzeltme kaydında korunur; haber kartı listesi doğrulama durumlarını tek toplu SQLite IN sorgusuyla yükler.
+- Store testinde toplu okuma sayacı 1 sorguyu doğrular; primary bozuksa last-good kayıttan geri döner.
+- Güncel exact-head Android run [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387) yeni HEAD için başladı; son kontrolde pending. Önceki ara head SUCCESS sonucu güncel HEAD'e aktarılmaz.
+- PR #71 açık/taslak; merge/deploy yok. Full App QA workflow'u `kariyer-modulu` tabanında yok; emulator ve telefon denemesi yok.
+- PR #71, PR #69'daki H1 çekirdeğini ve UI entegrasyonunu kapsayan güncel SQLite adayıdır. PR #69 ayrıca açık/taslak ve CI PASS durumda; iki PR da birleştirilmedi.
+- C1 sayımı/Worker değişmedi; 10 kaynak/100 doğrulanmış ilan ve production GET kapıları ayrı RED/BLOCKED kalır.
