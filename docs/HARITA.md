@@ -435,3 +435,10 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Bu nedenle güncel compare, C3 PR #30 değişikliklerini de içerir: 11 commit / 9 dosya / +207 / -41. Bu toplamın tamamı C1 P0 değişikliği değildir; C3 taban değişiklikleri de vardır.
 - Yeni HEAD için Actions run listesi ve commit status listesi hâlâ 0. Test PASS iddiası yok. Tetikleme nedeni ayrıca incelenecek.
 - PR #66 taslak ve birleştirilmedi; C3 PR #30 ile çakışma riski nedeniyle ana dala taşınamaz.
+
+
+### 17.2 PR #66 exact-head CI — 25.11.2026
+- Tested HEAD: `dc71e10dac04f17d0608678376d3ad38a3e1edf2`.
+- Android APK [#45653228021](https://github.com/aries919-bot/Jarvis/actions/runs/45653228021): run started; repository maintenance tests SUCCESS; Android unit tests IN_PROGRESS; APK build pending.
+- Full App QA [#45653227891](https://github.com/aries919-bot/Jarvis/actions/runs/45653227891): static/Lint/JUnit job and Android API29/33/34/35 UI audits in progress.
+- Final conclusion not available yet. No PASS/ONAY/merge claim.
