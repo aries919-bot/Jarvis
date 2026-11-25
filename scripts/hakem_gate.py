@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-MAX_DIFF_BYTES = 60_000
+MAX_DIFF_BYTES = 100_000
 MAX_TEST_BYTES = 12_000
 USER_AGENT = "AriesHakem/1.0"
 
@@ -51,7 +51,7 @@ def get_diff(repo: str, number: int, token: str) -> str:
     with urllib.request.urlopen(req, timeout=30) as response:
         raw = response.read(MAX_DIFF_BYTES + 1)
     if len(raw) > MAX_DIFF_BYTES:
-        raise RuntimeError("PR diff 60 KB sınırını aştı")
+        raise RuntimeError(f"PR diff {MAX_DIFF_BYTES} bayt sınırını aştı")
     return raw.decode("utf-8", errors="replace")
 
 def _added_diff_text(diff: str) -> str:
