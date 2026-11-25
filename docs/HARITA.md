@@ -457,3 +457,10 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #67: https://github.com/aries919-bot/Jarvis/pull/67 — open/draft; HEAD `9a7dca3c10a78a670f7aafab74c23fe48638416c`.
 - Exact compare: 4 commit / 4 dosya / +28 / -13; sadece Ai.kt, CareerMonitor.kt ve iki test dosyası. 0 behind.
 - PR #67 exact-head Actions run listesi henüz boş; test PASS yok. Eski PR #66 runları PR #67 için kanıt sayılmaz.
+
+
+### 17.5 PR #67 son test genişletmesi — 25.11.2026
+- PR #67 HEAD `164aad8cb593099d9b76d45e8e416d1893364d78`.
+- Yeni test ayrıca katalog içinde Indeed/LinkedIn URL'si bulunmadığını doğrular.
+- Compare: 5 commit / 4 dosya / +32 / -13; 0 behind.
+- Exact-head Actions workflow run listesi ve combined status henüz boş; CI PASS yok.
