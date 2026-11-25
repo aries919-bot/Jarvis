@@ -10,8 +10,13 @@ class CareerNewsVerificationStoreTest {
     private class MemoryStorage : CareerNewsVerificationKeyValueStore {
         val values = linkedMapOf<String, String>()
         var failWrites = false
+        var batchReadCalls = 0
 
         override fun get(key: String): String? = values[key]
+        override fun getMany(keys: Set<String>): Map<String, String?> {
+            batchReadCalls += 1
+            return keys.associateWith { values[it] }
+        }
         override fun keys(): Set<String> = values.keys.toSet()
         override fun putAtomically(values: Map<String, String>): Boolean {
             if (failWrites) return false
@@ -172,6 +177,26 @@ class CareerNewsVerificationStoreTest {
         assertTrue(store.save(corrected).saved)
         assertFalse(store.save(corrected.copy(correctionHistory = emptyList())).saved)
         assertEquals(1, store.load(reviewed.storyId)!!.correctionHistory.size)
+    }
+
+    @Test
+    fun loadManyUsesOneBatchReadAndRecoversCorruptPrimaryFromLastGood() {
+        val storage = MemoryStorage()
+        val store = CareerNewsVerificationStore(storage)
+        val first = record()
+        val second = first.copy(
+            storyId = "story-2",
+            originalSourceUrl = "https://kurum.gov.tr/duyuru/2"
+        )
+        assertTrue(store.save(first).saved)
+        assertTrue(store.save(second).saved)
+        storage.values["record." + first.storyId] = "{broken-primary"
+
+        val loaded = store.loadMany(listOf(first.storyId, second.storyId, first.storyId))
+        assertEquals(1, storage.batchReadCalls)
+        assertEquals(2, loaded.size)
+        assertEquals(first, loaded[first.storyId])
+        assertEquals(second, loaded[second.storyId])
     }
 
 }
