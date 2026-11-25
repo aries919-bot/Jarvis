@@ -827,3 +827,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - H1 önceki run #45685959506'in sahte PASS düzeltmesi bölüm 34'te geçerlidir: XML 4/1 pass/3 fail; set -e düzeltmesi ve asenkron SQLite commitleri uygulandı.
 - Güncel C1 sayımı 12 kamu kaynak /55 doğrulanmış açık ilan /45 eksik; production Worker GET/D1 ve city dedup RED.
 **KARAR:** H1 emulator 4/4 ve telefon testini bekle; Cloud runner adım başlatma engeli çözülene dek PR #12 taslak/RED. C1 kapıları değişmedi.
+
+## 36) QA/RAG exact-head son durum — 25.11.2026 20:22Z
+- Cloud PR #12 HEAD a80e557d1dc8373446a3a41b15d50f998d5e3e46; GitHub diff 4 dosya / +1043 / -20; 26 test tanımı, çalıştırılan test 0.
+- Son yedi run #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527, #45694369322; hepsinde 1 job / 0 step / failure / 1–3 saniye. En son #45694369322 job 139487790097 20:22:41Z–20:22:42Z.
+- Son kod düzeltmeleri: provider allowlist (public esube/H2, Büyük özel Lever/Ashby), PII block, off-topic abstain, AI rejectIfBusy + BM25 fallback, deterministic positionCount/city extraction. Null positionCount/city açıkça belirtilmemiş; şehir kurum merkezinden çıkarılmaz.
+- Test verilerindeki Bearer örneği fake şeklinde kısaltıldı; gerçek/token biçimine benzeyen test fixture kaldırıldı.
+- CI logu BlobNotFound; test adımı hiç başlamadı. PR #12 draft, merge/deploy yok. Yeni commit/rerun döngüsü durduruldu.
+- Ayrıntı `gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md`; son rapor commiti 6ba88e0992e370733d0ce303621d5047d4eb4c8b.
