@@ -416,3 +416,14 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Rakip güncelliği: Simplify (2.6.0, yaklaşık 24.11.2026), Kariyer.net (Google Play güncelleme 10.11.2026), Ground News (2026 sonbahar sürüm/filtreleri), 02.11.2026 kontrol edilmiş ATS API kataloğu. Ayrıntılı URL ve sınırlar görev raporunda.
 - C1 son H2 reader 19 kayıt /17 fresh /2 stale /13 açık kart; e-Şube ayrı 42 kayıt. 13+42 dedup kanıtı olmadan tekil toplam değildir; 10/100 RED.
 - **SONRAKİ ADIM:** P0 kaynak/UA kurallarını ayrı PR ile düzelt; H1 story/claim/evidence sözleşmesi ve C1 cross-feed exact-head CI. Kullanıcı onayı olmadan merge/deploy yok.
+
+
+## 17. C1 P0 kaynak politikası / UA düzeltmesi — 25.11.2026
+- PR #66: https://github.com/aries919-bot/Jarvis/pull/66, `fix/c1-source-policy-ua-guard-20261125` → `fix/c3-ai-consent-and-navigation-guard`; açık/taslak, birleştirilmedi.
+- HEAD `17f3fb796d482ea779c5ee2cf9f099828c7b3d72`; compare 4 dosya / +24 / -13; 4 commit; taban 5f6eebb.
+- Indeed/LinkedIn kaynakları, güvenilir/ikincil alan listeleri ve arama sorguları kaldırıldı. Genel `edu.tr` trusted listesinden çıkarıldı.
+- `Ai.kt` kaynak isteklerinde tarayıcı taklidi kaldırıldı; AriesKaynakTara/1.0 UA 4 noktada.
+- Test dosyası: yasaklı iş panoları için 1 test; genel edu.tr için mevcut test beklentisi düzeltildi.
+- CI exact-head henüz başlamadı: workflow run listesi 0, commit status 0. **KABUL DEĞİL.**
+- Kalan: mobil DDG/Bing/Brave HTML fallback kapatılmadı; Worker production GET kanıtı yok. Custom Tabs ve H1 claim/evidence modeli ayrı görev.
+- Ayrıntı: [C1-P0-source-policy-ua-2026-11-25.md](../gorevler/C1-P0-source-policy-ua-2026-11-25.md).
