@@ -98,6 +98,14 @@ SOURCES = [
         ],
     },
     {
+        "id": "bartin-academic",
+        "name": "Bartın Üniversitesi — öğretim üyesi ve öğretim elemanı alımı",
+        "allowed_link_hosts": ["onceinsan.bartin.edu.tr", "www.bartin.edu.tr", "bartin.edu.tr"],
+        "page_urls": [
+            "https://onceinsan.bartin.edu.tr/duyurular/ogretimuyesi202603veogretimelemani202603alimilani.html",
+        ],
+    },
+    {
         "id": "dpu",
         "name": "Kütahya Dumlupınar Üniversitesi",
         "allowed_link_hosts": ["pdb.dpu.edu.tr", "dpu.edu.tr", "ilan.dpu.edu.tr"],
