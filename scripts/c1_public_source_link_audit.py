@@ -139,6 +139,33 @@ SOURCES = [
         ],
     },
     {
+        "id": "biruni",
+        "name": "Biruni Üniversitesi",
+        "allowed_link_hosts": ["www.biruni.edu.tr", "biruni.edu.tr"],
+        "page_urls": [
+            "https://www.biruni.edu.tr/haberler/duyurular/universitemize-ogretim-uyesi-alinacaktir-13-11-2026",
+            "https://www.biruni.edu.tr/haberler/duyurular/universitemize-ogretim-elemani-alinacaktir-13-11-2026",
+            "https://www.biruni.edu.tr/haberler/duyurular/universitemize-ogretim-uyesi-alinacaktir-16-11-2026",
+        ],
+    },
+    {
+        "id": "cag",
+        "name": "Çağ Üniversitesi",
+        "allowed_link_hosts": ["www.cag.edu.tr", "cag.edu.tr"],
+        "page_urls": [
+            "https://www.cag.edu.tr",
+        ],
+    },
+    {
+        "id": "mcbu",
+        "name": "Manisa Celal Bayar Üniversitesi",
+        "allowed_link_hosts": ["www.mcbu.edu.tr", "mcbu.edu.tr", "personel.mcbu.edu.tr"],
+        "page_urls": [
+            "https://www.mcbu.edu.tr",
+            "https://personel.mcbu.edu.tr/Sayfa/Ynergeler",
+        ],
+    },
+    {
         "id": "tga",
         "name": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
         "allowed_link_hosts": ["tga.gov.tr", "kariyer.tga.gov.tr"],
