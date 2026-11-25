@@ -67,6 +67,28 @@ class CareerNewsVerificationStore private constructor(
         var replaced = false
         records.forEach { existing ->
             if (existing.storyId == record.storyId) {
+                if (record.firstSeenAt != existing.firstSeenAt) return@synchronized false
+                if (record.correctionHistory.size < existing.correctionHistory.size ||
+                    record.correctionHistory.take(existing.correctionHistory.size) != existing.correctionHistory
+                ) return@synchronized false
+
+                val oldClaims = existing.claims.associateBy { it.id }
+                val newClaims = record.claims.associateBy { it.id }
+                if (!newClaims.keys.containsAll(oldClaims.keys)) return@synchronized false
+                oldClaims.forEach { (claimId, oldClaim) ->
+                    val newClaim = newClaims[claimId] ?: return@synchronized false
+                    val hasRecordedCorrection = record.correctionHistory.any { correction ->
+                        correction.claimId == claimId &&
+                            correction.previousText == oldClaim.text &&
+                            correction.previousEvidence == oldClaim.evidence
+                    }
+                    if (oldClaim.text != newClaim.text && !hasRecordedCorrection) {
+                        return@synchronized false
+                    }
+                    if (!newClaim.evidence.containsAll(oldClaim.evidence) && !hasRecordedCorrection) {
+                        return@synchronized false
+                    }
+                }
                 output.put(record.toJson())
                 replaced = true
             } else {
