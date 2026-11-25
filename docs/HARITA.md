@@ -449,3 +449,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Düzeltme commit'i: `29503fe0769f6f6dd4aa5765eaf71420b212ff0f`; güncel HEAD bu SHA'dır.
 - Önceki HEAD `dc71e10` için açılmış CI koşuları çalışmaya devam ediyordu; yeni HEAD için Actions run listesi henüz dönmedi. Önceki SHA sonucu yeni HEAD'e PASS olarak aktarılamaz.
 - PR #66 KABUL/merge bekliyor; kaynak kodu ve test diff'i yeniden sayımı tamamlandı.
+
+
+### 17.4 PR #66 kapatıldı; temiz kapsam PR #67 — 25.11.2026
+- PR #66 kapatıldı (unmerged). Sebep: C3 parent commitleri nedeniyle 9 dosya / +207 / -41 diff oluşmuştu; görev kapsamını dar tutmak için yeniden oluşturuldu.
+- Yeni dal: `fix/c1-source-policy-ua-clean-20261125`, taban `is/c3-ilan-semasi-ai-kaynak-kaniti`.
+- PR #67: https://github.com/aries919-bot/Jarvis/pull/67 — open/draft; HEAD `9a7dca3c10a78a670f7aafab74c23fe48638416c`.
+- Exact compare: 4 commit / 4 dosya / +28 / -13; sadece Ai.kt, CareerMonitor.kt ve iki test dosyası. 0 behind.
+- PR #67 exact-head Actions run listesi henüz boş; test PASS yok. Eski PR #66 runları PR #67 için kanıt sayılmaz.
