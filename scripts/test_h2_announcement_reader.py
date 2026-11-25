@@ -564,5 +564,11 @@ class H2ReaderTests(unittest.TestCase):
 
 
 
+    def test_application_window_sentence_extracts_ending_date(self):
+        text="TGA kariyer ilanı. Başvurular 03 Kasım 2026 tarihinde başlayıp 04 Aralık 2026 tarihinde sona erecektir."
+        self.assertEqual("2026-12-04",h2.application_deadline(text,"başvurular"))
+
+
+
 if __name__ == "__main__":
     unittest.main()
