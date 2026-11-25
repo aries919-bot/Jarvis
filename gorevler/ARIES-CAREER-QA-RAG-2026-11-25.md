@@ -6,10 +6,10 @@ Bu iş, Aries İş & Kariyer için kaynaklı soru-cevap katmanı kurar. Film/tem
 ## PR
 - PR #12: https://github.com/aries919-bot/jarvis-cloud/pull/12
 - Branch: `feat/career-qa-rag-20261125`
-- Son HEAD: `4b010df6fbd30229ec1868cf12e86a03b3eab055`
+- Son HEAD: `a80e557d1dc8373446a3a41b15d50f998d5e3e46`
 - Base: `fix/c1-h2-final-integration-20261125` / PR #11 HEAD `b1415d6a76fd3856c60cfec891a575c3bef0341e`
 - Draft, açık, deploy yok.
-- GitHub diff yeniden sayımı: 4 dosya / +1045 / -20 (PR API); dosyalar `src/career-qa.js`, `src/index.js`, `tests/career-qa.test.mjs`, `.github/workflows/validate.yml`.
+- GitHub diff yeniden sayımı: 4 dosya / +1043 / -20 (PR API); dosyalar `src/career-qa.js`, `src/index.js`, `tests/career-qa.test.mjs`, `.github/workflows/validate.yml`.
 - Test dosyası tanım sayımı: `grep /^test(/ tests/career-qa.test.mjs` karşılığı 26 test. Bu sayı testlerin geçtiği anlamına gelmez.
 
 ## Uygulanan mimari
@@ -66,3 +66,11 @@ Bu haber QA henüz uygulanmadı.
 - Son yedi koşu steps=0 doğrulaması: #45692642608, #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527. Her birinde 1 job / 0 steps / failure / 2–3 saniye. Son örnek run #45693834527 job 139485957163: 20:19:25Z → 20:19:27Z.
 - Kaynak doğrulama için sağlayıcı allowlist kullanılır: public provider esube/H2, Büyük özel provider Lever/Ashby; generic HTML sağlayıcı reddedilir. H1 haber ve kariyer feed'leri ayrı tutulur.
 - **KARAR DEĞİŞMEDİ:** CI runner job adımı hiç başlamadığı için kod testlerinin çalıştığına dair kanıt yok; 26 test tanımı geçiş kanıtı değil. PR #12 draft, no merge/deploy.
+
+
+## 25.11.2026 son CI tekrar kontrolü
+- HEAD a80e557d1dc8373446a3a41b15d50f998d5e3e46; GitHub PR diff 4 dosya / +1043 / -20; test tanımı 26.
+- Yeni workflow run #45694369322: GitHub job #139487790097, 20:22:41Z başladı, 20:22:42Z bitti, steps=0, FAILURE. Bu CI adım başlatma sorunu devam ediyor; kod testleri hâlâ çalıştırılmış sayılmaz.
+- Son yedi CI run kanıt listesi artık #45692810534, #45692919011, #45692938639, #45693799901, #45693834527, #45694369322 ve önceki #45692792848. Yedisi de 0 step.
+- Testlerdeki yapay token örnekleri "Bearer fake" seviyesine kısaltıldı; gerçek/token biçimine benzeyen test değeri bırakılmadı.
+- PR taslak, merge/deploy yok.
