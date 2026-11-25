@@ -364,7 +364,7 @@ data class CareerNewsVerificationRecord(
                     id = item.getString("id"),
                     text = item.getString("text"),
                     evidence = evidenceItems,
-                    reviewDecision = reviewName?.let(CareerHumanReviewDecision::valueOf),
+                    reviewDecision = reviewName?.let { CareerHumanReviewDecision.valueOf(it) },
                     reviewedAt = nullableString(item, "reviewedAt"),
                     reviewNote = item.optString("reviewNote")
                 )
