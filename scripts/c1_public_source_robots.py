@@ -136,16 +136,22 @@ def main() -> int:
                 by_origin[origin] = probe_origin(origin)
             robots = by_origin[origin]
             allowed = None
-            if robots.get("http_status") == 200 and robots.get("body"):
+            policy = "UNKNOWN"
+            if robots.get("http_status") == 404:
+                allowed = True
+                policy = "NO_ROBOTS_FILE"
+            elif robots.get("http_status") == 200:
                 parser = RobotFileParser()
                 parser.set_url(robots["robots_url"])
-                parser.parse(robots["body"].splitlines())
+                parser.parse((robots.get("body") or "").splitlines())
                 allowed = parser.can_fetch(UA, page_url)
+                policy = "ALLOW" if allowed else "DISALLOW"
             page_results.append({
                 "page_url": page_url,
                 "robots_url": robots["robots_url"],
                 "robots_http_status": robots.get("http_status"),
                 "allowed": allowed,
+                "policy": policy,
                 "error": robots.get("error"),
             })
         results.append({
