@@ -11,21 +11,12 @@ on:
       - "app/src/main/java/com/cem/jarvis/CareerNewsVerification*.kt"
       - "app/src/androidTest/**"
       - ".github/workflows/h1-android-ui-smoke.yml"
-  push:
-    branches: [ feat/h1-news-store-ui-20261125 ]
-    paths:
-      - "app/build.gradle.kts"
-      - "app/src/main/AndroidManifest.xml"
-      - "app/src/main/java/com/cem/jarvis/CareerActivity.kt"
-      - "app/src/main/java/com/cem/jarvis/CareerNewsVerification*.kt"
-      - "app/src/androidTest/**"
-      - ".github/workflows/h1-android-ui-smoke.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: h1-android-ui-smoke-${{ github.event.pull_request.head.ref || github.ref_name }}
+  group: h1-android-ui-smoke-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
