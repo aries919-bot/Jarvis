@@ -597,3 +597,11 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 ## H1 latest check still separate
 - PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723`; APK/unit run #45716694105 SUCCESS, artifact #15069888409 and APK SHA-256 `96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab`.
 - Emulator run #45716694004 last independently recorded IN_PROGRESS; earlier run #45712459718 FAILURE with 4 tests/1 pass/3 fail/0 error/0 skipped due focus loss. No merge/deploy until new exact-head XML 4/4 PASS and phone test.
+
+## 26.11.2026 — C1 kamu sayımı için en güncel düzeltme
+- Daha yeni Resmî Gazete 24.11 ve 25.11 taraması sonrası master araştırma kaydı: [C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md](../gorevler/C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md), commit `eccaed393d3bf6569cd4d377ece87c48e80d9812`.
+- Manuel araştırma toplamı **23 deadline'ı doğrulanmış açık ana duyuru /17 kamu kurumu**. Bu sayı H2 live reader veya Worker feed sayısı değildir. Önceki 19/15 sayısı, 24 Kasım Marmara 2 + ÇOMÜ 2 duyurusu eklenmeden önceki ara toplamdır; güncel toplam olarak kullanılmamalı.
+- Ayrı durumlar: 4 future/opening-soon; 5 deadline-null/Doğrulanamadı; 5 expired. Özel üniversite havuzu 7 aday/duyuru olup kamuya dahil değildir.
+- Kamu 10 kaynak eşiği manuel envanterde aşılmıştır (17 kurum), ancak 100 ilan kartı eşiğine 77 kart eksiktir (23/100); manuel araştırma Worker'a ingest edilmemiştir.
+- Worker last-good 6 kaynak/47 kart, 6/6 stale; production authenticated GET/D1 kanıtı yok. H2 live 11 kaynak/13 kart ve e-Şube 1 kaynak/42 kayıt ayrı ölçümlerdir; çapraz-feed dedup/production doğrulaması olmadan toplanmaz.
+**KARAR:** Kamu C1 RED; 23/17 yalnız manuel doğrulanmış aday araştırmasıdır. 100 kart ve production Worker kanıtı sağlanmadı.
