@@ -73,6 +73,47 @@ SOURCES = [
         "page_urls": ["https://www.doka.org.tr/announcement-detail.php?id=1222"],
     },
     {
+        "id": "beykoz",
+        "name": "Beykoz Üniversitesi",
+        "allowed_link_hosts": ["www.beykoz.edu.tr", "beykoz.edu.tr"],
+        "page_urls": [
+            "https://www.beykoz.edu.tr/haber/6842-ogretim-uyesi-ogretim-gorevlisi-alim-ilani",
+        ],
+    },
+    {
+        "id": "agu",
+        "name": "Abdullah Gül Üniversitesi",
+        "allowed_link_hosts": ["personel.agu.edu.tr", "personel-tr.agu.edu.tr", "agu.edu.tr"],
+        "page_urls": [
+            "https://personel.agu.edu.tr/duyuru/oegretim-elemani-alim-ilani-20-11-2026",
+        ],
+    },
+    {
+        "id": "bartin",
+        "name": "Bartın Üniversitesi",
+        "allowed_link_hosts": ["www.bartin.edu.tr", "bartin.edu.tr", "onceinsan.bartin.edu.tr"],
+        "page_urls": [
+            "https://www.bartin.edu.tr/duyurular/sozlesmelipersonelalimilani202604.html",
+            "https://onceinsan.bartin.edu.tr/duyurular/sozlesmelipersonelalimilani202604.html",
+        ],
+    },
+    {
+        "id": "dpu",
+        "name": "Kütahya Dumlupınar Üniversitesi",
+        "allowed_link_hosts": ["pdb.dpu.edu.tr", "dpu.edu.tr", "ilan.dpu.edu.tr"],
+        "page_urls": [
+            "https://pdb.dpu.edu.tr/tr/index/duyuru/24916/23112026-tarihli-ogretim-uyesi-alim-ilani",
+        ],
+    },
+    {
+        "id": "duzce-faculty",
+        "name": "Düzce Üniversitesi — Öğretim Üyesi Alımı",
+        "allowed_link_hosts": ["personel.duzce.edu.tr", "cdn.duzce.edu.tr"],
+        "page_urls": [
+            "https://personel.duzce.edu.tr/duyuru/01b9/23112026-tarihli-ogretim-uyesi-alimi-lanimiz-yayinlanmistir",
+        ],
+    },
+    {
         "id": "tga",
         "name": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
         "allowed_link_hosts": ["tga.gov.tr", "kariyer.tga.gov.tr"],
