@@ -57,13 +57,22 @@ data class CareerNewsEvidence(
     val checkedAt: String
 )
 
+data class CareerNewsReviewEvent(
+    val id: String,
+    val decision: CareerHumanReviewDecision,
+    val reviewedAt: String,
+    val note: String,
+    val evidenceIds: List<String>
+)
+
 data class CareerNewsClaim(
     val id: String,
     val text: String,
     val evidence: List<CareerNewsEvidence> = emptyList(),
     val reviewDecision: CareerHumanReviewDecision? = null,
     val reviewedAt: String? = null,
-    val reviewNote: String = ""
+    val reviewNote: String = "",
+    val reviewHistory: List<CareerNewsReviewEvent> = emptyList()
 ) {
     fun verdict(): CareerClaimVerdict {
         val hasSupport = evidence.any { it.stance == CareerEvidenceStance.SUPPORTS }
@@ -90,14 +99,28 @@ data class CareerNewsClaim(
         return CareerClaimVerdict.NEEDS_EVIDENCE
     }
 
-    /** Adding evidence invalidates an earlier human decision so the new evidence is reviewed. */
+    private fun archiveCurrentReview(): List<CareerNewsReviewEvent> {
+        val decision = reviewDecision ?: return reviewHistory
+        val time = reviewedAt ?: return reviewHistory
+        return reviewHistory + CareerNewsReviewEvent(
+            id = UUID.randomUUID().toString(),
+            decision = decision,
+            reviewedAt = time,
+            note = reviewNote,
+            evidenceIds = evidence.map { it.id }
+        )
+    }
+
+    /** Adding evidence archives the previous decision before invalidating it. */
     fun withEvidence(item: CareerNewsEvidence): CareerNewsClaim = copy(
         evidence = evidence + item,
         reviewDecision = null,
         reviewedAt = null,
-        reviewNote = ""
+        reviewNote = "",
+        reviewHistory = archiveCurrentReview()
     )
 
+    /** Re-reviewing archives the previous human decision instead of overwriting it. */
     fun withHumanReview(
         decision: CareerHumanReviewDecision,
         reviewedAt: String,
@@ -105,7 +128,8 @@ data class CareerNewsClaim(
     ): CareerNewsClaim = copy(
         reviewDecision = decision,
         reviewedAt = reviewedAt,
-        reviewNote = note.trim().take(1000)
+        reviewNote = note.trim().take(1000),
+        reviewHistory = archiveCurrentReview()
     )
 }
 
@@ -265,6 +289,23 @@ data class CareerNewsVerificationRecord(
             ) {
                 errors += "İnsan inceleme kararı için geçerli zaman ve gerekçe gerekli."
             }
+            if (claim.reviewHistory.size > 50) errors += "Bir iddia için en fazla 50 eski insan incelemesi saklanabilir."
+            if (claim.reviewHistory.map { it.id }.distinct().size != claim.reviewHistory.size) {
+                errors += "Tekrarlanan insan inceleme geçmişi kimliği."
+            }
+            claim.reviewHistory.forEach { review ->
+                if (review.id.isBlank() || review.id.length > 160) errors += "İnsan inceleme geçmişi kimliği geçersiz."
+                if (!CareerNewsVerificationPolicy.isUtcTimestamp(review.reviewedAt)) {
+                    errors += "Eski insan inceleme zamanı geçersiz."
+                }
+                if (review.note.isBlank() || review.note.length > 1000 ||
+                    CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(review.note) != review.note
+                ) errors += "Eski insan inceleme gerekçesi geçersiz."
+                if (review.evidenceIds.size > 25 ||
+                    review.evidenceIds.any { it.isBlank() || it.length > 160 } ||
+                    review.evidenceIds.distinct().size != review.evidenceIds.size
+                ) errors += "Eski incelemenin kanıt kimlikleri geçersiz."
+            }
             if (claim.evidence.map { it.id }.distinct().size != claim.evidence.size) {
                 errors += "İddia içinde tekrarlanan kanıt kimliği."
             }
@@ -351,13 +392,25 @@ data class CareerNewsVerificationRecord(
             claim.evidence.forEach { evidence ->
                 evidenceArray.put(evidence.toJson())
             }
+            val reviewHistoryArray = JSONArray()
+            claim.reviewHistory.forEach { review ->
+                val evidenceIds = JSONArray()
+                review.evidenceIds.forEach { evidenceIds.put(it) }
+                reviewHistoryArray.put(JSONObject()
+                    .put("id", review.id)
+                    .put("decision", review.decision.name)
+                    .put("reviewedAt", review.reviewedAt)
+                    .put("note", review.note)
+                    .put("evidenceIds", evidenceIds))
+            }
             claimArray.put(JSONObject()
                 .put("id", claim.id)
                 .put("text", claim.text)
                 .put("evidence", evidenceArray)
                 .put("reviewDecision", claim.reviewDecision?.name ?: JSONObject.NULL)
                 .put("reviewedAt", claim.reviewedAt ?: JSONObject.NULL)
-                .put("reviewNote", claim.reviewNote))
+                .put("reviewNote", claim.reviewNote)
+                .put("reviewHistory", reviewHistoryArray))
         }
         val corrections = JSONArray()
         correctionHistory.forEach { correction ->
@@ -430,6 +483,23 @@ data class CareerNewsVerificationRecord(
                     val evidence = evidenceArray.getJSONObject(j)
                     evidenceItems += evidenceFromJson(evidence)
                 }
+                val reviewHistory = mutableListOf<CareerNewsReviewEvent>()
+                val reviewHistoryArray = item.optJSONArray("reviewHistory") ?: JSONArray()
+                for (j in 0 until reviewHistoryArray.length()) {
+                    val review = reviewHistoryArray.getJSONObject(j)
+                    val evidenceIds = mutableListOf<String>()
+                    val evidenceIdArray = review.optJSONArray("evidenceIds") ?: JSONArray()
+                    for (k in 0 until evidenceIdArray.length()) {
+                        evidenceIds += evidenceIdArray.getString(k)
+                    }
+                    reviewHistory += CareerNewsReviewEvent(
+                        id = review.getString("id"),
+                        decision = CareerHumanReviewDecision.valueOf(review.getString("decision")),
+                        reviewedAt = review.getString("reviewedAt"),
+                        note = review.getString("note"),
+                        evidenceIds = evidenceIds
+                    )
+                }
                 val reviewName = nullableString(item, "reviewDecision")
                 claims += CareerNewsClaim(
                     id = item.getString("id"),
@@ -437,7 +507,8 @@ data class CareerNewsVerificationRecord(
                     evidence = evidenceItems,
                     reviewDecision = reviewName?.let { CareerHumanReviewDecision.valueOf(it) },
                     reviewedAt = nullableString(item, "reviewedAt"),
-                    reviewNote = item.optString("reviewNote")
+                    reviewNote = item.optString("reviewNote"),
+                    reviewHistory = reviewHistory
                 )
             }
             val corrections = mutableListOf<CareerNewsCorrection>()
