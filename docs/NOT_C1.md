@@ -244,3 +244,10 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Log endpoint BlobNotFound; bu test sonucu değildir. APK/unit #45679523180 aynı HEAD SUCCESS.
 - **KARAR:** H1 emülatör ve gerçek telefon testi kapanana kadar RED/beklemede.
 
+## 21. C1 kaynak politikası PR #70 merge — 25.11.2026
+- PR #70 HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`; 4 dosya/+75/-20; exact-head Android CI #45677312902 SUCCESS; öz-QA ONAY.
+- Merge commit `09f98b324a9a1f38dbbc25853ec2eba2fc544db9`; kariyer-modulu branch head bu commit.
+- PR #71 H1 base artık source-policy düzeltmesini içeriyor. Mevcut emulator run exact PR head checkout ediyor; #70 ile gerçek entegrasyonun test edilmesi için run kapandıktan sonra workflow merge-ref checkout'a çevrilecek.
+- PR #71 hâlâ merge edilmedi; emülatör + telefon testi zorunlu.
+- C1 genel 10/100, public feed ve production GET/D1 kabulü değişmedi; RED.
+
