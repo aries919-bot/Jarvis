@@ -435,11 +435,14 @@ def application_deadline(text: str, context: str) -> str | None:
 
 def status_for(deadline: str | None, published: str | None, content_type: str, today: date,
                 application_opens_at: str | None = None, collected_at: str | None = None,
-                allow_null_published: bool = False) -> str:
+                allow_null_published: bool = False,
+                deadline_time_unknown: bool = False) -> str:
     if deadline:
         end = date.fromisoformat(deadline)
         if end < today:
             return "Süresi geçti"
+        if end == today and deadline_time_unknown:
+            return "Doğrulanamadı"
         # A known future application start is not an open application yet.
         if application_opens_at:
             opening = datetime.fromisoformat(application_opens_at.replace("Z","+00:00"))
@@ -460,7 +463,8 @@ def make_item(
     conditions: list[str], deadline: str | None, published_at: str | None,
     collected_at: str, first_seen_at: str, today: date, tags: list[str] | None = None,
     application_opens_at: str | None = None, position_count: int | None = None,
-    allow_null_published: bool = False,
+    allow_null_published: bool = False, deadline_time_text: str | None = None,
+    deadline_time_unknown: bool = False,
 ) -> dict[str,Any]:
     return {
         "id":item_id,
@@ -472,13 +476,15 @@ def make_item(
         "howToApply":how_to_apply,
         "conditions":conditions,
         "deadline":deadline,
+        "deadlineTimeText":deadline_time_text,
+        "deadlineTimeUnknown":deadline_time_unknown,
         "positionCount":position_count,
         "applicationOpensAt":application_opens_at,
         "publishedAt":published_at,
         "collectedAt":collected_at,
         "firstSeenAt":first_seen_at,
         "freshnessStatus":status_for(deadline,published_at,content_type,today,
-                                     application_opens_at,collected_at,allow_null_published),
+                                     application_opens_at,collected_at,allow_null_published,deadline_time_unknown),
         "tags":tags or [],
         "sourceStatus":"fresh",
     }
@@ -635,6 +641,8 @@ def parse_official_notice(source: dict[str,Any], page_text: str, attachment_text
         application_opens_at=source.get("applicationOpensAt"),
         position_count=source.get("positionCount"),
         allow_null_published=allow_null_published,
+        deadline_time_text=source.get("deadlineTimeText"),
+        deadline_time_unknown=source.get("deadlineTimeUnknown") is True,
     )
 
 
