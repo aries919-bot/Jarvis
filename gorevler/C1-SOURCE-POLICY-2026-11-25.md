@@ -17,7 +17,7 @@ Değişen dosyalar 4: `Ai.kt`, `CareerMonitor.kt`, `CareerForbiddenSourcesPolicy
 
 ## Yeni exact-head CI
 - Ara HEAD #45676772911 FAILED: 98 testten 2 assertion başarısız. Biri İşbul'un trusted olmasını varsayan yeni test, diğeri Memur365'in secondary olmamasını varsayan eski testti; iki beklenti düzeltildi.
-- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) — son kontrolde IN_PROGRESS.
+- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) — birim testleri SUCCESS, APK derlemesi IN_PROGRESS.
 - Önceki HEAD run #45658875411 yeni değişiklikleri kapsamıyor; yeni HEAD için PASS yerine geçmez.
 
 ## KARAR
