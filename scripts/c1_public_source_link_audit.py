@@ -114,6 +114,31 @@ SOURCES = [
         ],
     },
     {
+        "id": "marmara",
+        "name": "Marmara Üniversitesi",
+        "allowed_link_hosts": ["pdb.marmara.edu.tr", "www.marmara.edu.tr", "marmara.edu.tr"],
+        "page_urls": [
+            "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-gorevlisi-alim-ilani-1",
+            "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-uyesi-alim-ilani-28",
+        ],
+    },
+    {
+        "id": "uskudar",
+        "name": "Üsküdar Üniversitesi",
+        "allowed_link_hosts": ["uskudar.edu.tr", "www.uskudar.edu.tr"],
+        "page_urls": [
+            "https://uskudar.edu.tr/duyuru/13112026-tarihli-akademik-kadro-ilani/12758",
+        ],
+    },
+    {
+        "id": "resmigazete-2026-11-25",
+        "name": "Resmî Gazete — 25.11.2026 Çeşitli İlanlar",
+        "allowed_link_hosts": ["www.resmigazete.gov.tr", "resmigazete.gov.tr"],
+        "page_urls": [
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4.htm",
+        ],
+    },
+    {
         "id": "tga",
         "name": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
         "allowed_link_hosts": ["tga.gov.tr", "kariyer.tga.gov.tr"],
