@@ -13,6 +13,22 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 
 ## Atamalar
 
+### QA-07 — PR diff, secret ve yasak kaynak denetimi
+**Sorumluluk:** PR diff scope, hard-coded secret, kişisel veri sızıntısı, yasak platform ve browser UA taraması.
+- Durum: TAMAMLANDI.
+- PR #71: 10 dosya / +2.578 / -26; secret pattern 0; forbidden LinkedIn/Indeed URL 0; fake browser UA 0. publishedAt literal yalnızca iki tarih doğrulama testinde.
+- PR #70: 4 dosya / +75 / -20; secret pattern 0; fake browser UA 0; AriesKaynakTara/1.0 eklenmiş. LinkedIn/Indeed dizeleri yalnızca yasak kaynakları reddeden test assertion'larında.
+- PR #71 diff'te manifest değişikliği yalnız Activity kaydı için; izin ekleme/değiştirme olmadığı ayrıca doğrulanmalı.
+
+### QA-08 — CI hızı ve tekrarlanabilirlik
+**Sorumluluk:** Gradle tekrar derleme, cache, timeout, test raporu ve artifact doğrulaması.
+- Durum: İLK İNCELEME TAMAM; OPTİMİZASYON TAKİPTE.
+- android.yml iki ayrı Gradle çağrısı kullanıyor: testDebugUnitTest ve assembleDebug; tek Gradle çağrısında birleştirme, aynı compile graph'ını tekrar çalıştırmayı azaltabilir.
+- H1 emülatör workflow job timeout 35 dakika; step 5 yaklaşık 18 dakikadır IN_PROGRESS, log endpoint BlobNotFound. Timeout dolmadan fail/stall kararı yok.
+- Sonraki workflow PR'ında test raporu upload adımı if: always() olmalı; böylece fail/timeout sonrası rapor korunur.
+
+## Atamalar
+
 ### QA-01 — H1 veri modeli ve SQLite bütünlüğü
 **Sorumluluk:** Haber iddiası, kanıt, insan incelemesi, reviewHistory, correctionHistory, last-good kayıt ve bozuk primary davranışı.
 - Durum: KOD İNCELEMESİ TAMAM; CI BEKLENİYOR.
