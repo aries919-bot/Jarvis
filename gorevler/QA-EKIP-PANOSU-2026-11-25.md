@@ -36,7 +36,10 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 
 ### QA-04 — C1 canlı veri, kamu sayımı ve Worker
 **Sorumluluk:** e-Şube/H2 input, source bazlı stale, tarih alanları, mükerrer, kamu/özel ayrımı, production GET/D1.
-- Durum: RED.
+- Durum: RED; resmî ilan keşif dalgası 1 tamamlandı.
+- Ek resmî kaynak araştırması: 25.11 itibarıyla açık 7 duyuru adayı (Sayıştay, Zafer, TGA, HMB, Anadolu, Bartın, SSB); 2 gelecek (ATK 181 pozisyon, YÖKAK 5 pozisyon). Mevcut H2'de Zafer/TGA/Anadolu zaten var; yeni kaynak adayı Sayıştay/HMB/Bartın/SSB = 4. Henüz feed'e eklenmedi; 55 sayısı değişmedi.
+- Kontenjan toplamı ilan kartı sayısı değildir. Exact duplicate ve source mapping yapılmadan 100 eşiğine ekleme yok.
+- Araştırma kaydı: gorevler/C1-RESMI-ILAN-ARASTIRMASI-2026-11-25.md.
 - Kanıt: private PR #11 HEAD `b1415d6a76fd3856c60cfec891a575c3bef0341e`; public exact-head QA #45651444155 SUCCESS.
 - Yeniden sayım: 12 kamu kaynağı /55 doğrulanmış açık kamu ilanı; 100 eşiğine 45 eksik. 35 toplam kaynak, 27 fresh, 8 stale; 116 unknown deadline; 0 geçmiş deadline.
 - Kritik: H2 input city null; canlı cross-feed exact dedup kanıtlanamıyor. Worker production authenticated GET/POST + D1 PUBLISH SKIPPED.
