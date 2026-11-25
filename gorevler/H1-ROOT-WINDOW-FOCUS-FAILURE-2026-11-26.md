@@ -73,3 +73,34 @@ The current PR #71 contains the H1 change set; this task note adds no applicatio
 - APK artifact #15069888409 (name aries-apk), archive digest sha256:8f98ae33b42003beb70851e5b596e0b6354f7d24559b9585219e1f0ae46fbb79; downloaded app-debug.apk is 14,960,717 bytes, SHA-256 96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab.
 - Emulator run #45716694004 remains IN_PROGRESS; job #139564450544, step 7 instrumentation/preflight still running; XML/artifact list empty. No emulator PASS/FAIL yet.
 - APK build success is separate from H1 emulator criterion. No merge/deploy until current exact-head emulator XML has 4 tests /0 failures /0 errors /0 skipped and real-device checklist is completed.
+
+## 26.11.2026 — b51c53a exact-head emulator sonucu: instrumentation timeout
+
+### Sonuç
+PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723` için:
+- APK/unit workflow [#45716694105](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105): **SUCCESS**.
+- Emulator workflow [#45716694004](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004): **FAILURE**.
+- Job `139564450544`: setup/dependency adımları 1–6 SUCCESS; step 7 `Run Android emulator instrumentation tests` FAILURE; step 8 XML doğrulama FAILURE; step 9 artifact upload SUCCESS.
+- Emulator artifact: [#15070859325](https://github.com/aries919-bot/Jarvis/actions/runs/45716694004/artifacts/15070859325), 570,324 bytes, SHA-256 `2f4a7e0b9b500cc6dacaabe3235a61202f9b1c10364d967ff86080936625e94c`.
+- APK artifact: [#15069888409](https://github.com/aries919-bot/Jarvis/actions/runs/45716694105), archive digest SHA-256 `8f98ae33b42003beb70851e5b596e0b6354f7d24559b9585219e1f0ae46fbb79`; APK dosyası SHA-256 `96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab`.
+
+### Logdan yeniden doğrulanan olay sırası
+1. Android boot logu `Boot completed in 997518 ms` kaydı verdi.
+2. Grafik/emülatör belirtileri: `Failed to find ColorBuffer: 18`, `Failed to bind to texture: invalid color buffer` ve `Failed to start Emulator console for 5554`.
+3. Android framework/system_server ve Package Manager hazır kontrolleri geçti.
+4. Window-focus preflight açıkça **PASS** verdi: odakta sistem ANR/Application Error penceresi yoktu.
+5. Uygulama ve androidTest APK derlemesi `BUILD SUCCESSFUL` oldu (68 görev, 3m 12s).
+6. `gradle connectedDebugAndroidTest` başladı; GitHub Actions adımı 30 dakika zaman aşımıyla sonlandı.
+7. `app/build/outputs/androidTest-results/connected` altında instrumentation XML bulunmadı; XML doğrulayıcı exit 2 verdi.
+
+### Hakem sınıflandırması
+- Önceki `RootViewWithoutFocusException` teşhisi bu yeni koşunun sonucu değildir; önceki run #45712459718 tarihsel FAILURE olarak kalır.
+- Yeni koşuda dört testin geçtiğine veya uygulama iddialarının başarısız olduğuna dair XML kanıtı yoktur. Test sayısı **0 raporlanmış sonuç**; bu, 4 testin sıfırının başarısız olduğu anlamına gelmez.
+- Kanıtlanan yeni mekanizma: emülatör/ADB/Gradle instrumentation çalıştırma hattı `connectedDebugAndroidTest` aşamasında zaman aşımına uğradı.
+- ColorBuffer ve EmulatorConsole kayıtları emülatör altyapısı şüphesini güçlendirir; tek başına kesin kök neden kanıtı değildir. Pencere odağı preflight PASS olduğundan aynı focus kurtarma değişikliğini tekrar etmek gerekçesizdir.
+
+### Tekrarlı döngüyü önleyen sonraki adım
+- Aynı konfigürasyonla körlemesine workflow rerun yapılmayacak.
+- Bir sonraki H1-CI işi, uygulama kodunu değiştirmeden, emülatör bağlantısı ve instrumentation başlatma safhasını ayıran tanı kanıtı üretmelidir: `adb devices -l`, `getprop sys.boot_completed`, Package Manager yanıtı, kurulu test APK/runner kaydı, `dumpsys activity instrumentation`, ilgili logcat ve instrumentation komutunun başlangıç/son durumları.
+- Tek kontrollü emülatör denemesinde ilk testin gerçekten başlayıp başlamadığı ayrıştırılır; testler atlanmaz, dört testlik XML kapısı gevşetilmez.
+- PR #71 draft/open kalır. Bu run için emülatör PASS yok; formal GitHub review yok; merge/deploy yok.
