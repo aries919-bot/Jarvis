@@ -27,7 +27,7 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - User-Agent: AriesKaynakTara/1.0
 - Yalnızca her origin için /robots.txt alınır; TLS doğrulaması açıktır, yönlendirme takip edilmez.
 - Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45533410742 — job 138934056515 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14984879355. collectedAt=2026-11-25T02:30:33.5601165Z.
-- Sonuç: Atatürk sayfaları HTTP 200 fakat robots gövdesi boş olduğundan UNKNOWN; hedef sayfalara istek yok. Balıkesir duyuru HTML'i 200/ALLOW, fakat PDF eki robots 404/UNKNOWN. Zafer sayfası+PDF 200/ALLOW. DOKA sayfası+PDF 200/ALLOW. TGA 6 sayfa yolu 200/ALLOW. YÖKAK 200/ALLOW. Mardin Artuklu ve ORAN sayfaları 404/UNKNOWN; hedef sayfalara istek yok.
+- Sonuç: Mardin Artuklu ve ORAN robots 404; RFC 9309 §2.3.1.3 uyarınca robots dosyası yok/erişilemiyor ve kaynağa erişim serbest. Atatürk robots 200 boş gövde; parse edilebilir yasak kuralı yok. Balıkesir HTML 200 ve PDF host robots 404. Zafer ve DOKA sayfaları ile tam PDF ek yolları 200/ALLOW veya 404/no-file. TGA ve YÖKAK yolları 200/ALLOW. 401/403, 5xx, timeout, redirect ve ağ hatası hâlâ UNKNOWN/fail-closed.
 - TGA'nın tga.gov.tr yolları izinli görünse de sayfa içeriği çelişkili; bu, robots izninden bağımsız veri doğrulama sorunudur. TGA kariyer alt alanı için /jobs yolu da robots kontrol listesine eklendi.
 - HTTP 401/403/404/5xx, timeout, redirect veya ağ hatası UNKNOWN sayılır; hedef sayfaya istek yapılmaz.
 
@@ -60,6 +60,6 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 5. Kamu raporu ayrı verilmeli. Hedef 10 kaynak / 100 doğrulanmış açık ilan; eşiğin altında RED.
 
 ## Şu anki karar
-**RED / ön denetim sürüyor.** Yalnız Zafer ve DOKA'da 2 yeni kaynak / 3 açık kadro tam robots+ilan metniyle doğrulandı. Atatürk PDF yolu bulunup ölçülmeli; Balıkesir PDF robots UNKNOWN; Mardin/ORAN robots UNKNOWN; TGA ilan verisi çelişkili; YÖKAK başvurusu henüz açılmadı. Eski e-Şube/H2 snapshot'ları stale olduğundan birleşik güncel kamu toplamı kanıtlanmadı. Production Worker GET ve D1 kalıcılık kanıtı da yok. Hiçbir PR birleştirilmedi, deploy yapılmadı.
+**RED / ön denetim sürüyor.** Zafer (2), DOKA (1) ve TGA (13) olmak üzere **3 yeni kaynak / 16 açık kadro** resmî sayfa/ilan metni ve robots kurallarıyla doğrulandı. Atatürk, Balıkesir, Mardin ve ORAN kaynaklarının exact sayfa/PDF metni link-audit ve sonraki H2 ölçümünde doğrulanacak; YÖKAK başvurusu henüz açılmadı. Eski e-Şube/H2 snapshot'ları stale olduğundan birleşik güncel kamu toplamı kanıtlanmadı. Production Worker GET ve D1 kalıcılık kanıtı da yok. Hiçbir PR birleştirilmedi, deploy yapılmadı.
 
 **SONRAKİ ADIM:** Bu PR'daki robots-only Actions sonucunu incele; yalnız izinli kaynakları sonraki canlı ilan ölçümüne geçir.
