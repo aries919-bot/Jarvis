@@ -251,3 +251,62 @@ Resmî Gazete PDF: https://www.resmigazete.gov.tr/eskiler/2026/11/20261120.pdf. 
 - Kamu sayısı sıfır değildir; Worker veri katmanı stale'dir. 10 kaynak/100 doğrulanmış, süresi geçmemiş ilan eşiği hâlâ sağlanmamıştır. Kamu özel ayrı raporlanır; üretim Worker authenticated GET/D1 ve gerçek ingestion/dedup kanıtı olmadan C1 ONAY verilemez.
 
 **KARAR:** Manuel araştırmada 19 aktif kamu ana duyurusu /15 kurum doğrulanmış adaydır; 4 gelecek, 4 deadline-null, 4 expired duyuru ayrıca etiketlenmiştir. Bunların hiçbiri Worker count değildir. C1 genel karar RED; production GET/D1 entegrasyon kanıtı yok.
+
+## Ek doğrulama ve sayım düzeltmesi — 21–25 Kasım RG taraması (26.11.2026)
+
+### 24.11.2026 Resmî Gazete 33440 — 4 yeni kamu akademik duyurusu
+
+Resmî günlük index `https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261124-4.htm` dört üniversite duyurusunu ayrı kurum başlıklarıyla listeler; ilgili PDF parçalarından ve kurumların kendi ilan portallarından aşağıdaki 4 ana kart doğrulanmıştır. PDF screenshot denemesi dosya boyutu nedeniyle 400/time-out verdi; metin katmanı ve resmî kurum portalları kullanıldı.
+
+| Kurum / kategori | Duyuru | Kontenjan / alan | publishedAt | deadline | Başvuru / şart özeti | Resmî link |
+|---|---:|---|---|---|---|---|
+| Marmara Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı (Öğr.Gör./Arş.Gör.) | Birim/program tablosundaki kadrolar alt pozisyondur; tek ana duyuru | 2026-11-24 | 2026-12-08 | Online Marmara personel başvuru sistemi. 2547 ve ilgili öğretim elemanı yönetmeliği; ALES 70 ve yabancı dil/alan koşulları ilan tablosuna göre. | https://basvuru.marmara.edu.tr/personel ; Resmî Gazete PDF https://www.resmigazete.gov.tr/eskiler/2026/11/20261124.pdf (s.94–95) |
+| Marmara Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi | 2 kadro: Dr. Öğr. Üyesi 1, Profesör 1 | 2026-11-24 | 2026-12-08 | Online Marmara personel başvuru sistemi. 2547 ve üniversite akademik yükseltme/atanma kriterleri; Eğitim Yönetiminde yüksek lisans+doktora, Q1 SSCI yayın/proje ve İngilizce ders tecrübesi; Halkla İlişkiler doçentliği, araştırma projesi yürütücülüğü ve İngilizce ders yeterliği. | https://basvuru.marmara.edu.tr/personel ; Resmî Gazete PDF https://www.resmigazete.gov.tr/eskiler/2026/11/20261124.pdf (s.96) |
+| Çanakkale Onsekiz Mart Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi | Fakülte/anabilim dalı tablosundaki akademik kadrolar; ana kart 1 | 2026-11-24 | 2026-12-08 23:59 | Üniversitenin çevrimiçi ilan bilgi sistemi. 2547, 657 genel şartları ve üniversite akademik yükseltme/atanma ölçütleri; özel akademik alan/derece koşulları portalda. | https://ilan.comu.edu.tr/ilan_bilgi/56 ; kurum duyurusu https://www.comu.edu.tr/duyuru-25060.html |
+| Çanakkale Onsekiz Mart Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı (Öğr.Gör./Arş.Gör.) | İki ilan programı/kadrosu alt pozisyon; ana kart 1 | 2026-11-24 | 2026-12-08 23:59 | Aynı üniversite ilan bilgi sistemi üzerinden online. ALES en az 70, merkezi yabancı dil en az 50; araştırma görevlisi için 35 yaş sınırı ve tezli yüksek lisans/doktora/sanatta yeterlik öğrenciliği; kadroya özel mezuniyet/tecrübe şartları portalda. | https://ilan.comu.edu.tr/ilan_bilgi/57 ; kurum duyurusu https://www.comu.edu.tr/duyuru-25060.html |
+
+Yeniden sayım: Marmara 2 + ÇOMÜ 2 = **4 yeni ana duyuru / 2 yeni kamu kurumu**. Kadro veya pozisyon satırları ilan kartı sayısını artırmaz. Başvuru bitişleri kurum portallarında doğrulanmıştır; her iki kurumun da `publishedAt=2026-11-24`.
+
+### 21.11.2026 Resmî Gazete 33437 — deadline netleşmeyen kamu adayı
+
+| Kurum / kategori | Duyuru | publishedAt | deadline | Başvuru / şart bilgisi | Durum |
+|---|---:|---|---|---|---|
+| İstanbul Medeniyet Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi akademik ilanı | 2026-11-21 | null | Personel Daire Başkanlığı arşivinde 21.11.2026 tarihli akademik ilan bağlantısı mevcut; Resmî Gazete PDF bağlantısı 400/time-out verdi. Kurum sayfasında kesin son başvuru takvimi görünmediğinden 15 gün hesabıyla tarih türetilmedi. | Doğrulanamadı / deadline null; current active count'a eklenmez |
+
+Resmî kurum arşivi: https://personel.medeniyet.edu.tr/tr/akademik-ilanlar (21.11.2026 Tarihli Akademik İlan satırı). Resmî Gazete günlük dosya: https://www.resmigazete.gov.tr/eskiler/2026/11/20261121.pdf . PDF tıklaması timeout olduğundan ilan metninin şartları ve deadline'ı tam doğrulanamadı.
+
+### 25.11.2026 Resmî Gazete 33441 — yeni personel ilanı eklenmedi
+
+Resmî index: https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4.htm . Kurum/ilan başlıkları arasında:
+- Biruni Üniversitesi'nin 13.11.2026 tarihli Öğretim Elemanı ilanı iptal edilmiş; yeni işe alım değil, mevcut kartın iptal durumu. İlgili Biruni kartı güncel feed'den çıkarılmalı/iptal etiketi almalı.
+- Adalet Bakanlığı Ceza ve Tevkifevleri GM, Çevre Bakanlığı Yapı İşleri/Yerel Yönetimler, MEB Destek Hizmetleri/Temel Eğitim, MSB Tedarik Hizmetleri ve Marmara Üniversitesi başlıkları ihale yasaklama kararlarıdır; personel ilanı değildir.
+- Çağ Üniversitesi'nin 25.11.2026 akademik duyurusu özel üniversite havuzunda 1 ana kart /2 araştırma görevlisi pozisyonu olarak doğrulandı; son başvuru 2026-12-09. Kurum duyurusu https://www.cag.edu.tr/tr/duyurular/akademik-personel-alimi-26 . İlgili kadrolar Uluslararası Finans ve Bankacılık ile Uluslararası Ticaret ve Lojistik alanlarında; ilan şartları/teslim yöntemi üniversitenin sayfasındadır. Kamu sayımına eklenmez.
+- Manisa Celal Bayar Üniversitesi'nin 25.11.2026 Öğretim Üyesi ilanı daha önceki 6 aday kaydında 1 ana duyuru olarak yer alır; tekrar sayılmaz.
+- İndeksin kalan kalemleri koruma kurulu kararları/diğer duyurular; ek doğrulanmış personel duyurusu olarak sayılmadı.
+
+Biruni iptal metninin açık kaydı: 13.11.2026 tarihli önceki ilan iptal edilmiştir; eski ilanın bitiş tarihi 27.11.2026 yazsa da iptal duyurusundan sonra aktif gösterilmemelidir. Resmî indexteki bölüm: https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4.htm . 25 Kasım endeksi 52 kaynak bölümüne ayrılmıştır; ikincil dizin dökümü kaynakların bir kısmının ihale yasağı/koruma kurulu kararı olduğunu gösterir ve tam kapsama iddiası taşımaz. Bireysel kartta esas kaynak Resmî Gazete / kurum metnidir.
+
+### 20.11.2026 RG listesinde görünen Orman GM müfettiş yardımcısı — geçmiş ilan düzeltmesi
+
+| Kurum / kategori | Duyuru | Pozisyon | publishedAt | deadline | Şart özeti | Etiket |
+|---|---:|---:|---|---|---|---|
+| Orman Genel Müdürlüğü — Kamu / KPSS | 1 Müfettiş Yardımcılığı Giriş Sınavı | 12 | 2026-10-23 | 2026-11-09 23:59 | İlgili orman mühendisliği, orman endüstri mühendisliği, hukuk, iktisat/işletme/maliye lisansları; mezuniyet grubuna göre KPSS P3/P4/P48 en az 75; 35 yaş sınırı; başvuru e-Devlet/Kariyer Kapısı üzerinden alınmıştır. | Süresi geçti |
+
+Bu duyuru 20 Kasım sayısının dizininde görünse de 20 Kasım'da yayımlanmış yeni ilan değildir: Orman GM'nin kendi sayfasında gerçek `publishedAt=2026-10-23`, başvuru 26.10–09.11.2026 olarak yazılıdır. 23 Kasım'daki yazılı sınava çağrılma duyurusu da yeni işe alım ilanı değil sonuç/başvuru değerlendirme duyurusudur. 12 kontenjan 1 ana duyurudur. Resmî kaynak: https://www.ogm.gov.tr/tr/duyurular/tarim-ve-orman-bakanligi-orman-genel-mudurlugu-mufettis-yardimciligi-giris-sinavi-i%CC%87lani ; sonuç duyurusu: https://www.ogm.gov.tr/tr/duyurular/tarim-ve-orman-bakanligi-orman-genel-mudurlugu-mufettis-yardimciligi-giris-sinavinin-yazili-bolumune-katilmaya-hak-kazanan .
+
+### Özel üniversite havuzuna ekler
+
+- Çağ Üniversitesi — 1 akademik ana duyuru /2 araştırma görevlisi pozisyonu; `publishedAt=2026-11-25`, `deadline=2026-12-09`; başvuru üniversitenin İnsan Kaynakları birimine ilanda belirtilen yöntemle. Özel üniversite kaydıdır; kamu sayaçlarına girmez. Resmî duyuru: https://www.cag.edu.tr/tr/duyurular/akademik-personel-alimi-26 .
+- İstanbul Nişantaşı Üniversitesi — 24.11.2026 Resmî Gazete dizininde bir öğretim üyesi duyuru başlığı yer alır. Bireysel PDF erişimi timeout ve üniversitenin ilgili sayfasında tam başvuru şart/takvim bu kontrolde doğrulanamadı; `publishedAt=2026-11-24`, `deadline=null`, `Doğrulanamadı`; özel kurum havuzunda 1 aday, açık özel ilan sayısına dahil değil. Resmî index: https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261124-4.htm .
+
+### Düzeltilmiş toplu sayım — 26.11.2026
+
+- Aktif, deadline'ı resmî kaynakla doğrulanmış kamu ana duyuruları: önceki 19 + 24 Kasım Marmara 2 + ÇOMÜ 2 = **23 duyuru /17 benzersiz kurum**. Sayım ana ilan başlığına göredir, pozisyon sayısına göre değil.
+- Kamu gelecek başvurular: **4 duyuru** (SGK, Kültür ve Turizm Bakanlığı, İçişleri Bakanlığı, Adli Tıp Kurumu); applicationOpensAt ileride olduğundan current open=0.
+- Kamu deadline null/doğrulanamayan: önceki 4 + İstanbul Medeniyet 1 = **5 aday**; aktif/verified sayısına eklenmez.
+- Süresi geçmiş kamu duyuruları: önceki MEB 3 + Sağlık Bakanlığı 1 kura + OGM 1 müfettiş yardımcısı = **5 ana duyuru**. OGM 12 pozisyon, 1 duyurudur.
+- Özel üniversite aday havuzu: önceki 5 + Çağ 1 + Nişantaşı 1 = **7 aday/duyuru**; deadline null olanlar Doğrulanamadı; bu sayı kamu 23/17'ye eklenmez.
+- 25 Kasım Resmî Gazete taraması public active sayıya ek ilan getirmedi. MCBÜ mevcut kamu kaydıdır; Çağ özel havuza eklenmiştir; Biruni iptal ilanı aktiften çıkarılmalıdır. Tender bans, protection board decisions, sınav sonucu/duyuruları vacancy card değildir.
+- 23/17 manual count is still not Worker ingest. For all manual-only candidates `collectedAt=null`, `firstSeenAt=null`; production Worker GET/D1 confirmation still missing.
+
+**KARAR:** Kamu sıfır değil. Resmî kaynakla deadline doğrulanan manuel araştırma kümesi 23 ana duyuru/17 kurumdur; bu 100 doğrulanmış ilan eşiğini karşılamaz ve Worker feed sayısı değildir. 10 kaynak/100 doğrulanmış/süresi geçmemiş ilan ve production authenticated GET/D1 kapıları geçilmediğinden C1 RED.
