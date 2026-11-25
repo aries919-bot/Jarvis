@@ -161,3 +161,10 @@ Akış: izinli RSS/API ile haber keşfi → canonical URL/olay kümeleri → sı
 - Aynı belirtiyi anlatan topluluk kayıtları: https://github.com/orgs/community/discussions/213925 ve https://github.com/orgs/community/discussions/209028 — steps boş + runner_id 0 + BlobNotFound, job'ın runner'a atanmasından önceki dispatch/provisioning aşamasında kesildiğiyle uyumlu.
 - Olası nedenler: private repo Actions dakika/bütçe sınırı, repo/organizasyon Actions politikası veya GitHub runner provisioning/platform sorunu. Bu hesap/repo ayarlarına buradan erişim yok; kesin neden seçilemedi.
 - Sonuç: YAML komutları veya test kodu henüz çalışmadığı için PR #10 CI RED/kanıtsızdır. Workflow'u aynı şekilde tekrar çalıştırmak kök nedeni çözmez. Ayarlar/usage ve check-run annotation incelenmeden yeniden deneme yapılmayacak; gerekirse GitHub Support'a run #45649406146 ve job #139329455436 verilmeli.
+
+
+### PR #10 son statik inceleme düzeltmesi
+- Aynı ilan için önceki birleşik kart ile güncel kaynak satırı aynı listing id'yi taşıyorsa byId birleştirmesi kaynak kanıtlarını kaybedebiliyordu. Kaynak başına tek evidence kaydı korunacak, fresh kanıt stale kanıttan öncelikli olacak şekilde düzeltildi.
+- Son backend head: `043fcf15c26af05fcc9c79e91fbd7bccd8ce6d3d`.
+- Önceki Actions #45649406146, `09e375a7f6745b1928e41ca88956efc8ef428224` head'inde runner'a ulaşmadan başarısız oldu; bu son düzeltmeyi test etmedi. Son head için birleşik status boş; PASS yok.
+- PR #10 base branch'i parent PR #9 açık olduğu için hâlâ hareket ediyor; compare sonucu head 8 commit ahead / 5 behind. Parent dal sabitlenmeden rebase/merge yapılmayacak.
