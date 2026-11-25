@@ -160,6 +160,9 @@ class CareerNewsVerificationStore(
                     correction.previousReviewedAt == oldClaim.reviewedAt &&
                     correction.previousReviewNote == oldClaim.reviewNote
             }
+            if (updated.reviewHistory.size < oldClaim.reviewHistory.size ||
+                updated.reviewHistory.take(oldClaim.reviewHistory.size) != oldClaim.reviewHistory
+            ) return false
             val appendedReviews = updated.reviewHistory.drop(oldClaim.reviewHistory.size)
             val archivedActiveReview = oldClaim.reviewDecision != null && appendedReviews.any { review ->
                 review.decision == oldClaim.reviewDecision &&
