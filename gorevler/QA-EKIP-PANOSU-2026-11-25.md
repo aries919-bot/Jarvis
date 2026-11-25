@@ -123,3 +123,10 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - Önceki run #45679523114 XML: 4 test, 1 pass, 3 fail. Üç UI failure aynı window focus exception; no emulator PASS. Current emulator completion and physical phone remain required.
 - QA-07 retest: 10 files; secret pattern 0; forbidden LinkedIn/Indeed URL 0; browser impersonation UA 0.
 - H1 **RED/beklemede** until merge-ref emulator passes 4/4 and phone test done.
+
+
+### QA-04 ilave: H2 şehir alanı upstream kök neden
+- Sabit H2 reader commit `fe37be93202442394504f455b4a1caeb31f298cf`; `career/h2_sources.json` üzerinde JSON yeniden sayımı: 19 source record, city/location alanı olmayan 19/19.
+- `scripts/h2_announcement_reader.py` `make_item()` imzasında city/location girdisi yok ve ürettiği JSON'a city/location yazmıyor; `parse_official_notice()` de bu alanı üretmiyor. Cloud `h2-input.js` düzeltmesi tek başına çözüm olamaz.
+- Kaynakta açık işyeri/pozisyon şehri varsa pozisyon satırına bağlı kanıtla eklenmeli; kurum merkezi veya kaynak URL'sinden şehir tahmini yasak. Çok şehirli ilanlar ayrı pozisyon kaydı/location array ihtiyacı taşıyabilir. Şehir yoksa null ve possible duplicate; unique count'a eklenmez.
+- Rapor: `gorevler/C1-H2-CITY-FIELD-AUDIT-2026-11-25.md`; commit 99055f2b5ecee19a2b3936443f8d9fefd375548c. Kod değişikliği yok; C1 12/55, 45 eksik; RED.
