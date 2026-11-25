@@ -668,9 +668,22 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 
 ## 21) H1 UI publishedAt ve emulator akışı — 25.11.2026
 - PR #71 HEAD `6b392a3aa02d42700743657350d081d7f7ad6aeb`; 10 dosya / +2.578 / -26.
-- 20 model +10 store +4 Android instrumentation =34 test. Yeni UI testi iddia/kanıt/yayın tarihi/insan incelemesi/yeni kanıtla arşiv/kart düzeltmesi/önceki evidence ayrıntısı akışını deniyor.
-- Exact-head APK/unit [#45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) ve emulator/SQLite [#45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) son kontrolde IN_PROGRESS.
-- Eski emulator #45675851473 yeni HEAD sebebiyle CANCELLED; eski APK/unit #45675851347 PASS yeni UI akışını kapsamaz.
-- H1 kararı RED/beklemede; güncel iki CI PASS ve gerçek telefon testi gerekir.
-- Sonraki: yeni exact-head CI'ları kontrol et; H1 kabulünden sonra PR #70; ardından C1 PR #11'in 12 kamu kaynağı/55 doğrulanmış ilan sonucundaki 45 ilan açığını, production Worker GET/D1 ve şehir tabanlı dedup eksiklerini gider.
+- 20 model +10 store +4 Android instrumentation =34 test. UI testi iddia/kanıt/yayın tarihi/insan incelemesi/yeni kanıtla arşiv/düzeltme/önceki kanıt ayrıntısı akışını deniyor.
+- Exact-head APK/unit [#45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) **SUCCESS**; birim testleri, APK derlemesi ve artifact upload geçti.
+- Exact-head emulator/SQLite [#45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) son kontrolde IN_PROGRESS; BlobNotFound log erişimi test sonucu değildir.
+- Önceki emulator #45675851473 yeni HEAD sebebiyle CANCELLED; PASS değildir.
+- **H1 karar: RED / beklemede.** Güncel emulator PASS ve gerçek telefon doğrulaması olmadan merge yok.
+- C1 PR #70 exact-head CI PASS ve öz-QA ONAY; H1 sonrası merge sırasını bekler.
+- C1 PR #11 hâlâ RED: 12 kamu kaynağı /55 doğrulanmış açık ilan; 100 eşiğine 45 eksik; Worker production GET/D1 ve şehir kanıtlı dedup yok.
 - Ayrıntı: `gorevler/H1-UI-PUBLISHEDAT-EMULATOR-2026-11-25.md`.
+
+## 22) Aries mimari/dosya düzeni ekip QA — 25.11.2026
+- Dört ayrı QA geçişi yürütüldü: mimari dosya sınırları, güvenlik/yönetişim, H1 veri bütünlüğü, CI/test/C1 kapıları. Gerçek ayrı ajan aracı bulunmadığı için ajan kullanıldığı iddia edilmedi.
+- Envanter: `kariyer-modulu` 79 kayıt/30 Kotlin; H1 HEAD 91 kayıt/36 Kotlin.
+- Büyük sorumluluklar: CareerActivity 2.795 satır; CareerMonitor 2.049; MainActivity 1.802; Ai.kt 735. CareerMonitor tek dosyada kaynak kataloğu, uygunluk, tarih parser, search engine, recruitment tracker ve Worker scheduler içeriyor.
+- Media klasöründe 5 eski backup yaklaşık 262.725 byte; kapsam dışı olduğundan dokunulmadı.
+- `denetle.py` ilk 12 KB diff'i Groq'a gönderiyor; çalıştırılmıyor. `AGENTS.md` ve `DURUM.md` eski ajan talimatları içeriyordu; `durum` dalında güncellendi. `.gitignore` gorevler/HARITA desenleri ayrıca düzenleme işi.
+- Mimari görev kaydı: `gorevler/ARIES-MIMARI-DAGINIKLIK-2026-11-25.md`.
+- Refaktör kararı: H1 ve #70 sırası tamamlandıktan sonra CareerMonitor class-boundary extraction küçük PR'larla; ardından CareerActivity repository/page controller ayrımı. Büyük toplu taşıma yok.
+- **KARAR: RED / refaktör bekliyor.** Envanter ve sıra hazır; kaynak dosyaları henüz taşınmadı/silinmedi.
+
