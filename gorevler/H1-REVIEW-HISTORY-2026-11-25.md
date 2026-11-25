@@ -15,8 +15,8 @@ PR #71 Haber doğrulama çekirdeğinde, önceki insan inceleme kararının yeni 
 - Eski kayıt uyumu: `reviewHistory` alanı bulunmayan JSON boş geçmiş olarak okunur.
 
 ## CI / kanıt
-- Exact-head APK + unit test: [run #45675851347](https://github.com/aries919-bot/Jarvis/actions/runs/45675851347) — son kontrolde IN_PROGRESS.
-- Exact-head emulator + SQLite: [run #45675851473](https://github.com/aries919-bot/Jarvis/actions/runs/45675851473) — son kontrolde IN_PROGRESS.
+- Exact-head APK + unit test: [run #45675851347](https://github.com/aries919-bot/Jarvis/actions/runs/45675851347) — SUCCESS; unit tests and APK build passed.
+- Exact-head emulator + SQLite: [run #45675851473](https://github.com/aries919-bot/Jarvis/actions/runs/45675851473) — IN_PROGRESS; instrumentation step still running.
 - Önceki HEAD emulator run #45673231634 yeni commit sonrası CANCELLED; PASS değildir.
 - GitHub job log endpoint'i o anda BlobNotFound döndürdü; bu test sonucu değil, log erişim engelidir.
 
