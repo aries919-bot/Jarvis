@@ -147,3 +147,13 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - PR #67/#68 kapatıldı (unmerged) ve #70/#69 ile değiştirildi. Hiçbir PR merge/deploy edilmedi.
 - Bu işler C1'in kaynak sayısı kapısını değiştirmez. 10 kaynak/100 doğrulanmış ilan, kamu ayrı raporu, üretim Worker GET ve e-Şube/H2 cross-feed dedup kapıları hâlâ zorunlu. Kaynaklardan herhangi biri sıfırsa/başvuru süresi geçmişse kurallar gevşetilmez.
 - Eski Haber arşivi otomatik VERIFIED yapılmaz; source publishedAt yoksa null kalır. Telefon doğrulaması ve Full App QA henüz yok.
+
+## 14. H1 SQLite entegrasyonu ve veri güvenliği — 25.11.2026
+- Güncel H1 entegrasyon adayı PR #71: https://github.com/aries919-bot/Jarvis/pull/71; base `kariyer-modulu`, HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`.
+- Exact compare: 52 commit /8 dosya /+1.979 /-26 /0 behind. 17 model testi +8 store testi =25 @Test.
+- SQLite primary + last-good aynı transaction'da yazılır; primary bozuksa yedek okunur, iki kopya bozuksa üzerine yazılmaz. Kapasite 300 hikâye, hikâye 16 KB, 50 claim, claim başına 25 evidence, 100 correction; limitte eski kayıt atılmaz.
+- Aynı URL için başlık güncellense de storyId sabit; önceki evidence/review/correction history silinemez; kart listesi doğrulama durumlarını tek toplu SQLite sorgusuyla getirir.
+- PR #71 ilk exact-head run #45663064814 duplicate test tanımı yüzünden RED. Duplicate silindi. Ara HEAD run #45666479386 SUCCESS; yeni testler/store/performans sağlamlaştırması sonrası son HEAD için [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387) başlatıldı; final sonuç bekleniyor.
+- PR #69 H1 temel+SharedPreferences/UI uygulaması için exact-head [#45665491590](https://github.com/aries919-bot/Jarvis/actions/runs/45665491590) SUCCESS; PR #71 SQLite/last-good tasarımıyla onun yerine geçecek adaydır. PR #69/#71 henüz merge edilmedi.
+- C1 P0 PR #70 exact-head [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411) unit tests + APK SUCCESS. Bu değişikliklerin hiçbirisi C1'in kaynak sayısı veya Worker production GET sonucunu değiştirmez.
+- 10 kaynak/100 doğrulanmış ilan, kamu 0=RED, kaynak başına last-good, e-Şube/H2 dedup ve production authenticated GET kapıları aynen zorunludur.
