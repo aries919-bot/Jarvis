@@ -777,3 +777,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Workflow son revizyonu: `github.sha` PR merge-ref checkout, AOSP default API34 Pixel 2, tracing/monitor dependencyInsight, 30 dk emulator action timeout, log/XML/HTML report artifact if: always().
 - Yeni #71 HEAD için static diff scan tekrar sayımı: 10 dosya; secret pattern 0; LinkedIn/Indeed URL 0; browser impersonation UA 0.
 - **KARAR:** APK/unit PASS; emulator hâlâ RED/beklemede; telefon yok; PR #71 merge yok. PR #69 eski/duble SharedPreferences yaklaşımı nedeniyle merge dışı.
+
+
+## 33) C1 H2 city alanı upstream kök neden — 25.11.2026
+- H2 reader pinned SHA `fe37be93202442394504f455b4a1caeb31f298cf`; `career/h2_sources.json` gerçek JSON count: 19 source record / city-location alanı eksik 19.
+- `scripts/h2_announcement_reader.py` `make_item()` signature + return JSON'unda city/location yok; `parse_official_notice()` de çıkarmıyor. Dolayısıyla Cloud `h2-input.js` upstream field olmadan city'yi kurtaramaz.
+- Kurum merkez adresinden veya alan adı/başlıktan görev şehri çıkarılmayacak. Yalnız resmi sayfa/PDF'de pozisyon satırına bağlı açık işyeri şehri kullanılacak; birden çok şehir için ayrı kayıt veya location array. Yoksa null / possible duplicate / unique public count dışında.
+- İş belgesi: `gorevler/C1-H2-CITY-FIELD-AUDIT-2026-11-25.md` commit `99055f2b5ecee19a2b3936443f8d9fefd375548c`. Kod değişmedi.
+- **KARAR:** C1 RED; 12 kaynak /55 doğrulanmış açık kamu ilanı, 45 eksik. Şehirli cross-feed dedup yok, Worker GET/D1 SKIPPED.
