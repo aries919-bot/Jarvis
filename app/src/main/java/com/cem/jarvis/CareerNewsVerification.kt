@@ -267,6 +267,9 @@ data class CareerNewsVerificationRecord(
                 if (CareerNewsVerificationPolicy.validateHttpsUrl(evidence.sourceUrl) != null) {
                     errors += "Kanıt URL'si geçerli HTTPS adresi değil."
                 }
+                if (evidence.sourceType == CareerEvidenceSourceType.PRIMARY_SOURCE &&
+                    !CareerNewsVerificationPolicy.isPrimarySourceUrl(evidence.sourceUrl)
+                ) errors += "Birincil kanıt yalnız resmî/izinli kurum veya işveren kaynağından olabilir."
                 if (evidence.excerpt.isBlank() || evidence.excerpt.length > 2000) {
                     errors += "Kanıt alıntısı boş veya çok uzun."
                 } else if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(evidence.excerpt) != evidence.excerpt) {
@@ -293,6 +296,8 @@ data class CareerNewsVerificationRecord(
             if (correction.previousEvidence.any { evidence ->
                     evidence.id.isBlank() || evidence.publisher.isBlank() ||
                         CareerNewsVerificationPolicy.validateHttpsUrl(evidence.sourceUrl) != null ||
+                        (evidence.sourceType == CareerEvidenceSourceType.PRIMARY_SOURCE &&
+                            !CareerNewsVerificationPolicy.isPrimarySourceUrl(evidence.sourceUrl)) ||
                         evidence.excerpt.isBlank() ||
                         CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(evidence.excerpt) != evidence.excerpt ||
                         !CareerNewsVerificationPolicy.isUtcTimestamp(evidence.checkedAt) ||
@@ -467,6 +472,23 @@ object CareerNewsVerificationPolicy {
         .replace(Regex("\\bTR\\d{2}(?:\\s?\\d{4}){5}\\s?\\d{2}\\b", RegexOption.IGNORE_CASE), "[IBAN]")
         .replace(Regex("(\\+?90\\s?)?\\(?0?[2345]\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}"), "[TELEFON]")
         .trim()
+
+    fun isPrimarySourceUrl(value: String): Boolean {
+        if (validateHttpsUrl(value) != null) return false
+        if (!CareerSourceCatalog.isTrustedUrl(value) ||
+            CareerSourceCatalog.isSecondary(value) ||
+            CareerSourceCatalog.isNewsDiscoverySource(value)
+        ) return false
+        val host = runCatching { URI(value.trim()).host.orEmpty().lowercase(Locale.ROOT) }
+            .getOrDefault("")
+        val explicitlySecondary = CareerSourceCatalog.sources
+            .filterNot { it.official }
+            .mapNotNull { source ->
+                runCatching { URI(source.url).host?.lowercase(Locale.ROOT) }.getOrNull()
+            }
+            .any { sourceHost -> host == sourceHost || host.endsWith(".$sourceHost") }
+        return !explicitlySecondary
+    }
 
     fun validateHttpsUrl(value: String): String? {
         val uri = runCatching { URI(value.trim()) }.getOrNull()
