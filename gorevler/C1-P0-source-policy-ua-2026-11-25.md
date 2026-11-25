@@ -25,15 +25,14 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 - Exact compare: 8 commit / 4 dosya / +46 / -13 / 0 behind.
 - CareerMonitor.kt: 2.041 satır; kod taramasında Indeed/LinkedIn URL/domain ve genel trusted edu.tr kaydı yok.
 - Ai.kt: 737 satır; Mozilla/5.0 ve Chrome tarayıcı-UA kalıbı yok; kaynak UA sabiti 1 tanım + 4 kullanım (5 toplam referans).
-- CareerForbiddenSourcesPolicyTest.kt: 28 satır, 1 @Test.
+- CareerForbiddenSourcesPolicyTest.kt: 39 satır, 2 @Test; kaynak allowlist + tek User-Agent sabiti.
 - CareerSourceCatalogTest.kt: 272 satır, 13 mevcut @Test; tek genel .edu.tr beklentisi yeni kurala göre güncellendi.
 - Yasaklı domain isimleri yalnız regresyon testinde, RED beklenen değer olarak bulunur; production source/query/catalog dosyasında bulunmaz.
 
 ## CI
-- İlk exact-head PR #70 koşusu #45657277644 FAIL: 96 birim testten 1 eski assertion başarısız; hata eski CareerSourceCatalogTest'in example.edu.tr adresini trusted beklemesiydi.
-- Assertion düzeltildi; güncel HEAD 5d15ef30.
-- Güncel exact-head run #45657731556, Android APK #686: IN_PROGRESS. Son kontrolde Gradle setup aşamasındaydı; yeni test sonucu yok.
-- Eski failed run yeni HEAD için PASS sayılmaz. APK derlemesi/artefaktı henüz yok.
+- İlk exact-head PR #70 koşusu #45657277644 FAIL: 96 birim testten 1 eski assertion başarısız; eski CareerSourceCatalogTest example.edu.tr adresini trusted bekliyordu.
+- Assertion düzeltildikten sonraki önceki HEAD #45657731556 (#686): unit test task, APK build ve artifact upload SUCCESS; artifact 15043108366. Ancak bu koşu User-Agent tek sabite alınmadan önceki SHA'ya aittir.
+- Güncel HEAD bf8ca39 için exact-head run #45658875411 (#692): birim test adımı SUCCESS, APK derlemesi IN_PROGRESS; henüz final run sonucu yok. Önceki artifact yeni HEAD için kanıt değildir.
 
 ## Sınırlar
 - DDG/Bing/Brave HTML fallback kaldırılmadı: Worker production GET authenticated endpoint kanıtı yok; şimdi kapatmak iş aramasını bozabilir.
