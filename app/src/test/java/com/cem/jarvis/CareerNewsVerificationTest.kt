@@ -224,7 +224,12 @@ class CareerNewsVerificationTest {
             "https://kurum.gov.tr/duyuru/1/",
             "kurum personel alımı"
         )
+        val revisedHeadline = CareerNewsVerificationRecord.stableStoryId(
+            "https://kurum.gov.tr/duyuru/1",
+            "Kurum duyuru başlığını güncelledi"
+        )
         assertEquals(first, second)
+        assertEquals("Başlık değişse de aynı kaynak sayfası aynı haber kimliğini korur.", first, revisedHeadline)
     }
     @Test
     fun rejectsImpossibleDatesAndEvidenceExcerptsWithPersonalIdentifiers() {
