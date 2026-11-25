@@ -539,3 +539,8 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Eski CI #45658340086 (#688) önceki head'de test/APK/upload SUCCESS, ama son gerekçe/no-op testlerini içermiyor.
 - Güncel exact-head [#45659231791](https://github.com/aries919-bot/Jarvis/actions/runs/45659231791) (#695): birim testleri IN_PROGRESS (son kontrol). PASS henüz yok.
 - Haber ekranı/yerel arşiv entegrasyonu yapılmadı; eski haber kayıtları otomatik VERIFIED yapılmaz. [H1 görev raporu](../gorevler/H1-claim-evidence-2026-11-25.md).
+### 22.1 H1 latest exact-head duplicate test correction — 25.11.2026
+- Güncel PR #69 HEAD `79848e8848653de5fc495e5e35dcc5e305aff545`; compare 14 commit /3 dosya /+783/-0 /0 behind.
+- Test dosyası 12 @Test. #45659231791 (#695) iki kez tanımlanmış `humanReviewRequiresRationaleAndNoOpCorrectionIsRejected` nedeniyle compile test aşamasında FAIL oldu; duplicate tanım kaldırıldı.
+- Güncel exact-head run #45660034027 (#696): `Birim testleri` IN_PROGRESS son kontrol; henüz PASS yok.
+- PR açıklaması ve `gorevler/H1-claim-evidence-2026-11-25.md` bu son SHA/sayı/test durumuna güncellendi.
