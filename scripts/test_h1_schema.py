@@ -98,10 +98,7 @@ class H1SchemaTests(unittest.TestCase):
 
     def test_unpublished_or_not_yet_open_job_cannot_be_verified(self):
         no_publication = item(publishedAt=None)
-        self.assertTrue(any(
-            "publishedAt:" in error
-            for error in validate_feed(feed([no_publication]), TODAY)
-        ))
+        self.assertEqual([], validate_feed(feed([no_publication]), TODAY))
         not_open = item(
             applicationOpensAt="2026-11-30T09:00:00+03:00",
             collectedAt="2026-11-25T10:00:00Z",
