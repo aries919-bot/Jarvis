@@ -323,3 +323,18 @@
 
 KARAR: C1 RED; H1 şema testleri PASS, bağımsız review ve kabul bekliyor.
 SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı PR hazırla; exact-head QA, kaynak sayımı ve production GET geçmeden ONAY verme.
+
+## C1 H2 → tek Actions feed doğrulaması — 25.11.2026 03:25 TRT
+
+- Entegrasyon PR'ı: [jarvis-cloud PR #9](https://github.com/aries919-bot/jarvis-cloud/pull/9), `fix/c1-h2-official-feed` → `fix/c1-source-category-after-timestamp` (PR #8 tabanı), açık/taslak, HEAD `8a43b99981db601de3442e8394b71d0651d0e34e`. Merge yok. Formal review 0.
+- Görev/kanıt: [gorevler/C1-H2-entegrasyon-25-11.md](../gorevler/C1-H2-entegrasyon-25-11.md).
+- Public exact-SHA Hakem [Actions #45517626605](https://github.com/aries919-bot/Jarvis/actions/runs/45517626605), checked-out private SHA `8a43b99981db601de3442e8394b71d0651d0e34e`, base `68e858424c3589b7d6cffea7ba26c7941027b017`.
+- `npm run test:c1`: 46/46 PASS; local Wrangler+D1 smoke: 11/11 PASS; H2 parser + last-good test step SUCCESS; required regression matrix 17/17; public date contract PASS; exact diff/security PASS.
+- Diff yeniden sayımı: 5 dosya / +442 / -10 / 22.465 bayt. İzinli dosya listesi tam eşleşti; 60 KB sınırı altında; forbidden-pattern bulgusu 0; UA doğru; diff-check temiz.
+- Tek Actions collector çıktısı `collectedAt=2026-11-25T00:25:02.241Z`: 26 kaynak, 17 fresh / 9 stale, 163 fresh kayıt, 47 doğrulanmış açık iş, 116 deadline-unknown, 0 expired.
+- Kamu ayrı: 6 kaynak / 47 açık doğrulanmış kart. e-Şube 42 + H2 5 (Anadolu 1, Düzce 1, Tarsus 1, Marmara 1, Zafer 1). e-Şube snapshot `2026-11-24T23:51:48Z`, 42 ham/42 benzersiz/42 açık, publishedAt=null.
+- H2: 10 kaynak, 7 fresh / 3 stale, 7 ham kart. YHGM 1 kura (iş sayılmaz); ATK 1 future-open (30.11.2026 09:00 +03 öncesi sayılmaz); Anadolu, Düzce, Tarsus, Marmara, Zafer toplam 5 doğrulanmış açık kart. BOTAŞ timeout, ÇOMÜ robots UNKNOWN (hedef istenmedi), Bilecik Resmî Gazete robots timeout.
+- Özel ATS fresh: Trendyol 35, Midas 16, Commencis 5, Dream Games 17, Aleph 5, Ajax Systems 13, Insider One 22, Binance 0, Picus 1 = 114. Hepsinin deadlineStatus unknown; doğrulanmış ilana girmez. Bold Games, fal, Global Talent Co., Sensor Tower, XDS, Cambly robots HTTP 401 stale; API hedefleri çağrılmadı.
+- Sabit eşik 10 kaynak /100 doğrulanmış açık ilan; fiilî 6/47: RED. Production authenticated GET BLOCKED (`JARVIS_WORKER_URL/JARVIS_WORKER_TOKEN` yok), publish SKIPPED; production deploy/POST yok. Yerel D1 production kanıtı değildir.
+- Hakem raporu `qa-reports/c1/latest.json` exact run #45517626605'tir. HAKEM RED, çünkü 10/100 ve production GET şartları sağlanmadı; kod QA PASS bu RED'i kaldırmaz.
+- PR #9 taslak/açık; PR #5/#6/#8 ve H1/H2 PR #35/#57 birleştirilmedi. Android entegrasyonu yok. `qa-reports/c1/latest.json` run #45517626605 çıktısıdır.
