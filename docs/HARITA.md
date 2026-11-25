@@ -357,3 +357,14 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - 25.11 kontrolünde durum JSON'u hâlâ `2026-11-24T23:51:48Z` e-Şube çekim zamanında. Sabah schedule'ı çalışıp yeni JSON üretmiş kanıtı yok. 14:17 UTC slotu bu kontrol anında henüz gelmemişti.
 - Doğru çözüm yeni reader yazmak değil; var olan e-Şube/H2 workflow'larının default branch'te etkinleşmesini ve C1 workflow'unun yeni `durum` JSON snapshot'ını tüketmesini CI kanıtıyla doğrulamaktır.
 - Ayrıntı ve ölçüm engelleri: [C1-GUNLUK-SAYIM-25-11.md](../gorevler/C1-GUNLUK-SAYIM-25-11.md). Güncel C1 RED; 6/47 geçmiş run sayısıdır, bugünün şu anki doğrulanmış toplamı değildir.
+
+
+## C1 canlı kamu yeniden sayımı — 25.11.2026
+- Ayrıntılı kaynak bazlı sayım: [gorevler/C1-live-recount-2026-11-25.md](../gorevler/C1-live-recount-2026-11-25.md).
+- e-Şube Actions #45513413529 attempt 2 SUCCESS: 3 sayfa / 42 benzersiz açık ilan / 7 işveren; `collectedAt=2026-11-25T13:49:08Z`, tüm deadline'lar 27.11.2026. Yeni JSON `durum` commit `bbb663d`.
+- H2 Actions #45540249638 attempt 2 SUCCESS, artifact 15028921924: 19 kayıt / 17 fresh / 2 stale / 13 doğrulanmış açık kart / 11 kurum; `collectedAt=2026-11-25T13:50:40Z`.
+- Kamu ham toplamı 42+13=55/100; **C1 RED**. Ortak Worker GET/D1/cross-feed kanıtı yok.
+- H2 PR #61 Hakem RED: 5 dosya, +967/-30, diff 72.234 karakter; Hakem 60.000 byte sınırının üstünde. PR #9 private Worker entegrasyonu açık/taslak, production GET BLOCKED.
+- H1 kategori/null publishedAt sözleşme düzeltmesi PR #63: H1 Actions #45628989453 14/14 PASS; taslak ve formal review yok.
+- Hiçbir PR merge edilmedi; deploy/POST yok. Eski 6/47 ve 1/42 snapshotları güncel sayım diye kullanılmamalı.
+- SONRAKİ ADIM: H2 diff'i 60 KB altı parçalara böl, Worker production GET/D1 kanıtını çöz, ≥100 açık ilan eşiğini tamamla; PR #63'ü bağımsız incelemeye çıkar.
