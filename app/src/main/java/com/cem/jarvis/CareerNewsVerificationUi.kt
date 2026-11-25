@@ -67,6 +67,9 @@ class CareerNewsVerificationUi(
         addText(body, "Aries toplama zamanı: " + record.collectedAt)
         addText(body, "H1 kaydında ilk görülme: " + record.firstSeenAt)
         addText(body, "Genel durum: " + newsVerdictLabel(record.verdict()), bold = true)
+        addButton(body, "Asıl haber kaynağını aç") {
+            CareerExternalLinks.open(activity, record.originalSourceUrl) { toast(it) }
+        }
         addText(
             body,
             "Bu durum otomatik AI hükmü değildir. Doğrulandı/Çürütüldü için izinli birincil kaynak kanıtı ve gerekçeli insan incelemesi gerekir."
@@ -95,6 +98,9 @@ class CareerNewsVerificationUi(
                 addText(body, "Alıntı: " + evidence.excerpt)
                 addText(body, "Kaynak yayın tarihi: " + (evidence.publishedAt ?: "Belirtilmemiş") +
                     " · Aries kontrolü: " + evidence.checkedAt)
+                addButton(body, "Kanıt kaynağını aç") {
+                    CareerExternalLinks.open(activity, evidence.sourceUrl) { toast(it) }
+                }
             }
             val actions = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
             addButton(actions, "Bu iddiaya kanıt ekle") { promptEvidence(record, claim.id, dialog) }
