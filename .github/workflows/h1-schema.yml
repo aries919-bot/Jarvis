@@ -1,0 +1,37 @@
+name: H1 News Schema Contract
+
+on:
+  push:
+    branches:
+      - is/H1
+    paths:
+      - 'scripts/h1_schema.py'
+      - 'scripts/test_h1_schema.py'
+      - '.github/workflows/h1-schema.yml'
+      - 'docs/HABER_SEMA.md'
+  pull_request:
+    paths:
+      - 'scripts/h1_schema.py'
+      - 'scripts/test_h1_schema.py'
+      - '.github/workflows/h1-schema.yml'
+      - 'docs/HABER_SEMA.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: h1-schema-contract
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate H1 contract and regression cases
+        run: python -m unittest scripts.test_h1_schema -v
