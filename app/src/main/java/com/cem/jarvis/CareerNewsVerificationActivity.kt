@@ -158,11 +158,22 @@ class CareerNewsVerificationActivity : Activity() {
                 ))
                 if (claim.reviewDecision != null) {
                     card.addView(text(
-                        "İnsan incelemesi: " + claim.reviewDecision.name +
+                        "İnsan incelemesi: " + reviewDecisionLabel(claim.reviewDecision) +
                             " · " + (claim.reviewedAt ?: "Zaman bilinmiyor") +
                             " · " + claim.reviewNote,
                         11f
                     ))
+                }
+                if (claim.reviewHistory.isNotEmpty()) {
+                    card.addView(text("ÖNCEKİ İNCELEMELER", 10f, true))
+                    claim.reviewHistory.asReversed().forEach { review ->
+                        card.addView(text(
+                            reviewDecisionLabel(review.decision) + " · " + review.reviewedAt +
+                                " · " + review.evidenceIds.size + " kanıt",
+                            11f, true
+                        ))
+                        card.addView(text(review.note, 11f))
+                    }
                 }
                 claim.evidence.forEach { evidence ->
                     card.addView(text(
@@ -431,6 +442,12 @@ class CareerNewsVerificationActivity : Activity() {
         "yyyy-MM-dd'T'HH:mm:ss'Z'",
         Locale.US
     ).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
+
+    private fun reviewDecisionLabel(value: CareerHumanReviewDecision): String = when (value) {
+        CareerHumanReviewDecision.CONFIRM -> "Doğrulandı"
+        CareerHumanReviewDecision.REFUTE -> "Çürütüldü"
+        CareerHumanReviewDecision.INCONCLUSIVE -> "Kararsız"
+    }
 
     private fun sourceTypeLabel(value: CareerEvidenceSourceType): String = when (value) {
         CareerEvidenceSourceType.PRIMARY_SOURCE -> "Birincil / resmî kaynak"
