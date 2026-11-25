@@ -4,29 +4,38 @@ set -Eeuo pipefail
 mkdir -p h1-emulator-diagnostics
 exec > >(tee -a h1-emulator.log) 2>&1
 
+capture_adb() {
+  local output="$1"
+  shift
+  timeout --signal=TERM --kill-after=5s 15s adb "$@" > "$output" 2>&1 || true
+}
+
 collect_diagnostics() {
   local label="$1"
   local dir="h1-emulator-diagnostics/$label"
   mkdir -p "$dir"
-  adb devices -l > "$dir/adb-devices.txt" 2>&1 || true
-  adb shell getprop > "$dir/getprop.txt" 2>&1 || true
-  adb shell pidof system_server > "$dir/system-server-pid.txt" 2>&1 || true
-  adb shell ps -A -o PID,NAME > "$dir/process-list.txt" 2>&1 || true
-  adb shell service check package > "$dir/package-service.txt" 2>&1 || true
-  adb shell service list > "$dir/services.txt" 2>&1 || true
-  adb shell dumpsys window > "$dir/window-state.txt" 2>&1 || true
-  adb shell dumpsys activity activities > "$dir/activity-state.txt" 2>&1 || true
-  adb shell dumpsys activity processes > "$dir/process-state.txt" 2>&1 || true
-  adb shell cmd package list packages -3 > "$dir/third-party-packages.txt" 2>&1 || true
-  adb shell df -h /data > "$dir/data-space.txt" 2>&1 || true
-  adb shell dumpsys diskstats > "$dir/diskstats.txt" 2>&1 || true
-  adb logcat -b events -d -v brief > "$dir/events-log.txt" 2>&1 || true
-  adb logcat -b crash -d > "$dir/crash-buffer.txt" 2>&1 || true
-  adb logcat -d -t 3000 > "$dir/logcat.txt" 2>&1 || true
-  adb shell pm list instrumentation > "$dir/instrumentation-packages.txt" 2>&1 || true
-  adb shell dumpsys activity instrumentation > "$dir/instrumentation-state.txt" 2>&1 || true
-  adb shell pm path com.cem.jarvis > "$dir/app-apk-path.txt" 2>&1 || true
-  adb shell pm path com.cem.jarvis.test > "$dir/test-apk-path.txt" 2>&1 || true
+  capture_adb "$dir/adb-devices.txt" devices -l
+  capture_adb "$dir/getprop.txt" shell getprop
+  capture_adb "$dir/system-server-pid.txt" shell pidof system_server
+  capture_adb "$dir/process-list.txt" shell ps -A -o PID,NAME
+  capture_adb "$dir/package-service.txt" shell service check package
+  capture_adb "$dir/services.txt" shell service list
+  capture_adb "$dir/window-state.txt" shell dumpsys window
+  capture_adb "$dir/activity-state.txt" shell dumpsys activity activities
+  capture_adb "$dir/process-state.txt" shell dumpsys activity processes
+  capture_adb "$dir/third-party-packages.txt" shell cmd package list packages -3
+  capture_adb "$dir/data-space.txt" shell df -h /data
+  capture_adb "$dir/diskstats.txt" shell dumpsys diskstats
+  capture_adb "$dir/events-log.txt" logcat -b events -d -v brief
+  capture_adb "$dir/crash-buffer.txt" logcat -b crash -d
+  capture_adb "$dir/logcat.txt" logcat -d -t 3000
+  capture_adb "$dir/instrumentation-packages.txt" shell pm list instrumentation
+  capture_adb "$dir/instrumentation-state.txt" shell dumpsys activity instrumentation
+  capture_adb "$dir/app-apk-path.txt" shell pm path com.cem.jarvis
+  capture_adb "$dir/test-apk-path.txt" shell pm path com.cem.jarvis.test
+  timeout --signal=TERM --kill-after=5s 15s adb exec-out screencap -p > "$dir/screenshot.png" 2> "$dir/screenshot-error.txt" || {
+    rm -f "$dir/screenshot.png"
+  }
 }
 
 snapshot_adb() {
@@ -43,30 +52,30 @@ start_instrumentation_watchdog() {
   mkdir -p "$root"
   date -u +%Y-%m-%dT%H:%M:%SZ > "$root/started-at.txt"
 
-  adb logcat -v threadtime -T 1 > "$root/logcat-live.txt" 2>&1 &
+  setsid adb logcat -v threadtime -T 1 > "$root/logcat-live.txt" 2>&1 &
   H1_LOGCAT_PID="$!"
 
-  (
-    local sample=0
+  setsid bash -c '
+    root="h1-emulator-diagnostics/instrumentation-live"
+    sample=0
     while true; do
       sample=$((sample + 1))
-      local dir
-      dir="$(printf '%s/sample-%03d' "$root" "$sample")"
+      dir="$(printf "%s/sample-%03d" "$root" "$sample")"
       mkdir -p "$dir"
       date -u +%Y-%m-%dT%H:%M:%SZ > "$dir/collected-at.txt"
-      snapshot_adb "$dir/adb-devices.txt" devices -l
-      snapshot_adb "$dir/boot-completed.txt" shell getprop sys.boot_completed
-      snapshot_adb "$dir/package-service.txt" shell service check package
-      snapshot_adb "$dir/instrumentation-packages.txt" shell pm list instrumentation
-      snapshot_adb "$dir/instrumentation-state.txt" shell dumpsys activity instrumentation
-      snapshot_adb "$dir/activity-state.txt" shell dumpsys activity activities
-      snapshot_adb "$dir/window-state.txt" shell dumpsys window
-      snapshot_adb "$dir/system-server-pid.txt" shell pidof system_server
-      snapshot_adb "$dir/app-apk-path.txt" shell pm path com.cem.jarvis
-      snapshot_adb "$dir/test-apk-path.txt" shell pm path com.cem.jarvis.test
+      timeout --signal=TERM --kill-after=5s 10s adb devices -l > "$dir/adb-devices.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell getprop sys.boot_completed > "$dir/boot-completed.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell service check package > "$dir/package-service.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell pm list instrumentation > "$dir/instrumentation-packages.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell dumpsys activity instrumentation > "$dir/instrumentation-state.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell dumpsys activity activities > "$dir/activity-state.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell dumpsys window > "$dir/window-state.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell pidof system_server > "$dir/system-server-pid.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell pm path com.cem.jarvis > "$dir/app-apk-path.txt" 2>&1 || true
+      timeout --signal=TERM --kill-after=5s 10s adb shell pm path com.cem.jarvis.test > "$dir/test-apk-path.txt" 2>&1 || true
       sleep 90
     done
-  ) &
+  ' &
   H1_WATCH_PID="$!"
   echo "Started instrumentation diagnostics watchdog (sample interval: about 90 seconds)."
 }
@@ -74,7 +83,7 @@ start_instrumentation_watchdog() {
 stop_instrumentation_watchdog() {
   for pid in "${H1_WATCH_PID:-}" "${H1_LOGCAT_PID:-}"; do
     if [[ -n "$pid" ]]; then
-      kill "$pid" 2>/dev/null || true
+      kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
       wait "$pid" 2>/dev/null || true
     fi
   done
@@ -226,6 +235,6 @@ fi
 echo "Starting H1 instrumentation tests..."
 date -u +%Y-%m-%dT%H:%M:%SZ > h1-emulator-diagnostics/instrumentation-started-at.txt
 start_instrumentation_watchdog
-gradle connectedDebugAndroidTest --no-daemon --stacktrace --console=plain
+timeout --signal=TERM --kill-after=30s 1500s gradle connectedDebugAndroidTest --no-daemon --stacktrace --info --console=plain
 date -u +%Y-%m-%dT%H:%M:%SZ > h1-emulator-diagnostics/instrumentation-finished-at.txt
 collect_diagnostics after-instrumentation
