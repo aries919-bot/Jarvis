@@ -314,4 +314,16 @@ class CareerNewsVerificationTest {
         assertNull(withPersonalData)
     }
 
+    @Test
+    fun rejectsPersonalIdentifiersInReviewAndCorrectionNotes() {
+        val reviewed = record().addClaim(claim())!!
+            .addEvidence("claim-1", evidence())!!
+        assertNull(reviewed.reviewClaim(
+            "claim-1",
+            CareerHumanReviewDecision.CONFIRM,
+            reviewedAt,
+            "İnceleyen telefon 05321234567"
+        ))
+    }
+
 }
