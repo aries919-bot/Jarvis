@@ -138,9 +138,8 @@ data class CareerNewsVerificationRecord(
         }
         if (results.all { it == CareerClaimVerdict.VERIFIED }) return CareerNewsVerdict.VERIFIED
         if (results.all { it == CareerClaimVerdict.REFUTED }) return CareerNewsVerdict.REFUTED
-        if (results.any { it == CareerClaimVerdict.VERIFIED || it == CareerClaimVerdict.REFUTED }) {
-            return CareerNewsVerdict.PARTIALLY_VERIFIED
-        }
+        if (results.any { it == CareerClaimVerdict.VERIFIED }) return CareerNewsVerdict.PARTIALLY_VERIFIED
+        if (results.any { it == CareerClaimVerdict.REFUTED }) return CareerNewsVerdict.REVIEW_PENDING
         if (results.any {
                 it == CareerClaimVerdict.SUPPORTS_PENDING_REVIEW ||
                     it == CareerClaimVerdict.CONTRADICTION_PENDING_REVIEW
@@ -189,6 +188,7 @@ data class CareerNewsVerificationRecord(
         if (index < 0) return null
         val previous = claims[index].verdict()
         val resetReview = revisedClaim.copy(
+            evidence = emptyList(),
             reviewDecision = null,
             reviewedAt = null,
             reviewNote = ""
@@ -253,6 +253,8 @@ data class CareerNewsVerificationRecord(
                 }
                 if (evidence.excerpt.isBlank() || evidence.excerpt.length > 2000) {
                     errors += "Kanıt alıntısı boş veya çok uzun."
+                } else if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(evidence.excerpt) != evidence.excerpt) {
+                    errors += "Kanıt alıntısı kişisel veri işareti içeriyor; kaydetmeden önce maskele."
                 }
                 if (!CareerNewsVerificationPolicy.isUtcTimestamp(evidence.checkedAt)) {
                     errors += "Kanıt kontrol zamanı geçersiz."
@@ -398,10 +400,30 @@ data class CareerNewsVerificationRecord(
 }
 
 object CareerNewsVerificationPolicy {
-    private val utcTimestamp = Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z""")
+    private val utcTimestamp = Regex("""(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z""")
 
-    fun isUtcTimestamp(value: String?): Boolean =
-        !value.isNullOrBlank() && utcTimestamp.matches(value)
+    fun isUtcTimestamp(value: String?): Boolean {
+        val match = value?.let { utcTimestamp.matchEntire(it) } ?: return false
+        val year = match.groupValues[1].toIntOrNull() ?: return false
+        val month = match.groupValues[2].toIntOrNull() ?: return false
+        val day = match.groupValues[3].toIntOrNull() ?: return false
+        val hour = match.groupValues[4].toIntOrNull() ?: return false
+        val minute = match.groupValues[5].toIntOrNull() ?: return false
+        val second = match.groupValues[6].toIntOrNull() ?: return false
+        if (year < 1 || month !in 1..12 || hour !in 0..23 || minute !in 0..59 || second !in 0..59) {
+            return false
+        }
+        val leapYear = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+        val daysInMonth = when (month) {
+            2 -> if (leapYear) 29 else 28
+            4, 6, 9, 11 -> 30
+            else -> 31
+        }
+        return day in 1..daysInMonth
+    }
+
+    fun sanitizeEvidenceExcerpt(value: String): String =
+        CareerListingPagePolicy.sanitizeForAi(value).trim()
 
     fun validateHttpsUrl(value: String): String? =
         CareerListingPagePolicy.validateHttpsUrl(value)
