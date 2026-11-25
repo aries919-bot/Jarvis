@@ -405,3 +405,14 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #65 squash merge: 25.11.2026; SHA `fe37be93202442394504f455b4a1caeb31f298cf`; PR #61 head'i güncellendi. Bu PR H2 geliştirme dalına düzeltmeyi aldı; `cline/K1`, `main` veya production'a merge değildir.
 - Post-merge exact H2 push live reader [#45646698179](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179): SUCCESS; artifact [15037029949](https://github.com/aries919-bot/Jarvis/actions/runs/45646698179/artifacts/15037029949), exact head `fe37be93202442394504f455b4a1caeb31f298cf`, `collectedAt=2026-11-25T15:34:38Z`. JSON yeniden sayımı: 19 kaynak, 17 fresh/2 stale; 13 doğrulanmış açık kart/11 kurum/125 pozisyon. Açık kart dağılımı: Anadolu 1; Atatürk 2; Balıkesir 1; DOKA 1; Düzce 1; Mardin Artuklu öğretim görevlisi 1; Marmara 2; ORAN 1; Tarsus 1; TGA 1; Zafer 1. Stale: BOTAŞ timeout ve Mardin Artuklu öğretim üyesi deadline kanıtı yok. ATK başvuru açılışı 30.11.2026; iki Munzur kartının aynı gün deadline saati belirsiz; YHGM geçmiş kura. Bunlar 13 açık karta dahil değil.
 - PR #61 genel kararı hâlâ RED: 10 kaynak/100 doğrulanmış ilan kartı eşiği, e-Şube/H2 cross-feed tekilleştirme ve production Worker GET/D1 kapıları kapanmadı.
+
+## 16. Aries ana sürüm + C1/H1 rakip ve güvenilirlik denetimi — 25.11.2026
+
+- Rapor: [gorevler/ARIES-ANA-SURUM-C1-H1-RAKIP-DENETIMI-2026-11-25.md](../gorevler/ARIES-ANA-SURUM-C1-H1-RAKIP-DENETIMI-2026-11-25.md).
+- Yalnız kod/branch denetimi ve rakip araştırması yapıldı; uygulama kodu, Worker, D1, APK, merge veya deploy değişmedi.
+- Varsayılan main SHA `63e877d96cb910e6d98d56834ae55ae8edafab2a`; main'de CareerActivity bulunmuyor. C2/C3 özellik dalı HEAD `c6795908ccd753f47b216f34c59bc697df4f4d5d` için APK #45249266638 ve Full QA #45249266761 SUCCESS; bu main'e birleşme kanıtı değildir.
+- C2/C3 CareerMonitor'da Indeed/LinkedIn kaynakları ve arama sorguları; `edu.tr` geniş güven alanı tespit edildi. Ai.kt Chrome benzeri UA kullanıyor. NOT_C1 ile çeliştiği için P0 küçük PR önerildi; bu denetimde düzeltilmedi.
+- Ai.newsTitles RSS'te yalnız başlık alıyor; story/claim/kanıt/düzeltme zinciri H1'de tamamlanmalı.
+- Rakip güncelliği: Simplify (2.6.0, yaklaşık 24.11.2026), Kariyer.net (Google Play güncelleme 10.11.2026), Ground News (2026 sonbahar sürüm/filtreleri), 02.11.2026 kontrol edilmiş ATS API kataloğu. Ayrıntılı URL ve sınırlar görev raporunda.
+- C1 son H2 reader 19 kayıt /17 fresh /2 stale /13 açık kart; e-Şube ayrı 42 kayıt. 13+42 dedup kanıtı olmadan tekil toplam değildir; 10/100 RED.
+- **SONRAKİ ADIM:** P0 kaynak/UA kurallarını ayrı PR ile düzelt; H1 story/claim/evidence sözleşmesi ve C1 cross-feed exact-head CI. Kullanıcı onayı olmadan merge/deploy yok.
