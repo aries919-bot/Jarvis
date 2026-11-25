@@ -33,6 +33,18 @@ class H2ReaderTests(unittest.TestCase):
         text = "223 Kişilik Personel Alım Duyurusu Tarih: 5/11/2025"
         self.assertEqual("2025-11-05",h2.explicit_published_at(text))
 
+    def test_botas_job_parser_uses_h1_exact_category(self):
+        detail = "<p>223 Kişilik Personel Alım Duyurusu</p>".encode()
+        pdf_text = (
+            "İlanlar, 10.11.2025-14.11.2025 tarihleri arasında yayımlanacaktır."
+        )
+        item = h2.parse_botas_job(
+            detail, Message(), pdf_text,
+            "2026-11-25T14:00:00Z", "2026-11-25T14:00:00Z",
+            date(2026, 11, 25),
+        )
+        self.assertEqual("Kamu bağlı şirket", item["category"])
+
     def test_yhgm_actual_word_order_extracts_deadline_after_date_range(self):
         text = (
             "2.764 sürekli işçi alımı için 08/10/2025 – 13/10/2025 tarihleri "
@@ -91,6 +103,7 @@ class H2ReaderTests(unittest.TestCase):
         self.assertEqual("2026-01-21",item["publishedAt"])
         self.assertIsNone(item["deadline"])
         self.assertEqual("result",item["contentType"])
+        self.assertEqual("Kamu bağlı şirket",item["category"])
         self.assertEqual("Süresi geçti",item["freshnessStatus"])
 
     def test_robots_disallow_prevents_target_request(self):
