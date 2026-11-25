@@ -75,3 +75,12 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 - ChatGPT öz-QA kararı: **ONAY — yalnız PR #70 kapsamı için**. Bu bağımsız Claude/insan incelemesi değildir ve global C1 kabulü değildir.
 - Global C1: 6 kamu kaynağı /47 doğrulanmış açık ilan; 10/100 RED; Worker production authenticated GET BLOCKED. Bu PR bu kapıları geçirmiş sayılmaz.
 - Bu öz-QA kaydı merge/deploy işlemi değildir; PR açık/taslak tutuluyor.
+
+## Exact-head CI PASS — 25.11.2026
+- PR #70 current tested HEAD `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`.
+- Android Actions [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411): **SUCCESS**.
+- Job step output: `gradle testDebugUnitTest --no-daemon` → BUILD SUCCESSFUL; `gradle assembleDebug --no-daemon` → BUILD SUCCESSFUL; artifact upload → SUCCESS.
+- APK artifact ID `15044212711`, 14,061,515 bytes; SHA-256 `2a8f2183f474b907ee9345266b75c7a6d483c0982939073b2667f6560ce0b9de`.
+- Güncel kaynak taraması: Indeed/LinkedIn üretim dosyalarında 0 eşleşme; Chrome/Mozilla browser-UA kalıbı 0; `ARIES_SOURCE_USER_AGENT` bir literal tanım + dört kullanım; genel `.edu.tr` trusted listede yok ve unlisted university host early reject.
+- PR #70 açık/taslak; CI PASS olmasına rağmen hakem merge/deploy kararı verilmedi.
+- Bu düzeltme kaynak güvenliği/uyumluluğudur; C1 10 kaynak/100 doğrulanmış ilan sayısını artırmaz. Kamu ayrı rapor ve 10/100 eşiği RED/BLOCKED kalır.
