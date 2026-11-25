@@ -36,7 +36,7 @@ ALLOWED_HOSTS = {
     "personel.tarsus.edu.tr", "www.artuklu.edu.tr", "artuklu.edu.tr",
     "atauni.edu.tr", "personel.balikesir.edu.tr", "baunwebapi.balikesir.edu.tr",
     "www.oran.org.tr", "oran.org.tr", "www.doka.org.tr", "doka.org.tr",
-    "www.zafer.gov.tr", "zafer.gov.tr", "tga.gov.tr", "kariyer.tga.gov.tr",
+    "www.zafer.gov.tr", "zafer.gov.tr", "tga.gov.tr", "kariyer.tga.gov.tr", "pdb.marmara.edu.tr",
 }
 
 NUMERIC_DATE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
@@ -365,6 +365,10 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
         match = re.search(r"İlan Tarihi\s*(?:\||:)?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
         if match:
             return parse_date(match.group(1))
+    if mode == "marmara-pdb":
+        match = re.search(r"Yayın Tarihi\s*:\s*(\d{1,2})\s+Kasım\s+2026", page_text, re.I)
+        if match:
+            return parse_date(f"{match.group(1)}.11.2026")
     if mode == "ataturk-page-date":
         match = re.search(r"(\d{1,2}\s+Kasım\s+2026)\s+Atatürk Üniversitesi Öğretim Üyesi Alım İlanı",page_text,re.I)
         if match:
