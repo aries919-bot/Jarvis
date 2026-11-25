@@ -752,6 +752,12 @@ def collect_botas(source: dict[str,Any], requester: Callable[[str,int],FetchResp
     return {"schemaVersion":1,"sourceId":source["id"],"collectedAt":now,"sourceStatus":"fresh","items":items}
 
 
+
+def position_count_for(item: dict[str,Any]) -> int:
+    value = item.get("positionCount")
+    return value if isinstance(value,int) and value > 0 else 0
+
+
 def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
                previous_dir: Path | None = None,
                requester: Callable[[str,int],FetchResponse] = request_once,
@@ -787,9 +793,6 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
         write_feed(feed,out_dir,previous_dir)
         items = feed.get("items", [])
         source_status = feed["sourceStatus"]
-        def count_for(item: dict[str,Any]) -> int:
-            value = item.get("positionCount")
-            return value if isinstance(value,int) and value > 0 else 1
         verified_items = [
             item for item in items
             if source_status == "fresh"
@@ -804,8 +807,8 @@ def run_reader(config_path: Path = CONFIG, out_dir: Path = ROOT/"reports"/"h2",
             "institution":institutions[0] if len(institutions) == 1 else (source.get("institution") or source.get("name") or source["id"]),
             "sourceStatus":source_status,
             "items":len(items),
-            "positions":sum(count_for(item) for item in items),
-            "verifiedOpenPositions":sum(count_for(item) for item in verified_items),
+            "positions":sum(position_count_for(item) for item in items),
+            "verifiedOpenPositions":sum(position_count_for(item) for item in verified_items),
             "verifiedInstitutions":verified_institutions,
             "error":feed.get("lastError")
         })
