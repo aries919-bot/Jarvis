@@ -170,6 +170,7 @@ object CareerSourceCatalog {
         val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return false
         if (!uri.scheme.equals("https", ignoreCase = true)) return false
         val host = normalizedHost(url) ?: return false
+        if (isUnverifiedUniversityHost(host)) return false
         return trustedDomains.any { host == it || host.endsWith(".$it") }
     }
 
