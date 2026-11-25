@@ -817,3 +817,13 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - QA/RAG PR #12 bu açığı ilan uydurarak doldurmaz.
 
 **KARAR:** H1 emulator 4/4 tekrar kanıtı bekliyor ve fiziksel telefon yok; PR #71 merge yok. Career QA/RAG mimarisi kodlandı ancak CI runner adım başlatmadığı için test edilmedi, PR #12 merge/deploy yok. C1 12/55 ve RED.
+## 35) Son QA/RAG HEAD ve exact-head engelleri — 25.11.2026 20:20Z
+
+- Career QA/RAG Cloud PR #12 son HEAD 4b010df6fbd30229ec1868cf12e86a03b3eab055; GitHub diff 4 dosya / +1.045 / -20. Test dosyası kaynak sayımı 26 test tanımı. Bu testler çalıştırılmadı.
+- 26 test tanımı artık: source-provider allowlist, Lever/Ashby host, sahte public provider red, stale izolasyonu, geçersiz deadline, Turkish BM25/synonyms, RRF, embedding response, deadline/conditions/application/count/location exact fields, null publishedAt/city, PII/CV/KPSS/token block, off-topic abstain, AI busy fallback, auth/body/stale feed.
+- QA cevap sözleşmesinde positionCount ve city yalnız açıkça kayıtlıysa gösterilir; null/eksik city kurum adresinden/host'tan tahmin edilmez. Kamu provider sadece esube/H2; Büyük özel provider sadece resmi Lever/Ashby board hostları.
+- Son 7 Cloud Actions run: #45692642608, #45692792848, #45692810534, #45692919011, #45692938639, #45693799901, #45693834527. API her run'da 1 job / 0 step / failure / 2–3s döndürüyor. En son #45693834527 job 139485957163: 20:19:25Z başladı, 20:19:27Z bitti. Log BlobNotFound. Kod testleri çalışmadı; CI runner/job startup engeli. PR #12 draft, merge/deploy yok.
+- H1 yeni HEAD b8a78126cbc6713cb4d42838027a6189274f19e7; APK/unit [#45692016951](https://github.com/aries919-bot/Jarvis/actions/runs/45692016951) SUCCESS. Emulator [#45692017824](https://github.com/aries919-bot/Jarvis/actions/runs/45692017824) son kontrolde IN_PROGRESS; verify ve dependencyInsight PASS, instrumentation step beklemede/çalışıyor. Hata log URL BlobNotFound; artifact XML yok. H1 4/4 sonucu yok, telefon testi yok, PR #71 merge yok.
+- H1 önceki run #45685959506'in sahte PASS düzeltmesi bölüm 34'te geçerlidir: XML 4/1 pass/3 fail; set -e düzeltmesi ve asenkron SQLite commitleri uygulandı.
+- Güncel C1 sayımı 12 kamu kaynak /55 doğrulanmış açık ilan /45 eksik; production Worker GET/D1 ve city dedup RED.
+**KARAR:** H1 emulator 4/4 ve telefon testini bekle; Cloud runner adım başlatma engeli çözülene dek PR #12 taslak/RED. C1 kapıları değişmedi.
