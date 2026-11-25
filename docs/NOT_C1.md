@@ -226,3 +226,10 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - CALL_PHONE ve READ_CONTACTS gereksiz açılış izinleri adayı. Tam repo araması ve regresyon testi sonrası ayrı PR açılacak; henüz kod değiştirilmedi.
 - H1 emülatör #45679523114 `in_progress`, conclusion `null`; timeout dolmadan sonuç varsayılmayacak.
 
+## 18. C1 resmî kamu ilanı keşif dalgası — 25.11.2026
+- 7 açık duyuru adayı doğrulandı: Sayıştay (16), Zafer (2), TGA (13), Hazine Kontrolörleri Kurulu (en fazla 10), Anadolu (1), Bartın (1), SSB (26). Bunlar pozisyon kontenjanlarıdır; ilan kartı sayısı değildir.
+- Yeni kaynak adayı 4: Sayıştay, HMB, Bartın, SSB. H2'de Zafer/TGA/Anadolu zaten bulunduğundan tekrar kontrolü yapılmadan eklenmez.
+- Gelecek: ATK 181 pozisyon 30.11'de, YÖKAK 5 pozisyon 01.12'de açılacak; başvuru açılmadan açık sayımına eklenmez.
+- Kamu sayımı değişmedi: 12 kaynak/55 ilan; bu araştırmadan feed'e eklenen 0. C1 hâlâ RED, 45 ilan eksiği var.
+- Araştırma belgesi: `gorevler/C1-RESMI-ILAN-ARASTIRMASI-2026-11-25.md`.
+
