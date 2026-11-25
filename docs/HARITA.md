@@ -442,3 +442,10 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Android APK [#45653228021](https://github.com/aries919-bot/Jarvis/actions/runs/45653228021): run started; repository maintenance tests SUCCESS; Android unit tests IN_PROGRESS; APK build pending.
 - Full App QA [#45653227891](https://github.com/aries919-bot/Jarvis/actions/runs/45653227891): static/Lint/JUnit job and Android API29/33/34/35 UI audits in progress.
 - Final conclusion not available yet. No PASS/ONAY/merge claim.
+
+
+### 17.3 PR #66 hakem statik incelemesi — 25.11.2026
+- Patch okunurken yeni regresyon testindeki `assertTrue` import eksiği bulundu; CI sonucu beklenmeden düzeltildi.
+- Düzeltme commit'i: `29503fe0769f6f6dd4aa5765eaf71420b212ff0f`; güncel HEAD bu SHA'dır.
+- Önceki HEAD `dc71e10` için açılmış CI koşuları çalışmaya devam ediyordu; yeni HEAD için Actions run listesi henüz dönmedi. Önceki SHA sonucu yeni HEAD'e PASS olarak aktarılamaz.
+- PR #66 KABUL/merge bekliyor; kaynak kodu ve test diff'i yeniden sayımı tamamlandı.
