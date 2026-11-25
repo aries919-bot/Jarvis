@@ -119,3 +119,47 @@ Katman ayrımı:
 - Hazine, SSB ve Bartın'ın yeni/ek resmî duyuru adayları henüz hiçbir sayaca eklenmedi.
 
 **Eşik:** Worker feed 6/10 kaynak ve 47/100 kart ile RED; geniş resmi envanterde kaynak sayısı 12/10 olsa da ilan sayısı 55/100 ile RED.
+
+
+## 26.11.2026 — 12 saat freshness yeniden değerlendirmesi ve yeni resmî ilanlar
+
+- **Kayıt zamanı:** 2026-11-25T21:30:32.537Z
+- **Önceki makine kanıtı:** C1 live audit run [#45517626605](https://github.com/aries919-bot/Jarvis/actions/runs/45517626605), artifact [14977937193](https://github.com/aries919-bot/Jarvis/actions/runs/45517626605/artifacts/14977937193), JSON `collectedAt=2026-11-25T00:25:02.241Z`. Bu run anında 26 kaynak, 17 fresh /9 stale; 47 doğrulanmış açık kamu kartı; 116 deadline-unknown özel kayıt; eşik NOT_MET idi. Bu, bugünün canlı ölçümü değildir.
+- H2 official feed artifact [14976107324](https://github.com/aries919-bot/Jarvis/actions/runs/45512710235/artifacts/14976107324) içindeki 10 JSON dosyasının her birinde `collectedAt=2026-11-24T23:46:14Z`; kaynağa özgü `sourceStatus` alanları dosyadan yeniden okundu. Entegre audit sırasında H2 son iyi zamanları `2026-11-25T00:23:08Z` idi.
+- Projedeki freshness sınırı 12 saat olduğundan 26.11.2026 itibarıyla aşağıdaki altı kamu kaynağının tamamının son iyi ölçümü 12 saatten eskidir. Bunlar silinmez; yalnız kendi sourceId'leri stale olur. Diğer kaynakların last-good verisi bu durumdan etkilenmez.
+
+### Kamu — source-by-source son iyi kayıt / bugünkü statü
+
+| Kaynak | Son iyi kayıt sayısı | Son iyi ölçüm | 26.11 statüsü | Not |
+|---|---:|---|---|---|
+| İŞKUR e-Şube | 42 | 2026-11-24T23:51:48Z | stale | `publishedAt=null`; son başvuru tarihleri kaynak snapshot'ından |
+| Anadolu Üniversitesi | 1 | 2026-11-25T00:23:08Z | stale | deadline 30.11.2026 |
+| Düzce Üniversitesi | 1 | 2026-11-25T00:23:08Z | stale | deadline 07.12.2026 |
+| Marmara Üniversitesi | 1 | 2026-11-25T00:23:08Z | stale | deadline 08.12.2026 |
+| Tarsus Üniversitesi | 1 | 2026-11-25T00:23:08Z | stale | deadline 07.12.2026 |
+| Zafer Kalkınma Ajansı | 1 | 2026-11-25T00:23:08Z | stale | deadline 14.12.2026 |
+| **Toplam last-good** | **47** | — | **6 kaynak stale** | **42+1+1+1+1+1=47** |
+
+Bu nedenle bugünkü doğru gösterim **0 fresh ölçülmüş kamu kaynağı / 0 fresh ilan** değil; **6 kaynak stale / 47 kayıtlı last-good açık ilan** şeklindedir. “0 fresh” sıfır ilan anlamına gelmez. Eski 47 kayıt son iyi veri olarak tutulur, bugünkü canlı ilan etiketiyle gösterilmez. Kamu ilanları 0 diye raporlanmaz.
+
+Önceki proje-geneli manuel envanter **12 kaynak /55 açık kart** olarak kaydedilmişti; ancak bu 12 kaynağın tümü için bugüne ait source-level `lastGoodAt` kanıtı alınmadı. Dolayısıyla 12/55 de bugünün fresh sayımı değildir; son kayıtlı envanterdir. **12/55 ile feed alt kümesi 6/47 toplanmaz.** Her iki eşik değerlendirmesi de ilan sayısı 100'ün altında kaldığı için RED.
+
+### 26 Kasım'da yeniden bulunan resmî ilan adayları
+
+Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve Worker entegrasyonu yapılmadığı için mevcut 12/55 veya 6/47 sayımlarına eklenmedi. Kontenjanı ayrı ilan kartı gibi çoğaltma.
+
+1. **Sahil Güvenlik Komutanlığı — Kamu / KPSS.** 13.11.2026 tarihli Resmî Gazete ilanı; 10 açıktan devlet memuru, tek ilan kartı. Başvuru 16–27.11.2026; son tarih 27.11.2026 (ilan saat belirtmiyor). KPSS 2026: uzman/psikolog/İngilizce öğretmeni/tedarik uzmanı için P3, video montaj teknikeri ve muhasebeci için P93; asgari puan kılavuz tablosunda. Yaş ve 657 şartları var. Başvuru e-Devlet üzerinden: https://www.turkiye.gov.tr/sahil-guvenlik-komutanligi-is-basvurusu ; resmî ilan PDF'si: https://www.resmigazete.gov.tr/eskiler/2026/11/20261113.pdf (s.84). Önceki C1-1 probe satırındaki Sahil Güvenlik 0, tarama tasarım gereği yapılmadığı için 0'dı; “ilan yok” anlamına gelmiyordu. Yeni tek kart adayıdır.
+2. **Manisa Celal Bayar Üniversitesi — Kamu / KPSS'siz akademik personel.** 25.11.2026 Resmî Gazete ilanı, tek duyuru kartı; 13 öğretim üyesi +9 öğretim görevlisi/araştırma görevlisi = 22 kadro satırı. Elektronik başvuru sonu 09.12.2026 mesai bitimi; gerekli imzalı dosyaların teslim sonu 16.12.2026 mesai bitimi. Bu iki tarih ayrı süreç adımlarıdır; ilan kartında başvuru sonu 09.12.2026 kalır. ALES/dil/akademik derece ve kadroya özgü koşullar aranır. Resmî ilan PDF: https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-10.pdf ; başvuru: https://aed-basvuru.mcbu.edu.tr/ . 22 kadro, 22 ilan kartı değildir.
+3. **Çağ Üniversitesi — özel üniversite / KPSS'siz.** 25.11.2026 Resmî Gazete ilanı; Uluslararası Finans ve Bankacılık ile Uluslararası Ticaret ve Lojistik alanlarında 2 araştırma görevlisi kadrosu, tek duyuru kartı. `publishedAt=2026-11-25`; `deadline=2026-12-09`. ALES EA 70, yabancı dil 85 ve ilgili alanda tezli yüksek lisans mezunu/öğrencisi olma şartı. İnternet başvurusu kabul edilmez; şahsen/posta ile Çağ Üniversitesi İnsan Kaynakları Direktörlüğü'ne başvuru. Resmî PDF: https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261125-4-9.pdf . Kamu sayımına girmez; özel üniversite kaydı ayrı tutulur.
+
+### Resmî Gazete 25.11.2026 taraması — yanlış pozitif
+- 25 Kasım 33441 sayısının Çeşitli İlanlar sayfasında CTE Genel Müdürlüğü başlığına rastlandı; bireysel PDF `20261125-4-2.pdf` bir personel ilanı değil, ihale yasaklama kararıdır. İlan sayımına eklenmedi.
+- Aynı sayfada listelenen Yapı İşleri, Yerel Yönetimler, MEB, MSB ve Kültür Bakanlığı başlıklarının tüm PDF'leri bu ölçümde tek tek içerik/başvuru şartı düzeyinde doğrulanamadı; sırf sayfa listesinde adları geçtiği için personel alımı kabul edilmez.
+- PDF metinleri web arama/okuma katmanından çıkarıldı; screenshot çağrıları cache miss verdi. Bu nedenle görsel PDF incelemesi tamamlanmış sayılmaz; metin kaynağının resmî linki korunur.
+
+### Tarih/veri yazımı
+- Sahil Güvenlik `publishedAt=2026-11-13`; MCBÜ `publishedAt=2026-11-25`; Çağ Üniversitesi `publishedAt=2026-11-25`.
+- `collectedAt` yalnız gerçek ingest çalışması anında yazılabilir; `firstSeenAt` ilk başarılı entegrasyon zamanı gelmeden doldurulmaz. Bu üç aday için feed ingest henüz yapılmadığından `collectedAt=null`, `firstSeenAt=null` kalmalıdır.
+- Tarih kartları: deadline geçen Sayıştay ve benzeri ilanlar güncel listeden çıkar; sınav/ön değerlendirme tarihi deadline alanına yazılmaz. Sahil Güvenlik 27.11.2026 son başvuru tarihidir; resmi metinde saat yok.
+
+**KARAR:** C1 RED. Feed'in son iyi kamu verisi 6 kaynak /47 karttır; 26.11.2026 itibarıyla bu altı kaynağın tümü 12 saat freshness sınırını aştığı için stale durumundadır. Fresh ilan sayısı bu kanıt setinde 0; bu, kamu ilanı olmadığı anlamına gelmez. Yeni 2 kamu +1 özel aday kartı bulundu fakat dedup/Worker ingest yapılmadı. Production authenticated GET/D1 kanıtı ve 10/100 eşiği yok.
