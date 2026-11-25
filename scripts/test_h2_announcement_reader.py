@@ -446,7 +446,7 @@ class H2ReaderTests(unittest.TestCase):
     def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(15,len(cfg["sources"]))
+        self.assertEqual(17,len(cfg["sources"]))
 
 
     def test_source_categories_match_h1_allowed_enum(self):
