@@ -94,3 +94,13 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 
 ## Genel karar
 **RED / genel kabul yok.** Altı QA iş akışı tanımlandı; beşinde somut kanıt toplandı. Emülatör, izin kullanımı, C1 100 ilan ve Worker/D1 kapıları açık. Kod değişikliği sadece açık kabul kapıları kapandıktan sonra yapılır.
+
+
+### QA-09 — H1 eski PR çakışma denetimi
+**Sorumluluk:** H1 haber claim/evidence PR dallarının mükerrer iş ve eski mimari taşıyıp taşımadığını kontrol etme.
+- Durum: TAMAMLANDI — PR #69 MERGE EDİLMEMELİ.
+- PR #69: 8 dosya / +1.572 / -35; PR #71: 10 dosya / +2.578 / -26.
+- Ortak 6 dosya: build.gradle.kts, CareerActivity.kt, CareerNewsVerification.kt, CareerNewsVerificationStore.kt, CareerNewsVerificationTest.kt, CareerNewsVerificationStoreTest.kt.
+- #69 yalnız SharedPreferences store + eski UI/links helper; #71 SQLite store, ayrı Activity, append-only review history, publishedAt formu ve 4 instrumentation testi getiriyor. #71 Activity Custom Tabs + HTTPS doğrulamasını zaten yapıyor.
+- Karar: #69 taslak kalacak; #71 kabul edilip birleşirse #69 superseded olarak kapatılabilir. #69'dan bağımsız kod cherry-pick edilmiyor.
+- Kanıt: [PR #69](https://github.com/aries919-bot/Jarvis/pull/69), [PR #71](https://github.com/aries919-bot/Jarvis/pull/71), rapor: [H1 PR çakışma incelemesi](H1-PR69-71-Cakisma-QA-2026-11-25.md).
