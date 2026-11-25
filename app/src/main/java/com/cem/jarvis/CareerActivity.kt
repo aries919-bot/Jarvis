@@ -20,6 +20,8 @@ import java.text.SimpleDateFormat
 
 class CareerActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
+    private val newsVerificationStore by lazy { CareerNewsVerificationStore(prefs) }
+    private val newsVerificationUi by lazy { CareerNewsVerificationUi(this, newsVerificationStore) }
     private lateinit var cv: EditText
     private lateinit var role: EditText
     private lateinit var place: EditText
@@ -250,8 +252,7 @@ class CareerActivity : Activity() {
         cadreRadarCard.addView(primaryButton("Kadro radarını ve unvan rehberini aç") { showCadreRadar() },
             params(-1, dp(48), 0, 8, 0, 5))
         cadreRadarCard.addView(button("ÖSYM tercih takvimini aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
-                .onFailure { toast("ÖSYM sayfası açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.OFFICIAL_CALENDAR_URL) { toast("ÖSYM sayfası açılamadı.") }
         }, params(-1, dp(44), 0, 0, 0, 0))
         pageContent.addView(cadreRadarCard, params(-1, -2, 0, 0, 0, 14))
 
@@ -1111,8 +1112,7 @@ class CareerActivity : Activity() {
             11f, false, accentBlue
         ))
         card.addView(primaryButton("↗  İlanın tam sayfasını aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.url))) }
-                .onFailure { toast("Bağlantı açılamadı.") }
+            CareerExternalLinks.open(this, hit.url) { toast("Bağlantı açılamadı.") }
         }, params(-1, dp(48), 0, 10, 0, 5))
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         actions.addView(button("＋  Kaydet") { saveJob(hit) }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
@@ -1325,6 +1325,9 @@ class CareerActivity : Activity() {
                     hit
                 )
             }
+            val collectedAt = System.currentTimeMillis()
+            val previousFirstSeenAt = if (index >= 0) items[index].optLong("firstSeenAt", 0L) else 0L
+            val firstSeenAt = previousFirstSeenAt.takeIf { it > 0L } ?: collectedAt
             val item = JSONObject()
                 .put("title", hit.title)
                 .put("url", hit.url)
@@ -1333,13 +1336,15 @@ class CareerActivity : Activity() {
                 .put("contentLabel", classification.label)
                 .put("contentReason", classification.reason)
                 .put("contentConfidence", classification.confidence)
-                .put("lastSeenAt", System.currentTimeMillis())
+                .put("lastSeenAt", collectedAt)
+                .put("firstSeenAt", firstSeenAt)
             if (index < 0) items.add(item)
             else if (hit.snippet.length > items[index].optString("snippet").length) {
                 item.put("createdAt", items[index].optLong("createdAt", 0L))
                 items[index] = item
             } else {
-                items[index].put("lastSeenAt", System.currentTimeMillis())
+                items[index].put("lastSeenAt", collectedAt)
+                if (!items[index].has("firstSeenAt")) items[index].put("firstSeenAt", collectedAt)
             }
         }
         val output = JSONArray()
@@ -1593,10 +1598,16 @@ class CareerActivity : Activity() {
                     10f, false, muted
                 ))
             }
+            card.addView(newsVerificationUi.createActionButton(
+                headline = title,
+                publisher = if (source == "Bilinmeyen kaynak") host else source,
+                sourceUrl = url,
+                collectedAtMillis = seenAt,
+                firstSeenAtMillis = item.optLong("firstSeenAt", 0L)
+            ), params(-1, dp(48), 0, 7, 0, 0))
             card.addView(primaryButton("Kaynağın asıl sayfasını aç  ↗") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-                    .onFailure { toast("Kaynak açılamadı.") }
-            }, params(-1, dp(46), 0, 8, 0, 0))
+                CareerExternalLinks.open(this, url) { toast("Kaynak açılamadı.") }
+            }, params(-1, dp(46), 0, 4, 0, 0))
             parent.addView(card, params(-1, -2, 0, 2, 0, 8))
         }
     }
@@ -1659,8 +1670,7 @@ class CareerActivity : Activity() {
             }
             val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(button("Duyuruyu aç") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(event.url))) }
-                    .onFailure { toast("Kaynak açılamadı.") }
+                CareerExternalLinks.open(this, event.url) { toast("Kaynak açılamadı.") }
             }, LinearLayout.LayoutParams(0, dp(48), 1f))
             actions.addView(button("Başvurulara kaydet") {
                 saveJob(Net.Hit(event.title, event.url, event.snippet))
@@ -1817,8 +1827,7 @@ class CareerActivity : Activity() {
         }.toTypedArray()
         AlertDialog.Builder(this).setTitle("Takip edilen kaynaklar")
             .setItems(names) { _, which ->
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(sources[which].url))) }
-                    .onFailure { toast("Kaynak açılamadı.") }
+                CareerExternalLinks.open(this, sources[which].url) { toast("Kaynak açılamadı.") }
             }.setNegativeButton("Kapat", null).show()
     }
 
@@ -1846,19 +1855,16 @@ class CareerActivity : Activity() {
         ))
         if (hasP94Guide) {
             status.addView(button("Bulunan resmî P94 · TABLO-1 belgesini aç") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP94Url))) }
-                    .onFailure { toast("P94 kılavuzu açılamadı.") }
+                CareerExternalLinks.open(this, detectedP94Url) { toast("P94 kılavuzu açılamadı.") }
             }, params(-1, dp(44), 0, 6, 0, 0))
         }
         if (hasP93Guide) {
             status.addView(button("Bulunan resmî P93 · TABLO-2 belgesini aç") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(detectedP93Url))) }
-                    .onFailure { toast("P93 kılavuzu açılamadı.") }
+                CareerExternalLinks.open(this, detectedP93Url) { toast("P93 kılavuzu açılamadı.") }
             }, params(-1, dp(44), 0, 6, 0, 0))
         }
         status.addView(button("ÖSYM takvimini aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.OFFICIAL_CALENDAR_URL))) }
-                .onFailure { toast("ÖSYM sayfası açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.OFFICIAL_CALENDAR_URL) { toast("ÖSYM sayfası açılamadı.") }
         }, params(-1, dp(44), 0, 6, 0, 0))
         content.addView(status, params(-1, -2, 0, 0, 0, 12))
 
@@ -1936,12 +1942,10 @@ class CareerActivity : Activity() {
             11f, true, warningColor
         ))
         routes.addView(button("Adalet Bakanlığı duyurusunu aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.ADALET_2026_NOTICE_URL))) }
-                .onFailure { toast("Adalet Bakanlığı duyurusu açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.ADALET_2026_NOTICE_URL) { toast("Adalet Bakanlığı duyurusu açılamadı.") }
         }, params(-1, dp(44), 0, 6, 0, 0))
         routes.addView(button("İŞKUR açık iş sistemini aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.ISKUR_URL))) }
-                .onFailure { toast("İŞKUR sayfası açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.ISKUR_URL) { toast("İŞKUR sayfası açılamadı.") }
         }, params(-1, dp(44), 0, 5, 0, 0))
         content.addView(routes, params(-1, -2, 0, 10, 0, 12))
 
@@ -1949,20 +1953,16 @@ class CareerActivity : Activity() {
         historicScore.addView(label("Geçmiş puan örneği · tahmin değildir", 13f, true, primaryText))
         historicScore.addView(label(CareerCadreRadar.P94_ELAZIG_TECHNICIAN_NOTE, 11f, false, muted))
         historicScore.addView(button("2026/1 ortaöğretim kadro tablosunu aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_TABLE_URL))) }
-                .onFailure { toast("ÖSYM tablosu açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.KPSS_2026_1_MIDDLE_TABLE_URL) { toast("ÖSYM tablosu açılamadı.") }
         }, params(-1, dp(44), 0, 6, 0, 0))
         historicScore.addView(button("2026/1 ön lisans kadro tablosunu aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_TABLE_URL))) }
-                .onFailure { toast("ÖSYM tablosu açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.KPSS_2026_1_ASSOCIATE_TABLE_URL) { toast("ÖSYM tablosu açılamadı.") }
         }, params(-1, dp(44), 0, 5, 0, 0))
         historicScore.addView(button("P94 ortaöğretim nitelik kodlarını aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL))) }
-                .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.KPSS_2026_1_MIDDLE_QUALIFICATIONS_URL) { toast("ÖSYM nitelik kodları açılamadı.") }
         }, params(-1, dp(44), 0, 5, 0, 0))
         historicScore.addView(button("P93 ön lisans program kodlarını aç") {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CareerCadreRadar.KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL))) }
-                .onFailure { toast("ÖSYM nitelik kodları açılamadı.") }
+            CareerExternalLinks.open(this, CareerCadreRadar.KPSS_2026_1_ASSOCIATE_QUALIFICATIONS_URL) { toast("ÖSYM nitelik kodları açılamadı.") }
         }, params(-1, dp(44), 0, 5, 0, 0))
         content.addView(historicScore, params(-1, -2, 0, 0, 0, 12))
 
@@ -2627,8 +2627,7 @@ class CareerActivity : Activity() {
                 chooseJobStatus(url, status)
             }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(3), 0) })
             actions.addView(button("İlanı aç") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-                    .onFailure { toast("İlan bağlantısı açılamadı.") }
+                CareerExternalLinks.open(this, url) { toast("İlan bağlantısı açılamadı.") }
             }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(3), 0, dp(3), 0) })
             actions.addView(button("Sil") { confirmDeleteJob(url, title) },
                 LinearLayout.LayoutParams(0, dp(46), 0.6f).apply { setMargins(dp(3), 0, 0, 0) })
@@ -2686,8 +2685,7 @@ class CareerActivity : Activity() {
             }
             val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(button("İlanı aç") {
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-                    .onFailure { toast("İlan bağlantısı açılamadı.") }
+                CareerExternalLinks.open(this, url) { toast("İlan bağlantısı açılamadı.") }
             }, LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(0, 0, dp(4), 0) })
             actions.addView(button("Durumu değiştir") {
                 chooseJobStatus(url, status)
