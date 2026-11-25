@@ -247,6 +247,9 @@ data class CareerNewsVerificationRecord(
             if (claim.text.isBlank() || claim.text.length > 1500 || claim.text.contains('\n')) {
                 errors += "İddia tek ve okunabilir bir ifade olmalı."
             }
+            if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(claim.text) != claim.text) {
+                errors += "İddia metni kişisel veri işareti içeriyor; kaydetmeden önce maskele."
+            }
             if (claim.reviewNote.length > 1000) errors += "İnsan inceleme gerekçesi çok uzun."
             if (claim.reviewDecision == null && claim.reviewedAt != null) {
                 errors += "İnsan inceleme zamanı karar olmadan kaydedilemez."
@@ -293,6 +296,9 @@ data class CareerNewsVerificationRecord(
             if (correction.previousText.isBlank() || correction.revisedText.isBlank()) {
                 errors += "Düzeltme öncesi ve sonrası iddia metni gerekli."
             }
+            if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(correction.previousText) != correction.previousText ||
+                CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(correction.revisedText) != correction.revisedText
+            ) errors += "Düzeltme geçmişindeki iddia kişisel veri işareti içeriyor."
             if (correction.previousEvidence.any { evidence ->
                     evidence.id.isBlank() || evidence.publisher.isBlank() ||
                         CareerNewsVerificationPolicy.validateHttpsUrl(evidence.sourceUrl) != null ||
