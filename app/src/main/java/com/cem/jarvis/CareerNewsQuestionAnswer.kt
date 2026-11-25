@@ -191,7 +191,7 @@ object CareerNewsQuestionAnswer {
         }
         val sources = (listOf(originalSource(record)) +
             record.claims.flatMap { it.evidence }.mapNotNull { evidenceSource(it) })
-            .distinctBy { it.url }
+            .distinctBy { Triple(it.url, it.label, it.excerpt) }
         return answered("Haberin kayıtlı genel durumu: $overall.\n" + lines.joinToString("\n"), sources)
     }
 

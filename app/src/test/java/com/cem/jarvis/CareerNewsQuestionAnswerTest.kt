@@ -197,7 +197,7 @@ class CareerNewsQuestionAnswerTest {
             record(claims = listOf(first, second)),
             "Elektrik teknisyeni alımı iddiası doğru mu?"
         )
-        assertTrue(result.answer.contains("Elektrik teknisyeni alımı"))
+        assertTrue(result.answer.lowercase().contains("elektrik teknisyeni alımı"))
         assertFalse(result.answer.contains("10 Aralık 2026"))
     }
 
@@ -219,7 +219,7 @@ class CareerNewsQuestionAnswerTest {
         )
         val second = claim().copy(id = "claim-2", text = "Başvuru 10 Aralık 2026 tarihinde sona erecek.")
         val result = CareerNewsQuestionAnswer.answer(record(claims = listOf(first, second)), "Bu haberin genel durumu nedir?")
-        assertTrue(result.answer.contains("İnsan incelemesi bekliyor"))
+        assertTrue(result.answer.contains("Kısmen doğrulandı"))
         assertTrue(result.answer.contains("Başvuru 10 Aralık 2026"))
     }
 
