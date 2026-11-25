@@ -25,7 +25,7 @@ Mevcut İş & Kariyer modülünde NOT_C1 ihlali olan LinkedIn/Indeed kaynak güv
 - GitHub compare sonucu: 4 dosya; CareerMonitor 1 ekleme/9 silme; Ai.kt 4 ekleme/3 silme; yeni test 18 ekleme; mevcut test 1 ekleme/1 silme. Toplam 24 ekleme /13 silme.
 - CareerMonitor son dosya: 2.142 satır. Kod içi taramada Indeed/LinkedIn alan adı kalmadı. .edu.tr yalnız akademik statüyü sınıflandırmak için kalır; genel trusted domain olarak kullanılmaz.
 - Ai.kt son dosya: 736 satır. Kod içi taramada Mozilla/5.0 veya Chrome tarayıcı UA kalmadı; AriesKaynakTara UA 4 noktada kullanılıyor.
-- Yeni test dosyası 22 satır, 1 test metodu; LinkedIn/Indeed ile izinli/izinsiz .edu.tr alanlarını doğruluyor.
+- Yeni test dosyası 23 satır, 1 test metodu; LinkedIn/Indeed ile izinli/izinsiz .edu.tr alanlarını doğruluyor. Diff incelemesinde assertTrue import eksiği yakalandı ve CI tamamlanmadan ayrı commit ile düzeltildi.
 - CI: HEAD için Actions workflow run listesi boş; birleşik commit status listesi boş. Bu nedenle testler ÇALIŞTIRILMADI / KANIT YOK, PASS denemez.
 
 ## Bilinçli kapsam sınırı / eksikler
