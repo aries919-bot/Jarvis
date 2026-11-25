@@ -68,7 +68,7 @@ class CareerNewsQuestionAnswerTest {
         val firstSeen = CareerNewsQuestionAnswer.answer(record(), "İlk görülme zamanı nedir?")
         assertTrue(collected.answer.contains("2026-11-25T14:00:00Z"))
         assertTrue(firstSeen.answer.contains("2026-11-25T13:55:00Z"))
-        assertFalse(firstSeen.answer.contains("yayın tarihi"))
+        assertTrue(firstSeen.answer.contains("yayın tarihi yerine kullanılamaz"))
     }
 
     @Test
@@ -179,6 +179,48 @@ class CareerNewsQuestionAnswerTest {
         val result = CareerNewsQuestionAnswer.answer(record(claims = listOf(first, second)), "Elektrik teknisyeni alımı iddiası nedir?")
         assertTrue(result.answer.contains("12 elektrik teknisyeni"))
         assertFalse(result.answer.contains("10 Aralık"))
+    }
+
+    @Test
+    fun targetedVerdictOnMultipleClaimsDoesNotReturnWholeStoryVerdict() {
+        val first = claim(
+            evidence = listOf(evidence()),
+            review = CareerHumanReviewDecision.CONFIRM,
+            reviewedAt = reviewTime,
+            note = "Elektrik alım iddiası kaynakla karşılaştırıldı."
+        )
+        val second = claim().copy(
+            id = "claim-2",
+            text = "Başvuru 10 Aralık 2026 tarihinde sona erecek."
+        )
+        val result = CareerNewsQuestionAnswer.answer(
+            record(claims = listOf(first, second)),
+            "Elektrik teknisyeni alımı iddiası doğru mu?"
+        )
+        assertTrue(result.answer.contains("Elektrik teknisyeni alımı"))
+        assertFalse(result.answer.contains("10 Aralık 2026"))
+    }
+
+    @Test
+    fun ambiguousVerdictOnMultipleClaimsAsksWhichClaim() {
+        val first = claim().copy(text = "DSİ 12 elektrik teknisyeni alacak.")
+        val second = claim().copy(id = "claim-2", text = "Başvuru 10 Aralık 2026 tarihinde sona erecek.")
+        val result = CareerNewsQuestionAnswer.answer(record(claims = listOf(first, second)), "Bu iddia doğru mu?")
+        assertEquals(CareerNewsQAStatus.NEEDS_CLARIFICATION, result.status)
+    }
+
+    @Test
+    fun broadWholeNewsQuestionStillSummarizesAllClaims() {
+        val first = claim(
+            evidence = listOf(evidence()),
+            review = CareerHumanReviewDecision.CONFIRM,
+            reviewedAt = reviewTime,
+            note = "İlk iddia doğrulandı."
+        )
+        val second = claim().copy(id = "claim-2", text = "Başvuru 10 Aralık 2026 tarihinde sona erecek.")
+        val result = CareerNewsQuestionAnswer.answer(record(claims = listOf(first, second)), "Bu haberin genel durumu nedir?")
+        assertTrue(result.answer.contains("İnsan incelemesi bekliyor"))
+        assertTrue(result.answer.contains("Başvuru 10 Aralık 2026"))
     }
 
     @Test

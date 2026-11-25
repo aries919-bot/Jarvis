@@ -76,24 +76,37 @@ object CareerNewsQuestionAnswer {
             return correctionAnswer(record, null)
         }
 
-        if (has(normalized, "asıl kaynak", "asil kaynak", "haberi kim yayımladı", "haberi kim yayinladi", "yayıncı kim", "yayinci kim")) {
+        if (has(normalized, "asıl kaynak", "asıl kaynağı", "asil kaynak", "asil kaynagi", "haberi kim yayımladı", "haberi kim yayinladi", "yayıncı kim", "yayinci kim")) {
             return answered(
                 "Haber kaydındaki yayıncı: ${record.publisher}. Asıl bağlantı: ${record.originalSourceUrl}",
                 listOf(originalSource(record))
             )
         }
 
-        if (has(normalized, "haber durumu", "doğru mu", "dogru mu", "gerçek mi", "gercek mi", "doğrulandı mı", "dogrulandi mi", "iddia sonucu", "karar ne")) {
-            return verdictAnswer(record)
-        }
+        val asksWholeNewsStatus = has(
+            normalized,
+            "haber durumu", "bu haberin genel durumu", "bu haber genel olarak",
+            "bu haber doğru mu", "bu haber dogru mu", "bu haber doğrulandı mı",
+            "bu haber dogrulandi mi", "tüm iddialar", "tum iddialar"
+        ) || (record.claims.size <= 1 && has(
+            normalized, "doğru mu", "dogru mu", "gerçek mi", "gercek mi",
+            "doğrulandı mı", "dogrulandi mi", "iddia sonucu", "karar ne"
+        ))
+        if (asksWholeNewsStatus) return verdictAnswer(record)
 
-        if (has(normalized, "kanıt", "kanit", "kaynaklar", "hangi kaynak", "dayanak")) {
-            return evidenceAnswer(record, null)
-        }
+        val asksAllEvidence = has(
+            normalized, "tüm kanıtlar", "tum kanitlar", "bütün kanıtlar",
+            "butun kanitlar", "tüm kaynaklar", "tum kaynaklar"
+        ) || (record.claims.size <= 1 && has(normalized, "kanıt", "kanit", "kaynaklar", "hangi kaynak", "dayanak"))
+        if (asksAllEvidence) return evidenceAnswer(record, null)
 
-        if (has(normalized, "kim doğruladı", "kim dogruladi", "kim inceledi", "insan incelemesi", "inceleyen kişi")) {
-            return humanReviewAnswer(record, null)
-        }
+        val asksAllReviews = has(
+            normalized, "tüm insan incelemeleri", "tum insan incelemeleri",
+            "tüm inceleme geçmişi", "tum inceleme gecmisi"
+        ) || (record.claims.size <= 1 && has(
+            normalized, "kim doğruladı", "kim dogruladi", "kim inceledi", "insan incelemesi", "inceleyen kişi"
+        ))
+        if (asksAllReviews) return humanReviewAnswer(record, null)
 
         val selection = selectClaim(record, tokens(normalized))
         return when (selection) {
@@ -184,13 +197,13 @@ object CareerNewsQuestionAnswer {
 
     private fun claimVerdictText(claim: CareerNewsClaim): String {
         val status = when (claim.verdict()) {
-            CareerClaimVerdict.NEEDS_EVIDENCE -> "Kanıt yok; doğrulama yapılamaz."
-            CareerClaimVerdict.CONTEXT_MISSING -> "Yalnız bağlam/ikincil kanıt var; birincil kaynak kanıtı bulunmuyor."
-            CareerClaimVerdict.SUPPORTS_PENDING_REVIEW -> "Birincil kaynak destekliyor; açık insan onayı bekleniyor."
-            CareerClaimVerdict.CONTRADICTION_PENDING_REVIEW -> "Birincil kaynak çelişiyor; insan incelemesi bekleniyor."
-            CareerClaimVerdict.CONFLICTING_EVIDENCE -> "Destekleyen ve çelişen kanıtlar birlikte mevcut."
-            CareerClaimVerdict.VERIFIED -> "Birincil kanıt ve açık insan onayı mevcut: doğrulandı."
-            CareerClaimVerdict.REFUTED -> "Birincil karşıt kanıt ve açık insan kararı mevcut: çürütüldü."
+            CareerClaimVerdict.NEEDS_EVIDENCE -> "Durum: Kanıt bekliyor. Kanıt yok; doğrulama yapılamaz."
+            CareerClaimVerdict.CONTEXT_MISSING -> "Durum: Bağlam eksik. Yalnız bağlam/ikincil kanıt var; birincil kaynak kanıtı bulunmuyor."
+            CareerClaimVerdict.SUPPORTS_PENDING_REVIEW -> "Durum: İnsan incelemesi bekliyor. Birincil kaynak destekliyor; açık insan onayı bekleniyor."
+            CareerClaimVerdict.CONTRADICTION_PENDING_REVIEW -> "Durum: İnsan incelemesi bekliyor. Birincil kaynak çelişiyor; insan kararı bekleniyor."
+            CareerClaimVerdict.CONFLICTING_EVIDENCE -> "Durum: Çelişkili kanıt. Destekleyen ve çelişen kanıtlar birlikte mevcut."
+            CareerClaimVerdict.VERIFIED -> "Durum: Doğrulandı. Birincil kanıt ve açık insan onayı mevcut."
+            CareerClaimVerdict.REFUTED -> "Durum: Çürütüldü. Birincil karşıt kanıt ve açık insan kararı mevcut."
         }
         val review = claim.reviewDecision?.let { decision ->
             " İnsan kararı: ${reviewDecisionText(decision)} (${claim.reviewedAt ?: "zaman yok"}). Not: ${claim.reviewNote}"
@@ -213,7 +226,7 @@ object CareerNewsQuestionAnswer {
             current.evidence.map { current.text to it }
         }
         if (evidence.isEmpty()) {
-            return answered("Seçilen iddia için henüz kanıt kaydedilmedi. Birincil kaynak veya güvenilir bağımsız yayın eklenmeli.")
+            return answered("Seçilen iddia için henüz kanıt kaydedilmedi. Birincil kaynak veya güvenilir bağımsız yayın eklenmeli.", listOf(originalSource(record)))
         }
         val lines = evidence.map { (claimText, item) ->
             "İddia: $claimText\n${item.publisher} · ${sourceTypeText(item.sourceType)} · ${stanceText(item.stance)}\n" +
@@ -227,7 +240,7 @@ object CareerNewsQuestionAnswer {
         claim: CareerNewsClaim?
     ): CareerNewsQAAnswer {
         val claims = claim?.let { listOf(it) } ?: record.claims
-        if (claims.isEmpty()) return answered("Henüz insan incelemesi yapılabilecek bir iddia kaydedilmedi.")
+        if (claims.isEmpty()) return answered("Henüz insan incelemesi yapılabilecek bir iddia kaydedilmedi.", listOf(originalSource(record)))
         val lines = claims.map { item ->
             val current = item.reviewDecision?.let {
                 "Güncel karar: ${reviewDecisionText(it)} · ${item.reviewedAt ?: "zaman yok"} · ${item.reviewNote}"
@@ -251,7 +264,7 @@ object CareerNewsQuestionAnswer {
         val corrections = record.correctionHistory
             .filter { claimId == null || it.claimId == claimId }
             .takeLast(20)
-        if (corrections.isEmpty()) return answered("Bu haber/iddia için kayıtlı bir düzeltme geçmişi yok.")
+        if (corrections.isEmpty()) return answered("Bu haber/iddia için kayıtlı bir düzeltme geçmişi yok.", listOf(originalSource(record)))
         val lines = corrections.map {
             "Önce: ${it.previousText}\nSonra: ${it.revisedText}\nZaman: ${it.correctedAt}\nAçıklama: ${it.explanation}"
         }
@@ -335,7 +348,7 @@ object CareerNewsQuestionAnswer {
     private fun answered(
         value: String,
         sources: List<CareerNewsQASource> = emptyList()
-    ) = CareerNewsQAAnswer(CareerNewsQAStatus.ANSWERED, value, sources.distinctBy { it.url })
+    ) = CareerNewsQAAnswer(CareerNewsQAStatus.ANSWERED, value, sources.distinctBy { Triple(it.url, it.label, it.excerpt) })
 
     private fun abstain(value: String) =
         CareerNewsQAAnswer(CareerNewsQAStatus.ABSTAINED, value)
