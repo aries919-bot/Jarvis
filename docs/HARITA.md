@@ -717,3 +717,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Kamu sayımı hâlâ 12 kaynak /55 doğrulanmış ilan. Yeni araştırmadan feed'e eklenen 0; exact duplicate ve Worker entegrasyonu yapılmadı.
 - Araştırma: `gorevler/C1-RESMI-ILAN-ARASTIRMASI-2026-11-25.md`.
 - **KARAR: C1 RED; 45 ilan eksiği sürüyor.** Kaynak keşfi ilerledi, sayım henüz değişmedi.
+
+## 26) QA-07 diff/secret ve QA-08 CI hız denetimi — 25.11.2026
+- PR #71 exact diff: 10 dosya / +2.578 / -26. Secret pattern 0; LinkedIn/Indeed URL 0; fake Mozilla/Chrome UA 0. publishedAt sabitleri yalnız iki tarih doğrulama testinde.
+- PR #70 exact diff: 4 dosya / +75 / -20. Secret pattern 0; fake browser UA 0; AriesKaynakTara/1.0 eklenmiş. LinkedIn/Indeed dizeleri yalnız yasak kaynakları reddeden test assertion'larında.
+- CI optimizasyon bulgusu: android.yml testDebugUnitTest ve assembleDebug için iki ayrı Gradle çağrısı çalıştırıyor; sonraki ayrı PR'da tek Gradle çağrısına birleştirme değerlendirilecek.
+- H1 emülatör job timeout 35 dk; run #45679523114 step 5 IN_PROGRESS; log endpoint BlobNotFound. Timeout dolmadan FAIL/STALL denmez.
+- Sonraki workflow PR'ında test report upload if: always() yapılmalı.
+- Ayrıntı: `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
