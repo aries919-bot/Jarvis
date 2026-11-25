@@ -124,7 +124,7 @@ def main() -> int:
                 by_origin[origin] = probe_origin(origin)
             robots = by_origin[origin]
             allowed = None
-            if robots.get("http_status") == 200 and "body" in robots:
+            if robots.get("http_status") == 200 and robots.get("body"):
                 parser = RobotFileParser()
                 parser.set_url(robots["robots_url"])
                 parser.parse(robots["body"].splitlines())
