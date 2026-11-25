@@ -80,6 +80,7 @@ wait_for_android_framework_ready() {
       stable_pid="$(system_server_pid || true)"
       stable_marker="$(latest_system_server_boot_pid || true)"
       if [[ "$stable_pid" == "$pid" && "$stable_marker" == "$pid" ]] && package_manager_ready; then
+        mkdir -p h1-emulator-diagnostics/preflight
         printf '%s\n' "$pid" > h1-emulator-diagnostics/preflight/system-server-pid.txt
         echo "Android framework ready: system_server PID $pid; Package Manager found and responsive."
         return 0
