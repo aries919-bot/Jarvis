@@ -333,3 +333,17 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - H1 Haber QA raporu: gorevler/H1-NEWS-QA-2026-11-25.md; güncel harita: docs/HARITA.md bölüm 37.
 - Cloud Career QA/RAG PR #12: local pure tests 18/18, route tests 7/7; private repo Actions job 0 step runner-start blocker. CI PASS değildir; PR #12 draft/no merge/no deploy.
 - C1 kamu sayımı değişmedi: 12 resmî kaynak /55 doğrulanmış açık ilan /45 eksik. Worker GET/D1 + city dedup RED.
+
+
+### 26.11.2026 — H1 CI false-green ve yeni C1 resmî kaynakları
+- H1 PR #71 son HEAD `8a52e21e3dfb7e5e11d6f5009077f90edce2c09b`: APK run #45699704415 başarılı; emulator run #45699704565 GitHub SUCCESS görünmesine karşın artifact XML yeniden sayımı **4 test /3 failure /0 error /0 skipped**. Hatalar üç UI testte `RootViewWithoutFocusException` (window-focus=false); yalnız SQLite last-good recovery testi geçti.
+- Artifact ID `15063616173`, SHA-256 `da33e7d6084c64f6aabcadb488684ad41210be00f389fcfc266a0b1f43d10470`; logda `BUILD FAILED in 6m 26s`.
+- False-green kök sebep doğrulandı: workflow içindeki pinli ReactiveCircus runner'ın `parseScript` metodu çok satırlı script'i satırlara bölüyor ve her satırı ayrı `sh -c` ile çalıştırıyor. Bu yüzden `set -euo pipefail` sonraki Gradle|tee satırına taşınmıyor; tee'nin 0 çıkış kodu Gradle failure'ını gizliyor. Kaynakta tek satır `bash scripts/run-h1-emulator-tests.sh` ve bağımsız XML gate gerekli. Üç UI focus hatası da ayrıca çözülmeli; testi atlamak yok.
+- PR #71 H1 **ONAY YOK / merge yok**.
+- C1 resmî yeni kaynak adayları: SSB 26 proje bazlı personel ilanı (20.11–21.12.2026; bir ilan kartı, 26 değil); Hazine Kontrolörleri en çok 10 stajyer (23.11–04.12.2026; bir ilan kartı, 10 değil); Bartın 20.11.2026 akademik duyurusu (öğretim görevlisi son başvuru 04.12.2026 23:59; teyit edilen bir pozisyon; öğretim üyesi kadrolarının tamamı henüz sayılmadı). Sayıştay son tarihi 25.11.2026 23:59:59 olduğundan artık süresi geçti.
+- Yeni kaynak adayları exact dedup, sourceId ve city kontrolü yapılmadan Worker'a veya sayıya eklenmedi. SSB/HMB/Bartın duyuruları Kariyer Kapısı kazınmadan, kurum sayfalarından resmî link ile yönlendirme olarak sunulmalı.
+- Güncel C1 envanteri değişmedi: **12 kamu kaynağı /55 doğrulanmış açık ilan /45 ilan eksiği — RED**. C1 Worker'ın exact integrated audit'i ayrı: 26 katalog kaynağı, 17 fresh/9 stale, 47 açık doğrulanmış kart, 114 deadline-unknown özel aday. Bu iki veri katmanı toplanmaz.
+- C1 production authenticated GET/D1 kanıtı yok; Worker publish hâlâ blokeli. PR #11 draft; PR #12 draft ve son CI run #45697424481 FAILURE (job steps=null; PASS değil).
+- Ayrıntılı görev/kanıt: `gorevler/H1-CI-FALSE-GREEN-2026-11-26.md`.
+- CI bağlantıları: https://github.com/aries919-bot/Jarvis/actions/runs/45699704565 ; https://github.com/aries919-bot/Jarvis/actions/runs/45699704415 ; PR https://github.com/aries919-bot/Jarvis/pull/71
+**KARAR:** H1 RED (yanlış yeşil CI, 3/4 UI test fail); C1 RED (12/55, production GET/D1 yok); PR #11/#12/#71 merge/deploy yok.
