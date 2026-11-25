@@ -158,13 +158,29 @@ class CareerNewsVerificationStore(
                     correction.previousEvidence == oldClaim.evidence &&
                     correction.previousReviewDecision == oldClaim.reviewDecision &&
                     correction.previousReviewedAt == oldClaim.reviewedAt &&
-                    correction.previousReviewNote == oldClaim.reviewNote &&
                     correction.previousReviewNote == oldClaim.reviewNote
             }
+            val appendedReviews = updated.reviewHistory.drop(oldClaim.reviewHistory.size)
+            val archivedActiveReview = oldClaim.reviewDecision != null && appendedReviews.any { review ->
+                review.decision == oldClaim.reviewDecision &&
+                    review.reviewedAt == oldClaim.reviewedAt &&
+                    review.note == oldClaim.reviewNote &&
+                    review.evidenceIds == oldClaim.evidence.map { it.id }
+            }
+            val activeReviewChanged = oldClaim.reviewDecision != updated.reviewDecision ||
+                oldClaim.reviewedAt != updated.reviewedAt ||
+                oldClaim.reviewNote != updated.reviewNote
+            val evidenceChanged = oldClaim.evidence != updated.evidence
+
             if (oldClaim.text != updated.text && !hasCorrection) return false
             if (!updated.evidence.containsAll(oldClaim.evidence) && !hasCorrection) return false
-            if (oldClaim.reviewDecision != null && updated.reviewDecision == null &&
-                updated.evidence == oldClaim.evidence && !hasCorrection
+            if (oldClaim.reviewDecision != null && activeReviewChanged &&
+                !hasCorrection && !archivedActiveReview
+            ) return false
+            if (oldClaim.reviewDecision != null && evidenceChanged &&
+                updated.reviewDecision == oldClaim.reviewDecision &&
+                updated.reviewedAt == oldClaim.reviewedAt &&
+                updated.reviewNote == oldClaim.reviewNote
             ) return false
         }
         return true
