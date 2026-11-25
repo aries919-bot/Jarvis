@@ -556,3 +556,21 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Kod yeniden taraması: CareerMonitor production'da Indeed/LinkedIn ve generic edu.tr trust kalıbı 0; Ai.kt'te Mozilla/Chrome UA 0; Aries UA tek sabit + dört kullanım.
 - Exact-head #45658875411 (#692) tüm birim test, APK ve artifact upload adımları SUCCESS; artifact 15044212711.
 - PR #70 açık/taslak; merge/deploy yok. C1 genel gate hâlâ 6/47 RED ve production GET BLOCKED.
+
+### 19.1 PR #70 exact-head CI PASS — 25.11.2026
+- Current tested HEAD `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`.
+- [Android Actions #45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411): SUCCESS. Unit tests, APK build and artifact upload all SUCCESS.
+- Artifact [15044212711](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411/artifacts/15044212711), 14,061,515 bytes; SHA-256 `2a8f2183f474b907ee9345266b75c7a6d483c0982939073b2667f6560ce0b9de`.
+- Static source recount: Indeed/LinkedIn production occurrences 0; Chrome/Mozilla browser-UA 0; Aries source UA 1 literal +4 uses; generic edu.tr trust removed and unlisted academic hosts rejected.
+- PR #70 remains open/draft; no merge/deploy. C1 10/100 and public reporting gates remain RED.
+
+## 20. H1 Haber arşivi entegrasyonu PR #71 — 25.11.2026
+- PR #71: https://github.com/aries919-bot/Jarvis/pull/71, `feat/h1-news-store-ui-20261125` → `kariyer-modulu`; open/draft.
+- Current HEAD `a985d9600da7237bd45b954ca5e82a9c850f1944`; compare 34 commit /8 files /+1725/-25 /0 behind.
+- Adds private claim/evidence screen, isolated SharedPreferences store with last-good, no silent eviction, primary-source allowlist, human review and append-only corrections; old `career_news_items` remains unchanged; unknown publication/first-seen dates remain null.
+- CareerActivity external links switched to Custom Tabs; exact ACTION_VIEW count 0 in that file.
+- Tests: 17 model +6 store =23 @Test.
+- First run #45661731482 failed compile on EditText.singleLine and escaped string interpolation. Both were fixed in HEAD `a985d96`.
+- Exact-head Android run [#45662111632](https://github.com/aries919-bot/Jarvis/actions/runs/45662111632): latest status in_progress at last check; no PASS yet.
+- H1 core PR #69 exact-head tests + APK already PASS, but PR #71 is the actual UI/store superset. No merge/deploy; phone/emulator test pending.
+- Detailed task: [H1-news-store-ui-2026-11-25.md](../gorevler/H1-news-store-ui-2026-11-25.md).
