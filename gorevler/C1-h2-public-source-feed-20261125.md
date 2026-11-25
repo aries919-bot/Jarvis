@@ -36,3 +36,22 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 
 ## Karar
 **RED / doğrulama bekliyor.** Bu görev kod ve kaynak yapılandırmasıdır; Worker deploy, Android ekranı, branch silme, force-push veya merge yapmaz.
+
+## İlk exact-head live ölçüm (başarılı, düzeltme öncesi)
+- Run: https://github.com/aries919-bot/Jarvis/actions/runs/45534654328
+- Job: 138938195142 SUCCESS
+- Artifact: 14986776132
+- collectedAt=2026-11-25T02:40:49Z
+- 15 source definition; 9 fresh / 6 stale; 9 kart.
+- Güncel ve açık doğrulanmış: **6 kurum / 83 pozisyon**:
+  - Atatürk Üniversitesi 71 (70 profesör + 1 öğretim üyesi)
+  - Zafer 2
+  - DOKA 1
+  - Anadolu Üniversitesi 1
+  - Düzce Üniversitesi 5
+  - Tarsus Üniversitesi 3
+- YHGM kura deadline 13.10.2025 geçti; güncel sayıya dahil değil.
+- ATK 181 pozisyon başvurusu 30.11.2026'da açılır; henüz güncel açık sayıya dahil değil.
+- BOTAŞ kaynağı TIMEOUT_RETRY_FAILED; yalnız BOTAŞ stale kaldı.
+- Yeni kaynak düzeltmeleri: TGA expectedText `13 (onüç) adet pozisyon`; ORAN `6 (altı) Uzman` / `1 (bir) Destek Personeli`; Mardin başlık metni eşleşmesi sadeleştirildi; Mardin öğretim görevlisi PDF URL'sindeki fazla boşluk düzeltildi; Balıkesir beklenen metni resmî sayfadaki `Son Başvuru Tarihi` metnine çekildi.
+- Bu ölçüm düzeltme öncesidir; yeni exact-head live run bekleniyor. 10 kaynak / 100 pozisyon henüz sağlanmadığından RED.
