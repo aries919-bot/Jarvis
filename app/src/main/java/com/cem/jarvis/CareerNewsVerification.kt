@@ -285,9 +285,14 @@ data class CareerNewsVerificationRecord(
             if (correction.previousText.isBlank() || correction.revisedText.isBlank()) {
                 errors += "Düzeltme öncesi ve sonrası iddia metni gerekli."
             }
-            if (correction.previousEvidence.any {
-                    CareerNewsVerificationPolicy.validateHttpsUrl(it.sourceUrl) != null ||
-                        !CareerNewsVerificationPolicy.isUtcTimestamp(it.checkedAt)
+            if (correction.previousEvidence.any { evidence ->
+                    evidence.id.isBlank() || evidence.publisher.isBlank() ||
+                        CareerNewsVerificationPolicy.validateHttpsUrl(evidence.sourceUrl) != null ||
+                        evidence.excerpt.isBlank() ||
+                        CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(evidence.excerpt) != evidence.excerpt ||
+                        !CareerNewsVerificationPolicy.isUtcTimestamp(evidence.checkedAt) ||
+                        (evidence.publishedAt != null &&
+                            !CareerNewsVerificationPolicy.isUtcTimestamp(evidence.publishedAt))
                 }) errors += "Düzeltme geçmişindeki önceki kanıt geçersiz."
             if (correction.previousReviewDecision == null && correction.previousReviewedAt != null) {
                 errors += "Önceki inceleme zamanı karar olmadan kaydedilemez."
