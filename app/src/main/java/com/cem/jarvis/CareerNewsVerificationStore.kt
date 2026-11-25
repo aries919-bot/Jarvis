@@ -66,7 +66,7 @@ class CareerNewsVerificationStore(
     fun save(record: CareerNewsVerificationRecord): CareerNewsVerificationSaveResult {
         val errors = record.validationErrors()
         if (errors.isNotEmpty()) {
-            return CareerNewsVerificationSaveResult(false, "Kayıt doğrulaması başarısız: \${errors.joinToString(" ")}")
+            return CareerNewsVerificationSaveResult(false, "Kayıt doğrulaması başarısız: " + errors.joinToString(" "))
         }
         if (maxRecords < 1) return CareerNewsVerificationSaveResult(false, "Arşiv kapasitesi kapalı.")
 
