@@ -1,7 +1,7 @@
 # C1 — kaynak/UA politikası / PR #70 / 25.11.2026
 
 ## Kapsam
-PR #70 `fix/c1-source-policy-ua-ci-20261125`, exact HEAD `35ed88ccaed08e14d0164a835e7f9fe49f692d8f`.
+PR #70 `fix/c1-source-policy-ua-ci-20261125`, exact HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`.
 Değişen dosyalar 4: `Ai.kt`, `CareerMonitor.kt`, `CareerForbiddenSourcesPolicyTest.kt`, `CareerSourceCatalogTest.kt`. Diff: +70/-19.
 
 ## İlk CI ve hakem bulgusu
@@ -16,7 +16,8 @@ Değişen dosyalar 4: `Ai.kt`, `CareerMonitor.kt`, `CareerForbiddenSourcesPolicy
 - Kaynak HTTP isteklerinde `AriesKaynakTara/1.0` kullanılıyor; Mozilla/Chrome taklidi yok.
 
 ## Yeni exact-head CI
-- [Android APK/unit #45676772911](https://github.com/aries919-bot/Jarvis/actions/runs/45676772911) — son kontrolde unit test adımı IN_PROGRESS.
+- Ara HEAD #45676772911 FAILED: 98 testten 2 assertion başarısız. Biri İşbul'un trusted olmasını varsayan yeni test, diğeri Memur365'in secondary olmamasını varsayan eski testti; iki beklenti düzeltildi.
+- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) — son kontrolde IN_PROGRESS.
 - Önceki HEAD run #45658875411 yeni değişiklikleri kapsamıyor; yeni HEAD için PASS yerine geçmez.
 
 ## KARAR
