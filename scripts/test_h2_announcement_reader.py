@@ -544,21 +544,23 @@ class H2ReaderTests(unittest.TestCase):
     def test_summary_recounts_unique_institutions_and_verified_positions(self):
         rows=[
             {"sourceId":"ataturk-prof","institution":"Atatürk Üniversitesi","sourceStatus":"fresh",
-             "items":1,"positions":70,"verifiedOpenPositions":70,
+             "items":1,"positions":70,"verifiedOpenListings":1,"verifiedOpenPositions":70,
              "verifiedInstitutions":["Atatürk Üniversitesi"],"error":None},
             {"sourceId":"ataturk-dr","institution":"Atatürk Üniversitesi","sourceStatus":"fresh",
-             "items":1,"positions":1,"verifiedOpenPositions":1,
+             "items":1,"positions":1,"verifiedOpenListings":1,"verifiedOpenPositions":1,
              "verifiedInstitutions":["Atatürk Üniversitesi"],"error":None},
             {"sourceId":"atk-future","institution":"Adli Tıp Kurumu","sourceStatus":"fresh",
-             "items":1,"positions":181,"verifiedOpenPositions":0,
+             "items":1,"positions":181,"verifiedOpenListings":0,"verifiedOpenPositions":0,
              "verifiedInstitutions":[],"error":None},
             {"sourceId":"botas-stale","institution":"BOTAŞ","sourceStatus":"stale",
-             "items":1,"positions":223,"verifiedOpenPositions":0,
+             "items":1,"positions":223,"verifiedOpenListings":0,"verifiedOpenPositions":0,
              "verifiedInstitutions":[],"error":"TIMEOUT"},
         ]
         summary=h2.make_summary(rows,"2026-11-25T02:50:00Z")
         self.assertIn("Güncel açık doğrulanmış kurum: **1**",summary)
-        self.assertIn("Güncel açık doğrulanmış pozisyon: **71**",summary)
+        self.assertIn("Güncel açık doğrulanmış ilan kartı: **2**",summary)
+        self.assertIn("Kartlardaki güncel açık pozisyon toplamı: **71**",summary)
+        self.assertIn("70 kadrolu tek duyuru 70 ilan kartı değildir",summary)
         self.assertIn("botas-stale",summary)
         self.assertIn("stale",summary)
 
