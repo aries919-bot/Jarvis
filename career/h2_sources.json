@@ -171,7 +171,7 @@
       "allowNullPublishedAt": true,
       "deadlineContext": "başvuru tarihleri",
       "expectedText": [
-        "13 pozisyon",
+        "13 (onüç) adet pozisyon",
         "04 Aralık 2026",
         "Türkiye Turizm Tanıtım ve Geliştirme Ajansı"
       ],
@@ -206,8 +206,8 @@
       "publicationMode": "oran-table-date",
       "deadlineContext": "başvuru tarihleri",
       "expectedText": [
-        "6 Uzman Personel",
-        "1 Destek Personeli",
+        "6 (altı) Uzman",
+        "1 (bir) Destek Personeli",
         "03.12.2026"
       ],
       "positionCount": 7,
@@ -380,7 +380,7 @@
       "deadlineContext": "başvuru",
       "expectedText": [
         "Mardin Artuklu Üniversitesi",
-        "ÖĞRETİM ÜYESİ ALIM İLANI",
+        "20.11.2026",
         "04.12.2026"
       ],
       "positionCount": 36,
@@ -409,13 +409,13 @@
       "category": "Kamu",
       "contentType": "job",
       "url": "https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026",
-      "pdfUrl": "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20%20KASIM%20%202026%20%20TAR%C4%B0HL%C4%B0%20%20%C4%B0LAN%20METN%C4%B0%20%C3%96E%20WEBBB.pdf",
+      "pdfUrl": "https://www.artuklu.edu.tr/dosyalar/personel_daire_baskanligi/20%20%20KASIM%20%202026%20%20TAR%C4%B0HL%C4%B0%20%C4%B0LAN%20METN%C4%B0%20%C3%96E%20WEBBB.pdf",
       "pdfUrlPremeasured": true,
       "publicationMode": "added",
       "deadlineContext": "başvuru",
       "expectedText": [
         "Mardin Artuklu Üniversitesi",
-        "ÖĞRETİM ELEMANI ALIM İLANI",
+        "20.11.2026",
         "04.12.2026"
       ],
       "positionCount": 4,
@@ -449,7 +449,7 @@
       "deadlineContext": "başvuru",
       "expectedText": [
         "Balıkesir Üniversitesi",
-        "ÖĞRETİM ELEMANI",
+        "Son Başvuru Tarihi",
         "04.12.2026"
       ],
       "positionCount": 7,
