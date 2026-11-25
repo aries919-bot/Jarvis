@@ -7,13 +7,13 @@ Mevcut İş & Kariyer modülünde NOT_C1 ihlali olan LinkedIn/Indeed kaynak güv
 
 ## Dal ve PR
 - Repo: aries919-bot/Jarvis
-- Taban: fix/c3-ai-consent-and-navigation-guard
-- Taban SHA: 5f6eebb816fadfa8e1c7c51b4ccce1234d1cee03
+- PR hedef tabanı: is/c3-ilan-semasi-ai-kaynak-kaniti (Actions filtresindeki izinli taban)
+- Önceki C3 consent commit'i: 5f6eebb816fadfa8e1c7c51b4ccce1234d1cee03; PR #66 diff'i bu commit'i de içerir
 - Dal: fix/c1-source-policy-ua-guard-20261125
-- HEAD: 17f3fb796d482ea779c5ee2cf9f099828c7b3d72
+- HEAD: dc71e10dac04f17d0608678376d3ad38a3e1edf2
 - PR #66: https://github.com/aries919-bot/Jarvis/pull/66
 - PR durumu: open, draft, unmerged; mergeable false (GitHub sonucu).
-- Compare: 4 commit, 4 dosya, +24/-13; base ile 0 geride.
+- İlk dar compare (C3 consent head tabanına göre): 4 dosya / +24 / -13. Actions tetiklenebilmesi için PR hedefi C3 dalına alındı; güncel compare 11 commit / 9 dosya / +207 / -41 (C3 PR #30 değişiklikleri de diff içinde).
 
 ## Değişen dosyalar
 1. CareerMonitor.kt: Indeed/LinkedIn kaynak kayıtları, trustedDomains kayıtları, secondaryDomains kayıtları ve site sorguları çıkarıldı. Genel edu.tr trusted domain listesinden çıkarıldı.
@@ -25,7 +25,7 @@ Mevcut İş & Kariyer modülünde NOT_C1 ihlali olan LinkedIn/Indeed kaynak güv
 - GitHub compare sonucu: 4 dosya; CareerMonitor 1 ekleme/9 silme; Ai.kt 4 ekleme/3 silme; yeni test 18 ekleme; mevcut test 1 ekleme/1 silme. Toplam 24 ekleme /13 silme.
 - CareerMonitor son dosya: 2.142 satır. Kod içi taramada Indeed/LinkedIn alan adı kalmadı. .edu.tr yalnız akademik statüyü sınıflandırmak için kalır; genel trusted domain olarak kullanılmaz.
 - Ai.kt son dosya: 736 satır. Kod içi taramada Mozilla/5.0 veya Chrome tarayıcı UA kalmadı; AriesKaynakTara UA 4 noktada kullanılıyor.
-- Yeni test dosyası 19 satır (package/imports dahil), 1 test metodu; üç yasaklı host örneği doğrulanıyor.
+- Yeni test dosyası 22 satır, 1 test metodu; LinkedIn/Indeed ile izinli/izinsiz .edu.tr alanlarını doğruluyor.
 - CI: HEAD için Actions workflow run listesi boş; birleşik commit status listesi boş. Bu nedenle testler ÇALIŞTIRILMADI / KANIT YOK, PASS denemez.
 
 ## Bilinçli kapsam sınırı / eksikler
@@ -36,7 +36,7 @@ Mevcut İş & Kariyer modülünde NOT_C1 ihlali olan LinkedIn/Indeed kaynak güv
 
 ## Güvenlik kararı
 - Bu PR tek başına KABUL DEĞİL; CI ve exact-head inceleme bekliyor.
-- PR #30 C3 consent/navigation guard tabanına bağlıdır. #30 tabanı birleşmeden #66 ana dala taşınamaz.
+- PR #66 şu an C3 dalını hedefler ve PR #30'un değişikliklerini de diff içinde taşır. #30 ayrı PR olarak incelenip birleştirilmeden #66 ana dala taşınamaz; aksi hâlde aynı değişiklikler üst üste binebilir.
 - Birleştirme veya dağıtım yapılmadı.
 
 ## SONRAKİ ADIM
