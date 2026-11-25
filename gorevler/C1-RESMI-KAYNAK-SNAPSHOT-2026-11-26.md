@@ -184,3 +184,70 @@ Bu üç özel üniversite kaydı kamu kaynağı sayımına girmez. Antalya Belek
 - Eski logcat'te NexusLauncherActivity top-resumed state loss timeout ve pause timeout bulundu; doğrudan ANR dialog snapshot'ı yok. Yeni preflight bunu ölçmeyi amaçlar.
 - H1 emulator #45716694004 ve APK/unit #45716694105 IN_PROGRESS; ilkinde job #139564450544 step1–6 success, step7 running; ikincide unit success, APK build running. Henüz XML/artifact yok.
 - Ayrıntılı takip: gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md. H1 RED/beklemede, merge/deploy yok.
+
+## 20.11.2026 Resmî Gazete 33436 — ek kamu ve özel üniversite ilanları (26.11.2026 kontrolü)
+
+Resmî Gazete PDF: https://www.resmigazete.gov.tr/eskiler/2026/11/20261120.pdf. PDF metin katmanı incelendi. Dosya yaklaşık 43,377,793 byte olduğundan screenshot aracı 400/timeout verdi; görsel PDF QA bu turda tamamlanamadı. Bu sınırlama metin katmanı ve kurumların kendi duyuru sayfalarıyla çapraz doğrulanmış kayıtları otomatik olarak geçersiz kılmaz; ancak screenshot kanıtı olmadığı açıkça belirtilmelidir.
+
+### Yeni kamu duyuruları — başvuru aralığı açık, 10 ana kart
+
+| Kurum / kategori | Duyuru | Kontenjan bilgisi | publishedAt | deadline | Başvuru / şart özeti | Resmî kurum bağlantısı |
+|---|---:|---|---|---|---|---|
+| Atatürk Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi alımı | Kadro adedi PDF'deki alt kadro satırlarıyla ayrıca sayılmalı; kart adedi 1 | 2026-11-20 | 2026-12-04 | Profesör/doçent/doktor öğretim üyesi kadroları; 2547 ve üniversitenin atama ölçütleri; birim/kadro özel akademik şartlar. Resmî sayfa son tarihi açıkça verir; ilanın PDF'si ve başvuru dosyası kurum sayfasından açılır. | https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/ |
+| Mardin Artuklu Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı (Öğr.Gör.) | PDF'deki anabilim dalı/pozisyon satırları ayrı pozisyon metadata'sı; tek duyuru | 2026-11-20 | 2026-12-04 | ALES ve yabancı dil barajı (ilan tablosuna göre); 2547/ilgili yönetmelik ve birim özel koşulları. Resmî personel duyurusundaki ilan metni esas alınır. | https://artuklu.edu.tr/tr/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026 |
+| Mardin Artuklu Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi (Prof./Doç./Dr.Öğr.Üyesi) | Birden fazla akademik kadro satırı; tek ana duyuru | 2026-11-20 | 2026-12-04 | 2547, akademik atama ölçütleri ve anabilim dalı özel nitelikleri. Başvuru usulü ve gerekli dosyalar üniversitenin ilan metninde. | https://artuklu.edu.tr/tr/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-uyesi-alim-ilani-profdr-docdr-drogruyesi-20112026-04122026 |
+| Necmettin Erbakan Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi alımı | Kadro adedi PDF tablosuna göre alt pozisyonlardır; ana duyuru 1 | 2026-11-20 | 2026-12-07 | Profesör/doçent/doktor öğretim üyesi; 2547 ve akademik yükseltilme/atanma ölçütleri; alan ve birim özel koşulları. Başvuru dosyaları üniversitenin Personel Daire Başkanlığı duyurusuna göre teslim edilir. | https://erbakan.edu.tr/tr/birim/personel-db/duyuru/ogretim-uyesi-alim-ilani-20-11-2026-29285 |
+| Abdullah Gül Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı alımı | Öğretim görevlisi/araştırma görevlisi kadro satırları; tek ana duyuru | 2026-11-20 | 2026-12-04 mesai bitimi | ALES/yabancı dil koşulları ve kadro özel nitelikleri; araştırma görevlisi için ilgili lisansüstü program/öğrencilik koşulu. Resmî PDB sayfası son tarihi açıklar; başvuru formları ve sınav takvimi aynı sayfada. | https://personel.agu.edu.tr/duyuru/oegretim-elemani-alim-ilani-20-11-2026 |
+| Bartın Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi alımı (2026/03) | Birden çok akademik kadro; tek ana duyuru | 2026-11-20 | 2026-12-04 23:59 | 2547 ve Bartın Üniversitesi öğretim üyeliğine atanma ölçütleri; alan/fakülte özel koşulları. Başvuru UBYS akademik atama portalı üzerinden. 20 Kasım'daki 4/B personel duyurusundan ayrıdır. | https://akademiktayin.bartin.edu.tr/duyurular/ogretimuyesi202603veogretimelemanialimilani202603.html |
+| Bartın Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı alımı (2026/03) | Öğretim görevlisi/araştırma görevlisi alt kadroları; tek ana duyuru | 2026-11-20 | 2026-12-04 23:59 | ALES en az 70 ve ilandaki yabancı dil/alan koşulları; 2547 ve ilgili yönetmelik. Başvuru şekli ve belge listesi üniversitenin resmî ilanında. | https://akademiktayin.bartin.edu.tr/duyurular/ogretimuyesi202603veogretimelemanialimilani202603.html |
+| Balıkesir Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi alımı | Birden çok akademik kadro; tek ana duyuru | 2026-11-20 | 2026-12-04 mesai bitimi | Profesör/doçent/doktor öğretim üyesi; 2547 ve üniversite atama ölçütleri ile kadro özel şartları. Başvuru usulü PDB duyurusu ve PDF'de. | https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-uyesi-ilanimiz-202611201405 |
+| Balıkesir Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı alımı | Öğretim görevlisi/araştırma görevlisi alt kadroları; tek ana duyuru | 2026-11-20 | 2026-12-04 mesai bitimi | ALES en az 70; yabancı dil en az 50 ve ilan/alan özel şartları. Başvurular ilgili fakülte/yüksekokula, ilanda yazan yöntemle teslim edilir. | https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352 |
+| İstanbul Üniversitesi-Cerrahpaşa — Kamu / KPSS'siz akademik | 1 Öğretim Elemanı alımı | Öğretim görevlisi/araştırma görevlisi kadroları; tek ana duyuru | 2026-11-20 | 2026-12-04 17:00 | ALES/yabancı dil ve kadro özel koşulları. Başvurular APBS üzerinden elektronik olarak yapılır; şahsen/posta ile başvuru yerine resmî APBS duyurusu esas alınır. | https://apbs.iu.edu.tr |
+
+**20 Kasım aktif yeni kart yeniden sayımı:** Atatürk 1 + Mardin Artuklu 2 + Necmettin Erbakan 1 + Abdullah Gül (öğretim elemanı) 1 + Bartın akademik 2 + Balıkesir 2 + İstanbul Üniversitesi-Cerrahpaşa (öğretim elemanı) 1 = **10 ayrı ana duyuru**. Bu satırların pozisyon/kadro sayısı ilan kartı sayısına çevrilmez. Bartın Üniversitesi'nin 20.11.2026 tarihli 4/B sözleşmeli personel ilanı daha önceki altı adayın içindedir; burada yeniden sayılmamıştır.
+
+### 20 Kasım Resmî Gazete'de deadline null — doğrulanamadı, açık sayaca dahil değil
+
+| Kurum / kategori | Duyuru | publishedAt | deadline | Gerekçe ve resmî bağlantı |
+|---|---|---|---|---|
+| Abdullah Gül Üniversitesi — Kamu / KPSS'siz akademik | 1 ayrı Öğretim Üyesi alımı | 2026-11-20 | null | Resmî Gazete metni yayımdan itibaren 15 gün ifadesi kullanıyor; üniversitenin PDB sayfasında bu ayrı öğretim üyesi duyurusu için takvim doğrulanamadı. Son gün hesaplanmadı. https://personel.agu.edu.tr |
+| İstanbul Üniversitesi-Cerrahpaşa — Kamu / KPSS'siz akademik | 1 ayrı Öğretim Üyesi alımı | 2026-11-20 | null | Resmî Gazete metni bulundu; üniversite APBS/PDB'de bu başlığın kesin son günü doğrulanamadı. Öğretim elemanı başlığına ait 04.12.2026 17:00 tarihi bu ayrı öğretim üyesi duyurusuna taşınamaz. https://apbs.iu.edu.tr |
+
+### 20 Kasım özel üniversite duyuruları — kamu sayacından ayrı
+
+| Kurum / kategori | Duyuru | publishedAt | deadline | Başvuru / şart özeti | Resmî kaynak |
+|---|---|---|---|---|---|
+| Beykoz Üniversitesi — Büyük özel / KPSS'siz akademik | 1 karma öğretim üyesi + öğretim elemanı duyurusu | 2026-11-20 | null | Öğretim üyesi metninde 15 günlük dönem, öğretim elemanı bölümünde ayrı 04.12 son günü var; tek ana duyuruya tek deadline atamak için alt başlık bazlı kartlaştırma gerekir. Kesinleştirilene kadar Doğrulanamadı. | https://www.beykoz.edu.tr |
+| Hasan Kalyoncu Üniversitesi — Büyük özel / KPSS'siz akademik | 1 Öğretim Üyesi alımı | 2026-11-20 | null | Resmî kurum sayfasında ilan metni bulundu; kesin son gün bu incelemede kurumsal takvim alanından doğrulanamadı. Doğrulanamadı etiketi. | https://personel.hku.edu.tr/ogretim-uyesi-alim-ilani-53/ |
+
+### Adli Tıp Kurumu — gelecek başvuru, güncel açık sayaca girmez
+
+| Kurum / kategori | Duyuru | Pozisyon | publishedAt | applicationOpensAt | deadline | Başvuru / şart | Resmî bağlantı |
+|---|---|---:|---|---|---|---|---|
+| Adli Tıp Kurumu — Kamu / KPSS | 1 adet 4/B duyurusu | 181 pozisyon | 2026-11-20 | 2026-11-30 09:00 | 2026-12-06 23:59 | e-Devlet üzerinden Adli Tıp Kurumu/Kariyer Kapısı Kamu İşe Alım ekranı; her pozisyon için ilgili KPSS P3/P93/P94 türünden en az 70; 657/4-B genel şartları ve Ek-1'de unvan/öğrenim/özel şartlar. 181 pozisyon **1 duyurudur**, 181 ilan değildir. Başvuru henüz açılmadığından 26 Kasım current open=0. | https://atk.gov.tr/haber20.11.26.html ; pozisyon ve özel şart PDF: https://www.atk.gov.tr/Pdf/2026-2/ek-1.pdf |
+
+### Sağlık Bakanlığı — kura duyurusu, başvurusu geçmiş (ayrı Kamu/Kura geçmişi)
+
+- Sağlık Bakanlığı/Yönetim Hizmetleri GM, 2026 Yılı 3. Dönem İlk Defa ve Yeniden Atama Kurası: original notice 2026-10-30, EKİP tercih başvurusu 2026-11-05 18:00'de kapandı. 2026-11-19 başvuru değerlendirme sonuçları ve 20 Kasım'a kadar itiraz; 2026-11-25 itiraz sonuçları; kura 2026-11-26 10:30. 25 Kasım sayfası yeni personel ilanı değil, eski kura sürecinin sonuç/kura zamanı duyurusudur. `publishedAt=2026-10-30`, `deadline=2026-11-05T18:00`, güncel open=0; münhal kadro ekinin pozisyon adedi bu notta yeniden sayılmadığından sayı null bırakılır.
+- Resmî süreç ve 25 Kasım sonuç sayfası: https://yhgm.saglik.gov.tr/TR-121745/2026-yili-3-donem-ilk-defa-ve-yeniden-atama-kurasi.html ; resmî GM duyuru dizini: https://yhgm.saglik.gov.tr/ . EKİP arayüzü giriş gerektirdiğinden kazınmaz; yalnızca resmî sayfaya yönlendirilir.
+
+### 26.11.2026 tarihli aktif adayların toplu yeniden sayımı
+
+- İlk aday kümesi: 6 ana duyuru (Sahil Güvenlik, HMB, SSB, Bartın 4/B, AYBÜ, MCBÜ).
+- 23 Kasım RG ek turu: TÜRKAK 1 + Yozgat Bozok 1 + Düzce ayrı Öğretim Üyesi 1 = 3 yeni ana duyuru. İçişleri Bakanlığı 1 ayrı future notice/1.170 pozisyon; Tarsus ve Düzce Öğretim Elemanı H2 mevcut kayıtları exact notice ile eşleştiğinden tekrar sayılmaz.
+- 20 Kasım RG ek turu: yukarıda sayılan 10 yeni ana duyuru / 7 kurum; Bartın kurumu zaten ilk altı içindedir.
+- Sonuç: **19 aktif, deadline doğrulanmış kamu duyuru adayı / 15 kurum**. Bu, resmî metin ve kurum sayfası manuel araştırma kümesidir; Worker ingest sayısı değildir. 19 kartın sayımı kontenjanlardan değil ayrı ana ilan başlıklarından yapılmıştır.
+- Gelecek başvuru: SGK 1 + Kültür ve Turizm Bakanlığı 1 + İçişleri Bakanlığı 1 + Adli Tıp Kurumu 1 = **4 duyuru**; 26 Kasım açık sayısına 0.
+- Deadline null/Doğrulanamadı kamu adayları: AGÜ ayrı Öğretim Üyesi 1 + İÜ-Cerrahpaşa ayrı Öğretim Üyesi 1 + Kütahya Dumlupınar 1 + Ondokuz Mayıs Üniversitesi 1 = **4 duyuru**; kesin son tarih olmadan açık ilan sayısına 0.
+- Expired kamu kayıtları: MEB e-Olgunlaşma 3 duyuru/2 kurum (önceki bölümdeki tarihlerle) + Sağlık Bakanlığı 3. Dönem İlk Defa/Yeniden Atama 1 kura duyurusu; bunlar güncel open sayısından çıkarılır. Sağlık kura pozisyon sayısı bu notta null.
+- Özel üniversiteler ayrı: 23 Kasım Belek 1, Yaşar 1 (deadline null), Özyeğin 1; 20 Kasım Beykoz 1 (tek deadline çözülememiş), Hasan Kalyoncu 1 (deadline null); kamu 19/15 hesabına dahil değildir.
+- 26 Kasım Resmî Gazete index'te kalan kurum adayları (SUEN, Özburun, KSÜ, Mersin vb.) bireysel kurum PDF'si/duyurusu doğrulanamadığından Doğrulanamadı bölümünde kalır; bu aktif sayaç toplamına eklenmemiştir.
+
+### Worker, tazelik ve kabul eşiği — aynen korunur
+
+- Worker/H2 son iyi kamu feed'i: 6 kaynak /47 kart (e-Şube 42; Anadolu 1; Düzce 1; Marmara 1; Tarsus 1; Zafer 1). Son ölçüm 24–25 Kasım ve 12 saat freshness eşiğinin dışında; stale last-good.
+- Önceki manuel kamu envanteri: 12 kaynak /55 kart. Bu başka katmandır; 6/47 ile toplanmaz.
+- 19/15 sayısı manuel aday araştırma notunun sayısıdır; Worker/H2 feed'e ingest edilmemiştir. Her adayda `collectedAt=null`, `firstSeenAt=null` olarak kalır. İlan kaynağında yayın günü yoksa `publishedAt=null`.
+- Kamu sayısı sıfır değildir; Worker veri katmanı stale'dir. 10 kaynak/100 doğrulanmış, süresi geçmemiş ilan eşiği hâlâ sağlanmamıştır. Kamu özel ayrı raporlanır; üretim Worker authenticated GET/D1 ve gerçek ingestion/dedup kanıtı olmadan C1 ONAY verilemez.
+
+**KARAR:** Manuel araştırmada 19 aktif kamu ana duyurusu /15 kurum doğrulanmış adaydır; 4 gelecek, 4 deadline-null, 4 expired duyuru ayrıca etiketlenmiştir. Bunların hiçbiri Worker count değildir. C1 genel karar RED; production GET/D1 entegrasyon kanıtı yok.
