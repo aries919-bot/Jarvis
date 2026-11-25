@@ -1152,3 +1152,12 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Exact-head [emulator #45723036152](https://github.com/aries919-bot/Jarvis/actions/runs/45723036152) ve [APK/unit #45723036154](https://github.com/aries919-bot/Jarvis/actions/runs/45723036154) son kontrolde in_progress. Sonuç gelmeden PASS denmez.
 - Ayrıntı: [H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
 **KARAR:** H1 RED/BLOCKED; exact-head emulator XML 4 test/0 failure/0 error/0 skipped ve telefon kontrolü olmadan merge yok.
+
+
+## 26.11.2026 — H1 CI tanısı: timeout ve ekran görüntüsü
+- Genel teknik planın §9 maddeleri H1 ile eşleştirildi. Logcat + screenshot eklendi; izin otomasyonu/HoloView kapatma H1 CareerNewsVerificationActivity için uygulanabilir olmadığı için eklenmedi; dört gerçek UI/SQLite testi korunuyor.
+- Önceki tanı run #45723036152 16+ saat `in_progress` kaldı, yeni commit gelince concurrency ile iptal oldu; artefakt yok. Sonuç olarak kullanılamaz.
+- Script HEAD `9532d04343d1934dc01015f7dc78c7ec1ffc8e68`: ADB tanı komutları 15s sınırlandı, hata anında screenshot, logcat ve process-group cleanup eklendi; Gradle instrumentation'a 1500s internal timeout + 30s kill-after eklendi. Workflow step/job timeout ve XML 4/4 kapısı değiştirilmedi.
+- Yeni [H1 run #45723550345](https://github.com/aries919-bot/Jarvis/actions/runs/45723550345) ve [APK/unit #45723550139](https://github.com/aries919-bot/Jarvis/actions/runs/45723550139) son kontrolde devam ediyor; henüz test sonucu yok.
+- Ayrıntı: [H1 tanı görevi](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
+**KARAR:** H1 RED/BLOCKED; exact-head emulator XML 4/4 ve inceleme olmadan merge yok.
