@@ -10,7 +10,7 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 - Taban: kariyer-modulu
 - Taban SHA: 4b270245019ed322dc2dc1c735c715c0934076a2
 - Dal: fix/c1-source-policy-ua-ci-20261125
-- HEAD: 5d15ef30e016a0105cc8e1b62ed05b0405a48c77
+- HEAD: bf8ca39c1dee78b8436069e5cfabcbbd3afbc146
 - PR #70: https://github.com/aries919-bot/Jarvis/pull/70
 - Durum: açık/taslak, birleştirilmedi.
 - Eski PR #67 yanlış tabana bağlı olduğundan kapatıldı (unmerged); #66 da önceden kapatılmıştı.
@@ -22,9 +22,9 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 4. CareerSourceCatalogTest.kt: eski genel edu.tr pozitif beklentisi false olarak düzeltildi.
 
 ## Diff / yeniden sayım
-- Exact compare: 4 commit / 4 dosya / +33 / -13 / 0 behind.
+- Exact compare: 8 commit / 4 dosya / +46 / -13 / 0 behind.
 - CareerMonitor.kt: 2.041 satır; kod taramasında Indeed/LinkedIn URL/domain ve genel trusted edu.tr kaydı yok.
-- Ai.kt: 736 satır; Mozilla/5.0 ve Chrome tarayıcı-UA kalıbı yok; AriesKaynakTara/1.0 tam 4 noktada.
+- Ai.kt: 737 satır; Mozilla/5.0 ve Chrome tarayıcı-UA kalıbı yok; kaynak UA sabiti 1 tanım + 4 kullanım (5 toplam referans).
 - CareerForbiddenSourcesPolicyTest.kt: 28 satır, 1 @Test.
 - CareerSourceCatalogTest.kt: 272 satır, 13 mevcut @Test; tek genel .edu.tr beklentisi yeni kurala göre güncellendi.
 - Yasaklı domain isimleri yalnız regresyon testinde, RED beklenen değer olarak bulunur; production source/query/catalog dosyasında bulunmaz.
@@ -50,3 +50,12 @@ NOT_C1 ihlallerini küçük ve ayrı değişikliklerle kaldırmak; mevcut arama 
 2. PR #70 exact-head diff ve security scan tekrar et.
 3. Haber çekirdeği PR #69 testlerini tamamla.
 4. Worker JSON production GET, kaynak bazlı last-good, cross-feed dedup ve 10/100 gate kanıtları gelmeden Android arama motoru HTML fallback kapatılmaz.
+
+## Güncel exact-head — 25.11.2026 16:54 TRT
+- Güncel PR #70 HEAD: `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`.
+- Exact compare: 8 commit /4 dosya /+46/-13 /0 behind.
+- Android Actions [#45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411): son kontrolde PENDING; job/test adımları başlamamış. Önceki #45657277644 eski HEAD'de 96 test/1 hata; #45658345528 önceki HEAD için eski koşudur. Hiçbiri güncel HEAD'e PASS aktarmaz.
+- Son kaynak kodu statik sayımı: CareerMonitor 2042 satır; production'da Indeed/LinkedIn URL/domain eşleşmesi 0; genel trusted `edu.tr` kaydı yok; `isUnverifiedUniversityHost(host)` erken ret kontrolü mevcut.
+- Ai.kt 737 satır; Mozilla/Chrome browser-UA kalıbı yok; `ARIES_SOURCE_USER_AGENT` bir sabit tanımı + dört istek kullanımıyla yer alıyor.
+- Regresyon testleri: `CareerForbiddenSourcesPolicyTest` 2 @Test; `CareerSourceCatalogTest` 13 @Test mevcut, genel edu.tr pozitif beklentisi negatif olarak değiştirildi.
+- Sonuç: exact-head CI henüz tamamlanmadı; PR #70 RED/BEKLEME, merge yok.
