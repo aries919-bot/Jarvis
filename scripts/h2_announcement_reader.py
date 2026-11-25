@@ -404,6 +404,16 @@ def application_deadline(text: str, context: str) -> str | None:
         end = min(len(text),match.end()+260)
         if lowered_context in text[start:end].lower():
             return parse_date(match.group(2))
+    # Some official pages express the application window as "starts ... and ends ...".
+    start_end = re.search(
+        r"(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})\s+tarihinde\s+başlayıp\s+"
+        r"(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})\s+tarihinde\s+sona",
+        text, re.I
+    )
+    if start_end:
+        context_window = text[max(0,start_end.start()-220):min(len(text),start_end.end()+100)].lower()
+        if lowered_context in context_window or "başvurular" in context_window:
+            return parse_date(start_end.group(2))
     # Some official notices publish one explicit final date instead of a range.
     single = re.search(
         r"(?:Son Başvuru Tarihi|Başvuru Son Tarihi|Başvuruların Son Günü)\s*[:|]?\s*(\d{1,2}[./-]\d{1,2}[./-]20\d{2})",
