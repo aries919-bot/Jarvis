@@ -87,4 +87,53 @@ class CareerNewsVerificationStoreTest {
         assertFalse(store.save(record))
         assertTrue(store.all()!!.isEmpty())
     }
+    @Test
+    fun existingEvidenceAndCorrectionHistoryCannotBeSilentlyRemoved() {
+        var raw: String? = null
+        val store = CareerNewsVerificationStore.forTests({ raw }, { raw = it; true })
+        val claim = CareerNewsClaim(id = "claim-1", text = "Kurum 12 teknisyen alacak.")
+        val evidence = CareerNewsEvidence(
+            id = "evidence-1",
+            publisher = "Örnek kurum",
+            sourceUrl = "https://kurum.gov.tr/duyuru/1",
+            sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+            stance = CareerEvidenceStance.SUPPORTS,
+            excerpt = "Kurum 12 teknisyen alacağını duyurdu.",
+            publishedAt = null,
+            checkedAt = "2026-11-25T14:00:00Z"
+        )
+        val initial = CareerNewsVerificationRecord(
+            storyId = CareerNewsVerificationRecord.stableStoryId(
+                "https://kurum.gov.tr/duyuru/1", "Personel duyurusu"
+            ),
+            headline = "Personel duyurusu",
+            publisher = "Örnek kurum",
+            originalSourceUrl = "https://kurum.gov.tr/duyuru/1",
+            publishedAt = null,
+            collectedAt = "2026-11-25T14:00:00Z",
+            firstSeenAt = "2026-11-25T13:00:00Z"
+        ).addClaim(claim)!!
+            .addEvidence("claim-1", evidence)!!
+            .reviewClaim(
+                "claim-1",
+                CareerHumanReviewDecision.CONFIRM,
+                "2026-11-25T14:05:00Z",
+                "Resmî kaynak kontrol edildi."
+            )!!
+        assertTrue(store.save(initial))
+
+        val corrected = initial.correctClaim(
+            revisedClaim = claim.copy(text = "Kurum 10 teknisyen alacak."),
+            correctedAt = "2026-11-25T14:10:00Z",
+            explanation = "Kurumun düzeltme duyurusu kontenjanı değiştirdi.",
+            sourceUrl = "https://kurum.gov.tr/duyuru/duzeltme"
+        )!!
+        assertTrue(store.save(corrected))
+        assertFalse(store.save(corrected.copy(correctionHistory = emptyList())))
+        assertFalse(store.save(initial.copy(
+            claims = listOf(initial.claims.single().copy(evidence = emptyList()))
+        )))
+        assertEquals(1, store.find(initial.storyId)!!.correctionHistory.size)
+    }
+
 }
