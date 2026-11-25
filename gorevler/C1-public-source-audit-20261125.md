@@ -41,7 +41,7 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - Mardin Artuklu Üniversitesi öğretim görevlisi: https://www.artuklu.edu.tr/tr/personel-daire-baskanligi/duyurular/20112026-tarihli-ve-33436-sayili-resmi-gazete-ogretim-elemani-alim-ilani-ogrgor-2011202604122026
 - TGA: https://tga.gov.tr/kariyer
 - Balıkesir Üniversitesi: https://personel.balikesir.edu.tr/duyurular/20-11-2026-tarihli-ogretim-elemani-ilanimiz-202611201352
-- ORAN duyurusu: https://www.dogaka.gov.tr/tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855
+- ORAN duyurusu: https://www.dogaka.gov.tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855
 - Atatürk Üniversitesi: https://atauni.edu.tr/personel-daire-baskanligi/2026/11/20/ataturk-universitesi-ogretim-uyesi-alim-ilani-20-11-2026/
 - YÖKAK (gelecek başvuru): https://www.yokak.gov.tr/2026/11/13/yuksekogretim-kalite-kurulu-uzman-yardimcisi-alim-ilani-3/
 - Marmara süresi 20.11.2026 13:00: https://pdb.marmara.edu.tr/notice/universitemiz-sozlesmeli-personel-alimi-1
