@@ -156,6 +156,14 @@ class CareerNewsVerificationActivity : Activity() {
                     verdictLabel(claim.verdict()) + " · " + claim.evidence.size + " kanıt",
                     12f, true
                 ))
+                if (claim.reviewDecision != null) {
+                    card.addView(text(
+                        "İnsan incelemesi: " + claim.reviewDecision.name +
+                            " · " + (claim.reviewedAt ?: "Zaman bilinmiyor") +
+                            " · " + claim.reviewNote,
+                        11f
+                    ))
+                }
                 claim.evidence.forEach { evidence ->
                     card.addView(text(
                         evidence.publisher + " · " + sourceTypeLabel(evidence.sourceType) +
@@ -163,6 +171,11 @@ class CareerNewsVerificationActivity : Activity() {
                         11f, true
                     ))
                     card.addView(text(evidence.excerpt, 12f))
+                    card.addView(text(
+                        "Kaynak yayın tarihi: " + (evidence.publishedAt ?: "Bilinmiyor") +
+                            " · Kontrol zamanı: " + evidence.checkedAt,
+                        10f
+                    ))
                     card.addView(button("Kanıt kaynağını aç") { openExternal(evidence.sourceUrl) })
                 }
                 val actions = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -187,6 +200,14 @@ class CareerNewsVerificationActivity : Activity() {
                         11f
                     ))
                     addView(text(correction.explanation, 12f))
+                    addView(text(
+                        "Önceki kanıt: " + correction.previousEvidence.size +
+                            " · Önceki insan kararı: " + (correction.previousReviewDecision?.name ?: "Yok"),
+                        11f
+                    ))
+                    if (correction.previousReviewNote.isNotBlank()) {
+                        addView(text("Önceki inceleme notu: " + correction.previousReviewNote, 11f))
+                    }
                     addView(button("Düzeltme kaynağını aç") { openExternal(correction.sourceUrl) })
                 })
             }
