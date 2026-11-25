@@ -1144,3 +1144,11 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Ayrıntılı kanıt ve kontrollü sonraki tanı adımı: [H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
 
 **KARAR:** H1 RED/BLOCKED. Aynı test workflow'u körlemesine tekrarlanmayacak; önce instrumentation launch tanısı izole edilecek.
+
+
+## 26.11.2026 — H1 kontrollü instrumentation tanısı
+- PR #71 HEAD `65095a5420d80b6c8cbf9a48eb36f3a5d803fcf6`; yalnız CI tanı betiği/workflow değişti, uygulama kodu ve dört test korunuyor.
+- Yaklaşık 90 saniyelik ADB/Package Manager/instrumentation/Activity/window snapshotları ve canlı logcat eklendi; script değişiklikleri H1 workflow path filtresine alındı.
+- Exact-head [emulator #45723036152](https://github.com/aries919-bot/Jarvis/actions/runs/45723036152) ve [APK/unit #45723036154](https://github.com/aries919-bot/Jarvis/actions/runs/45723036154) son kontrolde in_progress. Sonuç gelmeden PASS denmez.
+- Ayrıntı: [H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
+**KARAR:** H1 RED/BLOCKED; exact-head emulator XML 4 test/0 failure/0 error/0 skipped ve telefon kontrolü olmadan merge yok.
