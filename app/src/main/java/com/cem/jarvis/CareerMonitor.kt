@@ -105,8 +105,6 @@ object CareerSourceCatalog {
         Source("Eleman.net", "https://www.eleman.net/is-ilanlari", "İlan platformu", false),
         Source("SecretCV", "https://www.secretcv.com/", "İlan platformu", false),
         Source("Yenibiriş", "https://www.yenibiris.com/", "İlan platformu", false),
-        Source("Indeed Türkiye", "https://tr.indeed.com/", "İlan platformu", false),
-        Source("LinkedIn İş İlanları", "https://www.linkedin.com/jobs/", "İlan platformu", false),
         Source("İşbul.net", "https://www.isbul.net/", "İlan platformu", false),
         Source("Manpower Türkiye", "https://www.manpower.com.tr/", "İşe alım platformu", false),
         Source("Jooble Türkiye", "https://tr.jooble.org/", "İlan platformu", false),
@@ -149,11 +147,10 @@ object CareerSourceCatalog {
     private val trustedDomains = listOf(
         "turkiye.gov.tr", "ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr",
         "cbiko.gov.tr", "kariyerkapisi.gov.tr", "osym.gov.tr", "sbb.gov.tr", "iskur.gov.tr", "mke.gov.tr", "etimaden.gov.tr", "tubitak.gov.tr", "turkseker.gov.tr", "sisecam.com", "turktelekomkariyer.com.tr", "ilan.gov.tr", "resmigazete.gov.tr",
-        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "edu.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
+        "csb.gov.tr", "ogm.gov.tr", "kgm.gov.tr", "ant.gov.tr", "gov.tr", "bel.tr", "malatya.bel.tr", "battalgazi.bel.tr", "yesilyurt.bel.tr", "aselsan.com", "tcdd.gov.tr", "tcddtasimacilik.gov.tr",
         "teias.gov.tr", "euas.gov.tr", "tusas.com", "botas.gov.tr", "tupras.com.tr", "tupras.gethirex.com", "tai.com.tr",
         "roketsan.com.tr", "tei.com.tr", "havelsan.com", "enerjisa.com.tr", "malatyatso.org.tr",
         "malorsa.org.tr", "kariyer.net", "eleman.net", "secretcv.com", "yenibiris.com",
-        "indeed.com", "linkedin.com", "isbul.net", "manpower.com.tr", "jooble.org",
         "pladis.wd3.myworkdayjobs.com", "kockariyerim.com", "koccareers.com", "sabanci.com",
         "borusan.com", "eczacibasi.com", "anadolukariyerim.com", "calik.com", "zorlu.com.tr", "vestelkariyer.com",
         "vestel.com.tr", "migroskurumsal.com", "careerscci.com", "turkcell.com.tr",
@@ -190,7 +187,6 @@ object CareerSourceCatalog {
         val host = normalizedHost(url).orEmpty()
         val secondaryDomains = listOf(
             "malatyatso.org.tr", "malorsa.org.tr", "kariyer.net", "eleman.net",
-            "secretcv.com", "yenibiris.com", "indeed.com", "linkedin.com", "isbul.net",
             "manpower.com.tr", "jooble.org"
         )
         return secondaryDomains.any { host == it || host.endsWith(".$it") }
@@ -785,8 +781,6 @@ object CareerSearchEngine {
             "site:eleman.net/is-ilanlari $r $c iş ilanı $year",
             "site:secretcv.com/is-ilanlari $r $c iş ilanı $year",
             "site:yenibiris.com/is-ilanlari $r $c iş ilanı $year",
-            "site:tr.indeed.com/jobs $r $c $year",
-            "site:linkedin.com/jobs/view $r $c Türkiye $year",
             "site:isbul.net $r $c iş ilanı $year"
         )
         val studentPrograms = listOf(
@@ -1327,8 +1321,6 @@ object CareerSearchEngine {
             "site:eleman.net/is-ilanlari $role $primaryCity",
             "site:secretcv.com/is-ilanlari $role $primaryCity",
             "site:yenibiris.com/is-ilanlari $role $primaryCity",
-            "site:tr.indeed.com/jobs $role $primaryCity",
-            "site:linkedin.com/jobs/view $role $primaryCity Türkiye",
             "site:isbul.net $role $primaryCity iş ilanı",
             "site:manpower.com.tr $role $primaryCity",
             "site:tr.jooble.org $role $primaryCity"
