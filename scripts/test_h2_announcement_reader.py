@@ -570,5 +570,13 @@ class H2ReaderTests(unittest.TestCase):
 
 
 
+    def test_missing_position_count_is_not_invented_as_one(self):
+        self.assertEqual(0,h2.position_count_for({"positionCount":None}))
+        self.assertEqual(0,h2.position_count_for({}))
+        self.assertEqual(0,h2.position_count_for({"positionCount":0}))
+        self.assertEqual(7,h2.position_count_for({"positionCount":7}))
+
+
+
 if __name__ == "__main__":
     unittest.main()
