@@ -556,6 +556,79 @@
         "Akademik",
         "KPSS'siz"
       ]
+    },
+    {
+      "id": "munzur-ogretim-uyesi-2026-11-10",
+      "reader": "official",
+      "format": "pdf",
+      "institution": "Munzur Üniversitesi",
+      "itemId": "munzur-2026-11-10-ogretim-uyesi",
+      "title": "Munzur Üniversitesi öğretim üyesi alımı — 11 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
+      "publicationMode": "munzur-ilan-date",
+      "deadlineContext": "son başvuru",
+      "expectedText": [
+        "Munzur Üniversitesi Rektörlüğünden",
+        "ÖĞRETİM ÜYESİ ALIM İLANI",
+        "İlan Tarihi : 10.11.2026",
+        "Son Başvuru Tarihi : 25.11.2026",
+        "2026/18",
+        "2026/28"
+      ],
+      "positionCount": 11,
+      "howToApply": {
+        "method": "İlgili akademik birime şahsen veya posta yoluyla",
+        "url": "https://www.munzur.edu.tr/",
+        "instructions": "Profesör ve doçent başvuruları Personel Daire Başkanlığına; doktor öğretim üyesi başvuruları ilan edilen fakülte veya meslek yüksekokuluna şahsen ya da posta ile yapılır. Posta ile gönderilen dosyanın 25.11.2026 mesai bitimine kadar ilgili birime ulaşması gerekir."
+      },
+      "conditions": [
+        "657 sayılı Kanun'un 48. maddesindeki genel şartlar ve ilgili akademik unvan için 2547 sayılı Kanun ile öğretim üyeliğine yükseltilme/atanma koşulları aranır.",
+        "Profesör ve doçent adayları bilim dosyalarını dijital USB nüshalarıyla; doktor öğretim üyesi adayları bir fiziki ve dört dijital nüsha ile teslim eder.",
+        "Aday yalnızca bir kadroya başvurabilir; eksik belge veya yanlış/gerçeğe aykırı beyan başvurunun değerlendirme dışı kalmasına yol açar.",
+        "İlan 2026/18–2026/28 arasındaki 11 tek kişilik kadro satırını içerir; her satırın bilim alanı ve özel yayın/tecrübe koşulları PDF tablosunda ayrıdır."
+      ],
+      "tags": [
+        "Akademik",
+        "KPSS'siz"
+      ]
+    },
+    {
+      "id": "munzur-ogretim-gorevlisi-2026-11-10",
+      "reader": "official",
+      "format": "pdf",
+      "institution": "Munzur Üniversitesi",
+      "itemId": "munzur-2026-11-10-ogretim-gorevlisi",
+      "title": "Munzur Üniversitesi öğretim görevlisi alımı — 1 kadro",
+      "category": "Kamu",
+      "contentType": "job",
+      "url": "https://cdn.munzur.edu.tr/www/media/akademik-personel-ilani.pdf",
+      "allowNullPublishedAt": true,
+      "deadlineContext": "son başvuru",
+      "expectedText": [
+        "Munzur Üniversitesi Rektörlüğünden",
+        "ÖĞRETİM GÖREVLİSİ ALIM İLANI",
+        "2026/29",
+        "25.11.2026"
+      ],
+      "positionCount": 1,
+      "howToApply": {
+        "method": "İlgili meslek yüksekokuluna şahsen veya posta yoluyla",
+        "url": "https://www.munzur.edu.tr/",
+        "instructions": "Başvuru Tıbbi Dokümantasyon ve Sekreterlik programının bağlı olduğu ilgili meslek yüksekokuluna şahsen veya posta ile yapılır. Dosyanın son başvuru tarihi 25.11.2026 mesai bitimine kadar ulaşması gerekir."
+      },
+      "conditions": [
+        "2547 sayılı Kanun ve öğretim üyesi dışındaki öğretim elemanı kadrolarına ilişkin giriş sınavı yönetmeliğinin genel/özel koşulları ile 657 sayılı Kanun'un 48. maddesi aranır.",
+        "Son 5 yıl içinde alınmış ALES belgesi, YDS/YÖKDİL veya eşdeğer yabancı dil belgesi ve lisans/yüksek lisans belgeleri istenir.",
+        "2026/29 kadrosu için Veteriner Fakültesi lisans mezuniyeti, Veteriner Patoloji alanında tezli yüksek lisans, yükseköğretimde en az 5 yıl tecrübe ve ders verme ile Deney Hayvanları Kullanım Sertifikası şartları bulunur.",
+        "Birden fazla kadroya başvuru yapılamaz; posta dosyası son tarihe kadar ilgili birime ulaşmalıdır."
+      ],
+      "tags": [
+        "Akademik",
+        "ALES",
+        "KPSS'siz"
+      ]
     }
   ]
 }
