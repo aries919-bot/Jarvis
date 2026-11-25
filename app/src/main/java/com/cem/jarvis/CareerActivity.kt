@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 
 class CareerActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("j", MODE_PRIVATE) }
-    private val newsVerificationStore by lazy { CareerNewsVerificationStore(SharedPreferencesCareerNewsStorage(this)) }
+    private val newsVerificationStore by lazy { CareerNewsVerificationStore(SQLiteCareerNewsStorage(this)) }
     private lateinit var cv: EditText
     private lateinit var role: EditText
     private lateinit var place: EditText
