@@ -865,3 +865,34 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - CI bağlantıları: https://github.com/aries919-bot/Jarvis/actions/runs/45699704565 ; https://github.com/aries919-bot/Jarvis/actions/runs/45699704415 ; PR https://github.com/aries919-bot/Jarvis/pull/71
 **KARAR:** H1 RED (yanlış yeşil CI, 3/4 UI test fail); C1 RED (12/55, production GET/D1 yok); PR #11/#12/#71 merge/deploy yok.
 
+
+
+## Kaynak başına yeniden sayım (feed katmanı) — 26.11.2026
+
+Son makine okuyucu raporunun kaynak satırları yeniden toplandı. Bu, 12/55 proje-geneli resmi envanter sayısından ayrı olan Worker'a girmiş mevcut kamu feed'i ölçümüdür:
+
+| Kamu kaynağı | Güncel açık kart | Not |
+|---|---:|---|
+| İŞKUR e-Şube | 42 | Son snapshot 2026-11-24T23:51:48Z; 3 sayfa; publishedAt=null |
+| Anadolu Üniversitesi | 1 | Son başvuru 30.11.2026 |
+| Düzce Üniversitesi | 1 | Son başvuru 07.12.2026 |
+| Marmara Üniversitesi | 1 | Son başvuru 08.12.2026 |
+| Tarsus Üniversitesi | 1 | Son başvuru 07.12.2026 |
+| Zafer Kalkınma Ajansı | 1 | Son başvuru 14.12.2026 |
+| **Toplam** | **47** | **6 kaynak / 47 açık ve benzersiz kamu kartı** |
+
+Tekrar hesabı: **42+1+1+1+1+1 = 47**.
+
+Açık iş olarak sayılmayan reader satırları:
+- Adli Tıp Kurumu: 1 duyuru / 181 kadro; başvuru 30.11.2026 09:00'da açılacağından 26.11.2026 tarihinde açık değil; aktif açık sayımına 0.
+- YHGM: 1 kura/sonuç duyurusu; son başvuru tarihi geçmiş, iş ilanı değil; 0.
+- Bilecik Üniversitesi, BOTAŞ, ÇOMÜ: stale kaynak; 0 yeni kart değil, ölçüm başarısız/son iyi veri korunmalı. Bunlar 0 ilan diye yorumlanamaz.
+
+Katman ayrımı:
+- Proje-geneli manuel/kurum doğrulama envanteri: **12 kaynak /55 açık kart /45 kart eksiği** (kaydedilmiş harita sayımı).
+- Worker'ın son makineyle doğrulanmış kamu feed'i: **6 kaynak /47 açık kart /4 kaynak ve 53 kart eksiği**.
+- 12/55 ile 6/47 toplanmaz; 6/47, feed'e alınmış ve source-level yeniden sayılmış alt kümedir. 12/55'teki fazladan kayıtların Worker feed'e exact dedup, sourceId ve şehir alanı kanıtı olmadan eklendiği iddia edilmez.
+- 114 özel ATS kaydı son başvuru tarihi bilinmediği için Doğrulanamadı; kamu 47'ye eklenmez.
+- Hazine, SSB ve Bartın'ın yeni/ek resmî duyuru adayları henüz hiçbir sayaca eklenmedi.
+
+**Eşik:** Worker feed 6/10 kaynak ve 47/100 kart ile RED; geniş resmi envanterde kaynak sayısı 12/10 olsa da ilan sayısı 55/100 ile RED.
