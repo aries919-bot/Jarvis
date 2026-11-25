@@ -498,3 +498,21 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #68, wrong CI-target branch, closed unmerged. PR #67 wrong base closed unmerged. PR #66/#67/#68 merges yok.
 - UI / SharedPreferences integration yok; existing news archive is untouched. UI integration separate PR required.
 - Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
+
+
+### 18.1 H1 PR #68 yerine CI hedefli PR #69 — 25.11.2026
+- PR #68 tabanı `is/c3-ilan-semasi-ai-kaynak-kaniti` için `pull_request.branches` filtresi eşleşmiyordu; o hedefte Actions run çıkmaması kod hatası değil workflow tetik kuralıydı.
+- Temiz CI hedefi `kariyer-modulu` tabanında PR #69: https://github.com/aries919-bot/Jarvis/pull/69.
+- HEAD `c3cd6e65f46c35e996fed30d4d45b0352b307d70`; compare 10 commit /3 dosya /+752/-0 /0 behind. Production 510 satır; test 241 satır /11 @Test /38 assert; test scope JSON dependency.
+- İlk PR #69 koşusu #45657242423 eski HEAD `d09786662a6ca26bd548a0a947282b0e775e5dd5` içindi ve yeni commit gelince iptal edildi; yeni exact-head PASS değildir.
+- İlk koşuda JSON round-trip Android local mock JSON sınıfları nedeniyle RuntimeException verdi; yalnız testImplementation `org.json:json:20240303` eklendi. Güncel HEAD CI bekleniyor.
+- H1 veri modeli source URL'nin resmîliğini kendi başına kanıtlamaz; PRIMARY_SOURCE seçimi UI'da resmî/orijinal kaynak ve insan incelemesiyle sınırlandırılmalı. PR #69 UI/store entegrasyonu değildir.
+
+## 19. C1 P0 kaynak/UA PR #70 — 25.11.2026
+- PR #70: https://github.com/aries919-bot/Jarvis/pull/70, `fix/c1-source-policy-ua-ci-20261125` → `kariyer-modulu`; açık/taslak.
+- Güncel HEAD `7ef01daf1785eebc3ad26bbf6254cc89e765cc3f`; compare 5 commit /4 dosya /+47/-13 /0 behind.
+- Indeed/LinkedIn katalog, trusted/secondary ve arama sorgularından çıkarıldı; genel `.edu.tr` trusted listeden çıkarıldı; Chrome/Mozilla UA `AriesKaynakTara/1.0` oldu; genel/izinli üniversite testi güncellendi. Ek koruma olarak `isTrustedUrl` başında allowlist dışı `.edu.tr` reddedilir.
+- İlk exact-head run #45657277644 başarısızdı: 96 test /1 hata, `CareerSourceCatalogTest` akademik alan kuralı. Bu run yeni koruma commitinden önceki HEAD'deydi.
+- Yeni HEAD için Android run #45658345528: [Actions](https://github.com/aries919-bot/Jarvis/actions/runs/45658345528), son kontrolde unit tests in_progress; APK adımı pending. PASS/ONAY yok.
+- PR #67 eski C3 hedefinde açık ve exact-head CI'siz; #70, aynı kapsamın gerçek Android CI hedefindeki sürümüdür. PR #67/#70 birleştirilmedi.
+- C1 10 kaynak/100 doğrulanmış ilan ve kamu ayrı raporu eşikleri değişmedi; bu P0 kaynak kodu düzeltmesi ilan sayısını yükseltmez.
