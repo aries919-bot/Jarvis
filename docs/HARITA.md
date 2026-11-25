@@ -516,3 +516,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Yeni HEAD için Android run #45658345528: [Actions](https://github.com/aries919-bot/Jarvis/actions/runs/45658345528), son kontrolde unit tests in_progress; APK adımı pending. PASS/ONAY yok.
 - PR #67 eski C3 hedefinde açık ve exact-head CI'siz; #70, aynı kapsamın gerçek Android CI hedefindeki sürümüdür. PR #67/#70 birleştirilmedi.
 - C1 10 kaynak/100 doğrulanmış ilan ve kamu ayrı raporu eşikleri değişmedi; bu P0 kaynak kodu düzeltmesi ilan sayısını yükseltmez.
+
+
+### 18.2 PR #69 exact-head unit test + APK PASS — 25.11.2026
+- Latest tested HEAD `c3cd6e65f46c35e996fed30d4d45b0352b307d70`.
+- Android APK [#45658340086](https://github.com/aries919-bot/Jarvis/actions/runs/45658340086): **SUCCESS**. `testDebugUnitTest`, `assembleDebug` and artifact upload all SUCCESS.
+- Artifact [15043163794](https://github.com/aries919-bot/Jarvis/actions/runs/45658340086/artifacts/15043163794), 14,082,661 bytes; SHA-256 `514af7cdba04e162f0bfd065cfad22afa257c5b158b90cc1f6dcf15578bce38f`.
+- Model test source: 11 @Test /38 assert calls. This is exact-head model unit-test + debug APK evidence, not Full App QA or real-phone evidence.
+- PR #69 remains open/draft; no merge/deploy. H1 UI/store integration remains next separate step.
