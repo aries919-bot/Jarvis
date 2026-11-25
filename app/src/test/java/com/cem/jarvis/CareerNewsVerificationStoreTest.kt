@@ -42,6 +42,10 @@ class CareerNewsVerificationStoreTest {
 
         assertTrue(store.save(record()).saved)
         assertEquals(record(), store.load(record().storyId))
+        val firstBackup = CareerNewsVerificationRecord.fromJson(
+            storage.values["last_good." + record().storyId]!!
+        )
+        assertEquals(record(), firstBackup)
         assertEquals("[{\"title\":\"eski haber\"}]", storage.values["legacy.career_news_items"])
     }
 
