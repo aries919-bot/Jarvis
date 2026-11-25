@@ -64,11 +64,11 @@ class CareerNewsVerificationActivity : Activity() {
             },
             originalSourceUrl = sourceUrl,
             publishedAt = intent.getStringExtra(EXTRA_PUBLISHED_AT)
-                ?.takeIf(CareerNewsVerificationPolicy::isUtcTimestamp),
+                ?.takeIf { CareerNewsVerificationPolicy.isUtcTimestamp(it) },
             collectedAt = intent.getStringExtra(EXTRA_COLLECTED_AT)
-                ?.takeIf(CareerNewsVerificationPolicy::isUtcTimestamp),
+                ?.takeIf { CareerNewsVerificationPolicy.isUtcTimestamp(it) },
             firstSeenAt = intent.getStringExtra(EXTRA_FIRST_SEEN_AT)
-                ?.takeIf(CareerNewsVerificationPolicy::isUtcTimestamp)
+                ?.takeIf { CareerNewsVerificationPolicy.isUtcTimestamp(it) }
         )
 
         val saved = store.save(record)
