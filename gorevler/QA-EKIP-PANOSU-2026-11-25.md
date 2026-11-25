@@ -104,3 +104,13 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - #69 yalnız SharedPreferences store + eski UI/links helper; #71 SQLite store, ayrı Activity, append-only review history, publishedAt formu ve 4 instrumentation testi getiriyor. #71 Activity Custom Tabs + HTTPS doğrulamasını zaten yapıyor.
 - Karar: #69 taslak kalacak; #71 kabul edilip birleşirse #69 superseded olarak kapatılabilir. #69'dan bağımsız kod cherry-pick edilmiyor.
 - Kanıt: [PR #69](https://github.com/aries919-bot/Jarvis/pull/69), [PR #71](https://github.com/aries919-bot/Jarvis/pull/71), rapor: [H1 PR çakışma incelemesi](H1-PR69-71-Cakisma-QA-2026-11-25.md).
+
+
+### QA-02 — emülatör hata analizi + yeni merge-ref retesti
+- İlk emülatör run #45679523114: FAILURE; artifact 15055314040 XML: 4 instrumentation / 1 PASS / 3 FAIL / 0 ERROR / 0 SKIP.
+- 3 UI testi aynı RootViewWithoutFocusException ile başarısız; SQLite last-good recovery testi geçti. Logcat 177+ frame skip, 2.5–3.2 sn renderer jank, Activity PAUSED geçişi gösteriyor. Senkron SQLite onCreate load + koşulsuz save P2 performans riski; ayrı iş belgesine yazıldı.
+- AndroidX Test issue #2248 aynı Trace.forceEnableAppTracing() NoSuchMethodError'u belgeliyor. Trace API 1.1.0'dan beri var; app'e tracing 1.2.0 eklendi. Kaynak: https://github.com/android/android-test/issues/2248 ; https://developer.android.com/reference/androidx/tracing/Trace
+- İlk merge-ref doğrulama run #45685844306 testlere ulaşmadan eski PR API base.sha snapshot'ına takıldı; workflow kontrolü gerçek merge commit parent'larına çevrildi.
+- Yeni HEAD 5df909fb1d0893aa0fb308f33b5fb8064aec8811; H1 merge-ref run #45685959506 ve Android APK/unit #45685959491 devam ediyor. Merge-ref verify PASS: parent1 canlı #70 merge 09f98b3..., parent2 yeni PR HEAD.
+- Workflow: github.sha checkout, AOSP default API34 Pixel 2, dependencyInsight, 30 dk test timeout, log + XML/HTML artifact if: always().
+- Karar: emülatör HALA RED; yeni run tamamlanmadan sonuç yok; telefon testi ayrıca gerekli.
