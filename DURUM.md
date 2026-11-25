@@ -11,7 +11,7 @@
 - **H1 PR #71:** HEAD `6b392a3aa02d42700743657350d081d7f7ad6aeb`; 10 dosya / +2.578 / -26; 20 model +10 store +4 Android instrumentation =34 test.
 - Exact-head APK/unit [#45679523180](https://github.com/aries919-bot/Jarvis/actions/runs/45679523180) SUCCESS.
 - Exact-head Android emulator/SQLite [#45679523114](https://github.com/aries919-bot/Jarvis/actions/runs/45679523114) son kontrolde IN_PROGRESS; test PASS sayılmaz. Gerçek telefon testi ayrıca gerekli. PR taslak/açık; merge yok.
-- **C1 PR #70:** exact-head [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) SUCCESS ve yalnız kaynak/UA kapsamı için öz-QA ONAY. H1 kabulinden sonra sıradaki iş.
+- **C1 PR #70:** MERGED commit `09f98b324a9a1f38dbbc25853ec2eba2fc544db9`; exact-head [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) SUCCESS ve kaynak/UA kapsamı için öz-QA ONAY.
 - **C1 private PR #11:** RED; son doğrulanmış kamu sayımı 12 kaynak /55 açık ilan; 100 ilan eşiğine 45 eksik. Production Worker authenticated GET/D1 ve şehir kanıtlı cross-source dedup eksik.
 
 ## Mimari envanter özeti
@@ -21,4 +21,4 @@
 - Eski `AGENTS.md`/`DURUM.md` talimatları güncellendi. `denetle.py` Groq'a diff gönderdiği için güvenlik incelemesi tamamlanana dek çalıştırılmaz.
 
 ## Çalışma kuralı
-H1 exact-head emülatör sonucu kapanmadan H1 merge yok. H1 kabulinden sonra PR #70. Ardından C1'in 10 kaynak /100 doğrulanmış ilan ve production GET/D1 kapıları. Film/tema alanı bu iş akışına dahil değildir.
+PR #70 kaynak politikası base'e girdi. H1 PR #71 için merge-ref emulator retesti + telefon doğrulaması kapanmadan merge yok. Ardından C1'in 10 kaynak /100 doğrulanmış ilan ve production GET/D1 kapıları. Film/tema alanı bu iş akışına dahil değildir.
