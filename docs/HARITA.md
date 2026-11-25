@@ -606,3 +606,12 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - PR #71 açık/taslak; merge/deploy yok. Full App QA workflow'u `kariyer-modulu` tabanında yok; emulator ve telefon denemesi yok.
 - PR #71, PR #69'daki H1 çekirdeğini ve UI entegrasyonunu kapsayan güncel SQLite adayıdır. PR #69 ayrıca açık/taslak ve CI PASS durumda; iki PR da birleştirilmedi.
 - C1 sayımı/Worker değişmedi; 10 kaynak/100 doğrulanmış ilan ve production GET kapıları ayrı RED/BLOCKED kalır.
+
+### 20.3 PR #71 exact-head CI sonucu — 25.11.2026
+- Tested HEAD: `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`.
+- Android APK run [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387): **SUCCESS**. JUnit task, APK assemble and artifact upload all SUCCESS.
+- Log kanıtı: `BUILD SUCCESSFUL in 1m 31s` (testDebugUnitTest) ve `BUILD SUCCESSFUL in 50s` (assembleDebug). Test dosyası anotasyon yeniden sayımı 17 model +8 store =25 yeni @Test.
+- APK artifact `aries-apk`, ID `15049240153`, 14,176,012 bytes, unexpired.
+- This is Android unit-test + debug APK evidence only. No Full App QA/emulator workflow on `kariyer-modulu`; no real phone test.
+- PR #71 remains open/draft, unmerged. PR #69 and #70 remain open/draft; no PR merged/deployed.
+- C1 10/100, public-source evidence, Worker authenticated production GET and e-Şube/H2 dedup counts unchanged; still separate RED/BLOCKED gates.
