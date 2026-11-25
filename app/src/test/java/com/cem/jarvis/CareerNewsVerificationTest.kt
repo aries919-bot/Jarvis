@@ -232,6 +232,14 @@ class CareerNewsVerificationTest {
         assertEquals("Başlık değişse de aynı kaynak sayfası aynı haber kimliğini korur.", first, revisedHeadline)
     }
     @Test
+    fun evidencePublicationTimestampMustBeValidUtcWhenProvided() {
+        val invalid = evidence().copy(publishedAt = "2026-02-30T10:00:00Z")
+        assertNull(record().addClaim(claim())!!.addEvidence("claim-1", invalid))
+        val valid = evidence().copy(publishedAt = "2026-11-20T10:00:00Z")
+        assertNotNull(record().addClaim(claim())!!.addEvidence("claim-1", valid))
+    }
+
+    @Test
     fun rejectsImpossibleDatesAndEvidenceExcerptsWithPersonalIdentifiers() {
         assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-02-30T14:00:00Z"))
         assertFalse(CareerNewsVerificationPolicy.isUtcTimestamp("2026-11-25T25:00:00Z"))
