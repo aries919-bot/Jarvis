@@ -131,3 +131,13 @@ Toplam pozisyon adayı 141; 23'ü (TGA 13, ORAN 7, Zafer 2, DOKA 1) HTML/PDF met
 - Son H2 PR tests exact HEAD `2a9618e63c63e4d025a5192ae6df34927fdc665c`: [Python Script Tests #45539934341](https://github.com/aries919-bot/Jarvis/actions/runs/45539934341) SUCCESS, `Ran 160 tests / OK`; [H2 PR test #45539934288](https://github.com/aries919-bot/Jarvis/actions/runs/45539934288) SUCCESS, `Ran 59 tests / OK`.
 - [Deterministik Hakem #45539934310](https://github.com/aries919-bot/Jarvis/actions/runs/45539934310): test alt işi SUCCESS; formal GitHub review kaydı 0 olduğundan bağımsız onay yok.
 - Son exact-head live push: [#45539925550](https://github.com/aries919-bot/Jarvis/actions/runs/45539925550), job `138955831007`, o güncel kayıtta hâlâ `Read measured official announcements` adımında in_progress; nihai kaynak sayımı/artifact henüz yok.
+
+
+## Altıncı exact-head live ölçüm — Munzur iki kayıt sonrası
+- Run: https://github.com/aries919-bot/Jarvis/actions/runs/45539925550
+- Job: 138955831007 SUCCESS; artifact 14989210546; collectedAt=2026-11-25T03:26:24Z.
+- 19 kaynak kaydı; **16 fresh / 3 stale**; 16 toplam last-good kart.
+- Açık doğrulanmış kamu: **11 benzersiz kurum / 13 ilan kartı / 125 pozisyon**. Bu, 100 kart eşiğinin 13/100 seviyesinde kaldığını gösterir.
+- Stale: BOTAŞ (NETWORK_ERROR), Mardin Artuklu öğretim üyesi (deadline kanıtı yok), Munzur öğretim üyesi (expectedText boşluk eşleşmesi). Munzur öğretim görevlisi PDF kaydı fresh oldu, fakat 25.11.2026 mesai bitimi ve kesin saat belirsizliği nedeniyle `deadlineTimeUnknown=true` → Doğrulanamadı, açık sayaca eklenmedi.
+- Munzur faculty expectedText düzeltildi: tek birleşik `Son Başvuru Tarihi : 25.11.2026` yerine iki ayrı kanıt dizgesi. Exact HEAD a952007c için yeni live run bekleniyor.
+- Pozisyon toplamı 125 bilgidir; 100 ilan kartı sayısı yerine geçmez. e-Şube feed ayrıca 42 snapshot kartı taşıyordu; bu H2 run ile cross-feed dedup/Worker merge kanıtı yapılmadı.
