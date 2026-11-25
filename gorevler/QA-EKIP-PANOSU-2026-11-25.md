@@ -45,10 +45,11 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 
 ### QA-03 — C1 kaynak politikası ve ağ güvenliği
 **Sorumluluk:** Kaynak allowlist, LinkedIn/Indeed yasağı, UA, official/secondary ayrımı, robots/timeout davranışı.
-- Durum: İNCELEME PASS; MERGE SIRASI BEKLİYOR.
+- Durum: MERGED; exact-head CI + scoped öz-QA ONAY tamam.
+- Merge commit: 09f98b324a9a1f38dbbc25853ec2eba2fc544db9; base kariyer-modulu.
 - Kanıt: PR #70 HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`; [CI #45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) SUCCESS; 4 dosya, +75/-20 (GitHub PR metadata).
 - Kabul: tüm HTTP istekleri tanımlı UA; LinkedIn/Indeed katalog/sorgu yok; resmi olmayan katalog girdileri primary alert üretemez.
-- Takip: PR #70, H1 sırası kapanmadan merge edilmez.
+- Takip: [PR #70](https://github.com/aries919-bot/Jarvis/pull/70) merged; source policy base'e girdi.
 
 ### QA-04 — C1 canlı veri, kamu sayımı ve Worker
 **Sorumluluk:** e-Şube/H2 input, source bazlı stale, tarih alanları, mükerrer, kamu/özel ayrımı, production GET/D1.
