@@ -700,3 +700,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Hız kuralı: bağımsız hatlar paralel, aynı branch/dosya üzerinde yazma sıralı; her hat kendi test/kanıtını üretir; kırmızı bulguda döngü yerine kök neden ve tek takip işi.
 - **KARAR: RED / genel kabul yok.** Emülatör, telefon, izin envanteri, 45 kamu ilanı ve Worker/D1 kapıları açık.
 
+## 24) Güvenlik QA — Android izin akışı bulgusu — 25.11.2026
+- Manifest 10 izin içeriyor: RECORD_AUDIO, CALL_PHONE, READ_CONTACTS, INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, SET_ALARM, USE_EXACT_ALARM, BLUETOOTH_CONNECT.
+- MainActivity onCreate satır 140–145 uygulama açılışında RECORD_AUDIO + CALL_PHONE + READ_CONTACTS + POST_NOTIFICATIONS izinlerini topluca istiyor.
+- MainActivity tam kaynak taramasında CALL_PHONE / READ_CONTACTS yalnız izin listesinde bulundu; ACTION_CALL, ACTION_DIAL, Phone.CONTENT_URI ve Phone.query kullanımı bulunmadı. ContactsContract.CommonDataKinds.Phone import'u var, kullanım bulunmadı.
+- RECORD_AUDIO sesli komut akışında; BLUETOOTH_CONNECT yalnız kullanıcı ses çıkış seçicisini açtığında isteniyor; POST_NOTIFICATIONS CareerActivity'de bildirim akışıyla da isteniyor. Reminders.kt `setAlarmClock` kullanıyor; exact alarm izni gerekmeyebilir, ayrıca doğrulanmalı.
+- **Güvenlik bulgusu:** CALL_PHONE ve READ_CONTACTS açılışta gereksiz isteniyor gibi görünüyor. Manifest ve onCreate'den kaldırma, tam repo araması + regresyon testi ve ayrı küçük PR gerektirir. Bu oturumda kod değiştirilmedi; aktif kapsam ve PR'lar kirletilmedi.
+- Emülatör #45679523114 son kontrol: `in_progress`, conclusion `null`; step 5 hâlâ çalışıyor. 35 dakikalık workflow timeout dolmadan fail/stall kararı verilmez.
+- Ayrıntı: `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
