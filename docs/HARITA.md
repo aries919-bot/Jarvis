@@ -755,3 +755,15 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - BLUETOOTH_CONNECT zaten ses çıkış seçimi sırasında just-in-time isteniyor.
 - Reminders.kt satır 85 `AlarmManager.setAlarmClock` çağırıyor. Android resmi belgeleri setAlarmClock için exact alarm izni gerektiğini söylüyor; `USE_EXACT_ALARM` otomatik verilir fakat esasen çalar saat/takvim uygulamaları için sınırlı. Jarvis'in ana işlevi alarm değilse Play policy riski doğar; kullanıcı kontrollü `SCHEDULE_EXACT_ALARM` veya inexact alarm/WorkManager alternatifi değerlendirilmelidir. [Android exact alarm policy](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms).
 - **KARAR:** İzinler kullanılmıyor diye silinmeyecek. Just-in-time izin akışı ve exact alarm ürün/policy değerlendirmesi ayrı güvenlik PR'ı.
+
+
+## 31) H1 emülatör başarısızlık analizi ve merge-ref retesti — 25.11.2026
+- Önceki run #45679523114 FAILURE; artifact 15055314040 XML tekrar sayımı 4 UI instrumentation test / 1 PASS / 3 FAIL / 0 error / 0 skipped. Geçen tek test SQLite last-good corrupt-primary recovery. Üç UI test aynı RootViewWithoutFocusException (window-focus=false).
+- Logcat'te H1 Activity'de 177+ frame skip ve 2.5–3.2 sn renderer jank, Activity'nin test sürecinde PAUSED olması gözlendi. OnCreate içindeki senkron SQLite load + her açılışta koşulsuz save P2 risk olarak ayrı düzeltmeye yazıldı; focus hatasının tek nedeni olduğu kanıtlanmadı.
+- Aynı logcat AndroidXTracer `Trace.forceEnableAppTracing()` NoSuchMethodError içeriyor. AndroidX Test issue #2248 monitor 1.7.1 patch çözümünü; resmi API dokümanı forceEnableAppTracing'in tracing 1.1.0 ile eklendiğini belirtiyor. App'e tracing 1.2.0 eklendi. [AndroidX Test issue](https://github.com/android/android-test/issues/2248) · [Trace API](https://developer.android.com/reference/androidx/tracing/Trace).
+- İlk workflow kontrol koşusu #45685844306 yalnız eski PR API base.sha snapshot'ını yanlış karşılaştırdığı için testlere ulaşmadan fail oldu; uygulama testi koşmadı. Workflow kontrolü gerçek merge commit ebeveynlerini doğrulayacak şekilde düzeltildi.
+- Yeni PR HEAD `5df909fb1d0893aa0fb308f33b5fb8064aec8811`; H1 run [#45685959506](https://github.com/aries919-bot/Jarvis/actions/runs/45685959506) ve APK/unit [#45685959491](https://github.com/aries919-bot/Jarvis/actions/runs/45685959491) IN_PROGRESS. H1 workflow verify step PASS; merge commit parent1 gerçek #70 merge `09f98b324a9a1f38dbbc25853ec2eba2fc544db9`, parent2 PR HEAD.
+- Workflow `github.sha` merge-ref checkout, AOSP default API34 Pixel 2, dependencyInsight, test adımı 30 dk timeout, emülatör logu + XML/HTML raporları if: always() ile yükleniyor.
+- PR #69, PR #71 ile 6 dosyada çakıştığı ve eski SharedPreferences mimarisini kullandığı için MERGE DIŞI tutuluyor. #71 geçmeden #69 kapatılmayacak.
+- Kamu C1 sayımı değişmedi: 12 resmî kaynak /55 doğrulanmış açık kamu ilanı; 45 eksik. Worker production GET/D1, city kanıtlı dedup eksik. C1 RED.
+- **KARAR:** H1 RED/beklemede; yeni emülatör sonucu ve gerçek telefon kontrolü olmadan #71 merge yok. Ayrıntı `gorevler/H1-EMULATOR-FAIL-ANALYSIS-2026-11-25.md`.
