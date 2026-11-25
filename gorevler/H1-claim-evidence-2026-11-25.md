@@ -1,23 +1,24 @@
 # H1 — Haber iddia/kanıt/düzeltme çekirdeği
 Tarih: 25.11.2026
-Durum: PR AÇIK / TASLAK / CI KANITI BEKLİYOR
+Durum: PR #69 AÇIK / TASLAK / EXACT-HEAD CI DEVAM EDİYOR
 
 ## Amaç
 Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor; iddia atomları, destekleyen/çelişen kanıtlar, insan incelemesi ve düzeltme geçmişi için veri sözleşmesi yok. Bu iş, mevcut haber kayıtlarına dokunmadan bu çekirdeği ayrı ekler.
 
 ## Dal / PR
 - Repo: aries919-bot/Jarvis
-- Taban: is/c3-ilan-semasi-ai-kaynak-kaniti
-- Taban SHA: 350f38bc9bd1939a5481689c32889c9b326f1d63
-- Dal: feat/h1-story-claim-evidence-20261125
-- HEAD: 5f5af96834de429dcb302d939a5fff444a2b01c0
-- PR #68: https://github.com/aries919-bot/Jarvis/pull/68
+- Taban: kariyer-modulu
+- Taban SHA: 4b270245019ed322dc2dc1c735c715c0934076a2
+- Dal: feat/h1-story-claim-evidence-ci-20261125
+- HEAD: fdfdd539a2e81826e53898aa07004ee21a0bd55b
+- PR #69: https://github.com/aries919-bot/Jarvis/pull/69 (aktif)
+- Eski PR #68 kapatıldı (unmerged), çünkü `is/c3-ilan-semasi-ai-kaynak-kaniti` hedefinin workflow filtresi CI tetiklemiyordu.
 - Durum: açık/taslak; merge yok; kullanıcı/gerçek cihaz doğrulaması yok.
 
 ## Diff yeniden sayımı
-- Compare exact taban/head: 5 commit; 2 dosya; +664 / -0; 0 behind.
-- Yeni production dosyası CareerNewsVerification.kt: 435 ek satır.
-- Yeni test dosyası CareerNewsVerificationTest.kt: 229 ek satır; 11 test.
+- Compare exact taban/head: 8 commit; 2 dosya; +741 / -0; 0 behind.
+- Yeni production dosyası CareerNewsVerification.kt: 500 ek satır.
+- Yeni test dosyası CareerNewsVerificationTest.kt: 241 ek satır; 11 test.
 - Eski Haber arşivi, SharedPreferences kaydı, CareerActivity UI, C1 feed, Worker ve kaynak okuyucuları bu PR'da değişmedi.
 
 ## Model
@@ -59,8 +60,8 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Merge/deploy yapılmadı.
 
 ## SONRAKİ ADIM
-1. PR #68 exact-head Android unit tests, APK ve Full App QA kanıtını al; başarısız olursa log kök nedenini düzelt.
+1. PR #69 exact-head Android unit tests ve APK sonucunu al; run #45657661662 tamamlanmadan PASS deme. Yeni başarısızlık olursa log kök nedenini düzelt.
 2. Ayrı PR'da mevcut Haber arşivine geriye dönük veri kaybı olmadan local store bağla; mevcut `career_news_items` kayıtları otomatik VERIFIED yapılmaz.
 3. Haber kartına iddia ekle, kaynak kanıtı ekle, karşıt kanıt ekle, insan incelemesi ve düzeltme geçmişi görüntüleme eylemleri ekle.
 4. Dış bağlantıları Custom Tabs ile aç; C1 worker JSON ve 10/100 kapıları kapanmadan mobil HTML arama motoru fallback'ini kapatma.
-5. Telefon testinde eski haber arşivi korunumu, kullanıcı onayı, link geri dönüşü ve offline/empty/error davranışını doğrula.
+5. H1 UI PR'si için ayrıca Full App QA workflow eklenmesi veya mevcut kariyer-modulu dalında UI test workflow'unun varlığı doğrulanmalı; PR #69 yalnız Android APK workflow'unu tetikler. Telefon testinde eski haber arşivi korunumu, kullanıcı onayı, link geri dönüşü ve offline/empty/error davranışını doğrula.
