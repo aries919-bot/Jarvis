@@ -108,3 +108,13 @@ Mevcut Haber arşivi başlık, bağlantı, snippet ve sınıflandırma saklıyor
 - Current exact HEAD [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387): started for HEAD 3a10175; final status pending at report time. Do not claim PASS until complete.
 - PR #71 includes the tested H1 core and UI integration and is the current SQLite candidate; PR #69 remains separately open/draft, both unmerged. PR #70 C1 source-policy P0 remains open/draft and has exact-head Android PASS (#45658875411).
 - No Full App QA workflow / emulator or real-phone test on `kariyer-modulu`; no merge/deploy.
+
+### PR #71 exact-head CI — 25.11.2026
+- Exact tested HEAD `3a1017528ebb1d87ca8e7f87022ae610ce1bdc6c`.
+- Android APK run [#45667520387](https://github.com/aries919-bot/Jarvis/actions/runs/45667520387): SUCCESS.
+- Job: `testDebugUnitTest` SUCCESS; `assembleDebug` SUCCESS; artifact upload SUCCESS.
+- Log outputs: `BUILD SUCCESSFUL in 1m 31s` for JUnit and `BUILD SUCCESSFUL in 50s` for APK.
+- Artifact `aries-apk`, ID `15049240153`, size 14,176,012 bytes, not expired.
+- Exact test annotation recount: 17 model tests +8 store tests =25 new @Test.
+- Full App QA/emulator workflow not found on `kariyer-modulu`; no actual phone test. This is not production/phone acceptance.
+- PR #71 stays open/draft/unmerged pending referee review and device test. PR #69/70 remain independently open/draft; no merge/deploy.
