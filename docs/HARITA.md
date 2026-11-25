@@ -1029,3 +1029,12 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - H2 exact dedup: Düzce Öğretim Elemanı 5 kadro ve Tarsus Öğretim Görevlisi 3 kadro mevcut H2 kartlarıyla eşleşti; yeniden sayılmadı. Düzce ayrı Öğretim Üyesi 4 kadro ana duyurusu yeni aday.
 - PDF screenshot isteği dosya boyutu 41,936,566 byte nedeniyle 400 döndü; metin PDF'si analiz edildi, görsel screenshot incelemesi tamamlanmadı.
 **KARAR:** Kamuya 3 yeni tarih/doğrulama koşulunu sağlayan aday duyuru (2 yeni kurum kaynağı) bulundu. Worker feed ve production GET/D1'e bağlanmadılar; current counts still last-good 6/47 stale, separate manual 12/55. 10/100 RED.
+
+## 26.11.2026 — H1 emulator exact-head sonucu: FAILURE
+- Önceki #45712459718 in_progress durumu kapandı. Güncel run: https://github.com/aries919-bot/Jarvis/actions/runs/45712459718 — FAILURE.
+- XML artefact #15069268534 yeniden okundu: 4 test /1 PASS /3 FAIL /0 error /0 skipped. Üç UI testinin her biri Espresso RootViewWithoutFocusException (has-window-focus=false); SQLite last-good recovery testi PASS. XML gate 4/4 pass şartını doğru şekilde reddetti.
+- APK/unit aynı HEAD run #45712459742 SUCCESS; bu sonuç emülatör instrumentation yerine geçmez.
+- Tanı: emulator online, boot_completed=1, system_server PID 552 sabit, Package service bulundu, 7.0G data boş. WindowManager test EmptyActivity'yi öne alıp Jarvis task'ını arkaya taşırken focus kaydı ve system_server slow dispatch/monitor contention görüldü. Muhtemel focus handoff/timing yarışı; tek kök neden kesinleşmedi.
+- Google AndroidX 18.09.2026 düzeltmesi aynı ActivityScenario/EmptyActivity geçişlerinden sonra focus kaybını kaydeder ve odak istemeyen UI-thread View.performClick yaklaşımı kullanır: https://android.googlesource.com/platform/frameworks/support/+/36c1b8edfc954907a546e09c7f42e20d39ecb083. Benzerlik vardır, aynı Aries kök nedeni olduğu kanıtlanmış değildir.
+- Ayrıntılı görev/artefact ve sonraki test-only planı: [H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md](../gorevler/H1-ROOT-WINDOW-FOCUS-FAILURE-2026-11-26.md).
+**KARAR:** H1 RED; 4/4 testi geçmedi. Aynı head kör rerun yok; test atlama/XML gate gevşetme yok; PR #71 merge/deploy yok.
