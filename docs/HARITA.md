@@ -661,6 +661,6 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Önceki HEAD #45658875411 APK/unit CI PASS; öz-QA'da SecretCV, Yenibiriş ve İşbul'un `isSecondary` listesinden çıkarılması nedeniyle trusted kaynak olarak primary alert üretebilmesi bulundu.
 - Düzeltme: `isSecondary()` katalogdaki `official=false` metadata'sından türetiliyor; tüm non-official kaynaklar secondary. Host seti cache ediliyor. Katalogdaki bütün non-official kaynaklar ve SecretCV/Yenibiriş/İşbul/Memur365 için regresyon beklentileri düzeltildi.
 - Ara HEAD #45676772911 FAILED: 98 testten 2 assertion (test beklentisi hatası: İşbul trust statüsü ve Memur365 secondary statüsü). İki test beklentisi düzeltildi.
-- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902) son kontrolde IN_PROGRESS.
+- Güncel exact-head Android APK/unit [#45677312902](https://github.com/aries919-bot/Jarvis/actions/runs/45677312902): birim testleri SUCCESS, APK derlemesi IN_PROGRESS.
 - **KARAR: RED / beklemede.** Yeni exact-head CI PASS olmadan PR #70 merge yok.
 - Ayrıntı: `gorevler/C1-SOURCE-POLICY-2026-11-25.md`.
