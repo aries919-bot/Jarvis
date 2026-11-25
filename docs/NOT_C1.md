@@ -582,3 +582,18 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Job metadata returned by GitHub connector has `logs_url=null`, no runner identity/timestamps; run artifact list is empty. The status has exceeded configured timeout by a wide margin, but this does not prove whether runner is alive, lost, or GitHub status is stale.
 - No XML means no test pass/fail conclusion. Do not start an overlapping identical emulator run. Inspect Actions UI run annotation/runner state; preserve logs, then cancel once only if UI confirms a live stuck run. Task: [H1-EMULATOR-RUN-LIFECYCLE-ANOMALY-2026-11-26.md](../gorevler/H1-EMULATOR-RUN-LIFECYCLE-ANOMALY-2026-11-26.md).
 **KARAR:** H1 remains BLOCKED/UNKNOWN; APK/unit CI success does not substitute for emulator 4/4 XML or referee review.
+
+
+## 26.11.2026 — 21–25 Kasım RG ek denetimi
+- Kaynak ayrıntı notu `gorevler/C1-RESMI-KAYNAK-SNAPSHOT-2026-11-26.md` commit `eccaed393d3bf6569cd4d377ece87c48e80d9812`; HARITA özeti commit `3c7f3afb041a149cabdd743393fbeb1cc8b3be9d`.
+- 24.11.2026 RG + kurum portalları: Marmara (Öğretim Elemanı 1 + Öğretim Üyesi 1) ve ÇOMÜ (Öğretim Üyesi 1 + Öğretim Elemanı 1) = **4 yeni kamu ana duyuru**, son başvuru hepsi 08.12.2026. Kamu current manual total **23 duyuru /17 kurum**.
+- 21.11 İstanbul Medeniyet Üniversitesi akademik duyurusu kurum PDB arşivinde var; PDF fetch timeout ve deadline kurumsal sayfada görünmüyor. 1 aday, `deadline=null`; active count'a eklenmedi.
+- 25.11 RG'de yeni public personnel notice eklenmedi. Biruni 13.11 ilanı iptal; CTE, ÇŞİDB, MEB, MSB ve Marmara başlıkları ihale yasaklama; MCBÜ zaten kayıtlı; Çağ Üniversitesi 1/2 pozisyon özel akademik aday, son başvuru 09.12.2026.
+- 20.11 RG dizininde görülen OGM 12 Müfettiş Yardımcısı ilanı aslında 23.10.2026 yayımlı, başvuru 09.11 23:59'da kapanmış. 1 kamu/Süresi geçti duyurusu; 20 Kasım active ilan değil. OGM kurum sayfası https://www.ogm.gov.tr/tr/duyurular/tarim-ve-orman-bakanligi-orman-genel-mudurlugu-mufettis-yardimciligi-giris-sinavi-i%CC%87lani.
+- Son sınıflandırma: public active deadline verified 23/17; public future 4; public deadline-null 5; public expired 5. Private separate 7 candidate notices. Biruni cancellation means active card must be removed. Contingent seats are not announcement count.
+- 24Nov PDF screenshot 400/timeout; 21Nov PDF timeout. Official institution pages and RG index used; unverified fields remain null.
+**KARAR:** C1 RED. 23/17 is manual review count, not Worker count. Worker/H2 last-good 6/47 stale; prior manual inventory 12/55 separate; do not sum. 10 sources/100 verified open card and production authenticated Worker GET/D1 not proven.
+
+## H1 latest check still separate
+- PR #71 HEAD `b51c53a5797c19d4e18ed81b679024fc14fa3723`; APK/unit run #45716694105 SUCCESS, artifact #15069888409 and APK SHA-256 `96ba976ec3f341d51d403633246e96b74c90228de64ac270b9a96058e3d925ab`.
+- Emulator run #45716694004 last independently recorded IN_PROGRESS; earlier run #45712459718 FAILURE with 4 tests/1 pass/3 fail/0 error/0 skipped due focus loss. No merge/deploy until new exact-head XML 4/4 PASS and phone test.
