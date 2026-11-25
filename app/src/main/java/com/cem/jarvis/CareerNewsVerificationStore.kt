@@ -1,7 +1,9 @@
 package com.cem.jarvis
 
+import android.content.ContentValues
 import android.content.Context
-import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 
 /** Testable persistence boundary; implementations commit a key/value group atomically. */
 interface CareerNewsVerificationKeyValueStore {
@@ -10,18 +12,74 @@ interface CareerNewsVerificationKeyValueStore {
     fun putAtomically(values: Map<String, String>): Boolean
 }
 
-class SharedPreferencesCareerNewsStorage(context: Context) : CareerNewsVerificationKeyValueStore {
-    private val preferences: SharedPreferences =
-        context.getSharedPreferences("career_news_verification_v1", Context.MODE_PRIVATE)
+class SQLiteCareerNewsStorage(context: Context) :
+    SQLiteOpenHelper(context.applicationContext, "career_news_verification_v1.db", null, 1),
+    CareerNewsVerificationKeyValueStore {
 
-    override fun get(key: String): String? = preferences.getString(key, null)
+    override fun onCreate(db: SQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS verification_kv (" +
+                "key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL)"
+        )
+    }
 
-    override fun keys(): Set<String> = preferences.all.keys
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Additive migrations only. Never drop the user's evidence or correction history.
+        onCreate(db)
+    }
+
+    override fun get(key: String): String? =
+        readableDatabase.query(
+            "verification_kv",
+            arrayOf("value"),
+            "key = ?",
+            arrayOf(key),
+            null,
+            null,
+            null
+        ).use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+
+    override fun keys(): Set<String> =
+        readableDatabase.query(
+            "verification_kv",
+            arrayOf("key"),
+            null,
+            null,
+            null,
+            null,
+            null
+        ).use { cursor ->
+            buildSet {
+                while (cursor.moveToNext()) add(cursor.getString(0))
+            }
+        }
 
     override fun putAtomically(values: Map<String, String>): Boolean {
-        val editor = preferences.edit()
-        values.forEach { (key, value) -> editor.putString(key, value) }
-        return editor.commit()
+        val db = writableDatabase
+        db.beginTransaction()
+        return try {
+            values.forEach { (key, value) ->
+                val row = ContentValues().apply {
+                    put("key", key)
+                    put("value", value)
+                }
+                if (db.insertWithOnConflict(
+                        "verification_kv",
+                        null,
+                        row,
+                        SQLiteDatabase.CONFLICT_REPLACE
+                    ) == -1L
+                ) throw IllegalStateException("SQLite row write failed")
+            }
+            db.setTransactionSuccessful()
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            db.endTransaction()
+        }
     }
 }
 
