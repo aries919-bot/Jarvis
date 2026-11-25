@@ -129,3 +129,17 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - Production authenticated GET BLOCKED; Worker URL/token secret çifti yapılandırılmamış. Publish SKIPPED, POST/deploy yok. Worker/Android canlı entegrasyon kanıtı yok.
 - PR #9 formal GitHub reviews 0; bot yorumları bağımsız onay sayılmaz; hiçbir PR merge edilmedi.
 - Tarih kuralları değişmedi: yayın tarihi yoksa null; collectedAt yayın tarihi değildir; deadline unknown kayıtlar sayılmaz; gelecekteki applicationOpensAt açık ilan değildir; kura/sonuç iş ilanı değildir.
+
+
+## 12. Güncel canlı kaynak sayımı ve H1 düzeltmesi — 25.11.2026
+- Bu bölüm, önceki 6/47, 1/42 ve 5 H2 kart snapshot'larının yerine geçer. Bugünkü kaynak JSON ve iki başarılı Actions run'ı yeniden sayılmıştır.
+- e-Şube: [Actions #45513413529](https://github.com/aries919-bot/Jarvis/actions/runs/45513413529) attempt 2/job 139250985235 SUCCESS; `robots: izinli`, 3 sayfa, 15+15+12=42. `durum` commit bbb663d, collectedAt 13:49:08Z. 42/42 unique `ilan_no`, 0 duplicate, 42 open, 0 expired; 42/42 firstSeen present; publishedAt yok/null. Deadline dağılımı 27.11.2026:42.
+- e-Şube kurum dağılımı: MSB 20; Emniyet 10; Durağan Belediyesi 2; OMÜ sağlık merkezi 7; Devlet Tiyatroları 1; Elazığ Karayolları 8. Bölge 1; Türkiye Denizcilik İşletmeleri 1.
+- H2: [Actions #45540249638](https://github.com/aries919-bot/Jarvis/actions/runs/45540249638) attempt 2/job 139252154310 SUCCESS; artifact [15028921924](https://github.com/aries919-bot/Jarvis/actions/runs/45540249638/artifacts/15028921924); 19 kaynak kaydı, 17 fresh/2 stale; collectedAt 13:50:40Z; 13 verified open job cards / 11 distinct institutions. Per-institution breakdown and exclusions are in the task note.
+- H2 fresh verified cards: Anadolu 1, Atatürk 2, Balıkesir 1, DOKA 1, Düzce 1, Mardin Artuklu 1, Marmara 2, ORAN 1, Tarsus 1, TGA 1, Zafer 1 =13. BOTAŞ and Mardin Artuklu öğretim üyesi feed stale. ATK future application, Munzur deadline-time unknown, YHGM expired Kura are not open job cards.
+- Kamu ham aggregate 55 (e-Şube 42 + H2 13); source feeds are separate and production cross-feed dedup is not proven. 100 verified listing threshold not met: **55/100 RED**. H2 feed registry has 19 records (17 fresh/2 stale), 11 unique institutions; e-Şube is a separate feed with 7 employers.
+- C1 public H2 PR #61 is open/draft; Hakem #45540323511 RED because the 5-file diff (967 additions/30 deletions, 72,234 chars) exceeds `MAX_DIFF_BYTES=60_000`. Passing tests 160/160, H2 PR tests 59/59 and K1-B does not override the gate.
+- Private Worker integration PR #9 remains open/draft; formal review 0. Previous exact-SHA run #45517626605 had Node 46/46, local D1 11/11 and regression 17/17 PASS, but final gate RED and production authenticated GET BLOCKED. Private repo Actions #45517394728/#45517353291 terminated without steps/logs. No production deployment/POST.
+- H1 PR #63 updates taxonomy to Büyük özel/Kamu bağlı şirket and allows null publishedAt while preserving real deadline checks. Actions #45628989453 passed 14/14; PR remains draft, no formal review or merge.
+- No PR merged. Do not call these feeds live in the Android app: successful Actions reads do not prove a production Worker GET or app integration.
+- SONRAKİ ADIM: keep gate fail-closed; split H2 change under 60 KB; validate Worker authenticated GET/D1; add ≥45 verified public cards; secure independent H1 review.
