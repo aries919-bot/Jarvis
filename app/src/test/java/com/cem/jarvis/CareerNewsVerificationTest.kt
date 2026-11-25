@@ -292,4 +292,18 @@ class CareerNewsVerificationTest {
         assertNull(restored.firstSeenAt)
     }
 
+    @Test
+    fun primaryEvidenceRequiresAnAllowlistedOfficialSource() {
+        assertTrue(CareerNewsVerificationPolicy.isPrimarySourceUrl("https://www.dsi.gov.tr/duyurular"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceUrl("https://example.com/news"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceUrl("https://example.edu.tr/duyuru"))
+        assertFalse(CareerNewsVerificationPolicy.isPrimarySourceUrl("https://www.kariyer.net/is-ilanlari"))
+
+        val untrustedPrimary = evidence(
+            sourceType = CareerEvidenceSourceType.PRIMARY_SOURCE,
+            url = "https://example.com/news"
+        )
+        assertNull(record().addClaim(claim())!!.addEvidence("claim-1", untrustedPrimary))
+    }
+
 }
