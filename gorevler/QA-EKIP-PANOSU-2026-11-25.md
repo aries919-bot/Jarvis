@@ -130,3 +130,23 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - `scripts/h2_announcement_reader.py` `make_item()` imzasında city/location girdisi yok ve ürettiği JSON'a city/location yazmıyor; `parse_official_notice()` de bu alanı üretmiyor. Cloud `h2-input.js` düzeltmesi tek başına çözüm olamaz.
 - Kaynakta açık işyeri/pozisyon şehri varsa pozisyon satırına bağlı kanıtla eklenmeli; kurum merkezi veya kaynak URL'sinden şehir tahmini yasak. Çok şehirli ilanlar ayrı pozisyon kaydı/location array ihtiyacı taşıyabilir. Şehir yoksa null ve possible duplicate; unique count'a eklenmez.
 - Rapor: `gorevler/C1-H2-CITY-FIELD-AUDIT-2026-11-25.md`; commit 99055f2b5ecee19a2b3936443f8d9fefd375548c. Kod değişikliği yok; C1 12/55, 45 eksik; RED.
+
+
+### QA-02 — düzeltme: emulator false-green ve yeni exact-head koşusu
+- Önceki #45685959506 GitHub SUCCESS değildi; rapor artifact 15057322360 XML tekrar sayımı 4 test / 1 PASS / 3 FAIL / 0 ERROR / 0 SKIP. Üç ekran testi RootViewWithoutFocusException (has-window-focus=false) ile kaldı. Önceki PASS sınıflandırması geri çekildi.
+- Kök CI hatası: emulator scripti set -o pipefail kullanıyor, set -e kullanmıyordu; Gradle connectedDebugAndroidTest failure kodu action'dan yutulmuş. set -euo pipefail eklendi; commit 8d560a7d4e18db6fa6fdd1b131b47a831d6fd4bd.
+- CareerNewsVerificationActivity ilk açılış SQLite load + koşulsuz save UI thread'deydi. Tek FIFO ExecutorService ile async load/persist, mevcut kayıt açılışında yeniden yazmama ve kuyruğun sonunda DB close düzeltmesi uygulandı; commit b8a78126cbc6713cb4d42838027a6189274f19e7.
+- Yeni exact-head APK/unit #45692016951 SUCCESS; birim testleri + APK build + upload adımları SUCCESS.
+- Yeni merge-ref emulator #45692017824 son sorguda IN_PROGRESS; checkout/parent verify ve AndroidX dependencyInsight PASS, instrumentation step 7 devam ediyor. XML raporu henüz yok; 4/4 kabul edilmedi. Telefon testi yok. PR #71 **RED/beklemede**, merge yok.
+
+### QA-10 — Aries İş & Kariyer Question Answering / RAG
+**Sorumluluk:** Kaynaklı doğal dil soru-cevap motoru, retrieval/answer safety, privacy ve route davranışı.
+- Durum: BACKEND TASLAĞI KODLANDI; CI RUNNER ENGELİ NEDENİYLE TESTSİZ / MERGE YOK.
+- PR #12: https://github.com/aries919-bot/jarvis-cloud/pull/12; HEAD d49de634b9e07030c0117039b62027b76405b435; 4 dosya / +992 / -20; test dosyasında 24 test tanımı (çalıştırılmış test sayısı 0).
+- Pipeline: BM25 + BGE-M3 multilingual embeddings + RRF; kaynak kaydı üzerinden Gemma 4; kesin tarih/şart/başvuru alanları deterministik çıkarım; kanıt veya kariyer niyeti yoksa abstain. AI capacity rejectIfBusy ile reddedilirse BM25 fallback.
+- Provider allowlist: Kamu/Kura/KPSS/KPSS'siz/Kamu bağlı şirket yalnız iskur-esube-json / h2-official-announcement; Büyük özel yalnız jobs.lever.co Lever / jobs.ashbyhq.com Ashby. Stale, geçmiş/unknown deadline ve possibleDuplicate kayıtlar cevap dışı.
+- Gizlilik: CV/özgeçmiş, kişisel KPSS puanı, T.C. kimlik, telefon, e-posta, bearer/API token AI çağrısından önce bloklanır; kullanıcı profili/sohbet geçmişi modele ve D1'e aktarılmaz; soru ve token loglanmaz.
+- Son 7 Cloud CI run: #45692460706, #45692517637, #45692608933, #45692642608, #45692792848, #45692810534, #45692919011. Her birinde 1 job, 0 workflow step, 2–3 saniyede FAILURE. Log BlobNotFound; check annotation içeriği erişilemiyor. Bu kod test failure kanıtı değil; job runner/startup blocker. Tekrarlı commit/rerun döngüsü durduruldu.
+- Rapor: gorevler/ARIES-CAREER-QA-RAG-2026-11-25.md, durum commit 71ddd4a722942113f748c1afc586891ef041ed56.
+- H1 Haber QA ayrı bir sonraki iş; kariyer feed ve haber SQLite birbirine karıştırılmayacak.
+
