@@ -207,3 +207,15 @@ Kurallar değişmedi: tarih uydurulmaz; e-Şube publishedAt=null; deadline yaln�
 - **KARAR: RED / mimari temizlik tamamlanmadı.** Envanter ve iş planı kayda girdi; hiçbir kaynak dosyası topluca taşınmadı veya silinmedi.
 - Ayrıntı: `gorevler/ARIES-MIMARI-DAGINIKLIK-2026-11-25.md`.
 
+## 16. Paralel QA iş atamaları — 25.11.2026
+- QA-01 H1 model/SQLite: kod incelemesi tamam; 20 model +10 store testi.
+- QA-02 H1 Android UI/emülatör: APK/unit PASS; exact-head emülatör IN_PROGRESS; gerçek telefon testi bekliyor.
+- QA-03 C1 kaynak/UA: PR #70 exact-head CI PASS; H1 sırası bekleniyor.
+- QA-04 C1 canlı kamu/Worker: RED; 12 kamu kaynağı/55 ilan, 45 eksik; H2 city null ve production GET/D1 yok.
+- QA-05 mimari: dosya/sınıf envanteri tamam; CareerMonitor extraction küçük PR olarak planlandı.
+- QA-06 güvenlik/izinler: `denetle.py` Groq diff upload sebebiyle çalıştırılmıyor; manifest izinlerinin kod kullanım haritası açık.
+- Gerçek alt ajan çalıştırma aracı olmadığından roller ayrı QA sorumluluklarıdır; harici ajan kullanıldığı iddia edilmez. Koordinatör bütün çıktıları çapraz kontrol eder.
+- Görev panosu: `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
+- Paralel hız kuralı: bağımsız dosya/depodaki QA aynı anda; aynı branch/dosya yazımı sıralı; exact-head CI bitmeden ilgili PR merge edilmez.
+- **KARAR: RED / genel kabul yok.** Açık kapılar: emülatör + telefon, izin kullanım haritası, kamu 100 ilan eşiği ve Worker GET/D1.
+
