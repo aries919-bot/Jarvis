@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper
 /** Testable persistence boundary; implementations commit a key/value group atomically. */
 interface CareerNewsVerificationKeyValueStore {
     fun get(key: String): String?
+    fun getMany(keys: Set<String>): Map<String, String?> = keys.associateWith { get(it) }
     fun keys(): Set<String>
     fun putAtomically(values: Map<String, String>): Boolean
 }
@@ -40,6 +41,26 @@ class SQLiteCareerNewsStorage(context: Context) :
         ).use { cursor ->
             if (cursor.moveToFirst()) cursor.getString(0) else null
         }
+
+    override fun getMany(keys: Set<String>): Map<String, String?> {
+        if (keys.isEmpty()) return emptyMap()
+        val keyList = keys.toList()
+        val placeholders = keyList.joinToString(",") { "?" }
+        val found = readableDatabase.query(
+            "verification_kv",
+            arrayOf("key", "value"),
+            "key IN ($placeholders)",
+            keyList.toTypedArray(),
+            null,
+            null,
+            null
+        ).use { cursor ->
+            buildMap {
+                while (cursor.moveToNext()) put(cursor.getString(0), cursor.getString(1))
+            }
+        }
+        return keyList.associateWith { found[it] }
+    }
 
     override fun keys(): Set<String> =
         readableDatabase.query(
@@ -156,6 +177,25 @@ class CareerNewsVerificationStore(
         return storage.get(backupKey(storyId))
             ?.let { CareerNewsVerificationRecord.fromJson(it) }
             ?.takeIf { it.storyId == storyId }
+    }
+
+    /** Read multiple story records with one SQLite IN query for smooth list rendering. */
+    fun loadMany(storyIds: Collection<String>): Map<String, CareerNewsVerificationRecord> {
+        val ids = storyIds.filter { it.isNotBlank() }.distinct()
+        if (ids.isEmpty()) return emptyMap()
+        val keys = ids.flatMap { listOf(recordKey(it), backupKey(it)) }.toSet()
+        val values = storage.getMany(keys)
+        return buildMap {
+            ids.forEach { storyId ->
+                val primary = values[recordKey(storyId)]
+                    ?.let { CareerNewsVerificationRecord.fromJson(it) }
+                    ?.takeIf { it.storyId == storyId }
+                val recovered = primary ?: values[backupKey(storyId)]
+                    ?.let { CareerNewsVerificationRecord.fromJson(it) }
+                    ?.takeIf { it.storyId == storyId }
+                if (recovered != null) put(storyId, recovered)
+            }
+        }
     }
 
     fun save(record: CareerNewsVerificationRecord): CareerNewsVerificationSaveResult {
