@@ -267,6 +267,11 @@ data class CareerNewsVerificationRecord(
                 if (CareerNewsVerificationPolicy.validateHttpsUrl(evidence.sourceUrl) != null) {
                     errors += "Kanıt URL'si geçerli HTTPS adresi değil."
                 }
+                if (evidence.sourceType == CareerEvidenceSourceType.PRIMARY_SOURCE &&
+                    !CareerNewsVerificationPolicy.isPrimarySourceAllowed(evidence.sourceUrl)
+                ) {
+                    errors += "Birincil kaynak için resmî/izinli işveren alan adı gerekli."
+                }
                 if (evidence.excerpt.isBlank() || evidence.excerpt.length > 2000) {
                     errors += "Kanıt alıntısı boş veya çok uzun."
                 } else if (CareerNewsVerificationPolicy.sanitizeEvidenceExcerpt(evidence.excerpt) != evidence.excerpt) {
@@ -472,6 +477,23 @@ object CareerNewsVerificationPolicy {
             else -> 31
         }
         return day in 1..daysInMonth
+    }
+
+    fun isPrimarySourceAllowed(value: String): Boolean {
+        val uri = runCatching { URI(value.trim()) }.getOrNull() ?: return false
+        val host = uri.host?.lowercase(Locale.ROOT)?.removePrefix("www.") ?: return false
+        val forbidden = listOf("linkedin.com", "indeed.com")
+        if (forbidden.any { host == it || host.endsWith(".$it") }) return false
+        if (host == "edu.tr" || host.endsWith(".edu.tr")) {
+            val publicUniversities = setOf("ozal.edu.tr", "inonu.edu.tr", "firat.edu.tr", "adiyaman.edu.tr")
+            if (publicUniversities.none { host == it || host.endsWith(".$it") }) return false
+        }
+        if (CareerSourceCatalog.isSecondary(value) || CareerSourceCatalog.isNewsDiscoverySource(value)) {
+            return false
+        }
+        val listed = CareerSourceCatalog.sources.firstOrNull { it.name == CareerSourceCatalog.sourceName(value) }
+        if (listed?.official == false) return false
+        return CareerSourceCatalog.isTrustedUrl(value)
     }
 
     fun sanitizeEvidenceExcerpt(value: String): String = value
