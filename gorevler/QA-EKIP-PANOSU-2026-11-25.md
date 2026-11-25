@@ -169,3 +169,24 @@ Bu oturumda bağımsız alt ajan başlatma aracı bulunmuyor. Bu nedenle aşağ�
 - Test fixtures no longer contain long token-like sample values; test still checks short Bearer placeholder blocking.
 - PositionCount/city QA fields are exact-source-only; absent values are stated as unspecified and never inferred.
 - Status unchanged: PR #12 draft/no merge/no deploy; no more branch pushes until CI runner start issue is diagnosed.
+
+
+### QA-11 — H1 haber soru-cevap
+Sorumluluk: Haber ekranı içinde kaynakla sınırlı soru-cevap; verdict/kanıt/insan incelemesi/düzeltme geçmişinin doğru açıklanması.
+- Durum: KODLANDI; exact-head CI düzeltme sonrası yeniden çalışıyor.
+- PR #71 HEAD 0eaaa74153dd3eacdd66c701b9727c2b8978983f; 12 dosya / +3.308 / -26.
+- Yeni file CareerNewsQuestionAnswer.kt, Activity button & dialog, 17 JUnit test tanımı.
+- AI/network/Worker/API call yok; only local Story SQLite record. publishedAt=null remains unknown and is never replaced by collectedAt or firstSeenAt; human reviewer name not invented.
+- Review verdict requires current model policy; support primary evidence alone does not count VERIFIED. Conflicting evidence, secondary-only context, pending human review explicitly distinct. Unclear multiple-claim question => NEEDS_CLARIFICATION.
+- Initial run #45698403489: 142 total /138 PASS /4 FAIL. Fixed 4 mismatches: wrong test expectation on firstSeen note, missing Turkish "asıl kaynağı" phrase, evidence dedupe by URL dropped same-URL conflicting excerpt, context missing lacked explicit label. Follow-up commit 0eaaa741; QA tests count 14→17.
+- New exact HEAD APK/unit #45699134292 and emulator merge-ref #45699134296; last check IN_PROGRESS; no pass assertion yet. Prior #45692016951/#45692017824 are prior HEAD b8a7812, not current.
+- H1 SQLite startup P2 fix already included: async FIFO load, no-op save when story exists, database close queued after pending IO.
+- No physical phone test yet; PR #71 draft, no merge.
+- Report: gorevler/H1-NEWS-QA-2026-11-25.md.
+
+### QA-10 güncel Cloud Career QA/RAG notu — kotadan bağımsız denetim
+- PR #12 route is separated: POST /kariyer-sor passes existing JARVIS_TOKEN auth first, stream-limits raw body 4 KB, question max 500 chars, rejects non-JSON/malformed/empty/old feed, ignores CV/KPSS profile/chat history. No user question or Bearer token in log.
+- Local exact-copy checks: career-qa.js blob/hash 10ee82fe6ec2918bdb528905d901502e070afd22, pure unit 18/18 PASS; route module blob/hash 0a8d53635f32340f91e4306c5b4e0c7e5c172299, isolated route tests 7/7 PASS. Actual worker authentication order inspected from src/index.js (auth above route). This local route harness uses dependency injection for feed/answer but is not deployed D1/Worker integration.
+- CI latest #45697424481 / job 139498357281: 0 steps, runner_id=0, blank runner_name, completed 2s. Runner start/quota failure; not a code test result. PR #12 draft, no merge/deploy.
+- Exact date/conditions/application use BM25 deterministic before Workers AI calls; semantic BGE-M3/Gemma only for non-exact retrieval. No CI run loop repeated.
+
