@@ -111,6 +111,43 @@ class CareerNewsVerificationStore(
     private fun recordKey(storyId: String) = RECORD_PREFIX + storyId
     private fun backupKey(storyId: String) = BACKUP_PREFIX + storyId
 
+    private fun preservesHistory(
+        previous: CareerNewsVerificationRecord,
+        next: CareerNewsVerificationRecord
+    ): Boolean {
+        if (previous.storyId != next.storyId ||
+            previous.originalSourceUrl != next.originalSourceUrl ||
+            previous.firstSeenAt != next.firstSeenAt
+        ) return false
+        if (next.correctionHistory.size < previous.correctionHistory.size ||
+            next.correctionHistory.take(previous.correctionHistory.size) != previous.correctionHistory
+        ) return false
+
+        val oldClaims = previous.claims.associateBy { it.id }
+        val newClaims = next.claims.associateBy { it.id }
+        if (!newClaims.keys.containsAll(oldClaims.keys)) return false
+
+        val appendedCorrections = next.correctionHistory.drop(previous.correctionHistory.size)
+        oldClaims.forEach { (claimId, oldClaim) ->
+            val updated = newClaims[claimId] ?: return false
+            val hasCorrection = appendedCorrections.any { correction ->
+                correction.claimId == claimId &&
+                    correction.previousText == oldClaim.text &&
+                    correction.revisedText == updated.text &&
+                    correction.previousEvidence == oldClaim.evidence &&
+                    correction.previousReviewDecision == oldClaim.reviewDecision &&
+                    correction.previousReviewedAt == oldClaim.reviewedAt &&
+                    correction.previousReviewNote == oldClaim.reviewNote
+            }
+            if (oldClaim.text != updated.text && !hasCorrection) return false
+            if (!updated.evidence.containsAll(oldClaim.evidence) && !hasCorrection) return false
+            if (oldClaim.reviewDecision != null && updated.reviewDecision == null &&
+                updated.evidence == oldClaim.evidence && !hasCorrection
+            ) return false
+        }
+        return true
+    }
+
     fun load(storyId: String): CareerNewsVerificationRecord? {
         if (storyId.isBlank()) return null
         val primary = storage.get(recordKey(storyId))
@@ -141,6 +178,12 @@ class CareerNewsVerificationStore(
             return CareerNewsVerificationSaveResult(
                 false,
                 "Mevcut kayıt ve son iyi kopyası okunamıyor; veri kaybını önlemek için yazma durduruldu."
+            )
+        }
+        if (previous != null && !preservesHistory(previous, record)) {
+            return CareerNewsVerificationSaveResult(
+                false,
+                "Önceki kanıt veya düzeltme geçmişi silinemez; değişiklik için kayıtlı bir iddia düzeltmesi gerekir."
             )
         }
 
