@@ -223,3 +223,38 @@ Aşağıdaki listeler H1'in her kategori için 2–3 resmî aday şartını kar�
 - H1 doğrulayıcısı yalnız JSON sözleşmesini/yardımcı veri işlemlerini sınar; canlı okuyucu veya Android/Worker entegrasyonu değildir.
 - İlk taramada her kategori için 2–3 aday araştırıldı; geniş K1-B ölçümünde aktif URL listesi 11 ÇALIŞIYOR adresle güncellendi. Bazı kategorilerde tek veya iki kaynak kaldığından kaynak çeşitliliği hedefi henüz karşılanmış sayılmaz. Girişli sayfalar yalnız yönlendirmedir; tarihli duyuru/ilan içeriği ve otomasyon uygunluğu H2/K1-C'de ayrıca doğrulanır.
 
+
+
+## 9. İddia / kanıt / insan incelemesi / düzeltme geçmişi
+
+H1 Claim Evidence core: PR #68 (açık/taslak; exact-head CI bekliyor). Kod: `CareerNewsVerification.kt`. Ayrıntı: [H1-claim-evidence-2026-11-25.md](../gorevler/H1-claim-evidence-2026-11-25.md).
+
+### Haber kaydı
+- `storyId`: kanonik kaynak URL'si + başlık üzerinden kararlı kimlik.
+- `headline`, `publisher`, `originalSourceUrl`.
+- `publishedAt`: kaynak açıkça vermediyse null; hiçbir durumda `collectedAt` veya `firstSeenAt` ile doldurulmaz.
+- `collectedAt`: Aries'in kaynağı kontrol ettiği zaman.
+- `firstSeenAt`: kaydın sistemde ilk görüldüğü kalıcı zaman.
+
+### İddia ve kanıt
+- Bir haber birden çok atomik/test edilebilir claim içerebilir; her claim ayrı değerlendirilir.
+- Kanıt: yayıncı, HTTPS kaynak URL'si, kaynak türü (`PRIMARY_SOURCE`, `INDEPENDENT_REPORTING`, `SECONDARY`, `UNKNOWN`), yön (`SUPPORTS`, `CONTRADICTS`, `CONTEXT_ONLY`), doğrudan alıntı, nullable yayın zamanı ve kontrol zamanı.
+- Arama snippet'i veya AI özeti tek başına birincil kaynak kanıtı değildir.
+- URL'ler bu çekirdekte otomatik açılmaz/kazınmaz; kanıt bağlantısı olarak saklanır.
+
+### Verdict güvenlik kapısı
+- `VERIFIED`: birincil kaynak destek kanıtı + açık insan `CONFIRM` + çelişen kanıt olmaması.
+- `REFUTED`: birincil kaynak çelişki kanıtı + açık insan `REFUTE` + destekleyici kanıt olmaması.
+- Hem destekleyen hem çelişen kanıt varsa `CONFLICTING_EVIDENCE`; insan kararı bu çatışmayı otomatik silemez.
+- Yalnız ikincil/bağlam kanıtı `CONTEXT_MISSING`; kanıt yoksa `NEEDS_EVIDENCE`.
+- Yeni kanıt eski insan incelemesini sıfırlar. Claim düzeltilince önceki kanıt/review temizlenir ve yeniden inceleme gerekir.
+
+### Düzeltme kaydı
+Düzeltmeler append-only tutulur: claimId, önceki verdict, yeni verdict, açıklama, kaynak URL'si ve UTC correctedAt. Eski kaydı ezmek veya düzeltme geçmişini silmek yoktur.
+
+### Kişisel veri / tarih
+- Known email, phone, IBAN ve 11 haneli kimlik desenleri içeren alıntı reddedilir; maskeleme eksiksiz PII garantisi değildir. Aday kura/sonuç listelerinde kişisel veri toplanmaz.
+- UTC tarih alanları biçim ve takvim aralığı açısından kontrol edilir. Yayın tarihi yoksa null kalır.
+
+### Entegrasyon sınırı
+PR #68 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt ve kullanıcı akışı henüz bağlanmadı. Mevcut arşivdeki eski haberler otomatik doğrulanmışa çevrilmez. UI/SharedPreferences entegrasyonu ayrı PR ve geriye dönük koruma testiyle yapılır.
