@@ -275,11 +275,11 @@ PR #69 yalnız veri modeli + birim testtir; Haber ekranı, yerel kalıcı kayıt
 
 ### 9.1 Yerel arşiv ve kullanıcı inceleme ekranı — PR #71
 - PR #71: https://github.com/aries919-bot/Jarvis/pull/71 (açık/taslak; exact-head CI bekliyor).
-- Haber kartındaki `İddia / kanıt incele` akışı, ayrı `career_news_verification_v1` SharedPreferences deposunu kullanır; eski `career_news_items` arşivi değiştirilmez.
-- Store her hikâye için primary ve last-good JSON saklar. Primary bozuksa son iyi kayıt okunur; iki kopya bozuksa yeni veriyle üzerine yazma reddedilir. 300 kayıt dolunca eski kayıt atılmaz.
+- Haber kartındaki `İddia / kanıt incele` akışı, ayrı `career_news_verification_v1.db` SQLite deposunu kullanır; eski `career_news_items` arşivi değiştirilmez. Primary ve last-good satırları aynı transaction'da yazılır.
+- Store her hikâye için primary ve last-good JSON saklar. Primary bozuksa son iyi kayıt okunur; iki kopya bozuksa yeni veriyle üzerine yazma reddedilir. 300 hikâye /16 KB kayıt /50 claim /25 evidence /100 correction sınırları vardır; kapasite dolunca eski kayıt atılmaz.
 - Yeni taranan haberlerde `firstSeenAt` ilk keşifte UTC yazılır. Legacy kayıtta bu bilgi yoksa null; `collectedAt` bilinen son tarama zamanından gelir; `publishedAt` yalnız kaynağın açık tarihi varsa doludur.
 - Birincil kanıt yalnız izinli/resmî kurum veya işveren allowlist'inden; genel `.edu.tr`, ikincil ilan panosu ve haber keşif sitesi birincil kaynak olamaz.
 - Claim/evidence/review/correction metinlerinde bilinen e-posta, telefon, IBAN ve 11 haneli kimlik desenleri reddedilir; bu tam PII taraması garantisi değildir.
 - Kullanıcı birincil kaynak sayfasını Custom Tabs ile açar, kısa kanıt alıntısı ve yönünü kaydeder; insan inceleme kutusunu ve gerekçeyi tamamlar. AI tek başına VERIFIED vermez.
 - Düzeltme önceki metin, kanıt, karar ve inceleme notunu arşivler; yeni metin için yeni kanıt ve review gerekir.
-- UI ve store testleri: 17 model +6 store =23 @Test; exact-head CI sonucu henüz bekleniyor.
+- UI ve store testleri: 18 model +6 store =24 @Test; exact-head CI sonucu henüz bekleniyor.
