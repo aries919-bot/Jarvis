@@ -50,6 +50,7 @@ SOURCES = [
         "page_urls": [
             "https://www.oran.org.tr/haber/t-c--orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani",
             "https://www.oran.org.tr/duyurular",
+            "https://www.oran.org.tr/dokuman/fcff3eca-5f37-4a33-890d-822aa9bec77f.pdf",
         ],
     },
     {
