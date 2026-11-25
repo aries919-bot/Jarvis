@@ -349,3 +349,11 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Workflow e-Şube'yi canlı çekmiyor; durum dalındaki statik JSON'u okuyor. Schedule yalnız default branch'te işler; PR #9 merge edilmediğinden otomatik günlük canlı yenileme kanıtı yok.
 - **Güncel C1 kararı: RED / bugünkü canlı kaynak sayımı henüz kanıtlanmadı.** 6/47 yalnız geçmiş run sonucu; 114 özel ATS adayı deadline unknown olduğu için doğrulanmış açık sayılmaz.
 - SONRAKİ ADIM: C1 Actions'a e-Şube'nin robots-uyumlu canlı okuyucusunu entegre et; Düzce öğretim üyesi kartını mevcut kurum kaynağı altında ayır; Bartın robots'u ölçmeden ekleme; exact-head CI ve her kaynağın fresh sayımı geçmeden eşiği yeniden değerlendir.
+
+
+### C1 günlük otomasyon notu — 25.11.2026
+- Mevcut e-Şube reader zaten var: `cline/K1/scripts/esube_kamu_okuyucu.py`; robots-first, girişsiz, AriesKaynakTara/1.0, 2 sn bekleme, en çok 40 sayfa. Başarılı çıktı `durum/career/esube_kamu_ilanlari.json` dosyasına mevcut workflow tarafından yazılır.
+- e-Şube workflow `cline/K1/.github/workflows/kamu-ilan-cek.yml`: cron 05:17 ve 14:17 UTC; H2 workflow: 6 saatte bir; C1 PR #9 workflow: 06:00 ve 18:00 UTC. Schedule yalnız varsayılan dalda çalışır; workflow dosyalarının `main`'e alındığına dair kanıt yok. PR'lar açık olduğu için cron satırları canlı çalışıyor varsayılmaz.
+- 25.11 kontrolünde durum JSON'u hâlâ `2026-11-24T23:51:48Z` e-Şube çekim zamanında. Sabah schedule'ı çalışıp yeni JSON üretmiş kanıtı yok. 14:17 UTC slotu bu kontrol anında henüz gelmemişti.
+- Doğru çözüm yeni reader yazmak değil; var olan e-Şube/H2 workflow'larının default branch'te etkinleşmesini ve C1 workflow'unun yeni `durum` JSON snapshot'ını tüketmesini CI kanıtıyla doğrulamaktır.
+- Ayrıntı ve ölçüm engelleri: [C1-GUNLUK-SAYIM-25-11.md](../gorevler/C1-GUNLUK-SAYIM-25-11.md). Güncel C1 RED; 6/47 geçmiş run sayısıdır, bugünün şu anki doğrulanmış toplamı değildir.
