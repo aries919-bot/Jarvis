@@ -77,6 +77,19 @@ class LinkAuditTests(unittest.TestCase):
             calls,
         )
 
+
+    def test_parser_ignores_script_and_style_content(self):
+        body = (
+            b'<html><head><title>Notice</title><style>.secret { display:none }</style>'
+            b'<script>var fake="not page text";</script></head>'
+            b'<body><p>Real announcement</p></body></html>'
+        )
+        result = audit.parse_page(body, "https://example.gov.tr/notice", ["example.gov.tr"])
+        self.assertIn("Real announcement", result["text_excerpt"])
+        self.assertNotIn("fake", result["text_excerpt"])
+        self.assertNotIn("display:none", result["text_excerpt"])
+
+
     def test_page_403_is_reported_without_redirect_or_retry(self):
         calls = []
 
