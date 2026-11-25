@@ -687,3 +687,16 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Refaktör kararı: H1 ve #70 sırası tamamlandıktan sonra CareerMonitor class-boundary extraction küçük PR'larla; ardından CareerActivity repository/page controller ayrımı. Büyük toplu taşıma yok.
 - **KARAR: RED / refaktör bekliyor.** Envanter ve sıra hazır; kaynak dosyaları henüz taşınmadı/silinmedi.
 
+## 23) Paralel QA ekip panosu — 25.11.2026
+- Altı ayrı QA iş akışı tanımlandı: H1 model/SQLite, H1 Android UI/emülatör, C1 kaynak/UA, C1 canlı kamu/Worker, mimari dosya sınırları, güvenlik/izinler.
+- Gerçek alt ajan aracı bulunmadığı için bunlar bağımsız ajan çalıştırması değil; ayrı sorumluluk ve kanıt kapsamlı öz-QA hatlarıdır. Koordinatör tüm çıktıları çapraz denetler.
+- QA-01 model/store kod incelemesi tamam; PR #71 exact HEAD `6b392a3aa02d42700743657350d081d7f7ad6aeb`, 20 model +10 store test.
+- QA-02 APK/unit #45679523180 SUCCESS; emülatör #45679523114 IN_PROGRESS. Exact-head emülatör ve telefon testi bekliyor.
+- QA-03 PR #70 exact HEAD `7ab7aec5e5fa34209fec5c56d20a3c468af89a78`, 4 dosya +75/-20; CI #45677312902 SUCCESS; H1 sırası bekliyor.
+- QA-04 C1 #11 RED: 12 kamu kaynağı/55 ilan; 45 eksik; H2 city null, Worker production GET/D1 kanıtı yok. PR base `fix/c1-source-category-after-timestamp`, ana entegrasyon zinciri çözülmeden bağımsız merge edilmez.
+- QA-05 büyük dosya envanteri tamam; CareerMonitor extraction, H1 ve #70 kapılarından sonra küçük PR.
+- QA-06 `denetle.py` Groq'a diff gönderdiği için çalıştırılmıyor; manifest izinlerinin kod kullanım haritası açık.
+- Görev panosu: `gorevler/QA-EKIP-PANOSU-2026-11-25.md`.
+- Hız kuralı: bağımsız hatlar paralel, aynı branch/dosya üzerinde yazma sıralı; her hat kendi test/kanıtını üretir; kırmızı bulguda döngü yerine kök neden ve tek takip işi.
+- **KARAR: RED / genel kabul yok.** Emülatör, telefon, izin envanteri, 45 kamu ilanı ve Worker/D1 kapıları açık.
+
