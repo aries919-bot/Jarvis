@@ -59,3 +59,12 @@ Google's AndroidX commit dated 18 September 2026 documents the same failure patt
 
 ## Scope and diff
 The current PR #71 contains the H1 change set; this task note adds no application-code changes. No token, secret, profile, CV/KPSS/e-Devlet personal data, robots bypass, or new network access was introduced.
+## Sonraki PR HEAD — sistem başlatıcı odak kurtarma denemesi
+- PR #71 head artık b51c53a5797c19d4e18ed81b679024fc14fa3723; önceki e390e05e1485717c3a07ce3af06db6b3840062f3 başarısız koşusunun sonucu hâlâ geçerlidir, yeni head henüz PASS değildir.
+- Yeni commit scripts/run-h1-emulator-tests.sh içine window/activity/process dumpsys kanıtı ve instrumentation öncesi pencere odağı preflight'ı ekledi; app ve androidTest APK'ları hazırlandıktan sonra Application Not Responding/Application Error penceresi taranıyor, varsa sistem iletişim penceresi kapatılıp HOME gönderiliyor. Eski üç UI testini atlamaz, XML gate'i değiştirmez.
+- Eski artifact logcat'inde 22:44:02'de NexusLauncherActivity için Activity top resumed state loss timeout ve Activity pause timeout kayıtları görüldü; bu, launcher başlangıç/odak sorunu hipotezini güçlendirir. Eski artifact'te o ana ait dumpsys window snapshot bulunmadığı için ANR dialog bulunduğu kesin söylenemez.
+- Yeni exact-head CI: H1 emulator #45716694004 IN_PROGRESS (job #139564450544; ilk 6 setup/dependency step SUCCESS, step 7 instrumentation/preflight çalışıyor; XML/artifact henüz yok): https://github.com/aries919-bot/Jarvis/actions/runs/45716694004
+- Yeni APK/unit #45716694105 IN_PROGRESS (unit test step SUCCESS, APK build çalışıyor): https://github.com/aries919-bot/Jarvis/actions/runs/45716694105
+- Yeni run artefact listesi son sorguda boştu; log endpoint henüz BlobNotFound döndürdü. Bu, PASS/FAIL değil; yeni CI'nın gerçek sonucunu bekleyen bir durum.
+- Google AndroidX 18.09.2026 EmptyActivity/focus düzeltmesi analog araştırma notu olarak kalır. Yeni PR çözümünün etkisi sadece yeni head XML ve preflight window/activity diagnostics ile belirlenecek.
+**Güncel KARAR:** H1 hâlâ RED/beklemede; #45712459718 failure kapandı, yeni b51c53a runları in_progress. Merge/deploy yok.
