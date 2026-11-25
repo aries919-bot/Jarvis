@@ -35,3 +35,10 @@ Feature branch `feat/h1-news-store-ui-20261125`:
 
 ## KARAR
 Bu çalışma önceki 0-test sahte PASS riskini kapatmıştır. Yeni runner/AVD değişikliği test sonucunu henüz kanıtlamamıştır. H1 RED/BLOCKED — yeni exact-head CI sonucu bekleniyor.
+
+
+## Ek doğrulama — XML kapısının kendisi
+- Yerel fixture kontrolünde artifact'ten çıkan `tests=0` XML'i verifier algoritmasına verildi: exit code 1 / RED.
+- Sentetik 4 testcase, 0 failure/error/skipped XML'i: PASS. Bu yalnız validator'ın pozitif/negatif mantığını doğrular; gerçek Android UI testlerinin geçtiğini göstermez.
+- Yeni exact-head run #45711684280 son API sorgusunda hâlâ instrumentation adımında IN_PROGRESS; #45711684204 APK/unit run da unit test adımında IN_PROGRESS. Sonuç alınmadan kabul kararı verilmez.
+- Container ortamında GitHub'a doğrudan `git clone` denemesi DNS nedeniyle başarısız oldu; Cloud PR #12 yerel test komutları bu oturumda çalıştırılamadı. Bu yüzden PR #12 için yeni CI/yerel PASS iddiası yoktur.
