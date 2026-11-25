@@ -36,3 +36,13 @@
 
 ## Sonraki adım
 Önce hakem diff sınırı için ayrı küçük PR; ardından PR #61 exact-head test ve üç göz denetimi.
+
+
+## Ayrı hakem-kapısı düzeltme PR'ı
+- PR #64: https://github.com/aries919-bot/Jarvis/pull/64
+- Dal: `fix/hakem-diff-limit-20261125`, hedef `cline/K1`.
+- HEAD: `7bc95985b870ae0311955221c725140f8904174b`.
+- Diff: 2 dosya, +21/-2. `MAX_DIFF_BYTES` 100.000'e çıkarıldı; sınır altı ve üstü için iki mock tabanlı test eklendi.
+- Compare sonucu: `ahead`, 2 commit; yalnız `scripts/hakem_gate.py` ve `scripts/test_hakem_gate.py`.
+- PR taslak ve açık. Bu kontrol anında PR-triggered Actions run listesi boş; CI henüz kanıtlanmadı. Merge edilebilirlik henüz true değil.
+- Secret scan/test CI/üç göz tamamlana kadar merge yok. PR #64 merge edilmeden PR #61'in hakem job'u eski 60 KB checker ile RED vermeye devam eder.
