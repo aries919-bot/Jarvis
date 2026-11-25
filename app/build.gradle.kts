@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.webkit:webkit:1.18.0")
     implementation("androidx.browser:browser:1.8.0")
+    implementation("androidx.tracing:tracing:1.2.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
