@@ -26,9 +26,8 @@ C1 kamu ilan eşiğine eklenebilecek yeni kurum kaynaklarını belirlemek. İlk 
 - Betik: scripts/c1_public_source_robots.py
 - User-Agent: AriesKaynakTara/1.0
 - Yalnızca her origin için /robots.txt alınır; TLS doğrulaması açıktır, yönlendirme takip edilmez.
-- Exact-head CI: https://github.com/aries919-bot/Jarvis/actions/runs/45532429537 — job 138930761817 SUCCESS; Python syntax check SUCCESS; robots-only ölçüm SUCCESS; artifact 14985447797. collectedAt=2026-11-25T02:22:15.837584Z.
-- Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45532648217 — job 138931501320 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14985038772. Balıkesir PDF eki (baunwebapi subdomain) ve Atatürk 16.11.2026 sayfası için ek robots ölçümü sıradaki çalıştırmaya eklendi. collectedAt=2026-11-25T02:24:12.356812Z.
-- Sonuç: Atatürk 200/ALLOW; Balıkesir 200/ALLOW; Zafer 200/ALLOW; DOKA (duyuru + PDF) 200/ALLOW; TGA (5 sayfa yolu + kariyer portalı) 200/ALLOW; YÖKAK 200/ALLOW. Mardin Artuklu 404/UNKNOWN; DOĞAKA/ORAN 404/UNKNOWN. 404 kaynaklarına hedef sayfa isteği yapılmadı.
+- Son exact-head ölçüm: https://github.com/aries919-bot/Jarvis/actions/runs/45533410742 — job 138934056515 SUCCESS; syntax check ve robots-only ölçüm SUCCESS; artifact 14984879355. collectedAt=2026-11-25T02:30:33.5601165Z.
+- Sonuç: Atatürk sayfaları HTTP 200 fakat robots gövdesi boş olduğundan UNKNOWN; hedef sayfalara istek yok. Balıkesir duyuru HTML'i 200/ALLOW, fakat PDF eki robots 404/UNKNOWN. Zafer sayfası+PDF 200/ALLOW. DOKA sayfası+PDF 200/ALLOW. TGA 6 sayfa yolu 200/ALLOW. YÖKAK 200/ALLOW. Mardin Artuklu ve ORAN sayfaları 404/UNKNOWN; hedef sayfalara istek yok.
 - TGA'nın tga.gov.tr yolları izinli görünse de sayfa içeriği çelişkili; bu, robots izninden bağımsız veri doğrulama sorunudur. TGA kariyer alt alanı için /jobs yolu da robots kontrol listesine eklendi.
 - HTTP 401/403/404/5xx, timeout, redirect veya ağ hatası UNKNOWN sayılır; hedef sayfaya istek yapılmaz.
 
