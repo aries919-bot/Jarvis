@@ -42,7 +42,8 @@ SOURCES = [
         "id": "oran",
         "name": "Orta Anadolu Kalkınma Ajansı (ORAN)",
         "page_urls": [
-            "https://www.dogaka.gov.tr/tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855",
+            "https://www.dogaka.gov.tr/duyuru/t-c-orta-anadolu-kalkinma-ajansi-oran-personel-alim-ilani/855",
+            "https://www.dogaka.gov.tr/tr/duyurular",
         ],
     },
     {
@@ -50,7 +51,11 @@ SOURCES = [
         "name": "Türkiye Turizm Tanıtım ve Geliştirme Ajansı",
         "page_urls": [
             "https://tga.gov.tr/kariyer",
-            "https://tga.gov.tr/kariyer/tn6uazy2dtfdq8pmygzyvspuxs",
+            "https://tga.gov.tr/kariyer/z7zehjtctwbgfp7tygzvfg7gv3",
+            "https://tga.gov.tr/kariyer/sfy7j99p8z4yty9hygzlwgfmvq",
+            "https://tga.gov.tr/kariyer/f46dc366kvk4jazmygzkmnsry3",
+            "https://tga.gov.tr/kariyer/caaxteswzw5mqjebygzzru3mnw",
+            "https://kariyer.tga.gov.tr/jobs",
         ],
     },
     {
