@@ -583,3 +583,15 @@ SONRAKİ ADIM: H2/e-Şube ayrı feed'lerini C1 Worker'a bağlayan dar kapsamlı 
 - Güncel PR #71 HEAD `b9abd9433badf90d0cda306c8c81daa001b0a383`; compare 43 commit /8 files /+1811/-25 /0 behind; 18 model +6 store =24 @Test.
 - Exact-head Actions [#45663064814](https://github.com/aries919-bot/Jarvis/actions/runs/45663064814): queued; PASS yok.
 - Store fake adapter testleri geçse bile SQLite Android adapter için gerçek emulator/telefon smoke testi hâlâ gerekir.
+
+
+## 19. H1 Haber kartı + yerel doğrulama arşivi ve C1 kaynak güvenliği — 25.11.2026
+- PR #69: https://github.com/aries919-bot/Jarvis/pull/69 açık/taslak; HEAD `b095528b9bb7974578c564be9e84791fa300ff55`; compare `kariyer-modulu` tabanına göre 29 commit /8 dosya /+1.572 /-35 /0 behind.
+- PR #69 kapsamı: H1 claim/evidence, primary-source allowlist gate, ayrı 1.5 MB yerel arşiv, append-only correctionHistory, Haber kartı iddia/kanıt/review/correction UI, Custom Tabs ve 18 yeni JUnit testi.
+- Browser 1.10.0 denemesi AAR metadata hatası verdi: compileSdk 36 + AGP 8.9.1 gerekir. AGP/compileSdk yükseltilmedi; Browser 1.8.0'a sabitlendi.
+- Exact-head Android run [#45665491590](https://github.com/aries919-bot/Jarvis/actions/runs/45665491590): AAR metadata ve 18 yeni + mevcut testlerin test task'ı SUCCESS; APK assemble adımı son kontrolde IN_PROGRESS. Final run conclusion bekleniyor.
+- PR #70: https://github.com/aries919-bot/Jarvis/pull/70 açık/taslak; HEAD `bf8ca39c1dee78b8436069e5cfabcbbd3afbc146`; 8 commit /4 dosya /+46 /-13 /0 behind. Indeed/LinkedIn katalog/güven/arama izleri kaldırıldı, genel .edu.tr trusted listesinden çıkarıldı, UA AriesKaynakTara/1.0. [Exact-head Android run #45658875411](https://github.com/aries919-bot/Jarvis/actions/runs/45658875411): unit tests SUCCESS, APK SUCCESS; artifact `15044212711`.
+- İlk PR #70 denemesi test beklentisi yüzünden RED idi (eski test genel edu.tr için true bekliyordu); beklenti false olarak düzeltildi ve yeni exact head test+APK PASS aldı.
+- Eski PR #67 ve #68 kapatıldı (ikisi de unmerged); sırasıyla #70 ve #69 bunların yerini aldı. PR #66 da unmerged kapalıdır.
+- Full App QA workflow'u `kariyer-modulu` tabanında bulunmadığından Android emülatör UI run yok. Gerçek telefon testi yok.
+- C1 kaynak/Worker sayımları bu PR'larla değişmedi; 10 kaynak/100 doğrulanmış ilan gate'i hâlâ ayrı RED/BLOCKED. PR #70'in #69'dan önce ana feature tabanına alınması gerekir; merge yapılmadı.
