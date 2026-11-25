@@ -114,3 +114,57 @@ Ayrı bir ikincil derleme 26 Kasım sayısında şu adayları raporluyor: Türki
 - 26 Kasım RG dizinindeki ek institution leads: 18 başlık satırı, ancak bunların içinden bireysel personel ilanı olduğu kesinleştirilen ve koşulları resmî içerikle okunabilen ilave kayıt bu incelemede 0; bu 0 kaynak/0 ilan değil, **henüz ölçülememiş** demektir.
 - Worker 6/47 last-good stale ve eski manuel envanter 12/55 değişmedi. Yeni MEB expired kayıtları da bu açık ilan sayılarına eklenmez.
 **KARAR:** C1 10/100 RED ve production GET/D1 BLOCKED kalır.
+
+
+## 23.11.2026 Resmî Gazete 33439 — ikinci tur PDF ilan ayrıştırması
+
+Resmî PDF: https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (Resmî Gazete 23.11.2026, sayı 33439). PDF metin içeriği açıldı; screenshot aracı 41,936,566 byte dosya nedeniyle 400 verdi. Dolayısıyla metin tabanlı resmî PDF kanıtı vardır, görsel PDF QA tamamlanmamıştır.
+
+### Yeni kamu ilanları — resmî metin ve takvim doğrulandı
+
+| Kurum / kategori | Duyuru adedi | Kontenjan | publishedAt | deadline | Başvuru | Şart özeti | Resmî bağlantı |
+|---|---:|---:|---|---|---|---|---|
+| İçişleri Bakanlığı — Kamu / KPSS | 1 | 1.170 pozisyon (119 merkez +1.051 taşra) | 2026-11-23 | 2026-12-11 16:00 | Başvuru 07.12.2026'da açılır; İçişleri Bakanlığı sitesindeki Duyurular bağlantısından e-Devlet başvuru ekranı. Şahsen/posta yok. | 2026 KPSS-B; lisans P3, ön lisans P93, lise P94 puan türünde en az 60; 18 yaş ve 657/4-B genel şartları. Pozisyona özel mezuniyet/sertifika şartları Ek tablolardadır. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.18–30); kurum: https://www.icisleri.gov.tr |
+| Türk Akreditasyon Kurumu (TÜRKAK) — Kamu / KPSS | 1 | 3 Koruma ve Güvenlik Görevlisi | 2026-11-23 | 2026-12-07 23:59 | e-Devlet Türk Akreditasyon Kurumu/Kariyer Kapısı Kamu İşe Alım veya https://kariyerkapisi.gov.tr üzerinden elektronik. | Ön lisans güvenlik/koruma ile ilişkili tabloda sayılan programlardan mezuniyet; KPSS P93 en az 70; 35 yaş sınırı; geçerli özel güvenlik kimlik kartı ve sağlık/özel güvenlik koşulları; sözlü sınav. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.57–59); kurum: https://www.turkak.org.tr |
+| Yozgat Bozok Üniversitesi — Kamu / KPSS'siz akademik | 1 | 7 akademik kadro | 2026-11-23 | 2026-12-11 (ilan aralığında açıkça yazılı) | https://personelbasvuru.bozok.edu.tr/ üzerinden elektronik; kurum sayfasında e-Devlet şifresiyle giriş gerektiği yazıyor. | Profesör/doçent/doktor öğretim üyesi; 2547, akademik yükseltilme ve atanma ölçütleri; tabloda hukuk, tarım-gıda/kenevir, tıp, turizm alanlarında özel doktora/doçentlik ve yayın/tecrübe şartları. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.62–63); portal: https://personelbasvuru.bozok.edu.tr |
+| Düzce Üniversitesi — Kamu / KPSS'siz akademik | 1 ek ana duyuru | 4 akademik kadro | 2026-11-23 | 2026-12-07 | https://abas.duzce.edu.tr üzerinden elektronik başvuru | Profesör 1 ve doktor öğretim üyesi 3: İktisat Tarihi, Gelişim Psikolojisi, Yönetim/Organizasyon ve Gelişimsel Pediatri alanlarında ilan-özel akademik derece/uzmanlık şartları. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.68–70); portal: https://abas.duzce.edu.tr |
+
+**İçişleri 1.170 pozisyon = 1 duyuru kartıdır.** Pozisyon adedi 1.170 diye ilan sayısı 1.170 yapılmaz. Başvuru 07.12.2026'da açıldığından 26.11.2026 tarihinde future/opening-soon statüsündedir; bugün açık ilan sayısına girmez. applicationOpensAt=2026-12-07, deadline=2026-12-11T16:00, publishedAt=2026-11-23.
+
+TÜRKAK bir kamu kaynağı olarak 3 pozisyonlu tek duyurudur. Yozgat Bozok da 7 kadrolu tek duyurudur. Düzce'nin 23.11.2026 Resmî Gazete metninde iki ayrı başlık bulunmaktadır: daha önce H2 feed'deki 5 kadrolu Öğretim Elemanı ilanı ile bu ek 4 kadrolu Öğretim Üyesi ilanı. H2'deki ilk kartla ikinci kartı birleştirmeyin; farklı pozisyon/unvan ve ayrı resmî duyuru kimliği vardır. Buna rağmen Worker'a yazmadan önce canonical notice URL/sourceId ve exact dedup uygulanmalıdır. Düzce benzersiz kurum sayısı yine birdir.
+
+### Kamu kaynak adayı — deadline teyidi eksik, sayaca eklenmez
+
+| Kurum / kategori | Duyuru | Pozisyon | publishedAt | deadline | Neden beklemede | Resmî bağlantı |
+|---|---|---:|---|---|---|---|
+| Kütahya Dumlupınar Üniversitesi — Kamu / KPSS'siz akademik | 1 Öğretim Üyesi ilanı | Çok sayıda akademik satır; ana ilan tek kart | 2026-11-23 | null | Resmî PDF, yayımlandığı tarihten itibaren 15 gün diyor ancak açık bir ISO/yerel tarih yazmıyor; kesin son gün kurum portalında teyit edilmeden hesaplanmaz. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.70–73); başvuru: https://ilan.dpu.edu.tr/ |
+| Ondokuz Mayıs Üniversitesi — Kamu / Kura | 1 sürekli işçi ilanı | 21 pozisyon | 2026-11-23 (Resmî Gazete); İŞKUR liste yayın tarihi bilinmiyor | null | Üniversite, başvurunun İŞKUR e-Şube ilanı yayımlandıktan sonra 5 gün içinde yapılacağını söylüyor. e-Şube ilan detayına giriş/şifre gerektiğinden sayfa kazınmaz; resmi e-Şube üzerinden kullanıcıya yönlendirme ve tarih doğrulaması gerekir. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.73–78); kurum: https://www.omu.edu.tr ; e-Şube: https://esube.iskur.gov.tr |
+
+Bu iki kayıt kamu kurum adayı olsa da doğrulanmış deadline bulunmadığı için güncel doğrulanmış açık ilan sayısına eklenmez. OMÜ için 7 temizlik, 2 kaynakçı, 2 oto bakım ve tabloda sayılan diğer iş türleri 21 pozisyonu oluşturur; 21 ayrı ilan kartı değildir.
+
+### Kamu dışı üniversite ilanları — ayrı özel kaynak havuzu
+
+| Kurum / kategori | Duyuru | Pozisyon özeti | publishedAt | deadline | Başvuru | Resmî bağlantı |
+|---|---:|---|---|---|---|---|
+| Antalya Belek Üniversitesi — KPSS'siz (özel üniversite) | 1 | 6 akademik kadro: 1 profesör, 2 doktor öğretim üyesi, 3 öğretim görevlisi | 2026-11-23 | 2026-12-07 | Öğretim üyesi dosyaları ilgili rektörlük/dekanlığa; öğretim görevlisi dosyaları ilgili birime şahsen veya posta ile. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.64–66); kurum: https://www.belek.edu.tr |
+| Yaşar Üniversitesi — KPSS'siz (özel üniversite) | 1 | 2 öğretim üyesi kadrosu | 2026-11-23 | null | Profesör/doçent adayları İnsan Kaynakları Müdürlüğüne; ilan içindeki profesör/doçent başvurusu fiziki dosya ile. PDF'de bu bölüm için takvim satırı açıkça doğrulanmadı. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.61–62); kurum: https://www.yasar.edu.tr |
+| Özyeğin Üniversitesi — KPSS'siz (özel üniversite) | 1 | Öğretim üyesi ve öğretim görevlisi kadroları; exact total slot count notu PDF tablosu tamamen eşleştirilmeden yazılmadı | 2026-11-23 | 2026-12-08 17:00 | PDF'de belirtilen insan kaynakları e-posta adresine elektronik dosya; şahsen/posta yok. | https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf (s.78–81); kurum: https://www.ozyegin.edu.tr |
+
+Bu üç özel üniversite kaydı kamu kaynağı sayımına girmez. Antalya Belek ve Özyeğin'in takvimleri açıkça doğrulandı; Yaşar için exact deadline henüz doğrulanmadı. Özel kaynaklar kendi ayrı sayacında tutulmalıdır.
+
+### 23 Kasım Resmî Gazete'de exact dedup / eski kayıt ayrımı
+
+- Tarsus Üniversitesi 23.11.2026 Öğretim Görevlisi ilanı; 2 pozisyon satırı ve toplam 3 kontenjan içerir, son başvuru 07.12.2026. H2'deki Tarsus 1 duyuru /3 kontenjan /07.12.2026 kartıyla eşleşir; yeni karta veya kaynağa eklenmez.
+- Düzce Üniversitesi 23.11.2026 Öğretim Elemanı ilanı 5 kontenjan ve 07.12 deadline ile H2 mevcut Düzce 5 kontenjan kartıyla eşleşir; ikinci kez sayılmaz. Aynı sayının 68–70. sayfalarındaki ayrı Öğretim Üyesi başlığı 4 akademik kadrolu ayrı duyurudur ve canonical notice dedup sonrası ayrı kart olarak değerlendirilir.
+- İçişleri Bakanlığı'nın 1.170 pozisyonu da tek 4/B ana duyurusudur. 119 merkez+1.051 taşra dağılımı alt pozisyon metadata'sıdır.
+
+### Yeniden sayım — yeni PDF turu
+
+- Yeni resmî kamu aktif ve tarihleri açık duyurular: TÜRKAK 1 + Yozgat Bozok 1 + Düzce ek akademik duyuru 1 = **3 yeni kart**. Düzce kurum kaynağı zaten mevcut feed'de var; yeni benzersiz kamu kurum sayısı bu üç kartla +2 olur (TÜRKAK, Yozgat Bozok).
+- Future/opening-soon kamu duyurusu: İçişleri Bakanlığı **1 ana duyuru /1.170 pozisyon**, şu an açık sayısına 0.
+- Resmî kamu adayları deadline belirsiz: Kütahya Dumlupınar 1 ve Ondokuz Mayıs 1; doğrulanmış open=0.
+- Yeni özel üniversite duyuruları: Antalya Belek 1, Yaşar 1 (deadline null), Özyeğin 1; kamuya eklenmez.
+- Tarsus ve Düzce Öğretim Elemanı önceki H2 kayıtlarıyla aynı; tekrar sayılmadı.
+- Bu ek kayıtların tamamı henüz Worker ingest/dedup işleminden geçmedi. collectedAt=null, firstSeenAt=null kalır. Bu elden sayım 6/47 veya 12/55 geçmiş sayılarını geriye dönük güncellemez.
+
+**KARAR:** Yeni PDF araştırması, kamuya 3 tarih/doğrulama koşulunu sağlayan aday duyuru daha buldu; bunun 2'si yeni kurum kaynağıdır. Toplam 10/100 kabulü veya production GET/D1 kanıtı anlamına gelmez. C1 RED kalır.
