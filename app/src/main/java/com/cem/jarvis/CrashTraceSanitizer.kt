@@ -6,13 +6,13 @@ package com.cem.jarvis
  */
 internal object CrashTraceSanitizer {
     private val appPathPattern =
-        Regex("""(?i)/data/(?:user/[^\\s)]+|data/[^\\s)]+)""")
+        Regex("""(?i)/data/(?:user/[^\s)]+|data/[^\s)]+)""")
     private val knownKeyPrefixPattern =
         Regex("""(?<![A-Za-z0-9_-])(?:AIza|sk-|gsk_)[A-Za-z0-9_-]{16,}""")
     private val longKeyPattern =
-        Regex("""(?=[A-Za-z0-9_-]*\\d)[A-Za-z0-9_-]{24,}""")
+        Regex("""(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]{24,}""")
     private val emailPattern =
-        Regex("""[\\w.+-]+@[\\w-]+\\.[\\w.-]+""")
+        Regex("""[\w.+-]+@[\w-]+\.[\w.-]+""")
 
     fun sanitizeCrashStackTrace(stackTrace: String): String {
         return stackTrace
