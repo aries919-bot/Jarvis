@@ -35,6 +35,7 @@ object Pal {
     const val WHITE = "#FFFFFF"    // dinleme / vurgu
     const val GREEN = "#34D399"    // başarılı işlem
     const val RED = "#FF6B6B"      // uyarı / durdur
+    const val AMBER = "#F5B455"    // eski veya doğrulanamayan veri uyarısı
     const val ACCENT = "#C4B5FD"   // lavanta vurgu (tek vurgu rengi)
     const val BUBBLE_ME = "#1E1B2E"// kullanıcı balonu zemini (koyu lavanta alt tonu)
 }
