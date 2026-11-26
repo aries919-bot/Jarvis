@@ -815,13 +815,18 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != PICK_FILE_REQUEST || resultCode != RESULT_OK) return
 
-        val uri = data?.data
+        val resultIntent = data
+        if (resultIntent == null) {
+            say("Dosya seçimi boş döndü. Yeniden dene.")
+            return
+        }
+        val uri = resultIntent.data
         if (uri == null || uri.scheme != "content") {
             say("Geçerli bir dosya URI'si alınamadı.")
             return
         }
 
-        val grantedFlags = data.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION
+        val grantedFlags = resultIntent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION
         if (grantedFlags == 0) {
             say("Dosya için okuma izni verilmedi. Dosyayı yeniden seç.")
             return
