@@ -120,8 +120,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         super.onCreate(b)
 
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            val crash = sanitizeCrashStackTrace(android.util.Log.getStackTraceString(e))
             getSharedPreferences("j", MODE_PRIVATE).edit()
-                .putString("crash", android.util.Log.getStackTraceString(e)).commit()
+                .putString("crash", crash.take(2000)).commit()
             android.os.Process.killProcess(android.os.Process.myPid())
         }
         val crash = getSharedPreferences("j", MODE_PRIVATE).getString("crash", null)
@@ -201,6 +202,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return
         }
         super.onBackPressed()
+    }
+
+    private fun sanitizeCrashStackTrace(stackTrace: String): String {
+        return CrashTraceSanitizer.sanitizeCrashStackTrace(stackTrace)
     }
 
     private fun showCrash(msg: String) {
