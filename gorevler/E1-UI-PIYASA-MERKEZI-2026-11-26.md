@@ -12,7 +12,7 @@
 
 ## Uygulanan entegrasyon
 - PR #74: `integration/aries-1.23-market-security-20261126` → `kariyer-modulu`.
-- Değişen dosyalar: `app/build.gradle.kts`, `AndroidManifest.xml`, `FinanceActivity.kt`, `FinanceData.kt`, `MainActivity.kt`, `Views.kt`, `FinanceDataTest.kt`.
+- Değişen dosyalar: `app/build.gradle.kts`, `AndroidManifest.xml`, `FinanceActivity.kt`, `FinanceData.kt`, `MainActivity.kt`, `Ai.kt`, `Views.kt`, `FinanceDataTest.kt`.
 - Sürüm `1.23`, `versionCode=23`.
 - Altın/döviz, Finnhub arama/izleme ve fiyat alarmı ekranı eklendi.
 - Eski `finnhub_enc` finans şifreli kaydı ilk okumada ortak `SecureStore` alanına taşınır; yeni anahtarlar da aynı güvenli depoda saklanır.
@@ -23,7 +23,7 @@
 - PR #74: https://github.com/aries919-bot/Jarvis/pull/74
 - İlk CI #768: https://github.com/aries919-bot/Jarvis/actions/runs/45734428315 — FAILURE; `FinanceActivity.kt` içindeki 10 `Pal.AMBER` referansı tema paletinde tanımsızdı.
 - Düzeltme sonrası exact-head CI #772: https://github.com/aries919-bot/Jarvis/actions/runs/45735481573 — son kontrolde IN_PROGRESS; birim test aşaması. Bu nedenle APK henüz yok.
-- Exact diff yeniden sayımı: 7 dosya / 1.181 ekleme / 4 silme (renk ve secure-store düzeltmeleriyle son diff sayımı GitHub PR metadata'sında ayrıca doğrulanacak).
+- Exact diff yeniden sayımı: 8 dosya / 1.187 ekleme / 14 silme (renk ve secure-store düzeltmeleriyle son diff sayımı GitHub PR metadata'sında ayrıca doğrulanacak).
 - Gizli anahtar literal, private-key başlığı, token sabiti, düz metin `finnhub` yazımı ve SSL bypass desen taramaları eklenen satırlarda 0 eşleşme.
 - Merge/deploy yapılmadı; #74 açık.
 
@@ -35,6 +35,6 @@
 5. PR #74 yalnız `kariyer-modulu` dalına merge edilir; `main` değiştirilmez.
 6. Merge sonrası `kariyer-modulu` dalında yeni APK workflow'u ve artefaktı ayrıca kontrol edilir.
 
-**KARAR:** DEVAM / MERGE BEKLİYOR.
+**KARAR:** DEVAM / MERGE BEKLİYOR. Exact-head #774 sonucu ve APK artefaktı henüz yok.
 
 **SONRAKİ ADIM:** #772 sonucunu al; yeşil değilse hata logunun son bölümünü inceleyip tek kök nedeni düzelt.
