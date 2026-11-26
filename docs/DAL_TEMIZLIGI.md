@@ -112,7 +112,7 @@
 
 ## 26.11.2026 — 13 dalın SHA doğrulamalı silinmesi (Cem bildirimi)
 
-Cem'in bildirdiği son işlem: **13 dal, SHA eşleşmesi doğrulanarak silindi.** Dal adları ve silme öncesi SHA değerleri Cem tarafından sağlanacaktır; bu nedenle isim veya SHA uydurulmamıştır.
+Cem'in bildirdiği son işlem: **13 dal, SHA eşleşmesi doğrulanarak silindi.** Dal adları ve SHA değerleri Cem'in Termux çıktısından alınmıştır (aşağıdaki tablo).
 
 | # | Dal adı | Silme öncesi SHA | Kayıt |
 |---:|---|---|---|
@@ -138,9 +138,16 @@ Bu 13 dal kaydı, yukarıdaki tarihsel 31 dal raporuyla birleştirilmemelidir. �
 
 ## 26.11.2026 — iki ana dala inme kararı
 
-- Hedef ana dallar: `kariyer-modulu` + `main`.
+- Hedef: `kariyer-modulu` (çalışan hat) + `main` (derlenmeyen, dokunulmuyor) + `cline/K1` ve `durum` (ARŞİV, silinmeyecek).
 - `kariyer-modulu`: çalışan hat ve varsayılan dal.
 - `main`: derlenmeyen/yarım kopya; korunur, bu PR'da değiştirilmez.
 - `film-dizi-v2` silinmedi; PR #1, #2, #3 bu dalı taban alıyor.
-- `cline/K1` ve `durum` henüz silinmedi. Bağımlılık/PR kontrolü yapılmadan silme yok.
-- Eski “korunan dallar” listesi iki-ana-dal kararına göre güncellenmiştir. Yukarıdaki üç geçiş dalı kalıcı koruma değil, henüz temizlenmemiş durum olarak izlenir.
+
+### Arşiv gerekçesi (26.11.2026, Cem'in Termux karşılaştırması, kariyer-modulu tabanlı)
+
+- **cline/K1:** 23 commit önde, 178 geride, 39 dosya. 34 dosya kariyer-modulu'nda YOK (8 workflow, 15 betik ve testi, 7 career/ veri dosyası, 3 doküman, kökte KARIYER_KAYNAK_DENETIMI.md), 5 dosya FARKLI (android.yml, .gitignore, FilmDizi.kt, MediaSourceBrowser.kt, docs/HARITA.md), 0 dosya AYNI. PR #57 ve #58 bu dalı taban alıyor.
+- **durum:** 506 commit önde, 178 geride, 77 dosya. 63 YOK, 6 FARKLI, 8 AYNI. YOK olanlar: gorevler/ altında yaklaşık 50 görev/QA notu, qa-reports/c1/ altında 7 JSON, h1-schema.yml, scripts/h1_schema.py, scripts/test_h1_schema.py, career/ altında 3 JSON. FARKLI: android.yml, AGENTS.md, DURUM.md, FilmDizi.kt, MediaSourceBrowser.kt ve bir docs dosyası.
+- **Karar:** ikisi de silinirse bu içerik geri gelmez; uygulamanın derlenmesini etkilemedikleri için arşiv olarak korunur. İleride ayrı yedekleme (zip/ayrı repo) sonrası silinebilir, o zaman yeni karar gerekir.
+- `FilmDizi.kt` ve `MediaSourceBrowser.kt` için hangisinin güncel olduğu doğrulanmadı.
+
+- Eski “korunan dallar” kaydı, `cline/K1` ve `durum` dallarının arşiv olarak korunması kararına göre güncellenmiştir.
