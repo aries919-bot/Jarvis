@@ -30,7 +30,10 @@ class Store(ctx: Context) {
                 prefs.edit().remove(k).apply()
                 return true
             }
-            if (!SecureStore.put(app, k, v)) return false
+            if (!SecureStore.put(app, k, v)) {
+                prefs.edit().remove(k).apply()
+                return false
+            }
             prefs.edit().remove(k).apply()
             return true
         }
