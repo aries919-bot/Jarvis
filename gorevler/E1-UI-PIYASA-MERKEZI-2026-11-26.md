@@ -25,7 +25,7 @@
 - Düzeltme sonrası exact-head CI #772: https://github.com/aries919-bot/Jarvis/actions/runs/45735481573 — son kontrolde IN_PROGRESS; birim test aşaması. Bu nedenle APK henüz yok.
 - Exact diff yeniden sayımı: 8 dosya / 1.187 ekleme / 14 silme (renk ve secure-store düzeltmeleriyle son diff sayımı GitHub PR metadata'sında ayrıca doğrulanacak).
 - Gizli anahtar literal, private-key başlığı, token sabiti, düz metin `finnhub` yazımı ve SSL bypass desen taramaları eklenen satırlarda 0 eşleşme.
-- Merge/deploy yapılmadı; #74 açık.
+- PR #74 normal merge ile tamamlandı; merge SHA `e40e2aa4e9d140c88546785ad5b3b89a99c9b7e4`. `main` dalına yazılmadı.
 
 ## Kabul kapıları
 1. Exact-head birim testleri SUCCESS.
@@ -35,6 +35,6 @@
 5. PR #74 yalnız `kariyer-modulu` dalına merge edilir; `main` değiştirilmez.
 6. Merge sonrası `kariyer-modulu` dalında yeni APK workflow'u ve artefaktı ayrıca kontrol edilir.
 
-**KARAR:** DEVAM / MERGE BEKLİYOR. Exact-head #774 sonucu ve APK artefaktı henüz yok.
+**KARAR:** PR #74 MERGED; test ve PR artefaktı PASS. Son kullanıcı APK'sı için post-merge #775 artefaktı ayrıca doğrulanacak.
 
 **SONRAKİ ADIM:** #772 sonucunu al; yeşil değilse hata logunun son bölümünü inceleyip tek kök nedeni düzelt.
