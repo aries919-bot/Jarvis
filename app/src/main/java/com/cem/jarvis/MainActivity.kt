@@ -910,11 +910,28 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun deleteFileRecord(index: Int) {
         val arr = JSONArray(store.str("app_files", "[]"))
+        if (index !in 0 until arr.length()) return
+
+        val removedUri = arr.getJSONObject(index).optString("uri")
         val out = JSONArray()
         for (i in 0 until arr.length()) {
             if (i != index) out.put(arr.getJSONObject(i))
         }
         store.put("app_files", out.toString())
+
+        val uriStillReferenced = (0 until out.length()).any {
+            out.getJSONObject(it).optString("uri") == removedUri
+        }
+        if (!uriStillReferenced && removedUri.isNotBlank()) {
+            try {
+                contentResolver.releasePersistableUriPermission(
+                    Uri.parse(removedUri),
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {
+                // The provider may already have revoked the persisted grant.
+            }
+        }
         loadInternalFileList()
     }
 
