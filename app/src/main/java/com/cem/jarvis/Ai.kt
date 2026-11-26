@@ -594,7 +594,7 @@ object Ai {
             val rawUrl = arr.opt(i)
             if (rawUrl !is String) throw IOException("Aries hızlı yanıt kaynak adresi geçersiz.")
             val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
-            if (uri?.scheme !in listOf("https", "http") || uri.host.isNullOrBlank()) {
+            if (uri == null || uri.scheme !in listOf("https", "http") || uri.host.isNullOrBlank()) {
                 throw IOException("Aries hızlı yanıt güvenli olmayan kaynak adresi döndürdü.")
             }
             src.add(Source(uri.host, rawUrl))
