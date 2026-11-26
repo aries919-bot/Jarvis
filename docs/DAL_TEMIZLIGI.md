@@ -60,7 +60,8 @@
 ## Önceki listede dokunulmadı — tarihsel kayıt
 - `is/H2-final-20261124`: #52 birleşti ama dal PR'dan sonra ilerlemiş (PR başı 6743599, dal d6e6911); ilerleyen commit'in `cline/K1`'de olup olmadığı doğrulanmadı.
 - `is/1-20-ilan-dogrulama-aktiflik`: #14 kapalı, dal PR'dan sonra ilerlemiş.
-- `is/K1-F2-rebased`, `feature/aries-finance-center`, `fix-media-url`: PR'sız dallar, amaçları belirsiz.
+- `is/K1-F2-rebased`, `feature/aries-finance-center`: PR'sız dallar, amaçları belirsiz.
+- `codespace-yedek`, `derleme-1`, `fix-media-url` 26.11.2026'da silindi.
 - Önceki sayımdaki “Kalan 36 dal” ifadesi güncel değildir. Yeni iki-ana-dal kararı ve 26.11.2026 dal işlemlerinden sonraki toplam, GitHub dal listesi yeniden sayılarak raporlanmalıdır.
 
 ## Önceki temizlik kaydı — 26.11.2026 (tarihsel; yeni 13 dal kaydından ayrı)
@@ -70,7 +71,7 @@
 - **Silinen: 31 / kalan: 56 / atlanan: 1.**
 - Tek atlanan dal: `fix/hakem-diff-lines`. PR #37 açık ve bu dal PR'ın başı olduğu için korundu. PR #37'ye dokunulmadı.
 - Bu 31 dal kaydı önceki temizlik turunun tarihsel raporudur; 26.11.2026 tarihli yeni 13 dal işlemiyle aynı liste olduğu varsayılmaz.
-- `--force` kullanılmadı. PR #76 için bu eski kayıttaki son durum “açık/birleştirilmemiş”tir; yeni dal kararı merge yetkisi oluşturmaz.
+- `--force` kullanılmadı. PR #76, `durum` dalına MERGE EDİLDİ; `kariyer-modulu`'na merge edilmedi. Yeni dal kararı merge yetkisi oluşturmaz.
 
 ### Silindi (31)
 1. `aries-career-monitor`
@@ -113,9 +114,25 @@
 
 Cem'in bildirdiği son işlem: **13 dal, SHA eşleşmesi doğrulanarak silindi.** Dal adları ve silme öncesi SHA değerleri Cem tarafından sağlanacaktır; bu nedenle isim veya SHA uydurulmamıştır.
 
-| # | Dal adı | Silme öncesi beklenen SHA | Kayıt |
+| # | Dal adı | Silme öncesi SHA | Kayıt |
 |---:|---|---|---|
-| 1–13 | Cem'in listesi beklenecek | Cem'in SHA listesi beklenecek | Liste gelince tek tek tamamlanacak |
+| 1 | `fix/c1-source-policy-ua-ci-20261125` | `7ab7aec5e5fa34209fec5c56d20a3c468af89a78` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 2 | `guvenlik-faz1-km` | `c2ff3f3c58310b3bbc2721b8b2073383b3f59c1b` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 3 | `integration/aries-1.23-market-security-20261126` | `438bae8e5ed5fed0f44970c018b867d12279305d` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 4 | `is/A1-ayarlar-sohbet-20261126` | `900b74e9560f6b62a8a64ceb02040f11e500dd66` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 5 | `is/ai-yanit-dogrulama-1mb-20261126` | `280e482faabf58e5c2097f6a58152a1f15bb48eb` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 6 | `is/crash-handler-20261126` | `79b1581b986ab0343056a92bfcf01465627158b6` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 7 | `is/reminders-20261126` | `875c26c9759bba4e9f266bc2550bf5292a0a3e1d` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 8 | `is/dosya-sayfasi-20261126` | `ba787586225796efd12bfdec08e80caf4b34b66e` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 9 | `is/bulut-hafiza-izin-20261126` | `06983bc792e1cc9724a00832a9472a89782c5272` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 10 | `is/ci-sertlestirme-20261126` | `f914c26888d54fbbd0c2602aa9ba3c57177a8c3c` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 11 | `codespace-yedek` | `ec1b785887014446a460aee48ae57e440491e859` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 12 | `derleme-1` | `321e87cc793a75794c92b098be4a7f9911dd2e89` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+| 13 | `fix-media-url` | `1a0921b191430a24351112b1ffb36cdea0cedc48` | SHA eşleşti; SİLİNDİ çıktısı alındı |
+
+- 1–5 numaralı PR'lar daha önce `kariyer-modulu`'na merge edilmişti; içerikleri `kariyer-modulu`'nda bulunur.
+- 6–10 numaralı dallar squash merge edildi: #77, #78, #79, #80, #82 (tamamı `kariyer-modulu` tabanlı).
+- 11–13 numaralı dallar PR açılmadan silindi; her biri için ahead=0 doğrulandı.
 
 Bu 13 dal kaydı, yukarıdaki tarihsel 31 dal raporuyla birleştirilmemelidir. İki listenin kapsamı karşılaştırılmadan toplam silinen dal sayısı çıkarılmaz.
 
@@ -124,5 +141,6 @@ Bu 13 dal kaydı, yukarıdaki tarihsel 31 dal raporuyla birleştirilmemelidir. �
 - Hedef ana dallar: `kariyer-modulu` + `main`.
 - `kariyer-modulu`: çalışan hat ve varsayılan dal.
 - `main`: derlenmeyen/yarım kopya; korunur, bu PR'da değiştirilmez.
-- `film-dizi-v2` (#1, #2, #3 bağlantılı), `cline/K1` ve `durum`: henüz silinmedi. Bağımlılık/PR kontrolü yapılmadan silme yok.
+- `film-dizi-v2` silinmedi; PR #1, #2, #3 bu dalı taban alıyor.
+- `cline/K1` ve `durum` henüz silinmedi. Bağımlılık/PR kontrolü yapılmadan silme yok.
 - Eski “korunan dallar” listesi iki-ana-dal kararına göre güncellenmiştir. Yukarıdaki üç geçiş dalı kalıcı koruma değil, henüz temizlenmemiş durum olarak izlenir.
