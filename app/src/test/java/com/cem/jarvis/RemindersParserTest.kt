@@ -19,7 +19,7 @@ class RemindersParserTest {
         val parsed = Reminders.parse("10 dakika sonra x hatırlat", now)
         assertNotNull(parsed)
         assertEquals(now.timeInMillis + 10 * 60_000L, parsed!!.time)
-        assertEquals("x", result.text)
+        assertEquals("x", parsed!!.text)
     }
 
     @Test
@@ -33,7 +33,7 @@ class RemindersParserTest {
         assertEquals(27, actual.get(Calendar.DAY_OF_MONTH))
         assertEquals(9, actual.get(Calendar.HOUR_OF_DAY))
         assertEquals(0, actual.get(Calendar.MINUTE))
-        assertEquals("x", parsed.text)
+        assertEquals("x", result.text)
     }
 
     @Test
@@ -45,7 +45,7 @@ class RemindersParserTest {
         }
         assertEquals(7, actual.get(Calendar.HOUR_OF_DAY))
         assertEquals(30, actual.get(Calendar.MINUTE))
-        assertEquals("alarm", result.text)
+        assertEquals("alarm", parsed!!.text)
     }
 
     @Test
