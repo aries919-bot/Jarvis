@@ -393,16 +393,12 @@ object Net {
     }
 
     fun quote(sym: String, token: String): String {
-        val url = "https://finnhub.io/api/v1/quote?symbol=" + URLEncoder.encode(sym, "UTF-8") +
-            "&token=" + URLEncoder.encode(token, "UTF-8")
-        val (code, txt) = get(url)
-        if (code == 401 || code == 403) throw IOException("Finnhub anahtarı geçersiz")
-        if (code != 200) throw IOException("borsa hatası $code")
-        val o = JSONObject(txt)
-        val c = o.optDouble("c", 0.0)
-        val dp = o.optDouble("dp", 0.0)
-        if (c == 0.0) return "$sym: veri yok (bu hisse ücretsiz planda olmayabilir)"
-        return "%s: %.2f (%+.2f%%)".format(java.util.Locale.US, sym, c, dp)
+        // Keep provider credentials out of query strings, logs and URL histories.
+        val quote = FinanceData.fetchFinnhubQuote(sym, token)
+        val change = quote.changePercent?.let {
+            " (%+.2f%%)".format(Locale.US, it)
+        } ?: " (değişim bilgisi yok)"
+        return "%s: %.2f%s".format(Locale.US, quote.symbol, quote.current, change)
     }
 }
 
