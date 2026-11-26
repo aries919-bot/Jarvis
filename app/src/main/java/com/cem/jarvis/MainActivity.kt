@@ -1387,7 +1387,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun wakeFilter(text: String) {
-        val m = Regex("\\b(jarvis|jarvıs)\\b[,:]?\s*(.*)").find(text.lowercase(tr))
+        val m = Regex("\\b(jarvis|jarvıs)\\b[,:]?\\s*(.*)").find(text.lowercase(tr))
         if (m == null) {
             restartLater(400)
             return
@@ -1476,7 +1476,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
-        if (Regex("^(?:bunu )?hatırla[:,]?\s+.+|^unut\s*(?::\s*|\s+).+|^notlarım[.!?]*$|^notlarda ara\s*:?\s+.+|^profilim\s*:\s*.+|^profilim[.!?]*$", RegexOption.IGNORE_CASE).containsMatchIn(raw.trim())) return memCloud(raw)
+        if (Regex("^(?:bunu )?hatırla[:,]?\\s+.+|^unut\\s*(?::\\s*|\\s+).+|^notlarım[.!?]*$|^notlarda ara\\s*:?\\s+.+|^profilim\\s*:\\s*.+|^profilim[.!?]*$", RegexOption.IGNORE_CASE).containsMatchIn(raw.trim())) return memCloud(raw)
 
         if (Regex("^saat kaç(ti)?$").containsMatchIn(s)) {
             val c = Calendar.getInstance()
@@ -1498,7 +1498,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return true
         }
 
-        val task = Regex("^görev ekle[:,]?\s+(.+)$", RegexOption.IGNORE_CASE).find(raw.trim())
+        val task = Regex("^görev ekle[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(raw.trim())
         if (task != null) {
             addTask(task.groupValues[1])
             say("Görevi ekledim.")
@@ -1506,20 +1506,20 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         }
 
         val flm = Regex("^(film|dizi) (ara|bul)[:,]? +(.+)$").find(s); if (flm != null) { val tk = store.str("bulut"); if (tk.isBlank()) { say("Aries Bulut anahtarı yok."); return true }; showThinking(); thread { try { val r = Ai.film(tk, flm.groupValues[3]); runOnUiThread { hideThinking(); say(r) } } catch (e: Exception) { runOnUiThread { hideThinking(); say(Ai.friendly(e)) } } }; return true }
-        val res = Regex("^araştır[:,]?\s+(.+)$").find(s)
+        val res = Regex("^araştır[:,]?\\s+(.+)$").find(s)
         if (res != null) {
             doResearch(res.groupValues[1])
             return true
         }
 
-        val calc = Regex("^hesapla[:,]?\s+(.+)$").find(s)
+        val calc = Regex("^hesapla[:,]?\\s+(.+)$").find(s)
         if (calc != null) {
             val v = evalMath(calc.groupValues[1])
             say(if (v != null) "Sonuç: " + formatNumber(v) else "Bu işlemi hesaplayamadım.")
             return true
         }
 
-        val tra = Regex("^(.+?)(?:ye|ya|e|a)\s+çevir[:,]?\s+(.+)$").find(s)
+        val tra = Regex("^(.+?)(?:ye|ya|e|a)\\s+çevir[:,]?\\s+(.+)$").find(s)
         if (tra != null) {
             doTranslate(tra.groupValues[1], tra.groupValues[2])
             return true
@@ -1736,8 +1736,8 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
         val tk = store.str("bulut")
-        val fact = Regex("^(?:bunu )?hatırla[:,]?\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
-        val unutN = Regex("^unut\s*(?::\s*|\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
+        val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
+        val unutN = Regex("^unut\\s*(?::\\s*|\\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
         if (unutN != null) {
             val n = unutN.groupValues[1].toIntOrNull() ?: 0
             val list = store.facts().split("; ").map { it.trim() }.filter { it.isNotEmpty() }
