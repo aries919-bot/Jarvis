@@ -13,6 +13,8 @@ import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
 
+class BadResponse(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+
 class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
     val temporary: Boolean
         get() = code == 429 || code == 500 || code == 502 || code == 503 || code == 504
@@ -35,7 +37,7 @@ object Net {
             val count = input.read(buffer, 0, minOf(buffer.size, remaining + 1))
             if (count < 0) break
             if (count == 0) continue
-            if (count > remaining) throw IOException("Yanıt boyutu 1 MB sınırını aşıyor.")
+            if (count > remaining) throw BadResponse("Yanıt boyutu 1 MB sınırını aşıyor.")
             output.write(buffer, 0, count)
             total += count
         }
@@ -157,13 +159,13 @@ object Net {
             val code = connection.responseCode
             if (code !in 200..299) throw IOException("$provider HTTP $code")
             val body = connection.inputStream.use { readLimitedText(it) }
-            if (body.isBlank()) throw IOException("$provider boş yanıt döndürdü.")
+            if (body.isBlank()) throw BadResponse("$provider boş yanıt döndürdü.")
             val lower = body.lowercase(Locale.ROOT)
             if (listOf(
                     "anomaly-modal", "captcha", "verify you are human",
                     "unusual traffic", "automated requests", "security challenge"
                 ).any(lower::contains)
-            ) throw IOException("$provider arama isteğini güvenlik kontrolüne taktı.")
+            ) throw BadResponse("$provider arama isteğini güvenlik kontrolüne taktı.")
             return body
         } finally {
             connection.disconnect()
@@ -303,7 +305,7 @@ object Net {
 
     private fun validateParsedResults(provider: String, html: String, hits: List<Hit>) {
         if (hits.isNotEmpty() || isExplicitNoResults(html)) return
-        throw IOException("$provider sayfası açıldı ancak sonuç bağlantıları okunamadı; arama sayfasının yapısı değişmiş veya sonuçlar engellenmiş olabilir.")
+        throw BadResponse("$provider sayfası açıldı ancak sonuç bağlantıları okunamadı; arama sayfasının yapısı değişmiş veya sonuçlar engellenmiş olabilir.")
     }
 
     // DuckDuckGo ana arama sağlayıcısı; HTML nitelikleri sırası değişse de sonuç bağlantılarını okur.
@@ -453,27 +455,27 @@ object Ai {
     class Answer(val text: String, val sources: List<Source>)
 
     internal fun parseResponseObject(body: String, endpoint: String): JSONObject {
-        if (body.isBlank()) throw IOException("$endpoint boş yanıt döndürdü.")
+        if (body.isBlank()) throw BadResponse("$endpoint boş yanıt döndürdü.")
         return try {
             JSONObject(body)
         } catch (e: Exception) {
-            throw IOException("$endpoint geçersiz JSON yanıtı döndürdü.", e)
+            throw BadResponse("$endpoint geçersiz JSON yanıtı döndürdü.", e)
         }
     }
 
     internal fun parseResponseArray(body: String, endpoint: String): JSONArray {
-        if (body.isBlank()) throw IOException("$endpoint boş yanıt döndürdü.")
+        if (body.isBlank()) throw BadResponse("$endpoint boş yanıt döndürdü.")
         return try {
             JSONArray(body)
         } catch (e: Exception) {
-            throw IOException("$endpoint geçersiz JSON listesi döndürdü.", e)
+            throw BadResponse("$endpoint geçersiz JSON listesi döndürdü.", e)
         }
     }
 
     internal fun requiredResponseString(json: JSONObject, key: String, endpoint: String): String {
         val value = json.opt(key)
         if (value !is String || value.isBlank()) {
-            throw IOException("$endpoint yanıtında '$key' alanı eksik veya geçersiz.")
+            throw BadResponse("$endpoint yanıtında '$key' alanı eksik veya geçersiz.")
         }
         return value
     }
@@ -506,6 +508,8 @@ object Ai {
         for (attempt in 0..1) {
             try {
                 return block()
+            } catch (e: BadResponse) {
+                throw e
             } catch (e: ApiError) {
                 if (!e.temporary) throw e
                 last = e
@@ -567,7 +571,7 @@ object Ai {
         val arr = parseResponseArray(body, "Aries Bulut film")
         if (arr.length() == 0) return "Sonuç bulamadım."
         return (0 until minOf(arr.length(), 3)).joinToString(Char(10).toString() + Char(10)) {
-            val item = arr.optJSONObject(it) ?: throw IOException("Aries Bulut film yanıtında geçersiz kayıt var.")
+            val item = arr.optJSONObject(it) ?: throw BadResponse("Aries Bulut film yanıtında geçersiz kayıt var.")
             item.optString("ad") + " (" + item.optString("yil") + ") puan " +
                 item.optString("puan") + Char(10) + item.optString("ozet")
         }
@@ -586,7 +590,7 @@ object Ai {
         val answer = requiredResponseString(j, "answer", "Aries hızlı yanıt")
         val sourcesValue = j.opt("sources")
         if (sourcesValue != null && sourcesValue != JSONObject.NULL && sourcesValue !is JSONArray) {
-            throw IOException("Aries hızlı yanıt kaynak listesi geçersiz.")
+            throw BadResponse("Aries hızlı yanıt kaynak listesi geçersiz.")
         }
         val arr = sourcesValue as? JSONArray ?: JSONArray()
         val src = ArrayList<Source>()
@@ -622,7 +626,7 @@ object Ai {
         val json = parseResponseObject(txt, "Aries Kariyer Arama")
         val rowsValue = json.opt("results")
         if (rowsValue != null && rowsValue != JSONObject.NULL && rowsValue !is JSONArray) {
-            throw IOException("Aries Kariyer Arama sonuç listesi geçersiz.")
+            throw BadResponse("Aries Kariyer Arama sonuç listesi geçersiz.")
         }
         val rows = rowsValue as? JSONArray ?: JSONArray()
         val hits = ArrayList<Net.Hit>()
@@ -669,10 +673,10 @@ object Ai {
         if (code != 200) throw ApiError(code, errText(name, code))
         val response = parseResponseObject(txt, name)
         val choices = response.optJSONArray("choices")
-            ?: throw IOException("$name yanıtında choices listesi eksik.")
-        if (choices.length() == 0) throw IOException("$name boş choices listesi döndürdü.")
+            ?: throw BadResponse("$name yanıtında choices listesi eksik.")
+        if (choices.length() == 0) throw BadResponse("$name boş choices listesi döndürdü.")
         val message = choices.optJSONObject(0)?.optJSONObject("message")
-            ?: throw IOException("$name yanıtında message alanı eksik.")
+            ?: throw BadResponse("$name yanıtında message alanı eksik.")
         return requiredResponseString(message, "content", name)
     }
 
@@ -713,21 +717,21 @@ object Ai {
             withRetry { gemini(key, GEMINI_FALLBACK, sys, hist, json, search) }
         }
         val candidates = o.optJSONArray("candidates")
-            ?: throw IOException("Gemini yanıtında candidates listesi eksik.")
-        if (candidates.length() == 0) throw IOException("Gemini boş candidates listesi döndürdü.")
+            ?: throw BadResponse("Gemini yanıtında candidates listesi eksik.")
+        if (candidates.length() == 0) throw BadResponse("Gemini boş candidates listesi döndürdü.")
         val cand = candidates.optJSONObject(0)
-            ?: throw IOException("Gemini yanıtında geçersiz aday kaydı var.")
+            ?: throw BadResponse("Gemini yanıtında geçersiz aday kaydı var.")
         val content = cand.optJSONObject("content")
-            ?: throw IOException("Gemini yanıtında content alanı eksik.")
+            ?: throw BadResponse("Gemini yanıtında content alanı eksik.")
         val parts = content.optJSONArray("parts")
-            ?: throw IOException("Gemini yanıtında parts listesi eksik.")
+            ?: throw BadResponse("Gemini yanıtında parts listesi eksik.")
         val sb = StringBuilder()
         for (i in 0 until parts.length()) {
             val part = parts.optJSONObject(i) ?: continue
             val text = part.opt("text")
             if (text is String) sb.append(text)
         }
-        if (sb.isEmpty()) throw IOException("Gemini yanıtında metin içeriği bulunamadı.")
+        if (sb.isEmpty()) throw BadResponse("Gemini yanıtında metin içeriği bulunamadı.")
         val sources = ArrayList<Source>()
         val chunks = cand.optJSONObject("groundingMetadata")?.optJSONArray("groundingChunks")
         if (chunks != null) {
@@ -827,6 +831,7 @@ object Ai {
     }
 
     fun friendly(e: Exception): String = when {
+        e is BadResponse -> e.message ?: "Sunucudan geçersiz yanıt geldi."
         e is ApiError && e.badKey -> e.message ?: "Anahtar geçersiz."
         e is ApiError -> e.message ?: "Yapay zekâ hatası."
         e is IOException -> "İnternete ulaşamadım."
