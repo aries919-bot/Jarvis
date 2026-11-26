@@ -63,52 +63,47 @@
 - `is/K1-F2-rebased`, `feature/aries-finance-center`, `fix-media-url`: PR'sız dallar, amaçları belirsiz.
 - Kalan 36 dal: 8 korunan + 23 açık PR'lı dal + yukarıdaki 5.
 
-## Silinebilir (sonradan eklenecek)
+## Silinebilir — 26.11.2026 son durum
 
-### 26.11.2026 — GitHub anlık SHA/PR doğrulaması
-- İncelenenler: 86 dal ve 31 açık PR. Tablodaki 32 dalın tamamı bulundu; **32/32 SHA öneki güncel tam SHA ile eşleşti**, SHA uyuşmazlığı 0.
-- **Cem'in SHA doğrulamalı silme betiğine uygun görünen 31 dal:** aşağıdaki tabloda tam SHA'ları verildi. Hiçbiri açık PR'ın başı veya tabanı değil. Bu QA çalışmasında **silinen dal sayısı 0**; §4 uyarınca silme Cem tarafından yapılır. `--force` kullanılmadı.
+- Cem, GitHub CLI üzerinden SHA kontrollü `gh api DELETE` işlemiyle aşağıdaki 31 dalı sildi.
+- Bu bağlantıyla yapılan güncel GitHub dal listesi kontrolü: **56 dal**. Hedef 31 dalın mevcut olanı: **0**.
+- **Silinen: 31 / kalan: 56 / atlanan: 1.**
+- Tek atlanan dal: `fix/hakem-diff-lines`. PR #37 açık ve bu dal PR'ın başı olduğu için korundu. PR #37'ye dokunulmadı.
+- Önceki kayıtlardaki “silme yapılamadı / 0 silindi” ifadeleri bu sonuca göre geçersizdir; aşağıdaki sonuç güncel durumdur.
+- `--force` kullanılmadı. **MERGE YOK:** PR #76 açık ve birleştirilmedi.
 
-| Dal | Güncel tam SHA | Kontrol |
-|---|---|---|
-| aries-career-monitor | 701e0bb35ffe77c9641bf45725edd41a8f69b988 | SHA eşleşti; açık PR yok |
-| career-public-private-separation | 5efc2c48f53d1d68ea5542b9b0bbcaa07ead65d2 | SHA eşleşti; açık PR yok |
-| career-ui-dedup-separation | 7858dbc025d03097f176feeb8bd48dbfac524bee | SHA eşleşti; açık PR yok |
-| fix/hakem-added-diff-only | 9178c8d8caa8b9fa8cb7340b79b3cf8316ec74ec | SHA eşleşti; açık PR yok |
-| is/C1-1-status-20261125 | 49dbd3f3720c15a1f0278b20383407fe08801d3a | SHA eşleşti; açık PR yok |
-| is/H2-clean-20261124 | 06f379a119334430379f50b82afc365bab4d8e7e | SHA eşleşti; açık PR yok |
-| is/H2-core-20261124 | e3cffee63ba449aed4c1f80e22146b319df50596 | SHA eşleşti; açık PR yok |
-| is/H2-merge-20261125 | 6ac2235e06efc50f636b3e0927e51424b86d19dc | SHA eşleşti; açık PR yok |
-| is/H2-verified-reader | 91642e74fce880fad67da74bb376f7a49ab29b9b | SHA eşleşti; açık PR yok |
-| is/K1-B-clean-20261124 | ece04d4e672234f15a7d1677828a2831fd0d59bd | SHA eşleşti; açık PR yok |
-| is/K1-B-final-20261124 | ece04d4e672234f15a7d1677828a2831fd0d59bd | SHA eşleşti; açık PR yok |
-| is/K1-B-wide | 7fcee2257e4dfd92bde994e4b6437de1a9f796c4 | SHA eşleşti; açık PR yok |
-| is/K1-C | 04afb7e132849f29b0f9e4d30c80890ea86b053b | SHA eşleşti; açık PR yok |
-| is/K1-C-clean-20261124 | 21084530ae32fb0fb4d56a916d5b2a224b4f01b3 | SHA eşleşti; açık PR yok |
-| is/K1-C-final-20261124 | 8d7d801f69cbd235ca5965ec8cd7c5e274af17d2 | SHA eşleşti; açık PR yok |
-| is/K1-C-validated-20261124 | 8d7d801f69cbd235ca5965ec8cd7c5e274af17d2 | SHA eşleşti; açık PR yok |
-| is/K1-F2 | ac887d8b049f73e65dfeaba2b914cb07b9c1d4f5 | SHA eşleşti; açık PR yok |
-| is/K1-F2-clean-20261124 | ec4795178f5a81711d6bd9fdcc0994e794724ee3 | SHA eşleşti; açık PR yok |
-| is/K1-test-workflow | ae2303f4b85c056d8ea27cfebe1422ed28a0cd1b | SHA eşleşti; açık PR yok |
-| is/kadro-radari-ve-kpss-2026-2 | 50aac1424d5e90502a676cf487ab7c82d5f8d4b3 | SHA eşleşti; açık PR yok |
-| is/kamu-kariyer-arama-ayristirma | 93c7b5800f7a64668724e67ba739187608700ba3 | SHA eşleşti; açık PR yok |
-| is/kariyer-google-grounding-kalite-kontrol | 34a65cf60eb0282fbec920309d4fe8198b713ecf | SHA eşleşti; açık PR yok |
-| is/kariyer-grounded-arama-temiz | efdd2709d4ac86e4eadd253e97ed9aced83a0fee | SHA eşleşti; açık PR yok |
-| is/kariyer-platform-derinlestirme | 309df90fa56e49940af15fd8f84f04ca8a05270f | SHA eşleşti; açık PR yok |
-| is/not-c1-v3 | 6543de3110fa9d8366bdc89a25d0a9677ff1efbf | SHA eşleşti; açık PR yok |
-| is/v3-progress-20261124 | eded5d3910a69da807ef395b64af3bebc2a77e6b | SHA eşleşti; açık PR yok |
-| is/1-18-kariyer-guvenilirlik-ve-akilli-tarih | b5dc61e3d1dfc2c6802a5869d7cc38c7a941efe0 | SHA eşleşti; açık PR yok |
-| is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi | 47ff8b4eca9ba0d65438bc5906c04e44a6deebdd | SHA eşleşti; açık PR yok |
-| is/1-20-default-feed-and-source-evidence | 55d44d3d906a8d441d174fa8afe150d60a8a87db | SHA eşleşti; açık PR yok |
-| is/1-20-kariyer-ilan-dogrulama | ec57f35c3cccd3c2287220cc743a76bd5b5073a3 | SHA eşleşti; açık PR yok |
-| is/1-20-tarih-ayristirma-duzeltmesi | c01b21a03f40199343ffec419986194867979ae3 | SHA eşleşti; açık PR yok |
+### Silindi (31)
+1. `aries-career-monitor`
+2. `career-public-private-separation`
+3. `career-ui-dedup-separation`
+4. `fix/hakem-added-diff-only`
+5. `is/C1-1-status-20261125`
+6. `is/H2-clean-20261124`
+7. `is/H2-core-20261124`
+8. `is/H2-merge-20261125`
+9. `is/H2-verified-reader`
+10. `is/K1-B-clean-20261124`
+11. `is/K1-B-final-20261124`
+12. `is/K1-B-wide`
+13. `is/K1-C`
+14. `is/K1-C-clean-20261124`
+15. `is/K1-C-final-20261124`
+16. `is/K1-C-validated-20261124`
+17. `is/K1-F2`
+18. `is/K1-F2-clean-20261124`
+19. `is/K1-test-workflow`
+20. `is/kadro-radari-ve-kpss-2026-2`
+21. `is/kamu-kariyer-arama-ayristirma`
+22. `is/kariyer-google-grounding-kalite-kontrol`
+23. `is/kariyer-grounded-arama-temiz`
+24. `is/kariyer-platform-derinlestirme`
+25. `is/not-c1-v3`
+26. `is/v3-progress-20261124`
+27. `is/1-18-kariyer-guvenilirlik-ve-akilli-tarih`
+28. `is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi`
+29. `is/1-20-default-feed-and-source-evidence`
+30. `is/1-20-kariyer-ilan-dogrulama`
+31. `is/1-20-tarih-ayristirma-duzeltmesi`
 
-- **Atlandı (1):** `fix/hakem-diff-lines` — beklenen `0bae86d`, güncel `0bae86dc33d4d15041723a622f57e151726befdf` ile eşleşiyor; ancak GitHub API #37'yi hâlâ açık ve bu dalı PR başı gösteriyor. Açık PR koruma kuralı nedeniyle silinemez. Kaynak tablodaki "#37 kapalı" notu güncel API durumuyla çelişiyor; #37 kapatılmadı.
-- **Özet:** silinen 0 / Cem'in betiği için koşulları doğrulanan 31 / açık PR nedeniyle atlanan 1 / SHA uyuşmazlığı 0. Bu kayıt silme işlemi değildir; silme sonrası GitHub'dan tekrar doğrulanmalıdır.
-
-### 26.11.2026 — Kullanıcı yetkisiyle silme talebi / uygulama engeli
-- Kullanıcı, §4'teki "silmeyi Cem yapar" kuralını bu iş için açıkça geçersiz kıldı ve 31 dalın silinmesine izin verdi; "MERGE YOK" şartı korundu.
-- Silme öncesi aynı kontrolde 87 dal ve 31 açık PR listelendi. İstenen 31 dalın **31/31'i tam SHA ile eşleşti**; her biri açık PR listesinin hem head hem base tarafında aranıp açık PR bulunmadı. SHA uyuşmazlığı 0; PR'ı açık olduğu için atlanan dal 0.
-- **Gerçek silme işlemi yapılamadı:** mevcut GitHub bağlantısında dal/ref silme eylemi yok; yalnızca okuma, dal oluşturma ve dosya/PR işlemleri mevcut. fetch yalnızca GET destekliyor. Güvenli bir DELETE çağrısı veya alternatif/force yöntemi denenmedi.
-- **Silinen 0 / atlanan 31 (entegrasyon yeteneği yokluğu nedeniyle) / SHA uyuşmazlığı 0 / açık PR nedeniyle atlanan 0.** Silme sonrası doğrulama yapılamadı; 31 dalın tamamı son kontrolde hâlâ mevcuttu.
-- Bu kayıt PR #76'nın dalında güncellendi; PR açık kalır, **merge edilmez**.
+### Atlandı (1)
+- `fix/hakem-diff-lines` — PR #37 açık; dal korunuyor.
