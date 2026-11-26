@@ -1223,3 +1223,13 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Exact-head [emulator run #45723550345](https://github.com/aries919-bot/Jarvis/actions/runs/45723550345) son kontrolde `Run Android emulator instrumentation tests` adımında `in_progress`; XML doğrulama ve upload başlamadı. Dört testin sonucu henüz **0 rapor**; PASS/FAIL sayılmaz.
 - PR #71 açık/taslak, 14 dosya, formal review 0. APK PASS, emulator PASS değildir; merge yok.
 **KARAR:** H1 RED/BLOCKED — emulator XML 4/4 ve screenshot/logcat artefaktı bekleniyor.
+
+
+## 26.11.2026 — E1-UI Piyasa Merkezi APK entegrasyonu
+- Kullanıcının açık APK talebi doğrultusunda borsa/altın/döviz ekranı güncel `kariyer-modulu` güvenlik tabanına taşınıyor. Bu, H/K1/C1 v3 iş alanını genel olarak genişletmez; ayrı E1-UI işi olarak izlenir.
+- Ayrıntılı görev ve dal denetimi: [E1-UI Piyasa Merkezi](../gorevler/E1-UI-PIYASA-MERKEZI-2026-11-26.md).
+- Eski PR #22 / `is/kariyer-1-21-verified-search` güncel kariyer dalıyla 25 commit geride ve çakışmalı; bütün eski dal birleştirilmedi. Yalnız Piyasa Merkezi dosyaları seçilerek PR #74 açıldı.
+- PR #74: `integration/aries-1.23-market-security-20261126` → `kariyer-modulu`; sürüm 1.23 / versionCode 23; 7 dosya, 1.181 ekleme, 4 silme. Finnhub anahtarı ortak `SecureStore` ile birleştirildi; eski finance-özel şifreli kayıt için geçiş eklendi.
+- İlk Actions #768 FAILURE: `Pal.AMBER` eksik. Renk token'ı ve SecureStore entegrasyon kusuru düzeltildi. Exact-head #772 SHA `2e981a5497b38fb13151ea39994e51041acc0dfe`, son kontrolde birim test aşamasında IN_PROGRESS.
+- PR #74 merge edilmedi; test, APK ve artefakt doğrulaması tamamlanmadan APK yayımlanmaz. `main` dalına yazılmadı.
+**KARAR:** E1-UI DEVAM — #772 exact-head CI sonucu ve APK artefaktı bekleniyor.
