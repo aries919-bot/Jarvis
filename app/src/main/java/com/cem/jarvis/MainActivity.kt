@@ -1010,8 +1010,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun saveSettings() {
-        for ((k, v) in keyFields) store.put(k, v.text.toString().trim())
-        say("Ayarlar kaydedildi.")
+        var secureSaveFailed = false
+        for ((k, v) in keyFields) {
+            if (!store.put(k, v.text.toString().trim())) secureSaveFailed = true
+        }
+        say(if (secureSaveFailed) "Anahtar güvenli saklanamadı, kaydedilmedi." else "Ayarlar kaydedildi.")
     }
 
     private fun flagLabel(flag: String): String =
