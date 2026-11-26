@@ -16,10 +16,7 @@ class Store(ctx: Context) {
     init { migrateSecrets(); loadConvs() }
 
     fun str(k: String, def: String = ""): String {
-        if (k in SECRET) {
-            val v = SecureStore.get(app, k)
-            if (v.isNotEmpty()) return v
-        }
+        if (k in SECRET) return SecureStore.get(app, k).ifEmpty { def }
         return prefs.getString(k, def) ?: def
     }
 
