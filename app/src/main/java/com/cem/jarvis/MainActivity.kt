@@ -956,6 +956,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         add(col, Ui.text(this, "Sohbet", 14f, Pal.MUTED))
         add(col, flagButton("histOn"))
+        add(col, flagButton("memOn"))
         add(col, flagButton("yeniAcilis"))
         add(col, Ui.button(this, "Tüm sohbetleri sil") {
             confirm("Tüm sohbetler silinsin mi?", {
@@ -1844,6 +1845,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
+        if (!store.flag("memOn", true)) { say("Hafıza kapalı. Ayarlardan açabilirsin."); return true }
         val tk = store.str("bulut")
         val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
         val unutN = Regex("^unut\\s*(?::\\s*|\\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
@@ -1889,6 +1891,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun searchFacts(query: String): List<String> {
+        if (!store.flag("memOn", true)) return emptyList()
         val words = query.lowercase(tr).split(Regex("[^a-zçğıöşü0-9]+")).filter { it.length >= 3 }
         if (words.isEmpty()) return emptyList()
         return store.facts().split(Regex("[;.\\n]"))
