@@ -67,8 +67,8 @@ class AriesNotifService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (sbn.packageName == packageName) return
         val e = sbn.notification.extras
-        val title = e.getCharSequence("android.title")?.toString() ?: ""
-        val text = e.getCharSequence("android.text")?.toString() ?: ""
+        val title = e.getCharSequence("android.title")?.toString()?.take(120) ?: ""
+        val text = e.getCharSequence("android.text")?.toString()?.take(300) ?: ""
         if (title.isBlank() && text.isBlank()) return
         val anahtar = sbn.packageName + "|" + text
         val simdi = System.currentTimeMillis()
@@ -77,8 +77,10 @@ class AriesNotifService : NotificationListenerService() {
         sonlar[anahtar] = simdi
         if (sonlar.size > 100) sonlar.entries.removeAll { simdi - it.value > 60000L }
         items.removeAll { it.startsWith(sbn.packageName + "|" + title + "|" + text + "|") }
+        val limit = System.currentTimeMillis() - 12 * 3600_000L
+        items.removeAll { (it.substringAfterLast("|").toLongOrNull() ?: 0L) < limit }
         items.add(0, sbn.packageName + "|" + title + "|" + text + "|" + sbn.postTime)
-        while (items.size > 30) items.removeAt(items.size - 1)
+        while (items.size > 20) items.removeAt(items.size - 1)
         if (!getSharedPreferences("j", Context.MODE_PRIVATE).getBoolean("bildirim_soyle", true)) return
         val n = sbn.notification
         if (n.flags and Notification.FLAG_ONGOING_EVENT != 0) return
