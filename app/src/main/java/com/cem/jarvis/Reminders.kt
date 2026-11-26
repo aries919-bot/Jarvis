@@ -106,7 +106,14 @@ object Reminders {
         }
         list.add(item)
         save(ctx, list)
-        if (!schedule(ctx, item)) {
+        val scheduled = try {
+            schedule(ctx, item)
+        } catch (e: SecurityException) {
+            list.removeAll { it.id == item.id }
+            save(ctx, list)
+            throw e
+        }
+        if (!scheduled) {
             list.removeAll { it.id == item.id }
             save(ctx, list)
             throw SecurityException("Android kesin alarm izni kapalı.")
@@ -134,7 +141,12 @@ object Reminders {
         val keep = ArrayList<Item>()
         for (item in load(ctx)) {
             if (item.time > now) {
-                schedule(ctx, item)
+                // İzin sonradan kapatılmışsa kaydı koru; sessizce silme.
+                try {
+                    schedule(ctx, item)
+                } catch (_: SecurityException) {
+                    // Kayıt korunur; izin yeniden açıldığında geri yüklenebilir.
+                }
                 keep.add(item)
             } else {
                 notifyNow(ctx, item.id, "Kaçırılan hatırlatma: " + item.text)
