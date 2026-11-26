@@ -51,4 +51,10 @@ object SecureStore {
     fun remove(ctx: Context, k: String) {
         prefs(ctx).edit().remove(k).apply()
     }
+
+    fun read(ctx: Context, k: String): String {
+        val v = get(ctx, k)
+        if (v.isNotEmpty()) return v
+        return ctx.getSharedPreferences("j", Context.MODE_PRIVATE).getString(k, "") ?: ""
+    }
 }
