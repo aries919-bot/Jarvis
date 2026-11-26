@@ -8,7 +8,7 @@ import org.junit.Test
 class PrivacyTest {
     @Test
     fun masksTcknOnlyWhenOfficialChecksPass() {
-        assertEquals("[TC]", Privacy.sanitizeCloudText("Kimlik 12345678950"))
+        assertEquals("Kimlik [TC]", Privacy.sanitizeCloudText("Kimlik 12345678950"))
         assertEquals("12345678951", Privacy.sanitizeCloudText("12345678951"))
     }
 
