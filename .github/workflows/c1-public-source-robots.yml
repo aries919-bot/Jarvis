@@ -1,0 +1,38 @@
+name: C1 Official Public Source Robots Audit
+
+on:
+  push:
+    branches: [is/C1-public-source-audit-20261125]
+    paths:
+      - ".github/workflows/c1-public-source-robots.yml"
+      - "scripts/c1_public_source_robots.py"
+  pull_request:
+    branches: [durum]
+    paths:
+      - ".github/workflows/c1-public-source-robots.yml"
+      - "scripts/c1_public_source_robots.py"
+
+permissions:
+  contents: read
+
+jobs:
+  robots-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Syntax check
+        run: python -m py_compile scripts/c1_public_source_robots.py
+      - name: Fetch robots.txt only and evaluate official announcement paths
+        run: |
+          mkdir -p reports
+          python scripts/c1_public_source_robots.py | tee reports/c1-public-source-robots.txt
+      - name: Upload audit output
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-public-source-robots
+          path: reports/c1-public-source-robots.txt
+          if-no-files-found: error
