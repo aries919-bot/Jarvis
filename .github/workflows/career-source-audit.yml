@@ -1,0 +1,47 @@
+name: Aries Career Source Audit
+
+on:
+  push:
+    branches: [ is/kariyer-kaynak-denetimi-1 ]
+    paths:
+      - 'career/sources.json'
+      - 'docs/KARIYER_KAYNAK_DENETIMI.md'
+      - 'scripts/career_source_audit.py'
+      - 'scripts/test_career_source_audit.py'
+      - '.github/workflows/career-source-audit.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'career/sources.json'
+      - 'docs/KARIYER_KAYNAK_DENETIMI.md'
+      - 'scripts/career_source_audit.py'
+      - 'scripts/test_career_source_audit.py'
+      - '.github/workflows/career-source-audit.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5,17 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Offline regression tests
+        run: python3 scripts/test_career_source_audit.py
+      - name: Probe public HTML sources, no login or CAPTCHA
+        run: python3 scripts/career_source_audit.py --probe --min-working 3 --output qa-output/career-source-status.json
+      - name: Upload source status report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aries-career-source-status
+          path: qa-output/career-source-status.json
+          if-no-files-found: warn
+          retention-days: 30

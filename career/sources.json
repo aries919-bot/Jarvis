@@ -1,0 +1,371 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-23",
+  "policy": {
+    "noPaidServices": true,
+    "noLoginScraping": true,
+    "noCaptchaBypass": true,
+    "noSearchEngineHtmlScraping": true
+  },
+  "sources": [
+    {
+      "id": "kariyer_kapisi",
+      "name": "Kariyer Kapısı",
+      "group": "kamu",
+      "url": "https://kariyerkapisi.gov.tr/isealim",
+      "probeUrl": "https://kariyerkapisi.gov.tr/isealim",
+      "readerMode": "dynamic",
+      "note": "JS ile doldurulan aktif ilan tablosu; public JSON/API doğrulanmadı.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_shell_no_rows",
+        "loginRequired": false,
+        "note": "Ana sayfa açıldı; Aktif İlanlar başlığı görünüyor ancak metin çıktısında ilan satırı yok."
+      }
+    },
+    {
+      "id": "iskur_open_jobs",
+      "name": "İŞKUR Açık İş Haritası",
+      "group": "kamu",
+      "url": "https://acikisharita.iskur.gov.tr/",
+      "probeUrl": "https://acikisharita.iskur.gov.tr/",
+      "readerMode": "dynamic",
+      "note": "Lütfen bekleyiniz ara sayfası; API doğrulanmadı.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "waiting_page",
+        "loginRequired": false,
+        "note": "Lütfen bekleyiniz/yönlendirme ara sayfası açıldı; ilan tablosu görünmedi."
+      }
+    },
+    {
+      "id": "edevlet",
+      "name": "e-Devlet İş İlanları ve Başvuru",
+      "group": "kamu",
+      "url": "https://www.turkiye.gov.tr/kriterlere-gore-acik-is-sorgulama",
+      "readerMode": "manual_only",
+      "note": "Kimlik doğrulama gerektirir; yalnız resmî link açılır, otomatik giriş yok.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "login_required",
+        "loginRequired": true,
+        "note": "Sayfa kimlik doğrulaması gerektiğini açıkça söylüyor; giriş yapılmadı."
+      }
+    },
+    {
+      "id": "ilan_gov",
+      "name": "ilan.gov.tr",
+      "group": "kamu",
+      "url": "https://www.ilan.gov.tr/",
+      "probeUrl": "https://www.ilan.gov.tr/",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "ilan"
+      ],
+      "note": "Elle doğrulamada timeout; CI yeniden ölçecek.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "timeout",
+        "loginRequired": null,
+        "note": "Tarayıcı erişimi timeout verdi; login veya CAPTCHA olduğu sonucuna varılamaz."
+      }
+    },
+    {
+      "id": "resmi_gazete",
+      "name": "Resmî Gazete",
+      "group": "kamu",
+      "url": "https://www.resmigazete.gov.tr/",
+      "readerMode": "pdf_archive",
+      "note": "PDF arşivi; ayrı sınırlı PDF okuyucusu gerekli.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_index",
+        "loginRequired": false,
+        "note": "Resmî Gazete ana sayfası ve ilan kategorileri açıldı; PDF okuyucu bu PR'da yok."
+      }
+    },
+    {
+      "id": "osym",
+      "name": "ÖSYM Duyurular",
+      "group": "kamu",
+      "url": "https://osym.gov.tr/Duyurular/Index",
+      "probeUrl": "https://osym.gov.tr/Duyurular/Index",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "duyurular",
+        "kpss"
+      ],
+      "note": "KPSS takvim/kılavuz kaynağı; her duyuru iş ilanı değildir.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_index_process_only",
+        "loginRequired": false,
+        "note": "Duyurular sayfası açıldı; CI 11 süreç/sonuç bağlantısı buldu, ilan reader'ı doğrulamadı."
+      }
+    },
+    {
+      "id": "sayistay_4b",
+      "name": "Sayıştay Sözleşmeli Çözümleyici ve Programcı",
+      "group": "kamu",
+      "url": "https://www.sayistay.gov.tr/duyuru/818-sozlesmeli-cozumleyici-ve-sozlesmeli-prog",
+      "probeUrl": "https://www.sayistay.gov.tr/duyuru/818-sozlesmeli-cozumleyici-ve-sozlesmeli-prog",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "sözleşmeli çözümleyici",
+        "25.11.2026"
+      ],
+      "note": "3 çözümleyici, 9 lisans programcı, 4 ön lisans programcı; 11–25.11.2026.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_detail",
+        "loginRequired": false,
+        "note": "İlan detay sayfası açıldı; 16 pozisyon ve 11–25.11.2026 başvuru dönemi görüldü."
+      }
+    },
+    {
+      "id": "anadolu_4b",
+      "name": "Anadolu Üniversitesi Sözleşmeli Personel",
+      "group": "universite",
+      "url": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "probeUrl": "https://anadolu.edu.tr/duyurular/sozlesmeli-personel-alimi-ilani-1794568099",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "sözleşmeli personel alımı",
+        "30.11.2026"
+      ],
+      "note": "1 adet 4/B pozisyon; başvuru 16–30.11.2026.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_detail",
+        "loginRequired": false,
+        "note": "İlan detay sayfası açıldı; tek 4/B pozisyon ve 16–30.11.2026 dönemi görüldü."
+      }
+    },
+    {
+      "id": "zafer_expert",
+      "name": "Zafer Kalkınma Ajansı Uzman Personel",
+      "group": "kamu_baglantili",
+      "url": "https://zafer.gov.tr/duyurular/227",
+      "probeUrl": "https://zafer.gov.tr/duyurular/227",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "2 uzman personel",
+        "25.11.2026",
+        "14.12.2026"
+      ],
+      "note": "2 uzman; 25.11–14.12.2026. 23 Kasım itibarıyla henüz başvuru açılmadı.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_detail_ci_security_marker",
+        "loginRequired": false,
+        "note": "Tarayıcıda ilan detay sayfası açıldı; 2 uzman, 25.11–14.12.2026. CI probe güvenlik işareti nedeniyle durdu; aşma yok."
+      }
+    },
+    {
+      "id": "tga",
+      "name": "TGA Kariyer",
+      "group": "kamu_baglantili",
+      "url": "https://tga.gov.tr/kariyer",
+      "probeUrl": "https://tga.gov.tr/kariyer",
+      "readerMode": "html_detail",
+      "expectedMarkers": [
+        "2026 yılı Türkiye Turizm Tanıtım ve Geliştirme Ajansı Personel Alım İlanı",
+        "04 Aralık 2026"
+      ],
+      "note": "Official direct HTML vacancy detail: 13 positions; applications 03.11.2026–04.12.2026. This is a live, public detail reader.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_detail",
+        "loginRequired": false,
+        "note": "Kariyer sayfası ve 13 pozisyonlu ilan açıldı; 03.11–04.12.2026 başvuru dönemi görüldü."
+      }
+    },
+    {
+      "id": "turkak_pdf",
+      "name": "TÜRKAK Resmî Gazete İlanı",
+      "group": "kamu",
+      "url": "https://www.resmigazete.gov.tr/eskiler/2026/11/20261123.pdf",
+      "readerMode": "pdf_detail",
+      "note": "PDF okuyucu olmadan çalışan kaynak sayılmaz.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "pdf_not_confirmed",
+        "loginRequired": null,
+        "note": "Doğrudan PDF bağlantısı tarayıcı aracında alınamadı; bu, kullanıcı oturumu gerektiğini kanıtlamaz. Otomatik PDF reader yok."
+      }
+    },
+    {
+      "id": "sahil_guvenlik_pdf",
+      "name": "Sahil Güvenlik Memur Alımı",
+      "group": "kamu",
+      "url": "https://www.resmigazete.gov.tr/eskiler/2026/11/20261113.pdf",
+      "readerMode": "pdf_detail",
+      "note": "Resmî Gazete PDF; e-Devlet başvurusu kazınmaz.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "pdf_timeout",
+        "loginRequired": null,
+        "note": "Doğrudan PDF bağlantısı timeout verdi; oturum/CAPTCHA sonucu çıkarılamaz. Otomatik PDF reader yok."
+      }
+    },
+    {
+      "id": "ozal_pdb",
+      "name": "Malatya Turgut Özal Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://personel.ozal.edu.tr/announcements-all",
+      "probeUrl": "https://personel.ozal.edu.tr/announcements-all",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel daire başkanlığı"
+      ],
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_index",
+        "loginRequired": false,
+        "note": "Personel Daire duyurular indeksi açıldı; CI 1 iş adayı ve 5 süreç/sonuç bağlantısı buldu."
+      }
+    },
+    {
+      "id": "inonu_pdb",
+      "name": "İnönü Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://www.inonu.edu.tr/personeldb/duyurular",
+      "probeUrl": "https://www.inonu.edu.tr/personeldb/duyurular",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel"
+      ],
+      "note": "Elle doğrulama timeout; CI yeniden ölçecek.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "timeout",
+        "loginRequired": null,
+        "note": "Tarayıcı isteği timeout verdi; erişim ve oturum durumu teyit edilemedi."
+      }
+    },
+    {
+      "id": "firat_pdb",
+      "name": "Fırat Üniversitesi Personel Daire",
+      "group": "universite",
+      "url": "https://personeldb.firat.edu.tr/announcements-all",
+      "probeUrl": "https://personeldb.firat.edu.tr/announcements-all",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "personel"
+      ],
+      "note": "Elle doğrulama timeout; CI yeniden ölçecek.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "timeout",
+        "loginRequired": null,
+        "note": "Tarayıcı isteği timeout verdi; erişim ve oturum durumu teyit edilemedi."
+      }
+    },
+    {
+      "id": "battalgazi",
+      "name": "Battalgazi Belediyesi Duyurular",
+      "group": "belediye",
+      "url": "https://www.battalgazi.bel.tr/",
+      "probeUrl": "https://www.battalgazi.bel.tr/",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "duyurular",
+        "ihale ilanları"
+      ],
+      "note": "İhale ilanları iş ilanı sayılmamalı.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_home_ci_security_marker",
+        "loginRequired": false,
+        "note": "Belediye ana sayfası açıldı; Duyurular ve İhale İlanları ayrı bağlantılar. CI güvenlik metin işareti nedeniyle otomatik probe durdu."
+      }
+    },
+    {
+      "id": "tusas_jobs",
+      "name": "TUSAŞ – Açık Pozisyonlar",
+      "group": "buyuk_sirket",
+      "publisher": "Türk Havacılık ve Uzay Sanayii",
+      "url": "https://kariyer.tusas.com/acik-pozisyonlarimiz?sirala=DESC",
+      "probeUrl": "https://kariyer.tusas.com/acik-pozisyonlarimiz?sirala=DESC",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "açık pozisyonlarımız",
+        "son başvuru"
+      ],
+      "candidateTerms": [
+        "mühendis",
+        "teknisyen"
+      ],
+      "note": "Resmî liste herkese açık. 23.11.2026 kontrolünde 4 açık pozisyon; genel mühendis/teknisyen başvuruları ve kurumsal kaynak yönetimi mühendisi ilanı görünüyordu.",
+      "programmeTerms": [
+        "global talents of türkiye"
+      ],
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_listing",
+        "loginRequired": false,
+        "note": "Kariyer liste sayfası açıldı; iş ilanı ile Global Talents programı ayrı sınıflandırılmalı."
+      }
+    },
+    {
+      "id": "roketsan_jobs",
+      "name": "ROKETSAN – Açık Pozisyonlar",
+      "group": "buyuk_sirket",
+      "publisher": "ROKETSAN",
+      "url": "https://kariyer.roketsan.com.tr/jobs",
+      "probeUrl": "https://kariyer.roketsan.com.tr/jobs",
+      "readerMode": "html_index",
+      "expectedMarkers": [
+        "roketsan kariyer iş ilanları"
+      ],
+      "candidateTerms": [
+        "teknisyen",
+        "mühendis",
+        "uzman",
+        "itfaiye eri"
+      ],
+      "note": "Resmî açık ilan listesi herkese açık. 23.11.2026 kontrolünde 16.11.2026 tarihli teknisyen ilanları ve mühendis pozisyonları listeleniyordu.",
+      "programmeTerms": [
+        "chain up"
+      ],
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_listing",
+        "loginRequired": false,
+        "note": "İş ilanları liste sayfası açıldı; CHAIN UP gelişim programı iş ilanından ayrı."
+      }
+    },
+    {
+      "id": "tei_jobs",
+      "name": "TEI – Açık Pozisyonlar ve Yetenek Programları",
+      "group": "buyuk_sirket",
+      "publisher": "TUSAŞ Motor Sanayii A.Ş.",
+      "url": "https://yetenek.tei.com.tr/jobs",
+      "readerMode": "manual_only",
+      "note": "TEI job/program list was visible in a manual public-browser check (Jet Talent, Back To Core, accessibility/general applications). GitHub Actions receives HTTP 403; do not retry around or bypass the restriction. Keep as official manual link only, not an automated reader.",
+      "browserStatus": "accessible_in_browser_http403_in_ci",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_listing_ci_403",
+        "loginRequired": false,
+        "note": "Kariyer liste sayfası açıldı (Jet Talent, Back To Core ve genel başvurular); Actions runner HTTP 403 verdi, otomatik probe kapalı."
+      }
+    },
+    {
+      "id": "aselsan_career",
+      "name": "ASELSAN – Kariyer ve Yetenek Programları",
+      "group": "buyuk_sirket",
+      "publisher": "ASELSAN",
+      "url": "https://www.aselsan.com/tr/kariyer/basvuru",
+      "readerMode": "manual_only",
+      "browserStatus": "accessible_career_info_no_public_job_list_verified",
+      "note": "Resmî kariyer alanları, profesyonel başvuru ve öğrenci/yeni mezun/yetenek programları açık. Bu kontrolde makinece okunabilir açık pozisyon listesi doğrulanmadı; otomatik reader sayılmayacak.",
+      "browserCheck": {
+        "checkedAt": "2026-11-23",
+        "status": "public_image_only",
+        "loginRequired": false,
+        "note": "Kariyer sayfası açıldı ancak tarayıcı metin çıktısında yalnız görsel vardı; pozisyon listesi doğrulanmadı."
+      }
+    }
+  ]
+}
