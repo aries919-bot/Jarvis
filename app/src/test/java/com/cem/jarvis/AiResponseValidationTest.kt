@@ -2,11 +2,11 @@ package com.cem.jarvis
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.io.IOException
 
 class AiResponseValidationTest {
     @Test
@@ -22,7 +22,7 @@ class AiResponseValidationTest {
         try {
             Net.readLimitedBytes(ByteArrayInputStream(bytes))
             fail("1 MB üstü yanıt reddedilmeliydi.")
-        } catch (expected: IOException) {
+        } catch (expected: BadResponse) {
             assertTrue(expected.message.orEmpty().contains("1 MB"))
         }
     }
@@ -53,6 +53,23 @@ class AiResponseValidationTest {
             } catch (expected: IOException) {
                 assertTrue(expected.message.orEmpty().contains("answer"))
             }
+        }
+    }
+
+    @Test
+    fun badResponseIsNotRetriedAndFriendlyShowsItsMessage() {
+        var attempts = 0
+        val expectedMessage = "Test API geçersiz yanıt döndürdü."
+        try {
+            Ai.withRetry {
+                attempts++
+                throw BadResponse(expectedMessage)
+            }
+            fail("BadResponse yeniden denenmeden dışarı çıkmalıydı.")
+        } catch (expected: BadResponse) {
+            assertEquals(expectedMessage, Ai.friendly(expected))
+            assertEquals(1, attempts)
+            assertFalse(java.io.IOException::class.java.isAssignableFrom(expected.javaClass))
         }
     }
 
