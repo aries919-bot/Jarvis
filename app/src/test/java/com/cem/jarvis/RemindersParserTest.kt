@@ -16,7 +16,7 @@ class RemindersParserTest {
     @Test
     fun parsesRelativeReminder() {
         val now = fixedNow()
-        val parsed = Reminders.parse("10 dakika sonra X hatırlat", now)
+        val parsed = Reminders.parse("10 dakika sonra x hatırlat", now)
         assertNotNull(parsed)
         assertEquals(now.timeInMillis + 10 * 60_000L, parsed!!.time)
         assertEquals("x", parsed.text)
@@ -24,7 +24,7 @@ class RemindersParserTest {
 
     @Test
     fun parsesTomorrowAtNine() {
-        val parsed = Reminders.parse("yarın 9'da X hatırlat", fixedNow())
+        val parsed = Reminders.parse("yarın 9'da x hatırlat", fixedNow())
         assertNotNull(parsed)
         val actual = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
             timeInMillis = parsed!!.time
@@ -49,7 +49,7 @@ class RemindersParserTest {
 
     @Test
     fun rejectsMalformedTimeInput() {
-        assertNull(Reminders.parse("yarın X hatırlat", fixedNow()))
+        assertNull(Reminders.parse("yarın x hatırlat", fixedNow()))
         assertNull(Reminders.parse("hatırlat bana bir şey", fixedNow()))
     }
 }
