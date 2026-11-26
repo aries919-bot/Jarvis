@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Android 12/12L: setAlarmClock için kullanıcı kontrollü özel erişim. Android 13+ USE_EXACT_ALARM kullanır. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
 
     <!-- Android 11+: yüklü uygulamaları (uygulama açma), konuşma servisini ve TTS'i görebilmek -->
     <queries>
