@@ -34,19 +34,20 @@ class CareerActivity : Activity() {
     private var manualScanLiveData: androidx.lifecycle.LiveData<androidx.work.WorkInfo?>? = null
     private var manualScanObserver: androidx.lifecycle.Observer<androidx.work.WorkInfo?>? = null
     private val filters = listOf("Tüm iş ilanları", "Kamu · KPSS P94", "KPSS’siz kamu işçisi / belediye + İŞKUR ilanları", "Özel sektör · teknik işler", "Büyük şirketler · ASELSAN / TCDD vb.", "Ön lisans mezuniyetinden sonra", "Haber: kura / noter / sonuç", "Günlük özel sektör · üretim/işçi", "Belediye · yerel yönetim alımları", "Haber: öğrenci / staj programları")
-    // Kariyer ekranına özel tasarım paleti; ana Aries temasını değiştirmez.
-    // Kariyer alanı ana uygulamadan bağımsız, açık ve yüksek kontrastlı bir görsel dile sahip.
-    private val bgColor = Color.rgb(244, 247, 251)
-    private val surfaceColor = Color.rgb(255, 255, 255)
-    private val surfaceRaised = Color.rgb(235, 242, 249)
-    private val borderColor = Color.rgb(211, 224, 237)
-    private val accentColor = Color.rgb(8, 127, 115)
-    private val accentBlue = Color.rgb(39, 96, 184)
-    private val primaryText = Color.rgb(24, 39, 58)
-    private val muted = Color.rgb(91, 109, 132)
-    private val successColor = Color.rgb(20, 126, 87)
-    private val warningColor = Color.rgb(153, 91, 17)
-    private val dangerColor = Color.rgb(184, 54, 65)
+    // Kariyer ekranı artık ana uygulamayla aynı koyu temayı kullanır (Views.kt içindeki Pal).
+    // Renk değiştirmek için Pal'ı düzenle; burada ayrı renk tanımlama.
+    private val bgColor = Color.parseColor(Pal.BG)
+    private val surfaceColor = Color.parseColor(Pal.CARD)
+    private val surfaceRaised = Color.parseColor(Pal.CARD2)
+    private val borderColor = Color.parseColor(Pal.LINE)
+    private val accentColor = Color.parseColor(Pal.ACCENT)
+    private val accentBlue = Color.parseColor(Pal.BLUE)
+    private val primaryText = Color.parseColor(Pal.TEXT)
+    private val muted = Color.parseColor(Pal.MUTED)
+    private val successColor = Color.parseColor(Pal.GREEN)
+    private val warningColor = Color.parseColor(Pal.AMBER)
+    private val dangerColor = Color.parseColor(Pal.RED)
+    private val onAccent = Color.parseColor(Pal.ON_ACCENT)
     private lateinit var monitorStatus: TextView
     private lateinit var cadreGuideStatus: TextView
     private lateinit var pageScroll: ScrollView
@@ -77,9 +78,9 @@ class CareerActivity : Activity() {
 
         window.statusBarColor = bgColor
         window.navigationBarColor = bgColor
-        window.decorView.systemUiVisibility =
-            android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
-                android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        // This screen uses a dark surface. LIGHT_STATUS_BAR / LIGHT_NAVIGATION_BAR
+        // would draw dark system icons over the dark bars and reduce visibility.
+        window.decorView.systemUiVisibility = 0
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         val root = LinearLayout(this).apply {
@@ -445,7 +446,7 @@ class CareerActivity : Activity() {
             isChecked = prefs.getBoolean("career_monitor_enabled", false)
             if (Build.VERSION.SDK_INT >= 21) {
                 thumbTintList = android.content.res.ColorStateList.valueOf(accentColor)
-                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(181, 207, 218))
+                trackTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(Pal.RAISED))
             }
             setOnCheckedChangeListener { _, enabled ->
                 prefs.edit().putBoolean("career_monitor_enabled", enabled).apply()
@@ -579,7 +580,10 @@ class CareerActivity : Activity() {
 
     private fun statCard(title: String, value: String, subtitle: String): LinearLayout = panel().apply {
         setPadding(dp(10), dp(11), dp(10), dp(11))
-        addView(label(title, 9f, true, muted))
+        addView(label(title, 11f, true, muted).apply {
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        })
         addView(label(value, 14f, true, primaryText).apply {
             setPadding(0, dp(5), 0, dp(2))
             maxLines = 1
@@ -593,11 +597,11 @@ class CareerActivity : Activity() {
 
     private fun primaryButton(value: String, action: () -> Unit) = Button(this).apply {
         text = value
-        textSize = 13f
+        textSize = 14f
         minHeight = dp(48)
         isAllCaps = false
         setTypeface(typeface, android.graphics.Typeface.BOLD)
-        setTextColor(Color.WHITE)
+        setTextColor(onAccent)
         setPadding(dp(12), dp(5), dp(12), dp(5))
         background = ripple(android.graphics.drawable.GradientDrawable(
             android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
@@ -609,12 +613,12 @@ class CareerActivity : Activity() {
 
     private fun chipButton(value: String, selected: Boolean, action: () -> Unit) = Button(this).apply {
         text = value
-        textSize = 10f
+        textSize = 13f
         minHeight = dp(44)
         isAllCaps = false
         setTypeface(typeface, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-        setTextColor(if (selected) Color.WHITE else primaryText)
-        setPadding(dp(9), dp(3), dp(9), dp(3))
+        setTextColor(if (selected) onAccent else primaryText)
+        setPadding(dp(12), dp(3), dp(12), dp(3))
         background = ripple(rounded(if (selected) accentColor else surfaceRaised, if (selected) accentColor else borderColor))
         setOnClickListener { action() }
     }
@@ -1094,7 +1098,7 @@ class CareerActivity : Activity() {
         if (stage != null) card.addView(label("İşe alım aşaması: " + stage, 11f, true, accentColor))
         card.addView(label(eligibility, 12f, true, warningColor).apply {
             setPadding(dp(10), dp(8), dp(10), dp(8))
-            background = rounded(Color.rgb(255, 245, 224), Color.rgb(230, 194, 128))
+            background = rounded(Color.rgb(44, 35, 18), Color.rgb(122, 92, 38))
         })
         card.addView(label(facts.applicationStatus, 11f, true, warningColor))
         if (!listingStatus.isNullOrBlank() && facts.applicationStatus.startsWith("BAŞVURU DURUMU")) {
@@ -1630,7 +1634,7 @@ class CareerActivity : Activity() {
             card.addView(label("SÜREÇ AŞAMASI", 9f, true, muted))
             card.addView(label(event.stage, 12f, true, accentColor).apply {
                 setPadding(dp(10), dp(7), dp(10), dp(7))
-                background = rounded(Color.rgb(226, 247, 241), Color.rgb(130, 198, 177))
+                background = rounded(Color.parseColor(Pal.ACCENT_SOFT), Color.rgb(84, 70, 140))
             })
             card.addView(label(event.title, 15f, true, primaryText))
             if (event.snippet.isNotBlank()) card.addView(label(event.snippet, 12f, false, muted))
@@ -1694,7 +1698,7 @@ class CareerActivity : Activity() {
                 if (page == current) accentColor else surfaceRaised,
                 Color.TRANSPARENT
             ))
-            if (page == current) number.setTextColor(Color.WHITE)
+            if (page == current) number.setTextColor(onAccent)
             row.addView(number, LinearLayout.LayoutParams(0, dp(48), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
         }
 
@@ -1899,7 +1903,7 @@ class CareerActivity : Activity() {
             isChecked = associateGraduated
             if (Build.VERSION.SDK_INT >= 21) {
                 thumbTintList = android.content.res.ColorStateList.valueOf(accentColor)
-                trackTintList = android.content.res.ColorStateList.valueOf(Color.rgb(181, 207, 218))
+                trackTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(Pal.RAISED))
             }
             setOnCheckedChangeListener { _, checked ->
                 prefs.edit().putBoolean("career_associate_graduated", checked).apply()
@@ -2766,7 +2770,7 @@ class CareerActivity : Activity() {
 
     private fun label(value: String, size: Float, bold: Boolean, color: Int = primaryText) = TextView(this).apply {
         text = value
-        textSize = size
+        textSize = size.coerceAtLeast(Tok.T_CAPTION)
         setTextColor(color)
         setPadding(0, dp(4), 0, dp(4))
         setLineSpacing(dp(2).toFloat(), 1.0f)
@@ -2775,7 +2779,7 @@ class CareerActivity : Activity() {
 
     private fun ripple(content: android.graphics.drawable.Drawable): android.graphics.drawable.Drawable =
         android.graphics.drawable.RippleDrawable(
-            android.content.res.ColorStateList.valueOf(Color.argb(42, 8, 127, 115)),
+            android.content.res.ColorStateList.valueOf(Color.argb(48, 255, 255, 255)),
             content,
             rounded(Color.WHITE, Color.TRANSPARENT)
         )
