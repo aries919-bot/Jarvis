@@ -44,6 +44,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.cem.jarvis.media.FilmDiziActivity"
+            android:exported="false"
+            android:screenOrientation="unspecified" />
+
         <!-- Hatırlatma zamanı gelince bildirim gösterir -->
         <receiver
             android:name="com.cem.jarvis.ReminderReceiver"

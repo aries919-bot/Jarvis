@@ -26,15 +26,31 @@ import android.widget.TextView
 // RENKLER: Tema değiştirmek istediğinde yalnızca bu bloğu düzenle.
 // ============================================================
 object Pal {
-    const val BG = "#0B0D12"       // ekran zemini (saf siyah)
-    const val CARD = "#12151C"     // kart zemini
-    const val CARD2 = "#1A1E28"    // düğme ve giriş kutusu zemini
-    const val LINE = "#2A3040"     // ince kenar çizgisi
-    const val TEXT = "#EDEFF5"     // yazı
-    const val MUTED = "#8B93A7"    // pasif yazı
-    const val WHITE = "#FFFFFF"    // dinleme / vurgu
-    const val GREEN = "#34D399"    // başarılı işlem
-    const val RED = "#FF6B6B"      // uyarı / durdur
+    const val BG = "#0A111A"          // derin lacivert ana zemin
+    const val CARD = "#111D2A"        // temel yüzey
+    const val CARD2 = "#18283A"       // yükseltilmiş yüzey / giriş
+    const val RAISED = "#21364A"      // seçili / üst katman
+    const val LINE = "#2C4054"        // ince kenar
+    const val TEXT = "#F3F7FC"        // ana metin
+    const val MUTED = "#A5B6C8"       // ikincil metin
+    const val WHITE = "#FFFFFF"       // ses küresi / yüksek vurgu
+    const val ACCENT = "#58D6CC"      // Aries turkuazı
+    const val ON_ACCENT = "#062522"   // turkuaz üzeri metin
+    const val ACCENT_SOFT = "#163C40" // seçili durum zemini
+    const val BUBBLE_ME = "#173746"   // kullanıcı mesajı
+    const val GREEN = "#55D6A5"       // başarılı işlem
+    const val RED = "#FF7777"         // hata / durdur
+    const val AMBER = "#F4C36A"       // dikkat
+    const val BLUE = "#83C5F4"        // bilgi
+}
+
+object Tok {
+    const val MIN_TOUCH_DP = 48
+    const val CARD_RADIUS_DP = 20
+    const val CONTROL_RADIUS_DP = 16
+    const val PILL_RADIUS_DP = 24
+    const val SCREEN_GUTTER_DP = 20
+    const val SECTION_GAP_DP = 16
 }
 
 // ============================================================
@@ -323,8 +339,8 @@ object Ui {
         t.text = s
         t.textSize = 14f
         t.setTextColor(Color.parseColor(Pal.TEXT))
-        t.background = rounded(Pal.CARD, Pal.LINE, dp(ctx, 18).toFloat())
-        t.setPadding(dp(ctx, 16), dp(ctx, 14), dp(ctx, 16), dp(ctx, 14))
+        t.background = rounded(Pal.CARD, Pal.LINE, dp(ctx, Tok.CARD_RADIUS_DP).toFloat())
+        t.setPadding(dp(ctx, 16), dp(ctx, 16), dp(ctx, 16), dp(ctx, 16))
         t.setTextIsSelectable(true)
         return t
     }
@@ -336,17 +352,17 @@ object Ui {
         b.textSize = 14f
         b.stateListAnimator = null
         b.minHeight = 0
-        b.minimumHeight = dp(ctx, 46)
+        b.minimumHeight = dp(ctx, Tok.MIN_TOUCH_DP)
         b.setTextColor(Color.parseColor(Pal.TEXT))
-        b.background = rounded(Pal.CARD2, Pal.LINE, dp(ctx, 16).toFloat())
+        b.background = rounded(Pal.CARD2, Pal.LINE, dp(ctx, Tok.CONTROL_RADIUS_DP).toFloat())
         b.setOnClickListener { onClick() }
         return b
     }
 
     fun primary(ctx: Context, s: String, onClick: () -> Unit): Button {
         val b = button(ctx, s, onClick)
-        b.setTextColor(Color.BLACK)
-        b.background = rounded(Pal.WHITE, null, dp(ctx, 16).toFloat())
+        b.setTextColor(Color.parseColor(Pal.ON_ACCENT))
+        b.background = rounded(Pal.ACCENT, null, dp(ctx, Tok.CONTROL_RADIUS_DP).toFloat())
         return b
     }
 
@@ -356,7 +372,8 @@ object Ui {
         e.textSize = 15f
         e.setTextColor(Color.parseColor(Pal.TEXT))
         e.setHintTextColor(Color.parseColor(Pal.MUTED))
-        e.background = rounded(Pal.CARD2, Pal.LINE, dp(ctx, 16).toFloat())
+        e.background = rounded(Pal.CARD2, Pal.LINE, dp(ctx, Tok.CONTROL_RADIUS_DP).toFloat())
+        e.minHeight = dp(ctx, 52)
         e.setPadding(dp(ctx, 14), dp(ctx, 12), dp(ctx, 14), dp(ctx, 12))
         return e
     }
@@ -402,7 +419,8 @@ object Ui {
         f.isClickable = true
         f.contentDescription = desc
         f.setOnClickListener { onClick() }
-        f.layoutParams = LinearLayout.LayoutParams(dp(ctx, sizeDp), dp(ctx, sizeDp))
+        val touchSize = maxOf(sizeDp, Tok.MIN_TOUCH_DP)
+        f.layoutParams = LinearLayout.LayoutParams(dp(ctx, touchSize), dp(ctx, touchSize))
         return f
     }
 
@@ -421,8 +439,10 @@ object Ui {
     }
 
     fun chip(ctx: Context, s: String, active: Boolean, onClick: () -> Unit): TextView {
-        val t = text(ctx, s, 13f, if (active) "#000000" else Pal.TEXT)
-        t.background = rounded(if (active) Pal.WHITE else Pal.CARD2, if (active) null else Pal.LINE, dp(ctx, 18).toFloat())
+        val t = text(ctx, s, 13f, if (active) Pal.ON_ACCENT else Pal.TEXT, active)
+        t.gravity = Gravity.CENTER
+        t.minHeight = dp(ctx, Tok.MIN_TOUCH_DP)
+        t.background = rounded(if (active) Pal.ACCENT else Pal.CARD2, if (active) null else Pal.LINE, dp(ctx, Tok.PILL_RADIUS_DP).toFloat())
         t.setPadding(dp(ctx, 14), dp(ctx, 8), dp(ctx, 14), dp(ctx, 8))
         t.isClickable = true
         t.setOnClickListener { onClick() }
