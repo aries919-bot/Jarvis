@@ -19,7 +19,8 @@ import java.util.Locale
 
 // ============================================================
 // Zamanlı hatırlatmalar. Tamamen telefonda çalışır, internet gerektirmez.
-// setAlarmClock: Doze modunda da tetiklenir, ek "tam alarm" izni gerektirmez.
+// setAlarmClock: Doze modunda da tetiklenir. Android 12+ (API 31+) için kesin alarm
+// izni (Alarmlar ve hatırlatmalar) gerekir; izin kapalıysa add() SecurityException fırlatır.
 // ============================================================
 object Reminders {
 
