@@ -1,8 +1,6 @@
 package com.cem.jarvis
 
 import android.content.Context
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import android.util.Base64
 import org.json.JSONObject
 import java.io.IOException
@@ -13,7 +11,6 @@ import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
@@ -208,7 +205,7 @@ object FinanceData {
             readTimeout = 12_000
             instanceFollowRedirects = true
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("User-Agent", "Aries-Android/1.22")
+            setRequestProperty("User-Agent", "Aries-Android/1.23")
             if (!finnhubApiKey.isNullOrBlank()) setRequestProperty("X-Finnhub-Token", finnhubApiKey)
         }
         try {
