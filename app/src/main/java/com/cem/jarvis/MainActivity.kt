@@ -27,6 +27,7 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -812,19 +813,37 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_FILE_REQUEST && resultCode == RESULT_OK) {
-            val uri: Uri? = data?.data
-            if (uri != null) {
-                try {
-                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    val fileName = uri.lastPathSegment ?: "Dosya"
-                    saveFileRecord(fileName, uri.toString())
-                    loadInternalFileList()
-                    say("Dosya eklendi: $fileName")
-                } catch (e: Exception) {
-                    say("Dosya izin hatası.")
-                }
-            }
+        if (requestCode != PICK_FILE_REQUEST || resultCode != RESULT_OK) return
+
+        val uri = data?.data
+        if (uri == null || uri.scheme != "content") {
+            say("Geçerli bir dosya URI'si alınamadı.")
+            return
+        }
+
+        val grantedFlags = data.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION
+        if (grantedFlags == 0) {
+            say("Dosya için okuma izni verilmedi. Dosyayı yeniden seç.")
+            return
+        }
+
+        try {
+            contentResolver.takePersistableUriPermission(uri, grantedFlags)
+            val fileName = try {
+                contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else null
+                }?.takeIf { it.isNotBlank() }
+            } catch (_: Exception) {
+                null
+            } ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: "Dosya"
+
+            saveFileRecord(fileName, uri.toString())
+            loadInternalFileList()
+            say("Dosya eklendi: $fileName")
+        } catch (_: SecurityException) {
+            say("Dosya erişim izni kalıcı olarak alınamadı. Dosyayı yeniden seç.")
+        } catch (_: Exception) {
+            say("Dosya kaydedilemedi. Sağlayıcı erişimini kontrol et.")
         }
     }
 
@@ -850,13 +869,33 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             val row = Ui.row(this)
             val openBtn = Ui.button(this, "📄 $name") {
                 try {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uriStr)))
-                } catch (e: Exception) {
-                    say("Dosya açılamadı.")
+                    val uri = Uri.parse(uriStr)
+                    if (uri.scheme != "content") {
+                        say("Dosya bağlantısı geçersiz.")
+                    } else {
+                        val mimeType = contentResolver.getType(uri) ?: "*/*"
+                        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, mimeType)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(viewIntent)
+                    }
+                } catch (_: ActivityNotFoundException) {
+                    say("Bu dosya türünü açabilecek uygulama bulunamadı.")
+                } catch (_: SecurityException) {
+                    say("Dosyaya erişim izni kaldırılmış. Dosyayı yeniden ekle.")
+                } catch (_: IllegalArgumentException) {
+                    say("Dosya bağlantısı bozuk.")
+                } catch (_: Exception) {
+                    say("Dosya açılamadı. Dosyanın taşınmadığını veya silinmediğini kontrol et.")
                 }
             }
             val delBtn = Ui.button(this, "Sil") {
-                deleteFileRecord(i)
+                confirm(
+                    "“$name” kayıt listesinden silinsin mi? Cihazdaki asıl dosya silinmez.",
+                    { deleteFileRecord(i) },
+                    { }
+                )
             }
             row.addView(openBtn, LinearLayout.LayoutParams(0, -2, 1f))
             row.addView(delBtn, LinearLayout.LayoutParams(-2, -2))
