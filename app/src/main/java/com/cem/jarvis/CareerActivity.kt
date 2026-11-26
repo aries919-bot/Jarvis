@@ -746,7 +746,7 @@ class CareerActivity : Activity() {
         Thread {
             var exceptionMessage: String? = null
             val batch = try {
-                CareerSearchEngine.searchBatch(selectedCategory, r, p, prefs.getString("bulut", "").orEmpty())
+                CareerSearchEngine.searchBatch(selectedCategory, r, p, SecureStore.read(this, "bulut"))
             } catch (error: Exception) {
                 exceptionMessage = error.message
                 null
@@ -1413,7 +1413,7 @@ class CareerActivity : Activity() {
             else prefs.getString("career_role", "Elektrik teknisyeni").orEmpty()
         val cityText = if (::place.isInitialized) place.text.toString().trim()
             else prefs.getString("career_place", "Malatya").orEmpty()
-        val cloudToken = prefs.getString("bulut", "").orEmpty()
+        val cloudToken = SecureStore.read(this, "bulut")
         Thread {
             var failure: String? = null
             val batch = try {
@@ -2007,10 +2007,10 @@ class CareerActivity : Activity() {
 
     private fun analyse(hit: Net.Hit, safeCv: String) {
         val keys = mapOf(
-            "bulut" to prefs.getString("bulut", "").orEmpty(),
-            "groq" to prefs.getString("groq", "").orEmpty(),
-            "gemini" to prefs.getString("key", "").orEmpty(),
-            "mistral" to prefs.getString("mistral", "").orEmpty()
+            "bulut" to SecureStore.read(this, "bulut"),
+            "groq" to SecureStore.read(this, "groq"),
+            "gemini" to SecureStore.read(this, "key"),
+            "mistral" to SecureStore.read(this, "mistral")
         )
         if (keys["bulut"].isNullOrBlank()) {
             toast("Aries Bulut anahtarı ayarlarda yapılandırılmamış.")
