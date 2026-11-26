@@ -4,10 +4,16 @@ import android.util.Xml
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.Locale
+
+class BadResponse(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
 class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
     val temporary: Boolean
@@ -17,41 +23,76 @@ class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
 }
 
 object Net {
-    fun get(url: String): Pair<Int, String> {
+    const val ARIES_SOURCE_USER_AGENT = "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)"
+    const val MAX_RESPONSE_BYTES = 1024 * 1024
+
+    internal fun readLimitedBytes(input: InputStream?, maxBytes: Int = MAX_RESPONSE_BYTES): ByteArray {
+        require(maxBytes >= 0) { "Yanıt sınırı negatif olamaz." }
+        if (input == null) return ByteArray(0)
+        val output = ByteArrayOutputStream(minOf(maxBytes, 8192))
+        val buffer = ByteArray(8192)
+        var total = 0
+        while (true) {
+            val remaining = maxBytes - total
+            val count = input.read(buffer, 0, minOf(buffer.size, remaining + 1))
+            if (count < 0) break
+            if (count == 0) continue
+            if (count > remaining) throw BadResponse("Yanıt boyutu 1 MB sınırını aşıyor.")
+            output.write(buffer, 0, count)
+            total += count
+        }
+        return output.toByteArray()
+    }
+
+    internal fun readLimitedText(input: InputStream?, maxBytes: Int = MAX_RESPONSE_BYTES): String =
+        String(readLimitedBytes(input, maxBytes), Charsets.UTF_8)
+
+    fun get(url: String, headers: Map<String, String> = emptyMap()): Pair<Int, String> {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.requestMethod = "GET"
-        c.connectTimeout = 8000
-        c.readTimeout = 15000
-        val code = c.responseCode
-        val stream = if (code in 200..299) c.inputStream else c.errorStream
-        val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
-        return Pair(code, body)
+        try {
+            c.requestMethod = "GET"
+            c.connectTimeout = 8000
+            c.readTimeout = 15000
+            for ((k, v) in headers) c.setRequestProperty(k, v)
+            val code = c.responseCode
+            val stream = if (code in 200..299) c.inputStream else c.errorStream
+            val body = stream?.use { readLimitedText(it) } ?: ""
+            return Pair(code, body)
+        } finally {
+            c.disconnect()
+        }
     }
 
     fun post(url: String, headers: Map<String, String>, body: JSONObject): Pair<Int, String> {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.requestMethod = "POST"
-        c.connectTimeout = 8000
-        c.readTimeout = 25000
-        c.doOutput = true
-        c.setRequestProperty("Content-Type", "application/json")
-        for ((k, v) in headers) c.setRequestProperty(k, v)
-        c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-        val stream = if (c.responseCode in 200..299) c.inputStream else c.errorStream
-        val text = stream?.bufferedReader()?.use { it.readText() } ?: ""
-        return Pair(c.responseCode, text)
+        try {
+            c.requestMethod = "POST"
+            c.connectTimeout = 8000
+            c.readTimeout = 25000
+            c.doOutput = true
+            c.setRequestProperty("Content-Type", "application/json")
+            for ((k, v) in headers) c.setRequestProperty(k, v)
+            c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+            val code = c.responseCode
+            val stream = if (code in 200..299) c.inputStream else c.errorStream
+            val text = stream?.use { readLimitedText(it) } ?: ""
+            return Pair(code, text)
+        } finally {
+            c.disconnect()
+        }
     }
 
     fun newsTitles(topic: String): List<String> {
         val url = "https://news.google.com/rss/search?q=" + URLEncoder.encode(topic, "UTF-8") + "&hl=tr&gl=TR&ceid=TR:tr"
         val c = URL(url).openConnection() as HttpURLConnection
+        c.setRequestProperty("User-Agent", ARIES_SOURCE_USER_AGENT)
         c.connectTimeout = 8000
         c.readTimeout = 15000
         if (c.responseCode !in 200..299) throw IOException("Haber hatası: " + c.responseCode)
         val titles = ArrayList<String>()
         c.inputStream.use { input ->
             val parser = Xml.newPullParser()
-            parser.setInput(input, null)
+            parser.setInput(ByteArrayInputStream(readLimitedBytes(input)), null)
             var inItem = false
             var inTitle = false
             var event = parser.eventType
@@ -74,51 +115,328 @@ object Net {
 
     class Hit(val title: String, val url: String, val snippet: String)
 
-    private fun stripTags(s: String): String =
-        s.replace(Regex("<[^>]*>"), "")
-            .replace("&amp;", "&").replace("&quot;", "\"").replace("&#x27;", "'")
-            .replace("&#39;", "'").replace("&lt;", "<").replace("&gt;", ">").replace("&nbsp;", " ")
-            .replace(Regex("\\s+"), " ").trim()
+    private fun attribute(attributes: String, name: String): String? {
+        val pattern = Regex("""(?is)\b""" + Regex.escape(name) + """\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""")
+        val match = pattern.find(attributes) ?: return null
+        return (1..3).firstNotNullOfOrNull { index -> match.groups[index]?.value }
+    }
 
-    // Anahtarsız web araması: DuckDuckGo'nun yazı tabanlı sayfasından sonuçları çeker.
-    fun webSearch(query: String): List<Hit> {
-        val url = "https://html.duckduckgo.com/html/?kl=tr-tr&q=" + URLEncoder.encode(query, "UTF-8")
-        val c = URL(url).openConnection() as HttpURLConnection
-        c.requestMethod = "GET"
-        c.connectTimeout = 8000
-        c.readTimeout = 10000
-        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36")
-        c.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9")
-        val code = c.responseCode
-        if (code !in 200..299) throw IOException("Arama hatası: $code")
-        val html = c.inputStream.bufferedReader().use { it.readText() }
-        val links = Regex("<a[^>]*class=\"result__a\"[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL).findAll(html).toList()
-        val snips = Regex("<a[^>]*class=\"result__snippet\"[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL).findAll(html).toList()
-        val out = ArrayList<Hit>()
-        for (i in links.indices) {
-            if (out.size >= 5) break
-            var href = links[i].groupValues[1].replace("&amp;", "&")
-            val m = Regex("[?&]uddg=([^&]+)").find(href)
-            if (m != null) href = java.net.URLDecoder.decode(m.groupValues[1], "UTF-8")
-            if (href.startsWith("//")) href = "https:$href"
-            val title = stripTags(links[i].groupValues[2])
-            val snip = if (i < snips.size) stripTags(snips[i].groupValues[1]) else ""
-            if (title.isNotEmpty() && href.startsWith("http")) out.add(Hit(title, href, snip))
+    private fun stripTags(value: String): String {
+        var clean = value
+            .replace(Regex("(?is)<script[^>]*>.*?</script>"), " ")
+            .replace(Regex("(?is)<style[^>]*>.*?</style>"), " ")
+            .replace(Regex("""(?i)<br\s*/?>|</p>|</div>|</li>"""), " ")
+            .replace(Regex("<[^>]*>"), " ")
+            .replace("&amp;", "&")
+            .replace("&quot;", "\"")
+            .replace("&#x27;", "'")
+            .replace("&#39;", "'")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&nbsp;", " ")
+        clean = clean.replace(Regex("&#(\\d+);")) { match ->
+            match.groupValues[1].toIntOrNull()?.takeIf { it in 1..65535 }?.toChar()?.toString() ?: match.value
         }
-        return out
+        clean = clean.replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.takeIf { it in 1..65535 }?.toChar()?.toString() ?: match.value
+        }
+        return clean.replace(Regex("\\s+"), " ").trim()
+    }
+
+    private fun searchConnection(url: String, provider: String): String {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.instanceFollowRedirects = true
+        connection.connectTimeout = 7000
+        connection.readTimeout = 11000
+        connection.setRequestProperty(
+            "User-Agent",
+            ARIES_SOURCE_USER_AGENT
+        )
+        connection.setRequestProperty("Accept-Language", "tr-TR,tr;q=0.9,en;q=0.7")
+        connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        try {
+            val code = connection.responseCode
+            if (code !in 200..299) throw IOException("$provider HTTP $code")
+            val body = connection.inputStream.use { readLimitedText(it) }
+            if (body.isBlank()) throw BadResponse("$provider boş yanıt döndürdü.")
+            val lower = body.lowercase(Locale.ROOT)
+            if (listOf(
+                    "anomaly-modal", "captcha", "verify you are human",
+                    "unusual traffic", "automated requests", "security challenge"
+                ).any(lower::contains)
+            ) throw BadResponse("$provider arama isteğini güvenlik kontrolüne taktı.")
+            return body
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun isExplicitNoResults(html: String): Boolean {
+        val lower = stripTags(html).lowercase(Locale.ROOT)
+        return listOf(
+            "no results found", "no results for", "no results.", "sonuç bulunamadı",
+            "sonuc bulunamadi", "eşleşme bulunamadı", "eslesme bulunamadi"
+        ).any(lower::contains)
+    }
+
+    private fun resolveDdgUrl(raw: String): String {
+        var href = raw.replace("&amp;", "&")
+        val wrapped = Regex("[?&]uddg=([^&]+)").find(href)?.groupValues?.getOrNull(1)
+        if (wrapped != null) {
+            href = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
+        }
+        if (href.startsWith("//")) href = "https:$href"
+        return href
+    }
+
+    private fun resolveBingUrl(raw: String): String {
+        var href = raw.replace("&amp;", "&")
+        if (href.contains("bing.com/ck/a", ignoreCase = true)) {
+            val wrapped = Regex("[?&]u=([^&]+)").find(href)?.groupValues?.getOrNull(1)
+            if (wrapped != null) {
+                val decoded = runCatching { java.net.URLDecoder.decode(wrapped, "UTF-8") }.getOrDefault(wrapped)
+                val token = decoded.removePrefix("a1")
+                val target = runCatching {
+                    String(
+                        android.util.Base64.decode(
+                            token,
+                            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                        ),
+                        Charsets.UTF_8
+                    )
+                }.getOrDefault(decoded)
+                if (target.startsWith("http://") || target.startsWith("https://")) href = target
+            }
+        }
+        if (href.startsWith("//")) href = "https:$href"
+        return href
+    }
+
+    private fun extractSnippet(html: String, classMarker: String): String {
+        val elements = Regex(
+            """(?is)<(?:a|div|p|span)\b([^>]*)>(.*?)</(?:a|div|p|span)\s*>"""
+        ).findAll(html)
+        for (element in elements) {
+            val classes = attribute(element.groupValues[1], "class").orEmpty()
+            if (classes.contains(classMarker, ignoreCase = true)) {
+                val text = stripTags(element.groupValues[2])
+                if (text.isNotBlank()) return text
+            }
+        }
+        return ""
+    }
+
+    internal fun parseDuckDuckGoHtml(html: String, maxResults: Int = 8): List<Hit> {
+        val allAnchors = Regex("""(?is)<a\b([^>]*)>(.*?)</a\s*>""").findAll(html).toList()
+        val resultAnchors = allAnchors.filter { anchor ->
+            val classes = attribute(anchor.groupValues[1], "class").orEmpty()
+            classes.split(Regex("\\s+")).any { it == "result__a" }
+        }
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for ((index, anchor) in resultAnchors.withIndex()) {
+            if (output.size >= maxResults.coerceIn(1, 15)) break
+            val attrs = anchor.groupValues[1]
+            val href = resolveDdgUrl(attribute(attrs, "href").orEmpty())
+            val title = stripTags(anchor.groupValues[2])
+            if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
+            val key = href.substringBefore("#")
+            if (!seen.add(key)) continue
+            val blockStart = anchor.range.last + 1
+            val blockEnd = resultAnchors.getOrNull(index + 1)?.range?.first
+                ?: (blockStart + 2200).coerceAtMost(html.length)
+            val localBlock = html.substring(blockStart.coerceAtMost(html.length), blockEnd.coerceAtMost(html.length))
+            output += Hit(title, href, extractSnippet(localBlock, "result__snippet"))
+        }
+        return output
+    }
+
+    internal fun parseBingHtml(html: String, maxResults: Int = 8): List<Hit> {
+        val headings = Regex(
+            """(?is)<h2\b[^>]*>\s*<a\b([^>]*)>(.*?)</a\s*>\s*</h2\s*>"""
+        ).findAll(html).toList()
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for ((index, heading) in headings.withIndex()) {
+            if (output.size >= maxResults.coerceIn(1, 15)) break
+            val href = resolveBingUrl(attribute(heading.groupValues[1], "href").orEmpty())
+            val title = stripTags(heading.groupValues[2])
+            if (title.isBlank() || !(href.startsWith("https://") || href.startsWith("http://"))) continue
+            val key = href.substringBefore("#")
+            if (!seen.add(key)) continue
+            val blockStart = heading.range.last + 1
+            val blockEnd = headings.getOrNull(index + 1)?.range?.first
+                ?: (blockStart + 2600).coerceAtMost(html.length)
+            val block = html.substring(blockStart.coerceAtMost(html.length), blockEnd.coerceAtMost(html.length))
+            val caption = Regex(
+                """(?is)<(?:div|p)\b[^>]*class=["'][^"']*(?:b_caption|b_snippet|b_lineclamp)[^"']*["'][^>]*>(.*?)</(?:div|p)\s*>"""
+            ).find(block)?.groupValues?.getOrNull(1).orEmpty()
+            val snippet = stripTags(caption).ifBlank {
+                Regex("""(?is)<p\b[^>]*>(.*?)</p\s*>""")
+                    .find(block)?.groupValues?.getOrNull(1)?.let(::stripTags).orEmpty()
+            }
+            output += Hit(title, href, snippet)
+        }
+        return output
+    }
+
+    internal fun parseBraveHtml(html: String, maxResults: Int = 8): List<Hit> {
+        val anchors = Regex("""(?is)<a\b([^>]*)>(.*?)</a\s*>""").findAll(html)
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for (anchor in anchors) {
+            if (output.size >= maxResults.coerceIn(1, 15)) break
+            val attrs = anchor.groupValues[1]
+            val classes = attribute(attrs, "class").orEmpty()
+            val testId = attribute(attrs, "data-testid").orEmpty()
+            if (!classes.contains("snippet-title", true) &&
+                !classes.contains("result-title", true) &&
+                !testId.contains("result-title", true)
+            ) continue
+            val href = attribute(attrs, "href").orEmpty().replace("&amp;", "&")
+            val title = stripTags(anchor.groupValues[2])
+            if (title.isBlank() || !href.startsWith("https://")) continue
+            if (!seen.add(href.substringBefore("#"))) continue
+            output += Hit(title, href, extractSnippet(html, "snippet-description"))
+        }
+        return output
+    }
+
+    private fun validateParsedResults(provider: String, html: String, hits: List<Hit>) {
+        if (hits.isNotEmpty() || isExplicitNoResults(html)) return
+        throw BadResponse("$provider sayfası açıldı ancak sonuç bağlantıları okunamadı; arama sayfasının yapısı değişmiş veya sonuçlar engellenmiş olabilir.")
+    }
+
+    // DuckDuckGo ana arama sağlayıcısı; HTML nitelikleri sırası değişse de sonuç bağlantılarını okur.
+    fun webSearch(query: String, maxResults: Int = 8): List<Hit> {
+        val address = "https://html.duckduckgo.com/html/?kl=tr-tr&q=" + URLEncoder.encode(query, "UTF-8")
+        val html = searchConnection(address, "DuckDuckGo")
+        val results = parseDuckDuckGoHtml(html, maxResults)
+        validateParsedResults("DuckDuckGo", html, results)
+        return results
+    }
+
+    // Bing bağımsız ikinci sağlayıcıdır; ilk sağlayıcı engellendiğinde ya da sonuç vermediğinde kullanılır.
+    fun webSearchBing(query: String, maxResults: Int = 8): List<Hit> {
+        val address = "https://www.bing.com/search?setlang=tr&cc=tr&q=" + URLEncoder.encode(query, "UTF-8")
+        val html = searchConnection(address, "Bing")
+        val results = parseBingHtml(html, maxResults)
+        validateParsedResults("Bing", html, results)
+        return results
+    }
+
+    private fun resolveGoogleNewsArticle(rawUrl: String): String? {
+        val connection = runCatching { URL(rawUrl).openConnection() as HttpURLConnection }.getOrNull() ?: return null
+        connection.instanceFollowRedirects = true
+        connection.connectTimeout = 5000
+        connection.readTimeout = 7000
+        connection.requestMethod = "GET"
+        connection.setRequestProperty(
+            "User-Agent",
+            ARIES_SOURCE_USER_AGENT
+        )
+        return try {
+            val code = connection.responseCode
+            val finalUrl = connection.url.toString()
+            if (code !in 200..399) return null
+            val uri = runCatching { java.net.URI(finalUrl) }.getOrNull() ?: return null
+            val host = uri.host.orEmpty().lowercase(Locale.ROOT)
+            if (host == "news.google.com" || host.endsWith(".google.com")) null else finalUrl
+        } catch (_: Exception) {
+            null
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    /** Google Haberler RSS, arama motorlarının HTML sayfaları engellendiğinde yayıncı bağlantısı keşfi için son yedektir. */
+    fun webSearchGoogleNews(query: String, maxResults: Int = 4): List<Hit> {
+        val address = "https://news.google.com/rss/search?q=" +
+            URLEncoder.encode(query, "UTF-8") + "&hl=tr&gl=TR&ceid=TR:tr"
+        val connection = URL(address).openConnection() as HttpURLConnection
+        connection.connectTimeout = 7000
+        connection.readTimeout = 10000
+        connection.setRequestProperty("User-Agent", ARIES_SOURCE_USER_AGENT)
+        val raw = ArrayList<Hit>()
+        try {
+            if (connection.responseCode !in 200..299) throw IOException("Google Haberler RSS yanıt vermedi.")
+            connection.inputStream.use { input ->
+                val parser = Xml.newPullParser()
+                parser.setInput(ByteArrayInputStream(readLimitedBytes(input)), "UTF-8")
+                var inItem = false
+                var field = ""
+                var title = ""
+                var link = ""
+                var description = ""
+                var event = parser.eventType
+                while (event != XmlPullParser.END_DOCUMENT && raw.size < maxResults.coerceIn(1, 8) * 3) {
+                    if (event == XmlPullParser.START_TAG) {
+                        when (parser.name.lowercase(Locale.ROOT)) {
+                            "item" -> {
+                                inItem = true
+                                title = ""
+                                link = ""
+                                description = ""
+                            }
+                            "title", "link", "description" -> if (inItem) field = parser.name.lowercase(Locale.ROOT)
+                        }
+                    } else if (event == XmlPullParser.TEXT || event == XmlPullParser.CDSECT) {
+                        if (inItem) {
+                            when (field) {
+                                "title" -> title += parser.text.orEmpty()
+                                "link" -> link += parser.text.orEmpty()
+                                "description" -> description += parser.text.orEmpty()
+                            }
+                        }
+                    } else if (event == XmlPullParser.END_TAG) {
+                        if (parser.name.equals("title", true) ||
+                            parser.name.equals("link", true) ||
+                            parser.name.equals("description", true)
+                        ) field = ""
+                        if (parser.name.equals("item", true)) {
+                            inItem = false
+                            if (title.isNotBlank() && link.isNotBlank()) {
+                                raw += Hit(stripTags(title), link.trim(), stripTags(description))
+                            }
+                        }
+                    }
+                    event = parser.next()
+                }
+            }
+        } finally {
+            connection.disconnect()
+        }
+
+        val output = ArrayList<Hit>()
+        val seen = HashSet<String>()
+        for (item in raw) {
+            if (output.size >= maxResults.coerceIn(1, 8)) break
+            val url = if (item.url.contains("news.google.com", true)) {
+                resolveGoogleNewsArticle(item.url) ?: continue
+            } else item.url
+            if (!url.startsWith("https://") || !seen.add(url.substringBefore("#"))) continue
+            output += Hit(item.title, url, item.snippet)
+        }
+        return output
+    }
+
+    // Brave üçüncü sağlayıcı olarak yalnızca ilk iki sağlayıcı yeterli sonuç üretmediğinde denenir.
+    fun webSearchBrave(query: String, maxResults: Int = 6): List<Hit> {
+        val address = "https://search.brave.com/search?q=" + URLEncoder.encode(query, "UTF-8") + "&source=web"
+        val html = searchConnection(address, "Brave")
+        val results = parseBraveHtml(html, maxResults)
+        validateParsedResults("Brave", html, results)
+        return results
     }
 
     fun quote(sym: String, token: String): String {
-        val url = "https://finnhub.io/api/v1/quote?symbol=" + URLEncoder.encode(sym, "UTF-8") +
-            "&token=" + URLEncoder.encode(token, "UTF-8")
-        val (code, txt) = get(url)
-        if (code == 401 || code == 403) throw IOException("Finnhub anahtarı geçersiz")
-        if (code != 200) throw IOException("borsa hatası $code")
-        val o = JSONObject(txt)
-        val c = o.optDouble("c", 0.0)
-        val dp = o.optDouble("dp", 0.0)
-        if (c == 0.0) return "$sym: veri yok (bu hisse ücretsiz planda olmayabilir)"
-        return "%s: %.2f (%+.2f%%)".format(java.util.Locale.US, sym, c, dp)
+        // Keep provider credentials out of query strings, logs and URL histories.
+        val quote = FinanceData.fetchFinnhubQuote(sym, token)
+        val change = quote.changePercent?.let {
+            " (%+.2f%%)".format(Locale.US, it)
+        } ?: " (değişim bilgisi yok)"
+        return "%s: %.2f%s".format(Locale.US, quote.symbol, quote.current, change)
     }
 }
 
@@ -135,6 +453,32 @@ object Ai {
 
     class Source(val title: String, val url: String)
     class Answer(val text: String, val sources: List<Source>)
+
+    internal fun parseResponseObject(body: String, endpoint: String): JSONObject {
+        if (body.isBlank()) throw BadResponse("$endpoint boş yanıt döndürdü.")
+        return try {
+            JSONObject(body)
+        } catch (e: Exception) {
+            throw BadResponse("$endpoint geçersiz JSON yanıtı döndürdü.", e)
+        }
+    }
+
+    internal fun parseResponseArray(body: String, endpoint: String): JSONArray {
+        if (body.isBlank()) throw BadResponse("$endpoint boş yanıt döndürdü.")
+        return try {
+            JSONArray(body)
+        } catch (e: Exception) {
+            throw BadResponse("$endpoint geçersiz JSON listesi döndürdü.", e)
+        }
+    }
+
+    internal fun requiredResponseString(json: JSONObject, key: String, endpoint: String): String {
+        val value = json.opt(key)
+        if (value !is String || value.isBlank()) {
+            throw BadResponse("$endpoint yanıtında '$key' alanı eksik veya geçersiz.")
+        }
+        return value
+    }
 
     fun defaultModel(who: String): String = when (who) {
         "groq" -> GROQ_DEFAULT
@@ -164,6 +508,8 @@ object Ai {
         for (attempt in 0..1) {
             try {
                 return block()
+            } catch (e: BadResponse) {
+                throw e
             } catch (e: ApiError) {
                 if (!e.temporary) throw e
                 last = e
@@ -197,17 +543,17 @@ object Ai {
     }
 
     fun oyVer(token: String, v: Int, a: String) {
-        try { Net.post("https://jarvis-cloud.aydincem919.workers.dev/oy_sohbet", mapOf("Authorization" to "Bearer $token"), JSONObject().put("v", v).put("a", a)) } catch (e: Exception) {}
+        try { Net.post("https://jarvis-cloud.aydincem919.workers.dev/oy_sohbet", mapOf("Authorization" to "Bearer $token"), JSONObject().put("v", v).put("a", Privacy.sanitizeCloudText(a))) } catch (e: Exception) {}
     }
 
     private const val BULUT_URL = "https://jarvis-cloud.aydincem919.workers.dev/ai"
 
     private fun bulut(token: String, sys: String, hist: List<Pair<String, String>>): String {
         val msgs = JSONArray()
-        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", t))
+        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", Privacy.sanitizeCloudText(t)))
         val body = JSONObject().put("system", sys).put("messages", msgs)
         val (code, txt) = Net.post(BULUT_URL, mapOf("Authorization" to "Bearer $token"), body)
-        if (code == 200) return JSONObject(txt).getString("answer")
+        if (code == 200) return requiredResponseString(parseResponseObject(txt, "Aries Bulut"), "answer", "Aries Bulut")
         throw ApiError(code, errText("Aries Bulut", code))
     }
 
@@ -217,7 +563,19 @@ object Ai {
         .replace(Regex("\\+?\\d[\\d ()-]{8,}\\d"), "")
         .replace(Regex("\\s+"), " ").trim()
 
-    fun film(token: String, q: String): String { val c = URL("https://jarvis-cloud.aydincem919.workers.dev/film?q=" + java.net.URLEncoder.encode(q, "UTF-8")).openConnection() as HttpURLConnection; c.connectTimeout = 8000; c.readTimeout = 15000; c.setRequestProperty("Authorization", "Bearer " + token); val code = c.responseCode; if (code != 200) throw ApiError(code, errText("Aries Bulut", code)); val arr = JSONArray(c.inputStream.bufferedReader().use { it.readText() }); if (arr.length() == 0) return "Sonuç bulamadım."; return (0 until minOf(arr.length(), 3)).joinToString(Char(10).toString() + Char(10)) { val o = arr.getJSONObject(it); o.optString("ad") + " (" + o.optString("yil") + ") puan " + o.optString("puan") + Char(10) + o.optString("ozet") } }
+    fun film(token: String, q: String): String {
+        val url = "https://jarvis-cloud.aydincem919.workers.dev/film?q=" +
+            java.net.URLEncoder.encode(q, "UTF-8")
+        val (code, body) = Net.get(url, mapOf("Authorization" to "Bearer " + token))
+        if (code != 200) throw ApiError(code, errText("Aries Bulut", code))
+        val arr = parseResponseArray(body, "Aries Bulut film")
+        if (arr.length() == 0) return "Sonuç bulamadım."
+        return (0 until minOf(arr.length(), 3)).joinToString(Char(10).toString() + Char(10)) {
+            val item = arr.optJSONObject(it) ?: throw BadResponse("Aries Bulut film yanıtında geçersiz kayıt var.")
+            item.optString("ad") + " (" + item.optString("yil") + ") puan " +
+                item.optString("puan") + Char(10) + item.optString("ozet")
+        }
+    }
     private const val HIZLI_URL = "https://jarvis-cloud.aydincem919.workers.dev/hizli"
 
     fun hizli(token: String, q: String): Answer {
@@ -228,14 +586,66 @@ object Ai {
         } catch (e: Exception) { }
         val (code, txt) = Net.post(HIZLI_URL, mapOf("Authorization" to "Bearer $token"), body)
         if (code != 200) throw ApiError(code, errText("Aries Bulut", code))
-        val j = JSONObject(txt)
-        val arr = j.optJSONArray("sources") ?: JSONArray()
+        val j = parseResponseObject(txt, "Aries hızlı yanıt")
+        val answer = requiredResponseString(j, "answer", "Aries hızlı yanıt")
+        val sourcesValue = j.opt("sources")
+        if (sourcesValue != null && sourcesValue != JSONObject.NULL && sourcesValue !is JSONArray) {
+            throw BadResponse("Aries hızlı yanıt kaynak listesi geçersiz.")
+        }
+        val arr = sourcesValue as? JSONArray ?: JSONArray()
         val src = ArrayList<Source>()
         for (i in 0 until arr.length()) {
-            val u = arr.getString(i)
-            src.add(Source(u.removePrefix("https://").removePrefix("http://").substringBefore("/"), u))
+            val rawUrl = arr.opt(i) as? String ?: continue
+            val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
+            if (uri == null || uri.scheme !in listOf("https", "http") || uri.host.isNullOrBlank()) continue
+            src.add(Source(uri.host, rawUrl))
         }
-        return Answer(j.getString("answer"), src)
+        return Answer(answer, src)
+    }
+
+    private const val CAREER_SEARCH_URL = "https://jarvis-cloud.aydincem919.workers.dev/kariyer-ara"
+
+    fun kariyerAra(
+        token: String,
+        role: String,
+        city: String,
+        category: Int,
+        daily: Boolean
+    ): CareerScanBatch {
+        val body = JSONObject()
+            .put("role", role.take(150))
+            .put("city", city.take(120))
+            .put("category", category.coerceIn(0, 9))
+            .put("daily", daily)
+        val (code, txt) = Net.post(
+            CAREER_SEARCH_URL,
+            mapOf("Authorization" to "Bearer $token"),
+            body
+        )
+        if (code != 200) throw ApiError(code, errText("Aries Kariyer Arama", code))
+        val json = parseResponseObject(txt, "Aries Kariyer Arama")
+        val rowsValue = json.opt("results")
+        if (rowsValue != null && rowsValue != JSONObject.NULL && rowsValue !is JSONArray) {
+            throw BadResponse("Aries Kariyer Arama sonuç listesi geçersiz.")
+        }
+        val rows = rowsValue as? JSONArray ?: JSONArray()
+        val hits = ArrayList<Net.Hit>()
+        for (i in 0 until rows.length()) {
+            val item = rows.optJSONObject(i) ?: continue
+            val title = item.optString("title").trim()
+            val url = item.optString("url").trim()
+            val snippet = item.optString("content").trim()
+            if (title.isNotBlank() && url.startsWith("https://") && snippet.isNotBlank()) {
+                hits += Net.Hit(title, url, snippet)
+            }
+        }
+        return CareerScanBatch(
+            hits = hits,
+            successfulQueries = json.optInt("successfulQueries", 0),
+            failedQueries = json.optInt("failedQueries", 0),
+            totalQueries = json.optInt("totalQueries", 0),
+            errorMessages = emptyList()
+        )
     }
 
     private fun callProvider(who: String, key: String, model: String, sys: String, hist: List<Pair<String, String>>, json: Boolean = true): String {
@@ -261,8 +671,13 @@ object Ai {
             .put("max_tokens", 600)
         val (code, txt) = Net.post(url, mapOf("Authorization" to "Bearer $key"), body)
         if (code != 200) throw ApiError(code, errText(name, code))
-        return JSONObject(txt).getJSONArray("choices").getJSONObject(0)
-            .getJSONObject("message").getString("content")
+        val response = parseResponseObject(txt, name)
+        val choices = response.optJSONArray("choices")
+            ?: throw BadResponse("$name yanıtında choices listesi eksik.")
+        if (choices.length() == 0) throw BadResponse("$name boş choices listesi döndürdü.")
+        val message = choices.optJSONObject(0)?.optJSONObject("message")
+            ?: throw BadResponse("$name yanıtında message alanı eksik.")
+        return requiredResponseString(message, "content", name)
     }
 
     private fun geminiBody(sys: String, hist: List<Pair<String, String>>, json: Boolean, search: Boolean): JSONObject {
@@ -291,7 +706,7 @@ object Ai {
             geminiBody(sys, hist, json, search)
         )
         if (code != 200) throw ApiError(code, errText("Gemini", code))
-        return JSONObject(txt)
+        return parseResponseObject(txt, "Gemini")
     }
 
     private fun geminiAnswer(key: String, sys: String, hist: List<Pair<String, String>>, json: Boolean, search: Boolean): Answer {
@@ -301,10 +716,22 @@ object Ai {
             if (!e.temporary) throw e
             withRetry { gemini(key, GEMINI_FALLBACK, sys, hist, json, search) }
         }
-        val cand = o.getJSONArray("candidates").getJSONObject(0)
-        val parts = cand.getJSONObject("content").getJSONArray("parts")
+        val candidates = o.optJSONArray("candidates")
+            ?: throw BadResponse("Gemini yanıtında candidates listesi eksik.")
+        if (candidates.length() == 0) throw BadResponse("Gemini boş candidates listesi döndürdü.")
+        val cand = candidates.optJSONObject(0)
+            ?: throw BadResponse("Gemini yanıtında geçersiz aday kaydı var.")
+        val content = cand.optJSONObject("content")
+            ?: throw BadResponse("Gemini yanıtında content alanı eksik.")
+        val parts = content.optJSONArray("parts")
+            ?: throw BadResponse("Gemini yanıtında parts listesi eksik.")
         val sb = StringBuilder()
-        for (i in 0 until parts.length()) sb.append(parts.getJSONObject(i).optString("text"))
+        for (i in 0 until parts.length()) {
+            val part = parts.optJSONObject(i) ?: continue
+            val text = part.opt("text")
+            if (text is String) sb.append(text)
+        }
+        if (sb.isEmpty()) throw BadResponse("Gemini yanıtında metin içeriği bulunamadı.")
         val sources = ArrayList<Source>()
         val chunks = cand.optJSONObject("groundingMetadata")?.optJSONArray("groundingChunks")
         if (chunks != null) {
@@ -404,6 +831,7 @@ object Ai {
     }
 
     fun friendly(e: Exception): String = when {
+        e is BadResponse -> e.message ?: "Sunucudan geçersiz yanıt geldi."
         e is ApiError && e.badKey -> e.message ?: "Anahtar geçersiz."
         e is ApiError -> e.message ?: "Yapay zekâ hatası."
         e is IOException -> "İnternete ulaşamadım."

@@ -27,6 +27,7 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -78,13 +79,15 @@ class MainActivity : Activity() {
     private val PICK_FILE_REQUEST = 1001
     private lateinit var fileListView: LinearLayout
 
-    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true)
+    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true, "yeniAcilis" to false, "bulutHafizaIzin" to false)
     private var pendingFact: String? = null
     private val flagTitles = mapOf(
         "heyJarvis" to "Hey Jarvis",
         "aiOn" to "Yapay zekâ",
         "histOn" to "Sohbet kaydı",
-        "memOn" to "Hafıza"
+        "memOn" to "Hafıza",
+        "yeniAcilis" to "Açılışta yeni sohbet",
+        "bulutHafizaIzin" to "Bulut hafıza izni"
     )
 
     private val SYS = """
@@ -119,8 +122,9 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         super.onCreate(b)
 
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            val crash = sanitizeCrashStackTrace(android.util.Log.getStackTraceString(e))
             getSharedPreferences("j", MODE_PRIVATE).edit()
-                .putString("crash", android.util.Log.getStackTraceString(e)).commit()
+                .putString("crash", crash.take(2000)).commit()
             android.os.Process.killProcess(android.os.Process.myPid())
         }
         val crash = getSharedPreferences("j", MODE_PRIVATE).getString("crash", null)
@@ -131,7 +135,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         store = Store(this)
         buildUi()
-        renderConv(store.current())
+        val currentConv = store.current()
+        val startupConv = if (store.flag("yeniAcilis", false) && currentConv.msgs.isNotEmpty()) {
+            store.newConv().also { store.setCurrent(it) }
+        } else currentConv
+        renderConv(startupConv)
         showPage(0)
         setOrb(0)
 
@@ -196,6 +204,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             return
         }
         super.onBackPressed()
+    }
+
+    private fun sanitizeCrashStackTrace(stackTrace: String): String {
+        return CrashTraceSanitizer.sanitizeCrashStackTrace(stackTrace)
     }
 
     private fun showCrash(msg: String) {
@@ -349,7 +361,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         // Ekranda gösterilmeyen ama kodun başka yerlerinin kullandığı görünümler
         clockTv = Ui.text(this, "", 18f)
-        dateTv = Ui.text(this, "", 11f, Pal.MUTED)
+        dateTv = Ui.text(this, "", Tok.T_CAPTION, Pal.MUTED)
         wave = WaveView(this)
 
         // Orta alan: sohbet (gizli) + küre
@@ -598,10 +610,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         if (sdk >= 31) { names.add("Varsayılana dön (Bluetooth)"); acts.add { am.clearCommunicationDevice(); say("Ses varsayılan çıkışa döndü.") } }
         names.add("Bluetooth ayarlarını aç")
         acts.add { safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS), "Bluetooth ayarları açılamadı.") }
-        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; val gd = android.graphics.drawable.GradientDrawable(); gd.setColor(android.graphics.Color.parseColor("#12151F")); gd.cornerRadius = 48f; box.background = gd; box.setPadding(56, 40, 56, 24)
+        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; box.background = Ui.rounded(Pal.CARD, Pal.LINE, dp(Tok.R_CARD + 6).toFloat()); box.setPadding(dp(22), dp(18), dp(22), dp(10))
         val dlg = android.app.AlertDialog.Builder(this).setView(box).create()
-        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.WHITE); ttl.textSize = 18f; box.addView(ttl)
-        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor("#C9CEDB")); tv.textSize = 16f; tv.setPadding(0, 32, 0, 32); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
+        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.parseColor(Pal.WHITE)); ttl.textSize = Tok.T_TITLE; ttl.setPadding(0, 0, 0, dp(6)); box.addView(ttl)
+        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor(Pal.TEXT)); tv.textSize = 16f; tv.minHeight = dp(Tok.MIN_TOUCH_DP); tv.gravity = Gravity.CENTER_VERTICAL; tv.setPadding(0, dp(10), 0, dp(10)); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
         dlg.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT)); dlg.show()
     }
 
@@ -802,19 +814,42 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_FILE_REQUEST && resultCode == RESULT_OK) {
-            val uri: Uri? = data?.data
-            if (uri != null) {
-                try {
-                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    val fileName = uri.lastPathSegment ?: "Dosya"
-                    saveFileRecord(fileName, uri.toString())
-                    loadInternalFileList()
-                    say("Dosya eklendi: $fileName")
-                } catch (e: Exception) {
-                    say("Dosya izin hatası.")
-                }
-            }
+        if (requestCode != PICK_FILE_REQUEST || resultCode != RESULT_OK) return
+
+        val resultIntent = data
+        if (resultIntent == null) {
+            say("Dosya seçimi boş döndü. Yeniden dene.")
+            return
+        }
+        val uri = resultIntent.data
+        if (uri == null || uri.scheme != "content") {
+            say("Geçerli bir dosya URI'si alınamadı.")
+            return
+        }
+
+        val grantedFlags = resultIntent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION
+        if (grantedFlags == 0) {
+            say("Dosya için okuma izni verilmedi. Dosyayı yeniden seç.")
+            return
+        }
+
+        try {
+            contentResolver.takePersistableUriPermission(uri, grantedFlags)
+            val fileName = try {
+                contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else null
+                }?.takeIf { it.isNotBlank() }
+            } catch (_: Exception) {
+                null
+            } ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: "Dosya"
+
+            saveFileRecord(fileName, uri.toString())
+            loadInternalFileList()
+            say("Dosya eklendi: $fileName")
+        } catch (_: SecurityException) {
+            say("Dosya erişim izni kalıcı olarak alınamadı. Dosyayı yeniden seç.")
+        } catch (_: Exception) {
+            say("Dosya kaydedilemedi. Sağlayıcı erişimini kontrol et.")
         }
     }
 
@@ -840,13 +875,33 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             val row = Ui.row(this)
             val openBtn = Ui.button(this, "📄 $name") {
                 try {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uriStr)))
-                } catch (e: Exception) {
-                    say("Dosya açılamadı.")
+                    val uri = Uri.parse(uriStr)
+                    if (uri.scheme != "content") {
+                        say("Dosya bağlantısı geçersiz.")
+                    } else {
+                        val mimeType = contentResolver.getType(uri) ?: "*/*"
+                        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, mimeType)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(viewIntent)
+                    }
+                } catch (_: ActivityNotFoundException) {
+                    say("Bu dosya türünü açabilecek uygulama bulunamadı.")
+                } catch (_: SecurityException) {
+                    say("Dosyaya erişim izni kaldırılmış. Dosyayı yeniden ekle.")
+                } catch (_: IllegalArgumentException) {
+                    say("Dosya bağlantısı bozuk.")
+                } catch (_: Exception) {
+                    say("Dosya açılamadı. Dosyanın taşınmadığını veya silinmediğini kontrol et.")
                 }
             }
             val delBtn = Ui.button(this, "Sil") {
-                deleteFileRecord(i)
+                confirm(
+                    "“$name” kayıt listesinden silinsin mi? Cihazdaki asıl dosya silinmez.",
+                    { deleteFileRecord(i) },
+                    { }
+                )
             }
             row.addView(openBtn, LinearLayout.LayoutParams(0, -2, 1f))
             row.addView(delBtn, LinearLayout.LayoutParams(-2, -2))
@@ -856,11 +911,28 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun deleteFileRecord(index: Int) {
         val arr = JSONArray(store.str("app_files", "[]"))
+        if (index !in 0 until arr.length()) return
+
+        val removedUri = arr.getJSONObject(index).optString("uri")
         val out = JSONArray()
         for (i in 0 until arr.length()) {
             if (i != index) out.put(arr.getJSONObject(i))
         }
         store.put("app_files", out.toString())
+
+        val uriStillReferenced = (0 until out.length()).any {
+            out.getJSONObject(it).optString("uri") == removedUri
+        }
+        if (!uriStillReferenced && removedUri.isNotBlank()) {
+            try {
+                contentResolver.releasePersistableUriPermission(
+                    Uri.parse(removedUri),
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {
+                // The provider may already have revoked the persisted grant.
+            }
+        }
         loadInternalFileList()
     }
 
@@ -871,6 +943,27 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
         add(col, Ui.button(this, "Kaydet") { saveSettings() })
+        add(col, Ui.button(this, "Bulut hafıza iznini kaldır") {
+            if (store.flag("bulutHafizaIzin", false)) {
+                confirm("Aries Bulut'un hafıza komutlarını almasına verdiğin izin kaldırılsın mı?", {
+                    store.setFlag("bulutHafizaIzin", false)
+                    say("Bulut hafıza izni kaldırıldı. Yeni gönderim için yeniden onay gerekir.")
+                }, { })
+            } else {
+                say("Bulut hafıza izni zaten kapalı.")
+            }
+        })
+
+        add(col, Ui.text(this, "Sohbet", 14f, Pal.MUTED))
+        add(col, flagButton("histOn"))
+        add(col, flagButton("memOn"))
+        add(col, flagButton("yeniAcilis"))
+        add(col, Ui.button(this, "Tüm sohbetleri sil") {
+            confirm("Tüm sohbetler silinsin mi?", {
+                store.clearConvs()
+                newChat()
+            }, { })
+        })
 
         add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
         add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
@@ -918,8 +1011,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun saveSettings() {
-        for ((k, v) in keyFields) store.put(k, v.text.toString().trim())
-        say("Ayarlar kaydedildi.")
+        var secureSaveFailed = false
+        for ((k, v) in keyFields) {
+            if (!store.put(k, v.text.toString().trim())) secureSaveFailed = true
+        }
+        say(if (secureSaveFailed) "Anahtar güvenli saklanamadı, kaydedilmedi." else "Ayarlar kaydedildi.")
     }
 
     private fun flagLabel(flag: String): String =
@@ -964,6 +1060,14 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             }
             p.addView(r, LinearLayout.LayoutParams(-1, -2))
         }
+        add(p, Ui.button(this, "💼  İş ve Kariyer") {
+            closeSide()
+            startActivity(Intent(this, CareerActivity::class.java))
+        })
+        add(p, Ui.button(this, "📈  Piyasa Merkezi") {
+            closeSide()
+            startActivity(Intent(this, FinanceActivity::class.java))
+        })
         val ttl = Ui.text(this, "Sohbetler", 20f, Pal.WHITE)
         ttl.setPadding(0, dp(14), 0, 0)
         p.addView(ttl)
@@ -1621,8 +1725,15 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
     private fun fetchWatchlist(speak: Boolean) {
         val list = store.watch()
-        val token = store.str("finnhub")
-        if (token.isBlank() || list.isEmpty()) return
+        val token = FinanceKeyStore.read(this)
+        if (list.isEmpty()) {
+            setStockText("İzlenen hisse yok. Piyasa Merkezi'nden hisse ekleyebilirsin.")
+            return
+        }
+        if (token.isBlank()) {
+            setStockText("Hisse listesi kayıtlı. Fiyatları görmek için Piyasa Merkezi'nden Finnhub anahtarını güvenli biçimde kaydet.")
+            return
+        }
         thread {
             val lines = list.map { sym -> try { Net.quote(sym, token) } catch (e: Exception) { "$sym: hata" } }
             runOnUiThread { setStockText(lines.joinToString("\n")) }
@@ -1695,8 +1806,46 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         say("Hafıza panoya kopyalandı.")
     }
 
+    private fun rejectCloudMemoryConsent() {
+        val request = pendingFact
+        pendingFact = null
+        val fact = request?.let {
+            Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE)
+                .find(it.trim())?.groupValues?.get(1)?.trim()
+        }
+        if (fact != null) {
+            if (Regex("\\d{11,}|şifre|parola|cvv", RegexOption.IGNORE_CASE).containsMatchIn(fact)) {
+                say("Kart, şifre ya da kimlik gibi görünüyor, kaydetmedim.")
+            } else {
+                store.addFact(fact)
+                say("Bulut'a göndermedim; notu yalnızca telefona kaydettim.")
+            }
+        } else {
+            say("Bulut hafıza isteği gönderilmedi.")
+        }
+    }
+
+    private fun requestCloudMemoryConsent(raw: String) {
+        pendingFact = raw
+        AlertDialog.Builder(this)
+            .setTitle("Aries Bulut hafıza izni")
+            .setMessage("Hafıza komutunun içeriği Aries Bulut'a gönderilecek ve yanıt almak için bulut hizmeti tarafından işlenecek. İzin verirsen bu onay sonraki hafıza komutlarında da geçerli olur. İzni Ayarlar'dan kaldırabilirsin. Devam edilsin mi?")
+            .setPositiveButton("İzin ver") { _, _ ->
+                val request = pendingFact
+                pendingFact = null
+                if (request != null) {
+                    store.setFlag("bulutHafizaIzin", true)
+                    memCloud(request)
+                }
+            }
+            .setNegativeButton("Gönderme") { _, _ -> rejectCloudMemoryConsent() }
+            .setOnCancelListener { rejectCloudMemoryConsent() }
+            .show()
+    }
+
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
+        if (!store.flag("memOn", true)) { say("Hafıza kapalı. Ayarlardan açabilirsin."); return true }
         val tk = store.str("bulut")
         val fact = Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
         val unutN = Regex("^unut\\s*(?::\\s*|\\s+)(\\d+)$", RegexOption.IGNORE_CASE).find(t)
@@ -1720,6 +1869,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             } else say("Bu komut için internet ve Aries Bulut anahtarı gerekir.")
             return true
         }
+        if (!store.flag("bulutHafizaIzin", false)) {
+            requestCloudMemoryConsent(t)
+            return true
+        }
         showThinking()
         thread {
             try {
@@ -1738,6 +1891,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun searchFacts(query: String): List<String> {
+        if (!store.flag("memOn", true)) return emptyList()
         val words = query.lowercase(tr).split(Regex("[^a-zçğıöşü0-9]+")).filter { it.length >= 3 }
         if (words.isEmpty()) return emptyList()
         return store.facts().split(Regex("[;.\\n]"))

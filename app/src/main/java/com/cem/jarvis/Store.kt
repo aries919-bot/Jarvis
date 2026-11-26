@@ -8,23 +8,49 @@ import org.json.JSONObject
 class Conv(val id: String, var title: String, var updated: Long, val msgs: MutableList<Pair<String, String>>)
 
 class Store(ctx: Context) {
-    val prefs: SharedPreferences = ctx.getSharedPreferences("j", Context.MODE_PRIVATE)
+    private val app: Context = ctx.applicationContext
+    private val SECRET = setOf("key", "bulut", "groq", "mistral", "finnhub")
+    val prefs: SharedPreferences = app.getSharedPreferences("j", Context.MODE_PRIVATE)
     private val cache = ArrayList<Conv>()
 
-    init {
-        loadConvs()
+    init { migrateSecrets(); loadConvs() }
+
+    fun str(k: String, def: String = ""): String {
+        if (k in SECRET) return SecureStore.get(app, k).ifEmpty { def }
+        return prefs.getString(k, def) ?: def
     }
 
-    fun str(k: String, def: String = ""): String = prefs.getString(k, def) ?: def
-
-    fun put(k: String, v: String) {
+    fun put(k: String, v: String): Boolean {
+        if (k in SECRET) {
+            if (v.isEmpty()) {
+                SecureStore.remove(app, k)
+                prefs.edit().remove(k).apply()
+                return true
+            }
+            if (!SecureStore.put(app, k, v)) return false
+            prefs.edit().remove(k).apply()
+            return true
+        }
         prefs.edit().putString(k, v).apply()
+        return true
+    }
+
+    private fun migrateSecrets() {
+        for (k in SECRET) {
+            val old = prefs.getString(k, "") ?: ""
+            if (old.isNotBlank() && SecureStore.put(app, k, old)) prefs.edit().remove(k).apply()
+        }
     }
 
     fun flag(k: String, def: Boolean): Boolean = prefs.getBoolean(k, def)
 
     fun setFlag(k: String, v: Boolean) {
         prefs.edit().putBoolean(k, v).apply()
+        if (k == "histOn" && !v) {
+            val currentId = prefs.getString("cur", "") ?: ""
+            cache.removeAll { it.id != currentId }
+            prefs.edit().remove("convs").apply()
+        }
     }
 
     fun convs(): List<Conv> = cache.sortedByDescending { it.updated }
@@ -158,6 +184,7 @@ class Store(ctx: Context) {
         val e = prefs.edit()
         for (k in listOf("convs", "cur", "facts", "tasks", "watch", "hist", "app_files")) e.remove(k)
         if (!keepKeys) {
+            for (k in SECRET) SecureStore.remove(app, k)
             for (k in listOf("key", "bulut", "groq", "groqModel", "mistral", "mistralModel", "finnhub", "news")) e.remove(k)
         }
         e.apply()

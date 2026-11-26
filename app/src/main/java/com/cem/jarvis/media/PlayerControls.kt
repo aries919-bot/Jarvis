@@ -2,6 +2,7 @@ package com.cem.jarvis.media
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import androidx.core.view.WindowCompat
@@ -43,7 +44,12 @@ fun PlayerControls(
     onFullscreen: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
-    val act = ctx as? Activity
+    val act = remember(ctx) {
+        var current: Context = ctx
+        while (current !is Activity && current is ContextWrapper) current = current.baseContext
+        current as? Activity
+    }
+    val originalBrightness = remember(act) { act?.window?.attributes?.screenBrightness ?: -1f }
     val prefs = remember { ctx.getSharedPreferences("aries_player", Context.MODE_PRIVATE) }
     val am = remember { ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
@@ -63,7 +69,12 @@ fun PlayerControls(
         act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         onDispose {
             act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            act?.window?.let { WindowCompat.getInsetsController(it, it.decorView).show(WindowInsetsCompat.Type.systemBars()) }
+            act?.window?.let { window ->
+                val attributes = window.attributes
+                attributes.screenBrightness = originalBrightness
+                window.attributes = attributes
+                WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+            }
         }
     }
     DisposableEffect(fullscreen) {
@@ -160,7 +171,7 @@ fun PlayerControls(
 
         // Açılır menüler
         if (menu != null && !locked) Column(
-            Modifier.align(Alignment.BottomCenter).padding(bottom = 84.dp).background(Color(0xFF181B26), RoundedCornerShape(16.dp)).padding(8.dp)
+            Modifier.align(Alignment.BottomCenter).padding(bottom = 84.dp).background(Ap.Card, RoundedCornerShape(16.dp)).padding(8.dp)
         ) {
             when (menu) {
                 "q" -> listOf("Otomatik" to 0, "360P" to 360, "540P" to 540, "720P" to 720, "1080P" to 1080).forEach { (l, h) ->
@@ -201,5 +212,5 @@ fun PlayerControls(
 
 @Composable private fun MenuItem(text: String, selected: Boolean, onClick: () -> Unit) =
     Text(text, color = Color.White, fontSize = 14.sp,
-        modifier = Modifier.fillMaxWidth().background(if (selected) Color(0xFF202433) else Color.Transparent, RoundedCornerShape(10.dp))
+        modifier = Modifier.fillMaxWidth().background(if (selected) Ap.Raised else Color.Transparent, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick).padding(horizontal = 18.dp, vertical = 10.dp))

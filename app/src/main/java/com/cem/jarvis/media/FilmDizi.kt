@@ -2,6 +2,7 @@ package com.cem.jarvis.media
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,6 +34,7 @@ import com.cem.jarvis.BuildConfig
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -63,11 +65,15 @@ data class Providers(val results: Map<String, Region>?)
 
 interface Tmdb {
     @GET("trending/all/week") suspend fun trending(@Query("language") l: String = "tr-TR"): Page
-    @GET("movie/popular") suspend fun movies(@Query("language") l: String = "tr-TR"): Page
+    @GET("movie/popular") suspend fun movies(
+        @Query("language") l: String = "tr-TR",
+        @Query("page") page: Int = 1
+    ): Page
     @GET("tv/popular") suspend fun series(@Query("language") l: String = "tr-TR"): Page
     @GET("discover/tv") suspend fun anime(
         @Query("with_genres") g: String = "16", @Query("with_original_language") o: String = "ja",
-        @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR"
+        @Query("sort_by") s: String = "popularity.desc", @Query("language") l: String = "tr-TR",
+        @Query("page") page: Int = 1
     ): Page
     @GET("search/multi") suspend fun search(@Query("query") q: String, @Query("language") l: String = "tr-TR"): Page
     @GET("tv/{id}") suspend fun tvInfo(@Path("id") id: Int, @Query("language") l: String = "tr-TR"): TvInfo
@@ -78,8 +84,16 @@ interface Tmdb {
 
 internal val api: Tmdb = Retrofit.Builder()
     .baseUrl("https://api.themoviedb.org/3/")
-    .client(OkHttpClient.Builder().addInterceptor { c ->
-        c.proceed(c.request().newBuilder().addHeader("Authorization", "Bearer ${BuildConfig.TMDB_TOKEN}").build())
+    .client(OkHttpClient.Builder().addInterceptor { chain ->
+        val token = BuildConfig.TMDB_TOKEN.trim()
+        val original = chain.request()
+        val builder = original.newBuilder()
+        if (token.length > 40) {
+            builder.header("Authorization", "Bearer " + token)
+        } else if (token.isNotBlank()) {
+            builder.url(original.url.newBuilder().addQueryParameter("api_key", token).build())
+        }
+        chain.proceed(builder.build())
     }.build())
     .addConverterFactory(GsonConverterFactory.create())
     .build().create(Tmdb::class.java)
@@ -92,17 +106,23 @@ class MediaVM : ViewModel() {
     var error by mutableStateOf<String?>(null)
     var history by mutableStateOf(listOf<String>())
     var searching by mutableStateOf(false)
+    private var loadJob: Job? = null
+    private var nextPage = 2
 
     init { load(0) }
 
     fun load(i: Int) {
-        tab = i; searching = false
+        tab = i
+        searching = false
+        nextPage = if (i == 0) 1 else if (i == 2) 2 else 2
         fetch {
             when (i) {
                 0 -> Page(tvmazePage(0))
                 2 -> Page(tvmazePage(1))
-                else -> if (BuildConfig.TMDB_TOKEN.isBlank()) throw IllegalStateException("tmdb")
-                        else if (i == 1) api.movies() else api.anime()
+                1 -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.movies()
+                     else Page(webSearch("2026 2025 notable feature films movies", "movie"))
+                else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime()
+                       else Page(webSearch("popular Japanese anime television series", "tv"))
             }
         }
     }
@@ -119,24 +139,45 @@ class MediaVM : ViewModel() {
         }
     }
 
-    private var pageNo = 1
     fun more() {
-        val t = tab
+        if (loading || searching || (tab !in 0..3)) return
+        val requestedPage = nextPage
         viewModelScope.launch {
+            loading = true
             try {
-                val extra = if (t == 0 || t == 2) tvmazePage(pageNo + (if (t == 2) 5 else 0)) else emptyList()
-                pageNo++
+                val extra = when (tab) {
+                    0 -> tvmazePage(requestedPage)
+                    2 -> tvmazePage(requestedPage)
+                    1 -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.movies(page = requestedPage).results else emptyList()
+                    else -> if (BuildConfig.TMDB_TOKEN.isNotBlank()) api.anime(page = requestedPage).results else emptyList()
+                }
                 list = list + extra.filter { n -> list.none { it.id == n.id } }
-            } catch (e: Exception) { }
+                nextPage = requestedPage + 1
+                error = null
+            } catch (e: Exception) {
+                error = "Daha fazla içerik yüklenemedi. Tekrar deneyebilirsin."
+            } finally {
+                loading = false
+            }
         }
     }
 
     fun removeHistory(q: String) { history = history - q }
 
-    private fun fetch(block: suspend () -> Page) = viewModelScope.launch {
-        loading = true; error = null
-        try { list = block().results } catch (e: Exception) { error = if (e.message == "tmdb") "Filmler ve Anime listesi için TMDB anahtarı gerekli. Arama anahtarsız çalışır." else "Bağlantı kurulamadı. İnternetini kontrol et." }
-        loading = false
+    private fun fetch(block: suspend () -> Page) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            loading = true
+            error = null
+            try {
+                list = block().results
+            } catch (e: Exception) {
+                error = "Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene."
+                list = emptyList()
+            } finally {
+                loading = false
+            }
+        }
     }
 }
 
@@ -144,14 +185,14 @@ class MediaVM : ViewModel() {
 fun FilmDiziCard(onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF1B2440)).clickable(onClick = onClick).padding(16.dp),
+            .background(Ap.AccentSoft).clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF8FB4FF)), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
+        Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Ap.Accent), Alignment.Center) { Text("▶", color = Color.Black, fontSize = 20.sp) }
         Spacer(Modifier.width(12.dp))
         Column {
             Text("Film ve Dizi", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("Ara, keşfet, izle", color = Color(0xFF9AA1B2), fontSize = 12.sp)
+            Text("Ara, keşfet, izle", color = Ap.Muted, fontSize = 12.sp)
         }
     }
 }
@@ -172,19 +213,27 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
     var q by remember { mutableStateOf("") }
     var web2 by remember { mutableStateOf(false) }
     var play2 by remember { mutableStateOf<PlayReq?>(null) }
+    BackHandler(enabled = play2 != null) { play2 = null }
     if (web2) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure ->
-                play2 = PlayReq(url, item, season, episode, headers, mime, onFailure)
+            MediaSourceBrowser(q, { web2 = false }, playerOverlay = play2 != null) { url, mime, headers, item, season, episode, onFailure, totalEpisodes, isMovie, onNextEpisode ->
+                play2 = PlayReq(url, item, season, episode, headers, mime, totalEpisodes, isMovie, onFailure, onNextEpisode)
             }
             play2?.let { p ->
                 ResumePlayer(
-                    p.url, p.item, p.season, p.episode, lib, false, {}, { play2 = null },
+                    p.url, p.item, p.season, p.episode, lib,
+                    hasNext = !p.isMovie && p.totalEpisodes > p.episode,
+                    onNext = { play2 = null; p.onNextEpisode() },
+                    onClose = { play2 = null },
+                    onEpisodes = { play2 = null },
                     requestHeaders = p.headers,
                     mimeType = p.mimeType,
                     onPlaybackError = {
-                        // Do not abandon the WebView page: tell its stream queue to try
-                        // the next manifest/URL captured from the same source.
+                        // Keep the source page mounted and advance the captured stream queue.
+                        play2 = null
+                        p.onFailure(p.url)
+                    },
+                    onPlaybackTimeout = {
                         play2 = null
                         p.onFailure(p.url)
                     }
@@ -193,9 +242,9 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
         }
         return
     }
-    Column(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
+            Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { if (vm.searching) vm.load(vm.tab) else onBack() }.padding(end = 12.dp))
             Text("Ara", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             Text("🌐", fontSize = 24.sp, modifier = Modifier.clickable { web2 = true }.padding(8.dp))
@@ -208,33 +257,42 @@ fun SearchScreen(vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item)
             if (vm.history.isNotEmpty() && !vm.searching) {
                 item { Text("Geçmiş", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)) }
                 items(vm.history) { h ->
-                    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(h, color = Color.White, modifier = Modifier.clickable { q = h; vm.search(h) })
-                        Text("✕", color = Color(0xFF9AA1B2), modifier = Modifier.clickable { vm.removeHistory(h) })
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(h, color = Color.White, modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp).clickable { q = h; vm.search(h) }.padding(vertical = 14.dp))
+                        Text("✕", color = Ap.Muted, modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).clickable { vm.removeHistory(h) }.padding(14.dp))
                     }
                 }
             }
             item {
-                Text(if (vm.searching) "Sonuçlar" else "Popülerlik Sıralaması", color = Color.White, fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Text(
+                    if (vm.searching) "Sonuçlar"
+                    else if (BuildConfig.TMDB_TOKEN.isBlank() && (vm.tab == 1 || vm.tab == 3)) "Ücretsiz açık katalog"
+                    else "Popülerlik Sıralaması",
+                    color = Color.White, fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
+                if (!vm.searching && BuildConfig.TMDB_TOKEN.isBlank() && (vm.tab == 1 || vm.tab == 3)) {
+                    Text("TMDB anahtarı ayarlı değil. Açık web katalog sonuçları kullanılıyor; içerik ve poster bilgileri sınırlı olabilir.",
+                        color = Ap.Amber, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                }
                 if (!vm.searching) LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(vm.tabs.size) { i ->
                         Text(vm.tabs[i], fontSize = 16.sp, fontWeight = if (i == vm.tab) FontWeight.Bold else FontWeight.Normal,
-                            color = if (i == vm.tab) Color.White else Color(0xFF9AA1B2),
-                            modifier = Modifier.clickable { vm.load(i) }.padding(vertical = 8.dp))
+                            color = if (i == vm.tab) Color.White else Ap.Muted,
+                            modifier = Modifier.defaultMinSize(minHeight = 48.dp).clickable { vm.load(i) }.padding(vertical = 12.dp))
                     }
                 }
             }
             if (vm.loading) item { CircularProgressIndicator(Modifier.padding(24.dp)) }
-            vm.error?.let { e -> item { Text(e, color = Color(0xFFFF8A7A), modifier = Modifier.padding(16.dp)) } }
-            if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Color(0xFF9AA1B2), modifier = Modifier.padding(16.dp)) }
+            vm.error?.let { e -> item { Text(e, color = Ap.Red, modifier = Modifier.padding(16.dp)) } }
+            if (!vm.loading && vm.error == null && vm.list.isEmpty()) item { Text("Sonuç bulunamadı. Başka bir ad dene.", color = Ap.Muted, modifier = Modifier.padding(16.dp)) }
             if (vm.searching) items(vm.list) { SearchResultCard(it) { onOpen(it) } }
             else items(vm.list.size) { i -> RankRow(i + 1, vm.list[i]) { onOpen(vm.list[i]) } }
-            if (!vm.searching && vm.list.size >= 20) item {
+            if (!vm.searching && vm.list.size >= 20 && (vm.tab == 0 || vm.tab == 2 || BuildConfig.TMDB_TOKEN.isNotBlank())) item {
                 Button(onClick = { vm.more() }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Daha fazla göster") }
             }
         }
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF202433)).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Raised).padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             TextField(q, { q = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Film veya dizi ara") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -258,36 +316,48 @@ fun RankRow(rank: Int, media: Item, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Text(media.label, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${media.year} · ${if (media.media_type == "movie" || media.title != null) "Film" else "TV Dizisi"} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}",
-                color = Color(0xFF9AA1B2), fontSize = 13.sp)
-            Text(media.overview.orEmpty(), color = Color(0xFF9AA1B2), fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = Ap.Muted, fontSize = 13.sp)
+            Text(media.overview.orEmpty(), color = Ap.Muted, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
 @Composable
 fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, onOpen: (Item) -> Unit, onTrailer: (String) -> Unit) {
-    val ctx = LocalContext.current
     val type = if (media.media_type == "movie" || media.title != null) "movie" else "tv"
     var trailerKey by remember(media.id) { mutableStateOf<String?>(null) }
-    var region by remember(media.id) { mutableStateOf<Region?>(null) }
     var web by remember(media.id) { mutableStateOf(false) }
+    var initialWatch by remember(media.id) { mutableStateOf<AriesInitialWatch?>(null) }
     var play by remember(media.id) { mutableStateOf<PlayReq?>(null) }
+    BackHandler(enabled = play != null) { play = null }
     LaunchedEffect(media.id) {
         if (media.poster_path?.startsWith("http") == true) return@LaunchedEffect
         runCatching { trailerKey = api.videos(type, media.id).results.firstOrNull { it.site == "YouTube" && it.type == "Trailer" }?.key }
-        runCatching { region = api.providers(type, media.id).results?.get("TR") }
     }
     if (web) {
         Box(Modifier.fillMaxSize()) {
-            MediaSourceBrowser(media.label, { web = false }, playerOverlay = play != null) { url, mime, headers, item, season, episode, onFailure ->
-                play = PlayReq(url, item, season, episode, headers, mime, onFailure)
+            MediaSourceBrowser(
+                query = media.label,
+                onBack = { web = false; initialWatch = null },
+                playerOverlay = play != null,
+                initialWatch = initialWatch
+            ) { url, mime, headers, item, season, episode, onFailure, totalEpisodes, isMovie, onNextEpisode ->
+                play = PlayReq(url, item, season, episode, headers, mime, totalEpisodes, isMovie, onFailure, onNextEpisode)
             }
             play?.let { pr ->
                 ResumePlayer(
-                    pr.url, pr.item, pr.season, pr.episode, lib, false, {}, { play = null },
+                    pr.url, pr.item, pr.season, pr.episode, lib,
+                    hasNext = !pr.isMovie && pr.totalEpisodes > pr.episode,
+                    onNext = { play = null; pr.onNextEpisode() },
+                    onClose = { play = null },
+                    onEpisodes = { play = null },
                     requestHeaders = pr.headers,
                     mimeType = pr.mimeType,
                     onPlaybackError = {
+                        play = null
+                        pr.onFailure(pr.url)
+                    },
+                    onPlaybackTimeout = {
                         play = null
                         pr.onFailure(pr.url)
                     }
@@ -296,7 +366,7 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
         }
         return
     }
-    LazyColumn(Modifier.fillMaxSize().background(Color(0xFF0B0D14)).padding(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize().background(Ap.Bg).padding(16.dp)) {
         item { Text("‹", color = Color.White, fontSize = 30.sp, modifier = Modifier.clickable(onClick = onBack)) }
         item {
             Row(Modifier.padding(vertical = 16.dp)) {
@@ -304,24 +374,33 @@ fun DetailScreen(media: Item, vm: MediaVM, lib: LibraryVM, onBack: () -> Unit, o
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(media.label, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    Text("${media.year} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}", color = Color(0xFF9AA1B2))
+                    Text("${media.year} · ★ ${"%.1f".format(media.vote_average ?: 0.0)}", color = Ap.Muted)
                 }
             }
-            Text(media.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Color(0xFFD5D9E4), fontSize = 14.sp)
+            Text(media.overview.orEmpty().ifBlank { "Özet bulunamadı." }, color = Ap.Text, fontSize = 14.sp)
             Spacer(Modifier.height(16.dp))
             Button(onClick = { trailerKey?.let(onTrailer) }, enabled = trailerKey != null, modifier = Modifier.fillMaxWidth()) {
                 Text(if (trailerKey != null) "▶ Fragmanı oynat" else "Fragman bulunamadı")
             }
             Spacer(Modifier.height(10.dp))
-            val names = region?.flatrate?.joinToString { it.provider_name }
             OutlinedButton(
-                onClick = { region?.link?.let { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } },
-                enabled = region?.link != null, modifier = Modifier.fillMaxWidth()
-            ) { Text(if (names.isNullOrBlank()) "Türkiye'de yasal yayın bulunamadı" else "Nerede izlenir: $names") }
-            Text("Yayın bilgisi JustWatch tarafından sağlanır.", color = Color(0xFF6E7488), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+                onClick = {
+                    initialWatch = if (type == "movie") AriesInitialWatch(media.label, null, 0, 0, true)
+                        else AriesInitialWatch(media.label, 1, 1, 0, false)
+                    web = true
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("▶ İzleme yeri · ${if (type == "tv") "1. bölümü aç" else "Kaynakları ara"}") }
+            Text("Aries önce doğrudan video kaynaklarını arar. Web sitesi yalnızca kaynak adına dokununca açılır.",
+                color = Ap.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             FavoriteButton(media, lib)
-            if (type == "tv" && media.poster_path?.startsWith("http") != true) EpisodeList(media, lib)
+            if (type == "tv" && media.source != "wikipedia") {
+                EpisodeList(media, lib) { season, episode, total ->
+                    initialWatch = AriesInitialWatch(media.label, season, episode, total, false)
+                    web = true
+                }
+            }
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = { web = true }, modifier = Modifier.fillMaxWidth()) { Text("Webde ara") }
             Text("Benzerler", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
@@ -362,5 +441,8 @@ data class PlayReq(
     val episode: Int,
     val headers: Map<String, String> = emptyMap(),
     val mimeType: String? = null,
-    val onFailure: (String) -> Unit = {}
+    val totalEpisodes: Int = 0,
+    val isMovie: Boolean = false,
+    val onFailure: (String) -> Unit = {},
+    val onNextEpisode: () -> Unit = {}
 )

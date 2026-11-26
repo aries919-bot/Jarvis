@@ -2,6 +2,8 @@ package com.cem.jarvis.media
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +30,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
@@ -79,12 +83,13 @@ data class Entry(
     val watched: List<String>? = null,            // "s1e3"
     val updatedAt: Long = 0,
     val upNext: Boolean = false,                  // bölüm bitti, sıradaki bekliyor
-    val dismissed: Boolean = false                // "Devam et"ten kaldırıldı
+    val dismissed: Boolean = false,               // "Devam et"ten kaldırıldı
+    val source: String? = null
 ) {
     val progress get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     val hasProgress get() = updatedAt > 0
     fun toItem() = Item(id, if (type == "movie") title else null, if (type == "tv") title else null,
-        null, poster, null, null, type, null, null)
+        null, poster, null, null, type, null, null, source = source)
 }
 
 // ---------- Depolama ----------
@@ -119,8 +124,12 @@ class LibraryVM(app: Application) : AndroidViewModel(app) {
 
     private fun update(item: Item, change: (Entry) -> Entry) {
         val type = if (item.media_type == "movie" || item.title != null) "movie" else "tv"
-        val base = get(item.id) ?: Entry(item.id, type, item.label, item.poster_path)
-        val next = change(base).copy(title = item.label.ifBlank { base.title }, poster = item.poster_path ?: base.poster)
+        val base = get(item.id) ?: Entry(item.id, type, item.label, item.poster_path, source = item.source)
+        val next = change(base).copy(
+            title = item.label.ifBlank { base.title },
+            poster = item.poster_path ?: base.poster,
+            source = item.source ?: base.source
+        )
         val list = listOf(next) + entries.filter { it.id != item.id }
         entries = list
         viewModelScope.launch { ds.edit { it[KEY] = gson.toJson(list) } }
@@ -179,7 +188,7 @@ fun ContinueRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
                     Text(e.title, color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val ep = if (e.type == "tv") "Sezon ${e.season} · Bölüm ${e.episode}" else ""
                     Text(if (e.upNext) "Sıradaki: $ep" else listOf(ep, fmtRemaining(e.durationMs - e.positionMs)).filter { it.isNotEmpty() }.joinToString(" · "),
-                        color = Color(0xFF9AA1B2), fontSize = 11.sp, maxLines = 2)
+                        color = Ap.Muted, fontSize = 11.sp, maxLines = 2)
                 }
             }
         }
@@ -204,15 +213,32 @@ fun FavoritesRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
     }
 }
 
-// ---------- Bölüm listesi + izledim işareti ----------
+// ---------- Bölüm listesi + oynatma ve izleme işareti ----------
 @Composable
-fun EpisodeList(item: Item, lib: LibraryVM) {
-    var seasons by remember(item.id) { mutableIntStateOf(1) }
-    var season by remember(item.id) { mutableIntStateOf(lib.get(item.id)?.season ?: 1) }
-    var eps by remember(item.id, season) { mutableStateOf<List<Ep>>(emptyList()) }
-    LaunchedEffect(item.id) { runCatching { seasons = api.tvInfo(item.id).number_of_seasons ?: 1 } }
-    LaunchedEffect(item.id, season) { runCatching { eps = api.season(item.id, season).episodes.orEmpty() } }
+fun EpisodeList(
+    item: Item,
+    lib: LibraryVM,
+    onPlay: (season: Int, episode: Int, totalEpisodes: Int) -> Unit
+) {
+    var seasons by remember(item.id, item.source) { mutableIntStateOf(1) }
+    var season by remember(item.id, item.source) { mutableIntStateOf(lib.get(item.id)?.season ?: 1) }
+    var eps by remember(item.id, item.source, season) { mutableStateOf<List<Ep>>(emptyList()) }
+    LaunchedEffect(item.id, item.source) {
+        runCatching {
+            seasons = if (item.source == "tvmaze") tvmazeSeasonCount(item.id)
+                else api.tvInfo(item.id).number_of_seasons ?: 1
+        }
+    }
+    LaunchedEffect(item.id, season, item.source) {
+        runCatching {
+            eps = if (item.source == "tvmaze") tvmazeEpisodesForSeason(item.id, season)
+                else api.season(item.id, season).episodes.orEmpty()
+        }
+    }
     val watched = lib.get(item.id)?.watched.orEmpty()
+    // Identical runtimes across every episode can be a generic show default; do not show them as episode data.
+    val distinctEpisodeRuntimes = eps.mapNotNull { it.runtime?.takeIf { runtime -> runtime > 0 } }.distinct()
+    val showEpisodeRuntime = distinctEpisodeRuntimes.size > 1
 
     Column {
         Text("Bölümler", color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
@@ -221,19 +247,34 @@ fun EpisodeList(item: Item, lib: LibraryVM) {
                 FilterChip(selected = s == season, onClick = { season = s }, label = { Text("Sezon $s") })
             }
         }
+        if (eps.isEmpty()) {
+            Text("Bu sezonun bölüm bilgileri yüklenemedi.", color = Ap.Muted, fontSize = 13.sp,
+                modifier = Modifier.padding(vertical = 12.dp))
+        }
         eps.forEach { ep ->
             val done = "s${season}e${ep.episode_number}" in watched
-            Row(Modifier.fillMaxWidth().clickable { lib.toggleWatched(item, season, ep.episode_number) }.padding(vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(if (done) Color(0xFF3A7D5C) else Color(0xFF202433)), Alignment.Center) {
+            Row(
+                Modifier.fillMaxWidth()
+                    .clickable { onPlay(season, ep.episode_number, eps.size) }
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(38.dp).clip(RoundedCornerShape(10.dp))
+                    .background(if (done) Color(0xFF3A7D5C) else Ap.Raised), Alignment.Center) {
                     Text(if (done) "✓" else "${ep.episode_number}", color = Color.White)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(ep.name ?: "Bölüm ${ep.episode_number}", color = if (done) Color(0xFF9AA1B2) else Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    ep.runtime?.let { Text("$it dk", color = Color(0xFF9AA1B2), fontSize = 12.sp) }
+                    Text(ep.name ?: "Bölüm ${ep.episode_number}", color = Color.White,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (showEpisodeRuntime) ep.runtime?.takeIf { it > 0 }?.let {
+                        Text("$it dk", color = Ap.Muted, fontSize = 12.sp)
+                    }
+                    Text("Oynatmak için dokun", color = Ap.Accent, fontSize = 11.sp)
                 }
-                Text(if (done) "İzlendi" else "İzledim", color = Color(0xFF8FB4FF), fontSize = 12.sp)
+                TextButton(onClick = { lib.toggleWatched(item, season, ep.episode_number) }) {
+                    Text(if (done) "İzlendi ✓" else "İşaretle", fontSize = 12.sp)
+                }
             }
         }
     }
@@ -263,16 +304,17 @@ fun ResumePlayer(
     onEpisodes: () -> Unit = onClose,
     requestHeaders: Map<String, String> = emptyMap(),
     mimeType: String? = null,
-    onPlaybackError: (PlaybackException) -> Unit = {}
+    onPlaybackError: (PlaybackException) -> Unit = {},
+    onPlaybackTimeout: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
     val owner = LocalLifecycleOwner.current
     // İlk 30 sn içinde kalındıysa baştan başlar; aksi halde 5 sn geriden devam eder.
-    val saved = remember {
+    val saved = remember(item.id, season, episode) {
         lib.get(item.id)?.takeIf { it.season == season && it.episode == episode && it.positionMs > 30_000 && it.progress < 0.9f }
     }
-    var banner by remember { mutableStateOf(saved != null) }
-    var ended by remember { mutableStateOf(false) }
+    var banner by remember(item.id, season, episode) { mutableStateOf(saved != null) }
+    var ended by remember(item.id, season, episode) { mutableStateOf(false) }
     var videoSize by remember { mutableStateOf("Büyük") }
 
     val player = remember(url, requestHeaders, mimeType) {
@@ -283,6 +325,14 @@ fun ResumePlayer(
         val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
         ExoPlayer.Builder(ctx)
             .setMediaSourceFactory(mediaSourceFactory)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build(),
+                true
+            )
+            .setHandleAudioBecomingNoisy(true)
             .build()
             .apply {
                 val mediaItem = MediaItem.Builder().setUri(url).apply {
@@ -296,6 +346,22 @@ fun ResumePlayer(
     }
     fun save() { if (player.duration > 0) lib.saveProgress(item, season, episode, player.currentPosition, player.duration, ended) }
 
+    LaunchedEffect(player) {
+        var bufferingSince = 0L
+        while (true) {
+            if (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING) {
+                if (bufferingSince == 0L) bufferingSince = SystemClock.elapsedRealtime()
+                if (SystemClock.elapsedRealtime() - bufferingSince >= 25_000L) {
+                    android.widget.Toast.makeText(ctx, "Video uzun süre yüklenemedi; başka kaynak deneniyor.", android.widget.Toast.LENGTH_SHORT).show()
+                    onPlaybackTimeout()
+                    break
+                }
+            } else {
+                bufferingSince = 0L
+            }
+            delay(1000)
+        }
+    }
     LaunchedEffect(player) { while (true) { delay(5000); save() } }          // 5 sn'de bir
     LaunchedEffect(banner) { if (banner) { delay(6000); banner = false } }
 
@@ -303,7 +369,9 @@ fun ResumePlayer(
         val l = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) { if (state == Player.STATE_ENDED) { ended = true; save() } }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                android.widget.Toast.makeText(ctx, "${error.errorCodeName}\n$mimeType\n${url.take(120)}", android.widget.Toast.LENGTH_LONG).show()
+                val host = runCatching { Uri.parse(url).host.orEmpty() }.getOrDefault("video kaynağı")
+                val kind = mimeType ?: "Tür otomatik"
+                android.widget.Toast.makeText(ctx, "Oynatma başarısız: " + error.errorCodeName + "\n" + host + "\n" + kind, android.widget.Toast.LENGTH_LONG).show()
                 onPlaybackError(error)
             }
         }
@@ -360,23 +428,23 @@ fun ResumePlayer(
 fun HomeContinueCard(lib: LibraryVM, onResume: (Entry) -> Unit) {
     val e = lib.continueWatching.firstOrNull() ?: return
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF171A24))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Card)
             .clickable { onResume(e) }.padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(webImg(e.poster), e.title, Modifier.size(56.dp, 80.dp).clip(RoundedCornerShape(10.dp)))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Kaldığın yerden devam et", color = Color(0xFF9AA1B2), fontSize = 11.sp)
+            Text("Kaldığın yerden devam et", color = Ap.Muted, fontSize = 11.sp)
             Text(e.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val ep = if (e.type == "tv") "Sezon ${e.season} · Bölüm ${e.episode}" else ""
             Text(
                 if (e.upNext) "Sıradaki: $ep"
                 else listOf(ep, fmtRemaining(e.durationMs - e.positionMs)).filter { it.isNotEmpty() }.joinToString(" · "),
-                color = Color(0xFF9AA1B2), fontSize = 12.sp
+                color = Ap.Muted, fontSize = 12.sp
             )
             if (!e.upNext) LinearProgressIndicator(progress = { e.progress }, Modifier.fillMaxWidth().padding(top = 6.dp))
         }
-        Text("▶", color = Color(0xFF8FB4FF), fontSize = 24.sp, modifier = Modifier.padding(start = 10.dp))
+        Text("▶", color = Ap.Accent, fontSize = 24.sp, modifier = Modifier.padding(start = 10.dp))
     }
 }

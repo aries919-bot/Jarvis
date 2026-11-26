@@ -1,8 +1,9 @@
 #!/bin/bash
+ARIES_BASE_BRANCH="${ARIES_BASE_BRANCH:-kariyer-modulu}"
 case "$1" in
   baslat) git switch -c "is/$2" ;;
   denetle)
-    git add -A; git diff --cached main > .git/fark.diff
+    git add -A; git diff --cached "$ARIES_BASE_BRANCH" > .git/fark.diff
     [ -s .git/fark.diff ] || { echo "fark yok"; exit 1; }
     rm -f .git/onay
     python3 denetle.py | tee .git/denetim.txt

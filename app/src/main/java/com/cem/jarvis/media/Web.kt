@@ -37,9 +37,14 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 private const val TMDB_IMG = "https://image.tmdb.org/t/p/w342"
-private val webHttp = OkHttpClient()
+private val webHttp = OkHttpClient.Builder()
+    .connectTimeout(8, TimeUnit.SECONDS)
+    .readTimeout(12, TimeUnit.SECONDS)
+    .callTimeout(15, TimeUnit.SECONDS)
+    .build()
 
 fun webImg(p: String?): String = when {
     p.isNullOrBlank() -> ""
@@ -49,7 +54,10 @@ fun webImg(p: String?): String = when {
 
 private fun getJson(url: String): String =
     webHttp.newCall(Request.Builder().url(url).header("User-Agent", "AriesApp/1.0").build())
-        .execute().use { it.body?.string().orEmpty() }
+        .execute().use { response ->
+            if (!response.isSuccessful) throw java.io.IOException("HTTP " + response.code)
+            response.body?.string().orEmpty()
+        }
 
 private fun showItem(sh: JSONObject): Item? {
     val im = sh.optJSONObject("image")?.optString("medium")
@@ -57,7 +65,8 @@ private fun showItem(sh: JSONObject): Item? {
     val r = sh.optJSONObject("rating")?.optDouble("average") ?: Double.NaN
     return Item(sh.getInt("id"), null, sh.optString("name"),
         sh.optString("summary").replace(Regex("<[^>]*>"), ""), im,
-        if (r.isNaN()) null else r, null, "tv", sh.optString("premiered"), null)
+        if (r.isNaN()) null else r, null, "tv", sh.optString("premiered"), null,
+        source = "tvmaze")
 }
 
 suspend fun tvmazeSchedule(country: String): List<Item> = withContext(Dispatchers.IO) {
@@ -74,9 +83,9 @@ suspend fun tvmazeSchedule(country: String): List<Item> = withContext(Dispatcher
     out
 }
 
-suspend fun webSearch(q: String): List<Item> = withContext(Dispatchers.IO) {
+suspend fun webSearch(q: String, mediaType: String? = null): List<Item> = withContext(Dispatchers.IO) {
     val out = mutableListOf<Item>()
-    runCatching {
+    if (mediaType != "movie") runCatching {
         val arr = JSONArray(getJson("https://api.tvmaze.com/search/shows?q=" + Uri.encode(q)))
         for (i in 0 until minOf(arr.length(), 10)) {
             showItem(arr.getJSONObject(i).getJSONObject("show"))?.let { out += it }
@@ -91,7 +100,11 @@ suspend fun webSearch(q: String): List<Item> = withContext(Dispatchers.IO) {
             val pg = pages.getJSONObject(k)
             val th = pg.optJSONObject("thumbnail")?.optString("source")
             if (!th.isNullOrBlank())
-                out += Item(pg.getInt("pageid"), null, pg.optString("title"), pg.optString("extract"), th, null, null, "tv", null, null)
+                out += Item(pg.getInt("pageid"),
+                    if (mediaType == "movie") pg.optString("title") else null,
+                    if (mediaType == "movie") null else pg.optString("title"),
+                    pg.optString("extract"), th, null, null, mediaType ?: "tv", null, null,
+                    source = "wikipedia")
         }
     }
     out
@@ -152,9 +165,32 @@ fun WebDialog(query: String, onClose: () -> Unit) {
     }
 }
 
+suspend fun tvmazeSeasonCount(showId: Int): Int = withContext(Dispatchers.IO) {
+    val arr = JSONArray(getJson("https://api.tvmaze.com/shows/$showId/seasons"))
+    (0 until arr.length()).count { arr.optJSONObject(it)?.optInt("number", 0)?.let { n -> n > 0 } == true }
+        .coerceAtLeast(1)
+}
+
+suspend fun tvmazeEpisodesForSeason(showId: Int, season: Int): List<Ep> = withContext(Dispatchers.IO) {
+    val arr = JSONArray(getJson("https://api.tvmaze.com/shows/$showId/episodes?specials=0"))
+    buildList {
+        for (i in 0 until arr.length()) {
+            val episode = arr.optJSONObject(i) ?: continue
+            if (episode.optInt("season", -1) != season) continue
+            val number = episode.optInt("number", 0)
+            if (number <= 0) continue
+            add(Ep(number, episode.optString("name").takeIf { it.isNotBlank() && it != "null" },
+                episode.optInt("runtime", 0).takeIf { it > 0 }))
+        }
+    }.sortedBy { it.episode_number }
+}
+
 suspend fun tvmazePage(page: Int): List<Item> = withContext(Dispatchers.IO) {
     val arr = JSONArray(getJson("https://api.tvmaze.com/shows?page=$page"))
     val out = mutableListOf<Item>()
-    for (i in 0 until arr.length()) showItem(arr.getJSONObject(i))?.let { out += it }
+    for (i in 0 until arr.length()) {
+        showItem(arr.getJSONObject(i))?.let { out += it }
+        if (out.size >= 30) break
+    }
     out.sortedByDescending { it.vote_average ?: 0.0 }
 }

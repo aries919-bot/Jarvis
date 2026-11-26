@@ -1,12 +1,19 @@
 name: Android APK
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ kariyer-modulu ]
   push:
-    branches: [ main, master, film-dizi-v2 ]
+    branches: [ main, master, film-dizi-v2, kariyer-modulu, aries-career-monitor, career-ui-dedup-separation, is/kamu-kariyer-arama-ayristirma, is/kadro-radari-ve-kpss-2026-2, is/kariyer-platform-derinlestirme, is/1-18-kariyer-guvenilirlik-ve-akilli-tarih, is/1-19-ilan-duyuru-ayrimi-sirket-arastirmasi, is/1-20-kariyer-ilan-dogrulama, is/1-20-tarih-ayristirma-duzeltmesi ]
+
+# Keep workflow permissions minimal; checkout needs repository contents read access.
+permissions:
+  contents: read
 
 concurrency:
-  group: android-apk-${{ github.ref }}
-  cancel-in-progress: true
+  # PR updates may supersede older PR checks. Never cancel an active push build on kariyer-modulu.
+  group: android-apk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -31,6 +38,8 @@ jobs:
           else
             echo "İmza anahtarı tanımlı değil; Android debug imzası kullanılacak."
           fi
+      - name: Birim testleri
+        run: gradle testDebugUnitTest --no-daemon
       - name: APK derle
         run: gradle assembleDebug --no-daemon
         env:
@@ -42,3 +51,4 @@ jobs:
         with:
           name: aries-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
