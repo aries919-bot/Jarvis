@@ -591,12 +591,9 @@ object Ai {
         val arr = sourcesValue as? JSONArray ?: JSONArray()
         val src = ArrayList<Source>()
         for (i in 0 until arr.length()) {
-            val rawUrl = arr.opt(i)
-            if (rawUrl !is String) throw IOException("Aries hızlı yanıt kaynak adresi geçersiz.")
+            val rawUrl = arr.opt(i) as? String ?: continue
             val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
-            if (uri == null || uri.scheme !in listOf("https", "http") || uri.host.isNullOrBlank()) {
-                throw IOException("Aries hızlı yanıt güvenli olmayan kaynak adresi döndürdü.")
-            }
+            if (uri == null || uri.scheme !in listOf("https", "http") || uri.host.isNullOrBlank()) continue
             src.add(Source(uri.host, rawUrl))
         }
         return Answer(answer, src)
