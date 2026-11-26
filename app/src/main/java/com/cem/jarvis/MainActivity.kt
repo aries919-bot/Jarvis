@@ -78,13 +78,14 @@ class MainActivity : Activity() {
     private val PICK_FILE_REQUEST = 1001
     private lateinit var fileListView: LinearLayout
 
-    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true)
+    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true, "yeniAcilis" to false)
     private var pendingFact: String? = null
     private val flagTitles = mapOf(
         "heyJarvis" to "Hey Jarvis",
         "aiOn" to "Yapay zekâ",
         "histOn" to "Sohbet kaydı",
-        "memOn" to "Hafıza"
+        "memOn" to "Hafıza",
+        "yeniAcilis" to "Açılışta yeni sohbet"
     )
 
     private val SYS = """
@@ -131,7 +132,11 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         store = Store(this)
         buildUi()
-        renderConv(store.current())
+        val currentConv = store.current()
+        val startupConv = if (store.flag("yeniAcilis", false) && currentConv.msgs.isNotEmpty()) {
+            store.newConv().also { store.setCurrent(it) }
+        } else currentConv
+        renderConv(startupConv)
         showPage(0)
         setOrb(0)
 
@@ -871,6 +876,16 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
         add(col, Ui.button(this, "Kaydet") { saveSettings() })
+
+        add(col, Ui.text(this, "Sohbet", 14f, Pal.MUTED))
+        add(col, flagButton("histOn"))
+        add(col, flagButton("yeniAcilis"))
+        add(col, Ui.button(this, "Tüm sohbetleri sil") {
+            confirm("Tüm sohbetler silinsin mi?", {
+                store.clearConvs()
+                newChat()
+            }, { })
+        })
 
         add(col, Ui.text(this, "Bildirim erişimi", 14f, Pal.MUTED))
         add(col, Ui.button(this, "Bildirim erişimi ver") { safeStart(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"), "Bildirim erişimi ekranı açılamadı.") })
