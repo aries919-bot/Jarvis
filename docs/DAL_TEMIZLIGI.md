@@ -10,7 +10,7 @@
 4. PR birleşince ya da kapanınca dalın silinebilirliği ayrıca kontrol edilir; silme yalnız açık talimat ve SHA doğrulamasıyla yapılır.
 5. **PR #37 açık durumdadır** (26.11.2026 GitHub API kontrolü); tabanı `cline/K1`, baş dalı `fix/hakem-diff-lines`. Birleştirilmedi ve kapatılmadı; açık PR'ın baş dalı olduğu için korunur.
 6. PR #56'nın eski tabanı ayrıca denetlenmelidir. Bu kayıt tek başına merge yetkisi vermez.
-7. Kökteki `DURUM.md` ve `AGENTS.md` 31 Ekim 2026 OpenCode ortamından kalma eski dokümanlardır. Bu PR'da değiştirilmez; geçerli çalışma notları `docs/TALIMAT.md` + `docs/NOT_C1.md`'dir.
+7. Kök `DURUM.md` ve `AGENTS.md` bu PR'ın kapsamı dışındadır; değiştirilmez.
 8. `docs/HARITA.md` küçültülmeyecek; boyut/sadeleştirme ayrı, tek amaçlı PR konusudur.
 
 ## Açık PR QA — 25.11.2026 (yalnız CI/çakışma; diff incelenmedi)
