@@ -17,15 +17,15 @@ object Privacy {
     private val tcknPattern = Regex("""(?<![\p{L}\d])([1-9]\d{10})(?![\p{L}\d])""")
     private val addressPattern = Regex(
         """(?:(?<![\p{L}\d_])([\p{L}][\p{L}'’.-]*(?:\s+[\p{L}][\p{L}'’.-]*){0,2})\s+(?<![\p{L}\d_])(?:mahalle(?:si)?|mah)\.?(?![\p{L}\d_])\s*[:.]?\s*|(?<![\p{L}\d_])(?:mahalle(?:si)?|mah|sokak|sok|sk|cadde|cad|cd|no(?=\s*[:.]?\s*\d)|daire|apt)\.?(?![\p{L}\d_])\s*[:.]?\s*)[^\n;]{1,120}""",
-        setOf(RegexOption.IGNORE_CASE, RegexOption.UNICODE_CASE)
+        setOf(RegexOption.IGNORE_CASE)
     )
     private val addressMarkerPattern = Regex(
         """(?<![\p{L}\d_])(?:mahalle(?:si)?|mah|sokak|sok|sk|cadde|cad|cd|no(?=\s*[:.]?\s*\d)|daire|apt)\.?(?![\p{L}\d_])""",
-        setOf(RegexOption.IGNORE_CASE, RegexOption.UNICODE_CASE)
+        setOf(RegexOption.IGNORE_CASE)
     )
     private val addressFirstValuePattern = Regex(
         """(?<![\p{L}\d_])(?:mahalle(?:si)?|mah|sokak|sok|sk|cadde|cad|cd|no(?=\s*[:.]?\s*\d)|daire|apt)\.?(?![\p{L}\d_])\s*[:.]?\s*([\p{L}\d]+)""",
-        setOf(RegexOption.IGNORE_CASE, RegexOption.UNICODE_CASE)
+        setOf(RegexOption.IGNORE_CASE)
     )
 
     fun isValidTckn(value: String): Boolean {
