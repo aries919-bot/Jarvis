@@ -4,11 +4,16 @@ import android.util.Xml
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
+
+class BadResponse(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
 class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
     val temporary: Boolean
@@ -19,29 +24,62 @@ class ApiError(val code: Int, msg: String) : RuntimeException(msg) {
 
 object Net {
     const val ARIES_SOURCE_USER_AGENT = "AriesKaynakTara/1.0 (+https://github.com/aries919-bot/Jarvis)"
-    fun get(url: String): Pair<Int, String> {
+    const val MAX_RESPONSE_BYTES = 1024 * 1024
+
+    internal fun readLimitedBytes(input: InputStream?, maxBytes: Int = MAX_RESPONSE_BYTES): ByteArray {
+        require(maxBytes >= 0) { "Yanıt sınırı negatif olamaz." }
+        if (input == null) return ByteArray(0)
+        val output = ByteArrayOutputStream(minOf(maxBytes, 8192))
+        val buffer = ByteArray(8192)
+        var total = 0
+        while (true) {
+            val remaining = maxBytes - total
+            val count = input.read(buffer, 0, minOf(buffer.size, remaining + 1))
+            if (count < 0) break
+            if (count == 0) continue
+            if (count > remaining) throw BadResponse("Yanıt boyutu 1 MB sınırını aşıyor.")
+            output.write(buffer, 0, count)
+            total += count
+        }
+        return output.toByteArray()
+    }
+
+    internal fun readLimitedText(input: InputStream?, maxBytes: Int = MAX_RESPONSE_BYTES): String =
+        String(readLimitedBytes(input, maxBytes), Charsets.UTF_8)
+
+    fun get(url: String, headers: Map<String, String> = emptyMap()): Pair<Int, String> {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.requestMethod = "GET"
-        c.connectTimeout = 8000
-        c.readTimeout = 15000
-        val code = c.responseCode
-        val stream = if (code in 200..299) c.inputStream else c.errorStream
-        val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
-        return Pair(code, body)
+        try {
+            c.requestMethod = "GET"
+            c.connectTimeout = 8000
+            c.readTimeout = 15000
+            for ((k, v) in headers) c.setRequestProperty(k, v)
+            val code = c.responseCode
+            val stream = if (code in 200..299) c.inputStream else c.errorStream
+            val body = stream?.use { readLimitedText(it) } ?: ""
+            return Pair(code, body)
+        } finally {
+            c.disconnect()
+        }
     }
 
     fun post(url: String, headers: Map<String, String>, body: JSONObject): Pair<Int, String> {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.requestMethod = "POST"
-        c.connectTimeout = 8000
-        c.readTimeout = 25000
-        c.doOutput = true
-        c.setRequestProperty("Content-Type", "application/json")
-        for ((k, v) in headers) c.setRequestProperty(k, v)
-        c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-        val stream = if (c.responseCode in 200..299) c.inputStream else c.errorStream
-        val text = stream?.bufferedReader()?.use { it.readText() } ?: ""
-        return Pair(c.responseCode, text)
+        try {
+            c.requestMethod = "POST"
+            c.connectTimeout = 8000
+            c.readTimeout = 25000
+            c.doOutput = true
+            c.setRequestProperty("Content-Type", "application/json")
+            for ((k, v) in headers) c.setRequestProperty(k, v)
+            c.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+            val code = c.responseCode
+            val stream = if (code in 200..299) c.inputStream else c.errorStream
+            val text = stream?.use { readLimitedText(it) } ?: ""
+            return Pair(code, text)
+        } finally {
+            c.disconnect()
+        }
     }
 
     fun newsTitles(topic: String): List<String> {
@@ -54,7 +92,7 @@ object Net {
         val titles = ArrayList<String>()
         c.inputStream.use { input ->
             val parser = Xml.newPullParser()
-            parser.setInput(input, null)
+            parser.setInput(ByteArrayInputStream(readLimitedBytes(input)), null)
             var inItem = false
             var inTitle = false
             var event = parser.eventType
@@ -120,14 +158,14 @@ object Net {
         try {
             val code = connection.responseCode
             if (code !in 200..299) throw IOException("$provider HTTP $code")
-            val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-            if (body.isBlank()) throw IOException("$provider boş yanıt döndürdü.")
+            val body = connection.inputStream.use { readLimitedText(it) }
+            if (body.isBlank()) throw BadResponse("$provider boş yanıt döndürdü.")
             val lower = body.lowercase(Locale.ROOT)
             if (listOf(
                     "anomaly-modal", "captcha", "verify you are human",
                     "unusual traffic", "automated requests", "security challenge"
                 ).any(lower::contains)
-            ) throw IOException("$provider arama isteğini güvenlik kontrolüne taktı.")
+            ) throw BadResponse("$provider arama isteğini güvenlik kontrolüne taktı.")
             return body
         } finally {
             connection.disconnect()
@@ -267,7 +305,7 @@ object Net {
 
     private fun validateParsedResults(provider: String, html: String, hits: List<Hit>) {
         if (hits.isNotEmpty() || isExplicitNoResults(html)) return
-        throw IOException("$provider sayfası açıldı ancak sonuç bağlantıları okunamadı; arama sayfasının yapısı değişmiş veya sonuçlar engellenmiş olabilir.")
+        throw BadResponse("$provider sayfası açıldı ancak sonuç bağlantıları okunamadı; arama sayfasının yapısı değişmiş veya sonuçlar engellenmiş olabilir.")
     }
 
     // DuckDuckGo ana arama sağlayıcısı; HTML nitelikleri sırası değişse de sonuç bağlantılarını okur.
@@ -325,7 +363,7 @@ object Net {
             if (connection.responseCode !in 200..299) throw IOException("Google Haberler RSS yanıt vermedi.")
             connection.inputStream.use { input ->
                 val parser = Xml.newPullParser()
-                parser.setInput(input, "UTF-8")
+                parser.setInput(ByteArrayInputStream(readLimitedBytes(input)), "UTF-8")
                 var inItem = false
                 var field = ""
                 var title = ""
@@ -416,6 +454,32 @@ object Ai {
     class Source(val title: String, val url: String)
     class Answer(val text: String, val sources: List<Source>)
 
+    internal fun parseResponseObject(body: String, endpoint: String): JSONObject {
+        if (body.isBlank()) throw BadResponse("$endpoint boş yanıt döndürdü.")
+        return try {
+            JSONObject(body)
+        } catch (e: Exception) {
+            throw BadResponse("$endpoint geçersiz JSON yanıtı döndürdü.", e)
+        }
+    }
+
+    internal fun parseResponseArray(body: String, endpoint: String): JSONArray {
+        if (body.isBlank()) throw BadResponse("$endpoint boş yanıt döndürdü.")
+        return try {
+            JSONArray(body)
+        } catch (e: Exception) {
+            throw BadResponse("$endpoint geçersiz JSON listesi döndürdü.", e)
+        }
+    }
+
+    internal fun requiredResponseString(json: JSONObject, key: String, endpoint: String): String {
+        val value = json.opt(key)
+        if (value !is String || value.isBlank()) {
+            throw BadResponse("$endpoint yanıtında '$key' alanı eksik veya geçersiz.")
+        }
+        return value
+    }
+
     fun defaultModel(who: String): String = when (who) {
         "groq" -> GROQ_DEFAULT
         "mistral" -> MISTRAL_DEFAULT
@@ -444,6 +508,8 @@ object Ai {
         for (attempt in 0..1) {
             try {
                 return block()
+            } catch (e: BadResponse) {
+                throw e
             } catch (e: ApiError) {
                 if (!e.temporary) throw e
                 last = e
@@ -487,7 +553,7 @@ object Ai {
         for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", Privacy.sanitizeCloudText(t)))
         val body = JSONObject().put("system", sys).put("messages", msgs)
         val (code, txt) = Net.post(BULUT_URL, mapOf("Authorization" to "Bearer $token"), body)
-        if (code == 200) return JSONObject(txt).getString("answer")
+        if (code == 200) return requiredResponseString(parseResponseObject(txt, "Aries Bulut"), "answer", "Aries Bulut")
         throw ApiError(code, errText("Aries Bulut", code))
     }
 
@@ -497,7 +563,19 @@ object Ai {
         .replace(Regex("\\+?\\d[\\d ()-]{8,}\\d"), "")
         .replace(Regex("\\s+"), " ").trim()
 
-    fun film(token: String, q: String): String { val c = URL("https://jarvis-cloud.aydincem919.workers.dev/film?q=" + java.net.URLEncoder.encode(q, "UTF-8")).openConnection() as HttpURLConnection; c.connectTimeout = 8000; c.readTimeout = 15000; c.setRequestProperty("Authorization", "Bearer " + token); val code = c.responseCode; if (code != 200) throw ApiError(code, errText("Aries Bulut", code)); val arr = JSONArray(c.inputStream.bufferedReader().use { it.readText() }); if (arr.length() == 0) return "Sonuç bulamadım."; return (0 until minOf(arr.length(), 3)).joinToString(Char(10).toString() + Char(10)) { val o = arr.getJSONObject(it); o.optString("ad") + " (" + o.optString("yil") + ") puan " + o.optString("puan") + Char(10) + o.optString("ozet") } }
+    fun film(token: String, q: String): String {
+        val url = "https://jarvis-cloud.aydincem919.workers.dev/film?q=" +
+            java.net.URLEncoder.encode(q, "UTF-8")
+        val (code, body) = Net.get(url, mapOf("Authorization" to "Bearer " + token))
+        if (code != 200) throw ApiError(code, errText("Aries Bulut", code))
+        val arr = parseResponseArray(body, "Aries Bulut film")
+        if (arr.length() == 0) return "Sonuç bulamadım."
+        return (0 until minOf(arr.length(), 3)).joinToString(Char(10).toString() + Char(10)) {
+            val item = arr.optJSONObject(it) ?: throw BadResponse("Aries Bulut film yanıtında geçersiz kayıt var.")
+            item.optString("ad") + " (" + item.optString("yil") + ") puan " +
+                item.optString("puan") + Char(10) + item.optString("ozet")
+        }
+    }
     private const val HIZLI_URL = "https://jarvis-cloud.aydincem919.workers.dev/hizli"
 
     fun hizli(token: String, q: String): Answer {
@@ -508,14 +586,21 @@ object Ai {
         } catch (e: Exception) { }
         val (code, txt) = Net.post(HIZLI_URL, mapOf("Authorization" to "Bearer $token"), body)
         if (code != 200) throw ApiError(code, errText("Aries Bulut", code))
-        val j = JSONObject(txt)
-        val arr = j.optJSONArray("sources") ?: JSONArray()
+        val j = parseResponseObject(txt, "Aries hızlı yanıt")
+        val answer = requiredResponseString(j, "answer", "Aries hızlı yanıt")
+        val sourcesValue = j.opt("sources")
+        if (sourcesValue != null && sourcesValue != JSONObject.NULL && sourcesValue !is JSONArray) {
+            throw BadResponse("Aries hızlı yanıt kaynak listesi geçersiz.")
+        }
+        val arr = sourcesValue as? JSONArray ?: JSONArray()
         val src = ArrayList<Source>()
         for (i in 0 until arr.length()) {
-            val u = arr.getString(i)
-            src.add(Source(u.removePrefix("https://").removePrefix("http://").substringBefore("/"), u))
+            val rawUrl = arr.opt(i) as? String ?: continue
+            val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
+            if (uri == null || uri.scheme !in listOf("https", "http") || uri.host.isNullOrBlank()) continue
+            src.add(Source(uri.host, rawUrl))
         }
-        return Answer(j.getString("answer"), src)
+        return Answer(answer, src)
     }
 
     private const val CAREER_SEARCH_URL = "https://jarvis-cloud.aydincem919.workers.dev/kariyer-ara"
@@ -538,8 +623,12 @@ object Ai {
             body
         )
         if (code != 200) throw ApiError(code, errText("Aries Kariyer Arama", code))
-        val json = JSONObject(txt)
-        val rows = json.optJSONArray("results") ?: JSONArray()
+        val json = parseResponseObject(txt, "Aries Kariyer Arama")
+        val rowsValue = json.opt("results")
+        if (rowsValue != null && rowsValue != JSONObject.NULL && rowsValue !is JSONArray) {
+            throw BadResponse("Aries Kariyer Arama sonuç listesi geçersiz.")
+        }
+        val rows = rowsValue as? JSONArray ?: JSONArray()
         val hits = ArrayList<Net.Hit>()
         for (i in 0 until rows.length()) {
             val item = rows.optJSONObject(i) ?: continue
@@ -582,8 +671,13 @@ object Ai {
             .put("max_tokens", 600)
         val (code, txt) = Net.post(url, mapOf("Authorization" to "Bearer $key"), body)
         if (code != 200) throw ApiError(code, errText(name, code))
-        return JSONObject(txt).getJSONArray("choices").getJSONObject(0)
-            .getJSONObject("message").getString("content")
+        val response = parseResponseObject(txt, name)
+        val choices = response.optJSONArray("choices")
+            ?: throw BadResponse("$name yanıtında choices listesi eksik.")
+        if (choices.length() == 0) throw BadResponse("$name boş choices listesi döndürdü.")
+        val message = choices.optJSONObject(0)?.optJSONObject("message")
+            ?: throw BadResponse("$name yanıtında message alanı eksik.")
+        return requiredResponseString(message, "content", name)
     }
 
     private fun geminiBody(sys: String, hist: List<Pair<String, String>>, json: Boolean, search: Boolean): JSONObject {
@@ -612,7 +706,7 @@ object Ai {
             geminiBody(sys, hist, json, search)
         )
         if (code != 200) throw ApiError(code, errText("Gemini", code))
-        return JSONObject(txt)
+        return parseResponseObject(txt, "Gemini")
     }
 
     private fun geminiAnswer(key: String, sys: String, hist: List<Pair<String, String>>, json: Boolean, search: Boolean): Answer {
@@ -622,10 +716,22 @@ object Ai {
             if (!e.temporary) throw e
             withRetry { gemini(key, GEMINI_FALLBACK, sys, hist, json, search) }
         }
-        val cand = o.getJSONArray("candidates").getJSONObject(0)
-        val parts = cand.getJSONObject("content").getJSONArray("parts")
+        val candidates = o.optJSONArray("candidates")
+            ?: throw BadResponse("Gemini yanıtında candidates listesi eksik.")
+        if (candidates.length() == 0) throw BadResponse("Gemini boş candidates listesi döndürdü.")
+        val cand = candidates.optJSONObject(0)
+            ?: throw BadResponse("Gemini yanıtında geçersiz aday kaydı var.")
+        val content = cand.optJSONObject("content")
+            ?: throw BadResponse("Gemini yanıtında content alanı eksik.")
+        val parts = content.optJSONArray("parts")
+            ?: throw BadResponse("Gemini yanıtında parts listesi eksik.")
         val sb = StringBuilder()
-        for (i in 0 until parts.length()) sb.append(parts.getJSONObject(i).optString("text"))
+        for (i in 0 until parts.length()) {
+            val part = parts.optJSONObject(i) ?: continue
+            val text = part.opt("text")
+            if (text is String) sb.append(text)
+        }
+        if (sb.isEmpty()) throw BadResponse("Gemini yanıtında metin içeriği bulunamadı.")
         val sources = ArrayList<Source>()
         val chunks = cand.optJSONObject("groundingMetadata")?.optJSONArray("groundingChunks")
         if (chunks != null) {
@@ -725,6 +831,7 @@ object Ai {
     }
 
     fun friendly(e: Exception): String = when {
+        e is BadResponse -> e.message ?: "Sunucudan geçersiz yanıt geldi."
         e is ApiError && e.badKey -> e.message ?: "Anahtar geçersiz."
         e is ApiError -> e.message ?: "Yapay zekâ hatası."
         e is IOException -> "İnternete ulaşamadım."
