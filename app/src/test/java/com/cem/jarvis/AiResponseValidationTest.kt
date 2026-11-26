@@ -38,7 +38,7 @@ class AiResponseValidationTest {
             try {
                 Ai.parseResponseObject(body, "Test API")
                 fail("Geçersiz JSON kabul edilmemeliydi.")
-            } catch (expected: IOException) {
+            } catch (expected: BadResponse) {
                 assertTrue(expected.message.orEmpty().contains("Test API"))
             }
         }
@@ -50,7 +50,7 @@ class AiResponseValidationTest {
             try {
                 Ai.requiredResponseString(json, "answer", "Test API")
                 fail("Eksik yanıt alanı kabul edilmemeliydi.")
-            } catch (expected: IOException) {
+            } catch (expected: BadResponse) {
                 assertTrue(expected.message.orEmpty().contains("answer"))
             }
         }
@@ -90,7 +90,7 @@ class AiResponseValidationTest {
         try {
             Ai.parseResponseArray("{not-an-array}", "Test API")
             fail("Nesne, liste yanıtı olarak kabul edilmemeliydi.")
-        } catch (expected: IOException) {
+        } catch (expected: BadResponse) {
             assertTrue(expected.message.orEmpty().contains("liste"))
         }
     }
