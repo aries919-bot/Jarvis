@@ -38,7 +38,11 @@ class RemindersParserTest {
 
     @Test
     fun parsesClockTimeWithoutReminderKeyword() {
-        val parsed = Reminders.parse("07:30 alarm", fixedNow())
+        val now = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            set(2026, Calendar.NOVEMBER, 26, 6, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val parsed = Reminders.parse("07:30 alarm", now)
         assertNotNull(parsed)
         val actual = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
             timeInMillis = parsed!!.time
