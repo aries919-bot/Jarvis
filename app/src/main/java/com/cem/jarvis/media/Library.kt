@@ -188,7 +188,7 @@ fun ContinueRow(lib: LibraryVM, onOpen: (Entry) -> Unit) {
                     Text(e.title, color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val ep = if (e.type == "tv") "Sezon ${e.season} · Bölüm ${e.episode}" else ""
                     Text(if (e.upNext) "Sıradaki: $ep" else listOf(ep, fmtRemaining(e.durationMs - e.positionMs)).filter { it.isNotEmpty() }.joinToString(" · "),
-                        color = Color(0xFF9AA1B2), fontSize = 11.sp, maxLines = 2)
+                        color = Ap.Muted, fontSize = 11.sp, maxLines = 2)
                 }
             }
         }
@@ -248,7 +248,7 @@ fun EpisodeList(
             }
         }
         if (eps.isEmpty()) {
-            Text("Bu sezonun bölüm bilgileri yüklenemedi.", color = Color(0xFF9AA1B2), fontSize = 13.sp,
+            Text("Bu sezonun bölüm bilgileri yüklenemedi.", color = Ap.Muted, fontSize = 13.sp,
                 modifier = Modifier.padding(vertical = 12.dp))
         }
         eps.forEach { ep ->
@@ -260,7 +260,7 @@ fun EpisodeList(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(Modifier.size(38.dp).clip(RoundedCornerShape(10.dp))
-                    .background(if (done) Color(0xFF3A7D5C) else Color(0xFF202433)), Alignment.Center) {
+                    .background(if (done) Color(0xFF3A7D5C) else Ap.Raised), Alignment.Center) {
                     Text(if (done) "✓" else "${ep.episode_number}", color = Color.White)
                 }
                 Spacer(Modifier.width(12.dp))
@@ -268,9 +268,9 @@ fun EpisodeList(
                     Text(ep.name ?: "Bölüm ${ep.episode_number}", color = Color.White,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (showEpisodeRuntime) ep.runtime?.takeIf { it > 0 }?.let {
-                        Text("$it dk", color = Color(0xFF9AA1B2), fontSize = 12.sp)
+                        Text("$it dk", color = Ap.Muted, fontSize = 12.sp)
                     }
-                    Text("Oynatmak için dokun", color = Color(0xFF8FB4FF), fontSize = 11.sp)
+                    Text("Oynatmak için dokun", color = Ap.Accent, fontSize = 11.sp)
                 }
                 TextButton(onClick = { lib.toggleWatched(item, season, ep.episode_number) }) {
                     Text(if (done) "İzlendi ✓" else "İşaretle", fontSize = 12.sp)
@@ -428,23 +428,23 @@ fun ResumePlayer(
 fun HomeContinueCard(lib: LibraryVM, onResume: (Entry) -> Unit) {
     val e = lib.continueWatching.firstOrNull() ?: return
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF171A24))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ap.Card)
             .clickable { onResume(e) }.padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(webImg(e.poster), e.title, Modifier.size(56.dp, 80.dp).clip(RoundedCornerShape(10.dp)))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Kaldığın yerden devam et", color = Color(0xFF9AA1B2), fontSize = 11.sp)
+            Text("Kaldığın yerden devam et", color = Ap.Muted, fontSize = 11.sp)
             Text(e.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val ep = if (e.type == "tv") "Sezon ${e.season} · Bölüm ${e.episode}" else ""
             Text(
                 if (e.upNext) "Sıradaki: $ep"
                 else listOf(ep, fmtRemaining(e.durationMs - e.positionMs)).filter { it.isNotEmpty() }.joinToString(" · "),
-                color = Color(0xFF9AA1B2), fontSize = 12.sp
+                color = Ap.Muted, fontSize = 12.sp
             )
             if (!e.upNext) LinearProgressIndicator(progress = { e.progress }, Modifier.fillMaxWidth().padding(top = 6.dp))
         }
-        Text("▶", color = Color(0xFF8FB4FF), fontSize = 24.sp, modifier = Modifier.padding(start = 10.dp))
+        Text("▶", color = Ap.Accent, fontSize = 24.sp, modifier = Modifier.padding(start = 10.dp))
     }
 }
