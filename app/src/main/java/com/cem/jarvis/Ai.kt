@@ -481,14 +481,14 @@ object Ai {
     }
 
     fun oyVer(token: String, v: Int, a: String) {
-        try { Net.post("https://jarvis-cloud.aydincem919.workers.dev/oy_sohbet", mapOf("Authorization" to "Bearer $token"), JSONObject().put("v", v).put("a", a)) } catch (e: Exception) {}
+        try { Net.post("https://jarvis-cloud.aydincem919.workers.dev/oy_sohbet", mapOf("Authorization" to "Bearer $token"), JSONObject().put("v", v).put("a", Privacy.sanitizeCloudText(a))) } catch (e: Exception) {}
     }
 
     private const val BULUT_URL = "https://jarvis-cloud.aydincem919.workers.dev/ai"
 
     private fun bulut(token: String, sys: String, hist: List<Pair<String, String>>): String {
         val msgs = JSONArray()
-        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", t))
+        for ((r, t) in hist) msgs.put(JSONObject().put("role", r).put("content", Privacy.sanitizeCloudText(t)))
         val body = JSONObject().put("system", sys).put("messages", msgs)
         val (code, txt) = Net.post(BULUT_URL, mapOf("Authorization" to "Bearer $token"), body)
         if (code == 200) return JSONObject(txt).getString("answer")
