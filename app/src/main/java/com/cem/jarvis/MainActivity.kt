@@ -361,7 +361,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
 
         // Ekranda gösterilmeyen ama kodun başka yerlerinin kullandığı görünümler
         clockTv = Ui.text(this, "", 18f)
-        dateTv = Ui.text(this, "", 11f, Pal.MUTED)
+        dateTv = Ui.text(this, "", Tok.T_CAPTION, Pal.MUTED)
         wave = WaveView(this)
 
         // Orta alan: sohbet (gizli) + küre
@@ -610,10 +610,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         if (sdk >= 31) { names.add("Varsayılana dön (Bluetooth)"); acts.add { am.clearCommunicationDevice(); say("Ses varsayılan çıkışa döndü.") } }
         names.add("Bluetooth ayarlarını aç")
         acts.add { safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS), "Bluetooth ayarları açılamadı.") }
-        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; val gd = android.graphics.drawable.GradientDrawable(); gd.setColor(android.graphics.Color.parseColor("#12151F")); gd.cornerRadius = 48f; box.background = gd; box.setPadding(56, 40, 56, 24)
+        val box = android.widget.LinearLayout(this); box.orientation = android.widget.LinearLayout.VERTICAL; box.background = Ui.rounded(Pal.CARD, Pal.LINE, dp(Tok.R_CARD + 6).toFloat()); box.setPadding(dp(22), dp(18), dp(22), dp(10))
         val dlg = android.app.AlertDialog.Builder(this).setView(box).create()
-        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.WHITE); ttl.textSize = 18f; box.addView(ttl)
-        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor("#C9CEDB")); tv.textSize = 16f; tv.setPadding(0, 32, 0, 32); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
+        val ttl = android.widget.TextView(this); ttl.text = "Ses çıkışı"; ttl.setTextColor(android.graphics.Color.parseColor(Pal.WHITE)); ttl.textSize = Tok.T_TITLE; ttl.setPadding(0, 0, 0, dp(6)); box.addView(ttl)
+        for (i in names.indices) { val tv = android.widget.TextView(this); tv.text = names[i]; tv.setTextColor(android.graphics.Color.parseColor(Pal.TEXT)); tv.textSize = 16f; tv.minHeight = dp(Tok.MIN_TOUCH_DP); tv.gravity = Gravity.CENTER_VERTICAL; tv.setPadding(0, dp(10), 0, dp(10)); tv.setOnClickListener { dlg.dismiss(); acts[i]() }; box.addView(tv) }
         dlg.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT)); dlg.show()
     }
 
