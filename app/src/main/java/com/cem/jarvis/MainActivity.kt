@@ -79,14 +79,15 @@ class MainActivity : Activity() {
     private val PICK_FILE_REQUEST = 1001
     private lateinit var fileListView: LinearLayout
 
-    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true, "yeniAcilis" to false)
+    private val flagDefs = mapOf("heyJarvis" to false, "aiOn" to true, "histOn" to true, "memOn" to true, "yeniAcilis" to false, "bulutHafizaIzin" to false)
     private var pendingFact: String? = null
     private val flagTitles = mapOf(
         "heyJarvis" to "Hey Jarvis",
         "aiOn" to "Yapay zekâ",
         "histOn" to "Sohbet kaydı",
         "memOn" to "Hafıza",
-        "yeniAcilis" to "Açılışta yeni sohbet"
+        "yeniAcilis" to "Açılışta yeni sohbet",
+        "bulutHafizaIzin" to "Bulut hafıza izni"
     )
 
     private val SYS = """
@@ -942,6 +943,16 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         add(col, Ui.text(this, "API Anahtarları", 14f, Pal.MUTED))
         keyField(col, "Aries Bulut Anahtarı", "bulut")
         add(col, Ui.button(this, "Kaydet") { saveSettings() })
+        add(col, Ui.button(this, "Bulut hafıza iznini kaldır") {
+            if (store.flag("bulutHafizaIzin", false)) {
+                confirm("Aries Bulut'un hafıza komutlarını almasına verdiğin izin kaldırılsın mı?", {
+                    store.setFlag("bulutHafizaIzin", false)
+                    say("Bulut hafıza izni kaldırıldı. Yeni gönderim için yeniden onay gerekir.")
+                }, { })
+            } else {
+                say("Bulut hafıza izni zaten kapalı.")
+            }
+        })
 
         add(col, Ui.text(this, "Sohbet", 14f, Pal.MUTED))
         add(col, flagButton("histOn"))
@@ -1791,6 +1802,43 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
         say("Hafıza panoya kopyalandı.")
     }
 
+    private fun rejectCloudMemoryConsent() {
+        val request = pendingFact
+        pendingFact = null
+        val fact = request?.let {
+            Regex("^(?:bunu )?hatırla[:,]?\\s+(.+)$", RegexOption.IGNORE_CASE)
+                .find(it.trim())?.groupValues?.get(1)?.trim()
+        }
+        if (fact != null) {
+            if (Regex("\\d{11,}|şifre|parola|cvv", RegexOption.IGNORE_CASE).containsMatchIn(fact)) {
+                say("Kart, şifre ya da kimlik gibi görünüyor, kaydetmedim.")
+            } else {
+                store.addFact(fact)
+                say("Bulut'a göndermedim; notu yalnızca telefona kaydettim.")
+            }
+        } else {
+            say("Bulut hafıza isteği gönderilmedi.")
+        }
+    }
+
+    private fun requestCloudMemoryConsent(raw: String) {
+        pendingFact = raw
+        AlertDialog.Builder(this)
+            .setTitle("Aries Bulut hafıza izni")
+            .setMessage("Hafıza komutunun içeriği Aries Bulut'a gönderilecek ve yanıt almak için bulut hizmeti tarafından işlenecek. İzin verirsen bu onay sonraki hafıza komutlarında da geçerli olur. İzni Ayarlar'dan kaldırabilirsin. Devam edilsin mi?")
+            .setPositiveButton("İzin ver") { _, _ ->
+                val request = pendingFact
+                pendingFact = null
+                if (request != null) {
+                    store.setFlag("bulutHafizaIzin", true)
+                    memCloud(request)
+                }
+            }
+            .setNegativeButton("Gönderme") { _, _ -> rejectCloudMemoryConsent() }
+            .setOnCancelListener { rejectCloudMemoryConsent() }
+            .show()
+    }
+
     private fun memCloud(raw: String): Boolean {
         val t = raw.trim()
         val tk = store.str("bulut")
@@ -1814,6 +1862,10 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
             } else if (Regex("^notlarım", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
                 say(store.facts().ifBlank { "Kayıtlı notun yok." })
             } else say("Bu komut için internet ve Aries Bulut anahtarı gerekir.")
+            return true
+        }
+        if (!store.flag("bulutHafizaIzin", false)) {
+            requestCloudMemoryConsent(t)
             return true
         }
         showThinking()
