@@ -1,0 +1,45 @@
+name: C1 Official Public Source Link Audit
+
+on:
+  push:
+    branches: [is/C1-public-source-link-audit-20261125]
+    paths:
+      - ".github/workflows/c1-public-source-link-audit.yml"
+      - "scripts/c1_public_source_link_audit.py"
+      - "scripts/test_c1_public_source_link_audit.py"
+  pull_request:
+    branches: [durum]
+    paths:
+      - ".github/workflows/c1-public-source-link-audit.yml"
+      - "scripts/c1_public_source_link_audit.py"
+      - "scripts/test_c1_public_source_link_audit.py"
+
+permissions:
+  contents: read
+
+jobs:
+  link-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Syntax check
+        run: python -m py_compile scripts/c1_public_source_link_audit.py scripts/test_c1_public_source_link_audit.py
+      - name: Test robots-first behavior, 403, redirect, timeout and link allowlist
+        run: python -m unittest scripts/test_c1_public_source_link_audit.py -v
+      - name: Discover official page metadata and attachment URLs (robots allow only)
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p reports
+          python scripts/c1_public_source_link_audit.py | tee reports/c1-public-source-link-audit.txt
+      - name: Upload audit output
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-public-source-link-audit
+          path: reports/c1-public-source-link-audit.txt
+          if-no-files-found: error
+          retention-days: 14
