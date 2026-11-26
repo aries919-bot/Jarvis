@@ -105,3 +105,10 @@
 
 - **Atlandı (1):** `fix/hakem-diff-lines` — beklenen `0bae86d`, güncel `0bae86dc33d4d15041723a622f57e151726befdf` ile eşleşiyor; ancak GitHub API #37'yi hâlâ açık ve bu dalı PR başı gösteriyor. Açık PR koruma kuralı nedeniyle silinemez. Kaynak tablodaki "#37 kapalı" notu güncel API durumuyla çelişiyor; #37 kapatılmadı.
 - **Özet:** silinen 0 / Cem'in betiği için koşulları doğrulanan 31 / açık PR nedeniyle atlanan 1 / SHA uyuşmazlığı 0. Bu kayıt silme işlemi değildir; silme sonrası GitHub'dan tekrar doğrulanmalıdır.
+
+### 26.11.2026 — Kullanıcı yetkisiyle silme talebi / uygulama engeli
+- Kullanıcı, §4'teki "silmeyi Cem yapar" kuralını bu iş için açıkça geçersiz kıldı ve 31 dalın silinmesine izin verdi; "MERGE YOK" şartı korundu.
+- Silme öncesi aynı kontrolde 87 dal ve 31 açık PR listelendi. İstenen 31 dalın **31/31'i tam SHA ile eşleşti**; her biri açık PR listesinin hem head hem base tarafında aranıp açık PR bulunmadı. SHA uyuşmazlığı 0; PR'ı açık olduğu için atlanan dal 0.
+- **Gerçek silme işlemi yapılamadı:** mevcut GitHub bağlantısında dal/ref silme eylemi yok; yalnızca okuma, dal oluşturma ve dosya/PR işlemleri mevcut. fetch yalnızca GET destekliyor. Güvenli bir DELETE çağrısı veya alternatif/force yöntemi denenmedi.
+- **Silinen 0 / atlanan 31 (entegrasyon yeteneği yokluğu nedeniyle) / SHA uyuşmazlığı 0 / açık PR nedeniyle atlanan 0.** Silme sonrası doğrulama yapılamadı; 31 dalın tamamı son kontrolde hâlâ mevcuttu.
+- Bu kayıt PR #76'nın dalında güncellendi; PR açık kalır, **merge edilmez**.
