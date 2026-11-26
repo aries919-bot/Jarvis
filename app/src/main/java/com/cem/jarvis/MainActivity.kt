@@ -205,10 +205,7 @@ Not: MIUI pil optimizasyonu nedeniyle uygulama tam kapalıyken 'Hey Jarvis' uyku
     }
 
     private fun sanitizeCrashStackTrace(stackTrace: String): String {
-        return stackTrace
-            .replace(Regex("""(?i)/data/(?:user/[^\s)]+|data/[^\s)]+)"""), "[APP_PATH]")
-            .replace(Regex("""[A-Za-z0-9_-]{20,}"""), "[REDACTED_KEY]")
-            .replace(Regex("""[\w.+-]+@[\w-]+\.[\w.-]+"""), "[REDACTED_EMAIL]")
+        return CrashTraceSanitizer.sanitizeCrashStackTrace(stackTrace)
     }
 
     private fun showCrash(msg: String) {
