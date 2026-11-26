@@ -23,19 +23,19 @@ class Store(ctx: Context) {
         return prefs.getString(k, def) ?: def
     }
 
-    fun put(k: String, v: String) {
+    fun put(k: String, v: String): Boolean {
         if (k in SECRET) {
             if (v.isEmpty()) {
                 SecureStore.remove(app, k)
                 prefs.edit().remove(k).apply()
-                return
+                return true
             }
-            if (SecureStore.put(app, k, v)) {
-                prefs.edit().remove(k).apply()
-                return
-            }
+            if (!SecureStore.put(app, k, v)) return false
+            prefs.edit().remove(k).apply()
+            return true
         }
         prefs.edit().putString(k, v).apply()
+        return true
     }
 
     private fun migrateSecrets() {
@@ -49,7 +49,11 @@ class Store(ctx: Context) {
 
     fun setFlag(k: String, v: Boolean) {
         prefs.edit().putBoolean(k, v).apply()
-        if (k == "histOn" && !v) prefs.edit().remove("convs").apply()
+        if (k == "histOn" && !v) {
+            val currentId = prefs.getString("cur", "") ?: ""
+            cache.removeAll { it.id != currentId }
+            prefs.edit().remove("convs").apply()
+        }
     }
 
     fun convs(): List<Conv> = cache.sortedByDescending { it.updated }
