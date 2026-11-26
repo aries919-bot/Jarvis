@@ -11,12 +11,12 @@ MAX_PARTS = 8
 
 SECRET_PATTERNS = (
     re.compile(r"(?:gsk_|sk-|AKIA|ghp_|AIza)[A-Za-z0-9_-]{16,}", re.I),
-    re.compile(r"(?:api[_-]?key|token|secret|password)\\s*[=:]\\s*['\\"]?[A-Za-z0-9_-]{16,}", re.I),
+    re.compile(r"(?:api[_-]?key|token|secret|password)\s*[=:]\s*['\"]?[A-Za-z0-9_-]{16,}", re.I),
     re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----", re.I),
     re.compile(
-        r"(?im)^\\s*\\+?\\s*(?:export\\s+)?"
+        r"(?im)^\s*\+?\s*(?:export\s+)?"
         r"[A-Z0-9_.-]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|PRIVATE[_-]?KEY)"
-        r"[A-Z0-9_.-]*\\s*=\\s*['\\"]?[^#\\s'\\"]{8,}"
+        r"[A-Z0-9_.-]*\s*=\s*['\"]?[^#\s'\"]{8,}"
     ),
 )
 
@@ -89,8 +89,8 @@ def _model_review(part, part_no, part_count, opener=None):
         "Gerçek çalışma hatası, veri kaybı veya güvenlik açığı varsa RED ver; "
         "stil ve küçük öneriler RED sebebi değildir. "
         "Bu parça tam diff'in bir bölümüdür; yalnız bu parçaya dayanarak denetle. "
-        "Sorun varsa dosya ve satırı belirt. Son satır yalnızca ONAY veya RED olsun.\\n\\n"
-        f"Parça {part_no}/{part_count}:\\n\\n{part}"
+        "Sorun varsa dosya ve satırı belirt. Son satır yalnızca ONAY veya RED olsun.\n\n"
+        f"Parça {part_no}/{part_count}:\n\n{part}"
     )
     request = urllib.request.Request(
         "https://api.groq.com/openai/v1/chat/completions",
@@ -130,10 +130,10 @@ def review_diff(diff, opener=None):
             answer = _model_review(part, index, len(parts), opener=opener)
             results.append(answer)
             if answer.splitlines()[-1].strip() != "ONAY":
-                return "\\n\\n".join(results) + "\\nRED"
+                return "\n\n".join(results) + "\nRED"
     except Exception as exc:
         return "RED: denetim hatası (" + type(exc).__name__ + ")"
-    return "\\n\\n".join(results) + "\\nONAY"
+    return "\n\n".join(results) + "\nONAY"
 
 
 def main():
