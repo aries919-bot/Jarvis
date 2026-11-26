@@ -1230,6 +1230,9 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Ayrıntılı görev ve dal denetimi: [E1-UI Piyasa Merkezi](../gorevler/E1-UI-PIYASA-MERKEZI-2026-11-26.md).
 - Eski PR #22 / `is/kariyer-1-21-verified-search` güncel kariyer dalıyla 25 commit geride ve çakışmalı; bütün eski dal birleştirilmedi. Yalnız Piyasa Merkezi dosyaları seçilerek PR #74 açıldı.
 - PR #74: `integration/aries-1.23-market-security-20261126` → `kariyer-modulu`; sürüm 1.23 / versionCode 23; 8 dosya, 1.187 ekleme, 14 silme; `Ai.kt` içindeki eski `Net.quote()` URL query token kullanımı da ortak `FinanceData.fetchFinnhubQuote()` HTTPS başlığına taşındı. Finnhub anahtarı ortak `SecureStore` ile birleştirildi; eski finance-özel şifreli kayıt için geçiş eklendi.
-- İlk Actions #768 FAILURE: `Pal.AMBER` eksik. Renk token'ı ve SecureStore entegrasyon kusuru düzeltildi. Exact-head #772 eski SHA için yeni commit nedeniyle CANCELLED; güncel exact-head #774 SHA `438bae8e5ed5fed0f44970c018b867d12279305d`, son kontrolde IN_PROGRESS.
-- PR #74 merge edilmedi; test, APK ve artefakt doğrulaması tamamlanmadan APK yayımlanmaz. `main` dalına yazılmadı.
-**KARAR:** E1-UI DEVAM — #772 exact-head CI sonucu ve APK artefaktı bekleniyor.
+- İlk Actions #768 FAILURE: `Pal.AMBER` eksik. Renk token'ı ve SecureStore entegrasyon kusuru düzeltildi; eski Finnhub URL token kullanımı kaldırıldı.
+- Exact-head PR CI #774 SHA `438bae8e5ed5fed0f44970c018b867d12279305d`: testDebugUnitTest SUCCESS, assembleDebug SUCCESS, artifact upload SUCCESS.
+- PR artefakt #15078344143: ZIP 14.100.789 bayt; ZIP SHA-256 `98479f74649ac0cc63d9e8b03ff4fc315a76449e7374315fad60314ef05a1d10`. Çıkarılan APK 14.855.695 bayt; SHA-256 `5f420aac52293284e2cfefb26f4e923c5b06087f24de2238e27103f614d04be0`.
+- PR #74 normal merge SHA `e40e2aa4e9d140c88546785ad5b3b89a99c9b7e4`; `kariyer-modulu` dalına alındı. `main` dalına yazılmadı.
+- Post-merge Actions #775: https://github.com/aries919-bot/Jarvis/actions/runs/45736185331 — son kontrolde IN_PROGRESS; son APK artefaktı bu koşudan doğrulanacak.
+**KARAR:** E1-UI PR MERGED; post-merge #775 ve APK artefaktı doğrulaması DEVAM.
