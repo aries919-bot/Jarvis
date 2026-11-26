@@ -1234,5 +1234,6 @@ Bunlar resmî belge/sayfada doğrulandı; exact duplicate, sourceId, şehir ve W
 - Exact-head PR CI #774 SHA `438bae8e5ed5fed0f44970c018b867d12279305d`: testDebugUnitTest SUCCESS, assembleDebug SUCCESS, artifact upload SUCCESS.
 - PR artefakt #15078344143: ZIP 14.100.789 bayt; ZIP SHA-256 `98479f74649ac0cc63d9e8b03ff4fc315a76449e7374315fad60314ef05a1d10`. Çıkarılan APK 14.855.695 bayt; SHA-256 `5f420aac52293284e2cfefb26f4e923c5b06087f24de2238e27103f614d04be0`.
 - PR #74 normal merge SHA `e40e2aa4e9d140c88546785ad5b3b89a99c9b7e4`; `kariyer-modulu` dalına alındı. `main` dalına yazılmadı.
-- Post-merge Actions #775: https://github.com/aries919-bot/Jarvis/actions/runs/45736185331 — son kontrolde IN_PROGRESS; son APK artefaktı bu koşudan doğrulanacak.
-**KARAR:** E1-UI PR MERGED; post-merge #775 ve APK artefaktı doğrulaması DEVAM.
+- Teslim APK `Aries-1.23-Piyasa-Merkezi.apk`: 14.855.695 bayt; SHA-256 `5f420aac52293284e2cfefb26f4e923c5b06087f24de2238e27103f614d04be0`. PR head ve merge commit aynı Git tree SHA `7889fd520f7ea872c3243c0990708ad809451ab9`; teslim edilen APK merge edilen kaynak ağacından üretilmiştir.
+- Post-merge Actions #775: https://github.com/aries919-bot/Jarvis/actions/runs/45736185331 — birim test SUCCESS; APK assemble son kontrolde IN_PROGRESS, artefakt henüz yok.
+**KARAR:** E1-UI APK teslim edildi; source-tree eşleşmesi doğrulandı. Gerçek telefon/live piyasa API testi eksik; post-merge #775 artifact takibi sürüyor.
