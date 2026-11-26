@@ -145,7 +145,7 @@ Bu 13 dal kaydı, yukarıdaki tarihsel 31 dal raporuyla birleştirilmemelidir. �
 
 ### Arşiv gerekçesi (26.11.2026, Cem'in Termux karşılaştırması, kariyer-modulu tabanlı)
 
-- **cline/K1:** 23 commit önde, 178 geride, 39 dosya. 34 dosya kariyer-modulu'nda YOK (8 workflow, 17 betik ve testi, 7 career/ veri dosyası, 3 doküman, kökte KARIYER_KAYNAK_DENETIMI.md), 5 dosya FARKLI (android.yml, .gitignore, FilmDizi.kt, MediaSourceBrowser.kt, docs/HARITA.md), 0 dosya AYNI. PR #57 ve #58 bu dalı taban alıyor.
+- **cline/K1:** 23 commit önde, 178 geride, 39 dosya. 34 dosya kariyer-modulu'nda YOK (8 workflow, 15 betik ve testi, 7 career/ veri dosyası, 3 doküman, kökte KARIYER_KAYNAK_DENETIMI.md), 5 dosya FARKLI (android.yml, .gitignore, FilmDizi.kt, MediaSourceBrowser.kt, docs/HARITA.md), 0 dosya AYNI. PR #57 ve #58 bu dalı taban alıyor.
 - **durum:** 506 commit önde, 178 geride, 77 dosya. 63 YOK, 6 FARKLI, 8 AYNI. YOK olanlar: gorevler/ altında yaklaşık 50 görev/QA notu, qa-reports/c1/ altında 7 JSON, h1-schema.yml, scripts/h1_schema.py, scripts/test_h1_schema.py, career/ altında 3 JSON. FARKLI: android.yml, AGENTS.md, DURUM.md, FilmDizi.kt, MediaSourceBrowser.kt ve bir docs dosyası.
 - **Karar:** ikisi de silinirse bu içerik geri gelmez; uygulamanın derlenmesini etkilemedikleri için arşiv olarak korunur. İleride ayrı yedekleme (zip/ayrı repo) sonrası silinebilir, o zaman yeni karar gerekir.
 - `FilmDizi.kt` ve `MediaSourceBrowser.kt` için hangisinin güncel olduğu doğrulanmadı.
