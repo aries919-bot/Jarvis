@@ -156,6 +156,129 @@
         "KPSS'siz"
       ],
       "pdfUrlPremeasured": true
+    },
+    {
+      "id": "marmara-ogretim-gorevlisi-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Marmara Üniversitesi",
+      "category": "Kamu",
+      "url": "https://pdb.marmara.edu.tr/notice/universitemiz-ogretim-gorevlisi-alim-ilani-1",
+      "pdfUrl": "https://pdb.marmara.edu.tr/dosya/pdb/ilanlar/24.11.2026%20%C3%96%C4%9Fr.G%C3%B6r.%20%C4%B0lan%C4%B1.pdf",
+      "pdfUrlPremeasured": true,
+      "itemId": "marmara-2026-11-24-ogretim-gorevlisi",
+      "title": "Marmara Üniversitesi öğretim görevlisi alım ilanı",
+      "contentType": "job",
+      "expectedText": [
+        "Üniversitemiz Öğretim Görevlisi Alım İlanı",
+        "24 Kasım 2026"
+      ],
+      "publicationMode": "labelled",
+      "deadlineContext": "Son Başvuru Tarihi",
+      "howToApply": {
+        "method": "Marmara Üniversitesi Personel Daire Başkanlığı duyurusundaki elektronik başvuru bağlantısı.",
+        "url": "https://basvuru.marmara.edu.tr/personel",
+        "instructions": "Başvurular 24.11.2026–08.12.2026 arasında. Okuyucu başvuru sistemine giriş yapmaz; yalnız resmî bağlantıyı gösterir."
+      },
+      "conditions": [
+        "Öğretim görevlisi kadrosudur; kadroya özgü bölüm, ALES ve yabancı dil şartları resmî ilan PDF ekindedir.",
+        "Resmî sayfada yayın tarihi 24.11.2026, son başvuru tarihi 08.12.2026 olarak belirtilmiştir."
+      ],
+      "tags": [
+        "KPSS'siz",
+        "ALES"
+      ]
+    },
+    {
+      "id": "comu-akademik-ilanlar-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Çanakkale Onsekiz Mart Üniversitesi",
+      "category": "Kamu",
+      "url": "https://ilan.comu.edu.tr/",
+      "itemId": "comu-2026-11-24-aktif-akademik-ilanlar",
+      "title": "ÇOMÜ akademik personel alımı — iki aktif duyuru",
+      "contentType": "job",
+      "expectedText": [
+        "Çanakkale Onsekiz Mart Üniversitesi İlan Bilgi Sistemine Hoşgeldiniz",
+        "24.11.2026 tarihli Resmi Gazete'de yayımlanan Öğretim Üyesi İlanı",
+        "24.11.2026 tarihli Resmi Gazete'de yayımlanan Öğretim Eleman İlanı"
+      ],
+      "publicationMode": "comu-gazette",
+      "deadlineContext": "Başvuru Tarihileri",
+      "howToApply": {
+        "method": "ÇOMÜ İlan Bilgi Sistemi üzerinden çevrim içi başvuru.",
+        "url": "https://ilan.comu.edu.tr/",
+        "instructions": "Başvuru ekranında hesap/oturum gerekir. Okuyucu kayıt veya oturum açmaz; yalnız herkese açık duyuru başlıkları ve tarihleri okur."
+      },
+      "conditions": [
+        "Kamuya açık listede 24.11.2026 tarihli iki aktif akademik duyuru bulunur: öğretim üyesi ve öğretim elemanı.",
+        "Kadro, bölüm, ALES ve yabancı dil özel şartları ilgili resmî ilan detayında gösterilir."
+      ],
+      "tags": [
+        "KPSS'siz",
+        "ALES"
+      ]
+    },
+    {
+      "id": "zafer-uzman-personel-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Zafer Kalkınma Ajansı",
+      "category": "Kamu",
+      "url": "https://www.zafer.gov.tr/duyurular/227",
+      "itemId": "zafer-2026-11-03-2-uzman-personel",
+      "title": "Zafer Kalkınma Ajansı — 2 uzman personel alımı",
+      "contentType": "job",
+      "expectedText": [
+        "Zafer Kalkınma Ajansı Personel Alım İlanı (Kasım 2026)",
+        "2 (iki) Uzman Personel",
+        "TR33 Bölgesinin"
+      ],
+      "publicationMode": "zafer-heading",
+      "deadlineContext": "Son Tarih",
+      "howToApply": {
+        "method": "Kariyer Kapısı İşe Alım Platformu üzerinden elektronik başvuru.",
+        "url": "https://kariyerkapisi.gov.tr",
+        "instructions": "Başvurular 25.11.2026–14.12.2026 arasında; okuyucu Kariyer Kapısı'na giriş yapmaz."
+      },
+      "conditions": [
+        "TR33 Bölgesi için 2 uzman personel alınacağı resmî duyuruda belirtilir.",
+        "Ajans merkezi Kütahya'dır; görevlendirme Afyonkarahisar, Kütahya, Manisa veya Uşak'ta olabilir.",
+        "Başvuru şartlarının ayrıntısı resmî tam ilan metnindedir."
+      ],
+      "tags": []
+    },
+    {
+      "id": "bilecik-ogretim-elemani-2026",
+      "reader": "official",
+      "format": "html",
+      "institution": "Bilecik Şeyh Edebali Üniversitesi",
+      "category": "Kamu",
+      "url": "https://www.bilecik.edu.tr/personel/Icerik/19-11-2026-tarihli-ve-33435-sayili-resmi-gazete-de-yayimlanan-ogretim-uyesi-disindaki-ogretim-elemani-lani",
+      "pdfUrl": "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261119-4-13.pdf",
+      "pdfUrlPremeasured": true,
+      "itemId": "bilecik-2026-11-19-ogretim-elemani",
+      "title": "Bilecik Şeyh Edebali Üniversitesi öğretim elemanı alımı",
+      "contentType": "job",
+      "expectedText": [
+        "19.11.2026 tarihli ve 33435 sayılı Resmi Gazete'de yayımlanan Öğretim Üyesi Dışındaki Öğretim Elemanı İlanı"
+      ],
+      "publicationMode": "bilecik-page",
+      "deadlineContext": "başvuru",
+      "howToApply": {
+        "method": "Bilecik Şeyh Edebali Üniversitesi resmî başvuru sistemi üzerinden.",
+        "url": "https://basvuru.bilecik.edu.tr/",
+        "instructions": "Başvuru üniversitenin resmî sistemi üzerinden yapılır; okuyucu başvuru sistemine giriş yapmaz."
+      },
+      "conditions": [
+        "Öğretim üyesi dışındaki öğretim elemanı kadrolarıdır.",
+        "Kadro, ALES ve yabancı dil asgari koşulları resmî Resmî Gazete ilanında ve üniversitenin puan tablosunda belirtilir."
+      ],
+      "tags": [
+        "KPSS'siz",
+        "ALES"
+      ]
     }
   ]
 }

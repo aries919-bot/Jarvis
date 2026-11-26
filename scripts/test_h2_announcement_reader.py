@@ -40,6 +40,39 @@ class H2ReaderTests(unittest.TestCase):
         )
         self.assertEqual("2025-10-13",h2.application_deadline(text,"başvurular"))
 
+    def test_new_official_publication_date_modes_are_source_specific(self):
+        self.assertEqual("2026-11-24", h2.explicit_published_at(
+            "Yayın Tarihi: 24 Kasım 2026", mode="labelled"))
+        self.assertEqual("2026-11-24", h2.explicit_published_at(
+            "24.11.2026 tarihli Resmi Gazete'de yayımlanan Öğretim Üyesi İlanı",
+            mode="comu-gazette"))
+        self.assertEqual("2026-11-03", h2.explicit_published_at(
+            "Zafer Kalkınma Ajansı Personel Alım İlanı (Kasım 2026) 3 Kasım 2026",
+            mode="zafer-heading"))
+        self.assertEqual("2026-11-19", h2.explicit_published_at(
+            "19.11.2026 tarihli ve 33435 sayılı Resmi Gazete'de yayımlanan duyuru",
+            mode="bilecik-page"))
+
+    def test_new_official_explicit_single_deadline_labels(self):
+        self.assertEqual("2026-12-08", h2.application_deadline(
+            "İLK BAŞVURU TARİHİ: 24.11.2026 SON BAŞVURU TARİHİ: 08.12.2026",
+            "Son Başvuru Tarihi"))
+        self.assertEqual("2026-12-14", h2.application_deadline(
+            "Son Tarih: 14 Aralık 2026", "Son Tarih"))
+
+    def test_comu_range_with_start_and_end_times_extracts_last_date(self):
+        self.assertEqual("2026-12-08", h2.application_deadline(
+            "Başvuru Tarihileri: 24.11.2026 00:01 - 08.12.2026 23:59",
+            "Başvuru Tarihileri"))
+
+    def test_bilecik_official_page_may_link_only_to_official_gazette_host(self):
+        self.assertTrue(h2.same_official_host(
+            "https://www.bilecik.edu.tr/personel",
+            "https://www.resmigazete.gov.tr/ilanlar/eskiilanlar/2026/11/20261119-4-13.pdf"))
+        self.assertFalse(h2.same_official_host(
+            "https://www.bilecik.edu.tr/personel",
+            "https://evil.example/20261119-4-13.pdf"))
+
     def test_botas_robots_redirect_to_official_apex_is_followed(self):
         calls=[]
         def requester(url,limit):
@@ -437,16 +470,17 @@ class H2ReaderTests(unittest.TestCase):
         found_path = h2.urllib.parse.unquote(h2.urllib.parse.urlsplit(found).path)
         self.assertEqual(expected_path.casefold(),found_path.casefold())
 
-    def test_config_includes_only_k1b_measured_reader_sources(self):
+    def test_config_includes_only_measured_reader_sources(self):
         cfg = json.loads(h2.CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(10,len(cfg["sources"]))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
         self.assertTrue({"atk-personel-2026-2","anadolu-sozlesmeli-2026","duzce-ogretim-elemani-2026","tarsus-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
+        self.assertTrue({"marmara-ogretim-gorevlisi-2026","comu-akademik-ilanlar-2026","zafer-uzman-personel-2026","bilecik-ogretim-elemani-2026"}.issubset({s["id"] for s in cfg["sources"]}))
 
     def test_config_is_limited_to_measured_official_sources(self):
         cfg=json.loads(h2.CONFIG.read_text(encoding="utf-8"))
         self.assertEqual({"yhgm","botas","official"},{s["reader"] for s in cfg["sources"]})
-        self.assertEqual(6,len(cfg["sources"]))
+        self.assertEqual(10,len(cfg["sources"]))
 
 
     def test_source_categories_match_h1_allowed_enum(self):

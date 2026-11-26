@@ -30,11 +30,11 @@ MAX_PDF_BYTES = 20 * 1024 * 1024
 MAX_ROBOTS_BYTES = 512 * 1024
 TIMEOUT_SECONDS = 15
 MAX_REDIRECTS = 3
-ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr", "atk.gov.tr", "www.atk.gov.tr", "anadolu.edu.tr", "cdn.duzce.edu.tr", "personel.tarsus.edu.tr"}
+ALLOWED_HOSTS = {"yhgm.saglik.gov.tr", "www.botas.gov.tr", "botas.gov.tr", "atk.gov.tr", "www.atk.gov.tr", "anadolu.edu.tr", "cdn.duzce.edu.tr", "personel.tarsus.edu.tr", "pdb.marmara.edu.tr", "ilan.comu.edu.tr", "www.zafer.gov.tr", "www.bilecik.edu.tr", "www.resmigazete.gov.tr"}
 
 NUMERIC_DATE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 RANGE_DATE = re.compile(
-    r"(\d{1,2}[./-]\d{1,2}[./-]\d{4})\s*(?:-|–|—|−)\s*"
+    r"(\d{1,2}[./-]\d{1,2}[./-]\d{4})(?:\s+\d{1,2}:\d{2})?\s*(?:-|–|—|−)\s*"
     r"(\d{1,2}[./-]\d{1,2}[./-]\d{4})"
 )
 
@@ -157,7 +157,12 @@ def same_official_host(left: str, right: str) -> bool:
     b = (urllib.parse.urlsplit(right).hostname or "").lower()
     if a == b:
         return True
-    return {a, b}.issubset({"www.botas.gov.tr", "botas.gov.tr"}) or {a, b}.issubset({"atk.gov.tr", "www.atk.gov.tr"})
+    trusted_pairs = (
+        {"www.botas.gov.tr", "botas.gov.tr"},
+        {"atk.gov.tr", "www.atk.gov.tr"},
+        {"www.bilecik.edu.tr", "www.resmigazete.gov.tr"},
+    )
+    return any({a, b}.issubset(pair) for pair in trusted_pairs)
 
 
 def official_link_target(page: PageParser, base_url: str, expected_url: str) -> str | None:
@@ -333,12 +338,31 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
         match = re.search(r"DÜZCE ÜNİVERSİTESİ\s+(\d{1,2}[./-]\d{1,2}[./-]\d{4})\s+TARİHLİ",page_text,re.I)
         if match:
             return parse_date(match.group(1))
+    if mode == "comu-gazette":
+        match = re.search(r"(\d{1,2}[./-]\d{1,2}[./-]\d{4})\s+tarihli\s+Resm[iî]\s+Gazete",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "bilecik-page":
+        match = re.search(r"(\d{1,2}[./-]\d{1,2}[./-]\d{4})\s+tarihli\s+ve\s+33435\s+sayılı\s+Resm[iî]\s+Gazete",page_text,re.I)
+        if match:
+            return parse_date(match.group(1))
+    if mode == "zafer-heading":
+        match = re.search(
+            r"Zafer Kalkınma Ajansı Personel Alım İlanı \(Kasım 2026\)\s+(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})",
+            page_text,re.I,
+        )
+        if match:
+            return parse_date(match.group(1))
     if mode == "tarsus-gazette":
         match = re.search(r"İlanın Yayımlandığı Resmî Gazete Tarih ve Sayısı\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
         if match:
             return parse_date(match.group(1))
     # A named publication field is stronger evidence than a date in a title.
-    labelled = re.search(r"(?:Yayın Tarihi|Yayımlanma Tarihi|Tarih)\s*:\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})",page_text,re.I)
+    labelled = re.search(
+        r"(?:Yayın Tarihi|Yayımlanma Tarihi|Tarih)\s*[:：]\s*"
+        r"(\d{1,2}(?:[./-]\d{1,2}[./-]\d{4}|\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2}))",
+        page_text,re.I,
+    )
     if labelled:
         return parse_date(labelled.group(1))
     added = re.search(r"Eklenme Tarihi\s*:\s*(\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})",page_text,re.I)
@@ -353,6 +377,18 @@ def explicit_published_at(page_text: str, meta: dict[str,str] | None = None,
 
 def application_deadline(text: str, context: str) -> str | None:
     lowered_context = context.lower()
+    # Explicit single deadline labels are stronger than nearby publication/exam dates.
+    single_deadline = re.search(
+        r"(?:Son\s+Ba[sş]vuru\s+Tarihi|Son\s+Tarih|İlan\s+Bitiş\s+Tarihi|"
+        r"Başvuru\s+Bitiş\s+Tarihi)\s*[:：]?\s*"
+        r"(\d{1,2}[./-]\d{1,2}[./-]\d{4}|"
+        r"\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2})",
+        text,re.I,
+    )
+    if single_deadline:
+        parsed = parse_date(single_deadline.group(1))
+        if parsed:
+            return parsed
     # Numeric or Turkish month-name date ranges; never substitute publication/collection dates.
     for match in RANGE_DATE.finditer(text):
         start = max(0,match.start()-260)
