@@ -80,12 +80,20 @@ object Reminders {
         )
     }
 
-    private fun schedule(ctx: Context, item: Item) {
+    private fun canScheduleExactAlarms(ctx: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return am.canScheduleExactAlarms()
+    }
+
+    private fun schedule(ctx: Context, item: Item): Boolean {
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return false
         am.setAlarmClock(
             AlarmManager.AlarmClockInfo(item.time, openAppPending(ctx)),
             firePending(ctx, item.id, item.text)
         )
+        return true
     }
 
     fun add(ctx: Context, time: Long, text: String): Item {
@@ -93,9 +101,16 @@ object Reminders {
         var id = (System.currentTimeMillis() % 1000000000L).toInt()
         while (list.any { it.id == id }) id++
         val item = Item(id, time, text)
+        if (!canScheduleExactAlarms(ctx)) {
+            throw SecurityException("Android kesin alarm izni kapalı.")
+        }
         list.add(item)
         save(ctx, list)
-        schedule(ctx, item)
+        if (!schedule(ctx, item)) {
+            list.removeAll { it.id == item.id }
+            save(ctx, list)
+            throw SecurityException("Android kesin alarm izni kapalı.")
+        }
         return item
     }
 
@@ -188,7 +203,11 @@ object Reminders {
         val item = try {
             add(ctx, p.time, p.text)
         } catch (e: Exception) {
-            say("Hatırlatmayı kuramadım: " + (e.message ?: "bilinmeyen hata"))
+            if (e is SecurityException) {
+                say("Android kesin alarm izni kapalı. Aries'in hatırlatma kurabilmesi için uygulama ayarlarından Alarmlar ve hatırlatmalar iznini aç.")
+            } else {
+                say("Hatırlatmayı kuramadım: " + (e.message ?: "bilinmeyen hata"))
+            }
             return true
         }
         if (upcoming(ctx).none { it.id == item.id }) {
@@ -382,8 +401,7 @@ object Reminders {
             }
         }
 
-        val whenCal = Calendar.getInstance()
-        whenCal.timeInMillis = now.timeInMillis
+        val whenCal = now.clone() as Calendar
         if (addMinutes != null) {
             whenCal.add(Calendar.SECOND, Math.round(addMinutes * 60.0).toInt())
         } else {
@@ -401,8 +419,7 @@ object Reminders {
                 if (whenCal.timeInMillis <= now.timeInMillis) whenCal.add(Calendar.DAY_OF_YEAR, 7)
             } else if (whenCal.timeInMillis <= now.timeInMillis) {
                 // Saat geçtiyse: öğleden sonra ihtimali varsa 12 saat ileri al, yoksa yarına.
-                val alt = Calendar.getInstance()
-                alt.timeInMillis = whenCal.timeInMillis
+                val alt = whenCal.clone() as Calendar
                 alt.add(Calendar.HOUR_OF_DAY, 12)
                 if (!explicitPart && h < 12 && alt.timeInMillis > now.timeInMillis) {
                     whenCal.timeInMillis = alt.timeInMillis
