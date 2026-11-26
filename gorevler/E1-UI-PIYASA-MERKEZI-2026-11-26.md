@@ -38,3 +38,13 @@
 **KARAR:** PR #74 MERGED; test ve PR artefaktı PASS. Son kullanıcı APK'sı için post-merge #775 artefaktı ayrıca doğrulanacak.
 
 **SONRAKİ ADIM:** #772 sonucunu al; yeşil değilse hata logunun son bölümünü inceleyip tek kök nedeni düzelt.
+
+## Son APK teslim kaydı — 26.11.2026
+- PR #74 merge commit: `e40e2aa4e9d140c88546785ad5b3b89a99c9b7e4`.
+- PR exact-head `438bae8e5ed5fed0f44970c018b867d12279305d` ve merge commit aynı Git tree SHA'yı taşıyor: `7889fd520f7ea872c3243c0990708ad809451ab9`. Dolayısıyla PR #774 artefaktı, merge edilen kaynak ağacının aynısını derlemiştir.
+- PR #774 build/test/artifact upload SUCCESS: https://github.com/aries919-bot/Jarvis/actions/runs/45735775751.
+- Teslim APK: `Aries-1.23-Piyasa-Merkezi.apk`, 14,855,695 bayt; SHA-256 `5f420aac52293284e2cfefb26f4e923c5b06087f24de2238e27103f614d04be0`.
+- Artefakt ZIP #15078344143, 14,100,789 bayt; SHA-256 `98479f74649ac0cc63d9e8b03ff4fc315a76449e7374315fad60314ef05a1d10`.
+- APK DEX içinde `Piyasa Merkezi`, `FinanceActivity` ve `FinanceKeyStore` dizgileri bulundu; uygulama paket formatı doğrulandı.
+- Post-merge Actions #775 https://github.com/aries919-bot/Jarvis/actions/runs/45736185331: exact merge SHA üzerinde birim test SUCCESS; APK build adımı son kontrolde IN_PROGRESS, post-merge artifact henüz görünmüyor. Teslim edilen APK, aynı Git tree'den başarılı PR #774 koşusunda üretilmiştir.
+**KARAR:** APK teslim edildi; kaynak ağacı merge commit ile birebir aynı. Post-merge #775 artefaktı ayrı son koşu kanıtı olarak bekliyor. Gerçek telefon/live piyasa verisi denemesi yapılmadı.
