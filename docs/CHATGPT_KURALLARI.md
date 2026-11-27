@@ -1,0 +1,205 @@
+# ChatGPT Çalışma Kuralları (ARIES / Jarvis)
+
+Konum: `docs/CHATGPT_KURALLARI.md`
+
+## Bu dosya nasıl okunur
+
+Üç katman vardır:
+
+1. **Ana sütun** (proje talimatı, 1500 karakter): her konuşmada okunur, en yüksek önceliktir.
+2. **Bu dosya**: ana sütunun ayrıntısı (çalışma ve doğrulama disiplini). "devam et" denince sırayla okunur: `docs/TALIMAT.md` → `docs/CHATGPT_KURALLARI.md` → `docs/HARITA.md` → `docs/NOT_C1.md`.
+3. **ChatGPT genel talimatı**: Aries'ten bağımsız genel kalite kuralları.
+
+`docs/TALIMAT.md` projenin işletim kurallarını (roller, iş listesi, rapor, Aries test senaryoları) içerir. Bu dosya onu tekrar etmez, tamamlar.
+
+**Öncelik:** ana sütun > `docs/NOT_C1.md` (v3 FINAL) > bu dosya > `docs/TALIMAT.md`. Çelişkide daha katı ve güvenli kural uygulanır, çelişki Cem'e bildirilir. Not ile repo/kod çelişirse repo/kod kazanır.
+
+Amaç: ChatGPT kodu gerçekten okusun, kök nedeni kanıtla bulsun, en küçük düzeltmeyi test önce yaklaşımıyla yazsın, geliştirmede gerçekten araştırsın ve sonucu dürüstçe raporlasın. Bu kurallar disiplin sağlar, doğruluğun garantisi değildir. Her rapor çıktı ve GitHub kaydıyla doğrulanabilir olmalıdır.
+
+Bu kurallar belirli bir hataya değil, Aries'te karşılaşılabilecek her duruma uygulanır.
+
+---
+
+## 1. İlkeler
+
+- Cem, Claude ve ChatGPT eşit çalışır. Hiçbiri diğerinden onay beklemez; herkes kanıtla ilerler.
+- Kanıt, kimin söylediğinden önemlidir. Çelişkide komut çıktısı ve kaynak kod kazanır.
+- Önce incele, sonra uygula. İnceleme bitmeden dosya değiştirme.
+- Türkçe, kısa, net yaz. Anlatım yerine satır numarası ve kanıt ver.
+- Emin değilsen sor. Tahminle ilerleme.
+
+## 2. Hangi durumda ne yapılır
+
+| Durum | Yap |
+|---|---|
+| Hata / bug | §5 → §6 → §7 → §8 |
+| Yeni özellik, iyileştirme, kütüphane/servis seçimi | §9 (araştırma) → sonra §6–§8 |
+| İstek belirsiz | Tek net soru sor; cevap gelene kadar uygulama |
+| Başka bir yapay zekânın raporu | §11 |
+| Test çalıştırılamıyor | "ÇALIŞTIRILMADI" + nedeni; başarılı raporlama yok |
+| Commit, PR, merge, deploy, Actions, APK, Codespace gerekiyor | Dur, Cem'den onay iste |
+| Dosya veya bağlantı açılamıyor | "OKUYAMADIM"; tahminle sürdürme |
+| "devam et" | §3 |
+
+## 3. "devam et" protokolü
+
+1. Sırayla oku: `docs/TALIMAT.md`, bu dosya, `docs/HARITA.md`, `docs/NOT_C1.md`. Okuduğun dosyaları listele; açamadığını açıkça yaz.
+2. İlk satır TALIMAT §1 biçiminde: `KALDIĞIM YER: <iş-id>, <son tamamlanan adım>, <şimdi yapacağım>`.
+3. Notlar ile repo (PR, dal, commit, CI) çelişirse repo gerçeği kazanır; çelişkiyi bildir.
+4. Biten işi yeniden yapma. Açık işleri ve sonraki tek adımı yaz.
+5. Not güncellemesini taslak olarak öner; Cem onayı olmadan commit yok.
+
+## 4. Kanıt etiketleri
+
+| Etiket | Ne zaman |
+|---|---|
+| DOĞRULANDI | Komut çıktısı, sayı veya açılmış kaynak satırı var |
+| ÇALIŞTIRILMADI | Komutu çalıştırmadın |
+| DOĞRULANMADI | Kaynağı açıp kontrol etmedin |
+| OKUYAMADIM | Dosyayı veya bağlantıyı açamadın |
+| HİPOTEZ | Kök neden çıktısız; mantıksal çıkarım |
+
+Yasak ifadeler: "muhtemelen geçer", "sorunsuz olmalı", "bitti" (çıktısız), "testler geçti" (çalıştırmadan).
+
+## 5. Okuma ve kök neden
+
+**Okuma protokolü**
+
+1. Dosyayı, çağıranlarını ve testini aç.
+2. Her bulgu için: dosya yolu, dal, commit SHA, satır numarası ve satırın kendisi (aynen).
+3. Yalnızca bir satır aralığı gördüysen "kısmi okuma" yaz ve o okumayla karar verme.
+4. Karar öncesi dal HEAD SHA'sını yeniden doğrula. Değiştiyse yeniden oku.
+5. Kod aramasında sonuç çıkmadıysa "aramada bulunamadı" yaz; "yok" yazma. Arama dinamik veri, string birleştirme, yansıma ve indeks gecikmesini kapsamaz.
+6. Özet tablodaki yorum okunmuş satır değildir. Yorum ile satırı ayrı göster.
+7. Bağlantılara takip parametresi (utm_*) ekleme. Commit SHA'lı düz GitHub permalink kullan.
+
+**Kök neden**
+
+- **Belirti:** ne görünüyor. **Kök neden:** hangi satır veya koşul bunu üretiyor. İkisini ayrı yaz.
+- Karar sırası olan kodda (kapı, filtre, öncelik) hangi kontrolün önce çalıştığını satır numarasıyla çıkar. Düzeltmenin o kapıdan önce etki ettiğini göster.
+- Çalıştırılmış çıktı yoksa kök neden HİPOTEZ'dir ve KARAR bölümünde öyle yazılır.
+- Tek örnekten genelleme yapma. Aynı kök nedeni paylaşan başka girdileri (başka kaynak, başka yol, başka veri) ara.
+
+## 6. Test önce
+
+1. Hatayı üreten testi yaz. Mümkünse gerçek, kayıtlı örnekle.
+2. Mevcut kodda kırmızı olduğunu doğrula ve çıktıyı ekle. Kırmızı görmediysen test hatayı yakalamıyor olabilir.
+3. En küçük düzeltmeyi uygula.
+4. İlgili testleri, sonra tüm paketi çalıştır.
+5. Hata testi kalıcıdır. Silme, gevşetme, atlama (ignore) yok.
+
+Altyapı (ChatGPT envanterine göre, DOĞRULANMADI): Android JUnit 4.13.2, komut `./gradlew :app:testDebugUnitTest`. Worker: `node --test tests/`.
+
+Çalıştıramıyorsan "ÇALIŞTIRILMADI" yaz; başarılıymış gibi raporlama.
+
+**Aries'e özel zorunlu senaryolar** `docs/TALIMAT.md` §3'tedir: bozuk/yok internet, timeout, 4xx/5xx, boş/bozuk yanıt, eski veri, yeniden başlatma, tarih/saat sınırı, mükerrer kayıt. Emülatörün doğrulayamadığı şeyleri (mikrofon, bildirim/alarm, canlı API, gerçek oynatma, MIUI pil kısıtı) `TELEFONDA DENENMELİ` listesine yaz.
+
+**Sınır testi zorunlu.** Her kural için pozitif, negatif ve sınır durumu test et (ör. eşleşen yol, sonda `/`, benzer ama farklı yol, büyük harf, başka kaynak, bozuk girdi).
+
+## 7. En küçük düzeltme
+
+- Mevcut mekanizmayı kullan. Yeni tür, ikinci fonksiyon, kopya fonksiyon, refactor, boş `catch` yok.
+- Kuralı en dar kapsama bağla (kaynak + koşul). Koşulsuz genel kural gerçek veriyi eler.
+- Regex'i her çağrıda derleme; bir kez derle ve ankrajla.
+- Harf büyüklüğü için `Locale.ROOT` kullan. Türkçe İ/ı tuzağını testle.
+- Hata yönetiminde mevcut davranışı koru. Sessiz yutma gerekiyorsa testle kilitle.
+- İlgisiz dosya, biçim değişikliği, bağımlılık ekleme yok.
+- Ortak fonksiyonu değiştirirsen tüm çağıranları oku ve etkisini yaz.
+
+## 8. Hasım denetimi
+
+Diff'i bu kodu kırmak isteyen biri gibi oku:
+
+- null, boş string, bozuk girdi (ör. istisna fırlatan URL ayrıştırma)
+- saat dilimi ve tarih sınırları
+- İ/ı ve büyük/küçük harf
+- sınır değerleri, sondaki ayraçlar
+- çift veya eski kayıt
+- ağ hatası, kota, zaman aşımı
+- ortak fonksiyonun tüm çağıranları
+- **gerçek veriyi yanlış eleme** (ör. "Rehber Öğretmen" gibi hem ilan hem haber olabilen ifadeler)
+
+Her teslimde en az 3 somut risk ve her biri için kontrol yaz.
+
+## 9. Geliştirme ve araştırma
+
+Ne zaman: yeni özellik, iyileştirme, kütüphane veya servis seçimi, "nasıl daha iyi olur" soruları.
+
+1. Hedefi ve ölçütü tek cümleyle yaz (kimin faydası, nasıl ölçülür).
+2. Mevcut kodu ve `docs/HARITA.md` dosyasını oku: zaten ne var, hangi mekanizma kullanılabilir.
+3. Gerçekten araştır (web arama, GitHub). En az 2-3 alternatif bul. Kaynak önceliği: resmî doküman > kaynak kod, repo ve issue'lar > sürüm notları / changelog > güvenilir teknik yazılar > forum. Forum veya blog tek başına yeterli değil.
+4. Her kaynak için bağlantı ve yayın/güncelleme tarihi yaz. Eski veya tarihsiz bilgiyi işaretle. Sürüm, limit, fiyat, lisans gibi değişkenleri güncel kaynaktan doğrula.
+5. Karşılaştır: fayda, maliyet (0 TL şart; ücretsiz kota ve limitleri doğrula), bakım yükü, Android/Worker uyumu, lisans, risk, geri alınabilirlik, test edilebilirlik.
+6. Veri kaynağı veya kazıma önerirken `robots.txt` ve kullanım şartlarını kontrol et. İŞKUR ve Kariyer Kapısı kazınmaz; LinkedIn, Indeed ve oturum gerektiren siteler de kazınmaz. Giriş veya CAPTCHA çıkarsa dur, aşma. Ücretli proxy, scraping hizmeti veya API önerme.
+7. "En iyi" iddiası ölçüt ve kaynakla desteklenir. Seçilmeyenlerin neden elendiğini yaz.
+8. Küçük, geri alınabilir ilk adımı seç; §6'daki test önce yaklaşımıyla uygula. Büyük değişikliği parçala.
+9. Kaynak bulamadıysan "bulunamadı" yaz. Hafızadan "en iyi uygulama" uydurma.
+
+Rapor formatı:
+
+```
+ARAŞTIRMA:     soru ve ölçüt
+KAYNAK:        bağlantı + tarih + ne dediği (kısa)
+KARŞILAŞTIRMA: seçenek | fayda | maliyet | risk
+ÖNERİ:         seçim + gerekçe
+EKSİK:         bulunamayan / doğrulanmayan
+SONRAKİ:       ilk küçük adım
+```
+
+## 10. İş & Kariyer alan kuralları
+
+- Tarih uydurma yok. `publishedAt` yoksa `null`. Başlıktaki tarih son başvuru tarihi değildir.
+- Kamu ayrı sayılır (eşik: 10 kaynak / 100 ilan).
+- İŞKUR ve Kariyer Kapısı kazınmaz.
+- Haber ile ilan ayrımını başlıktaki kelimeyle değil; kaynak, URL yapısı ve sayfa türüyle yap.
+- Sınıflandırıcıdaki karar sırasını bozma. Önce mevcut kapıların neden çalışmadığını bul.
+
+## 11. Başkasının raporunu doğrulama
+
+- Claude'un, kendi önceki raporunun ve başka bir yapay zekânın raporu dahil hiçbir rapor kanıt sayılmaz.
+- Raporda geçen dosya, satır, SHA ve sayıları kaynaktan veya GitHub'dan aç.
+- Çelişki bulursan ikisini yan yana yaz; çıktısı olan kazanır.
+- "Onay beklemez" demek "kanıtsız kabul eder" demek değildir.
+
+## 12. Yetki ve güvenlik
+
+- Cem onayı olmadan commit, PR, merge, deploy, Actions, APK derleme, Codespace yok (1 Aralık 2026'ya kadar).
+- Yeni bir CI koşusu tetikleyebilecek her işlemden önce ayrıca izin iste.
+- Gizli değer (token, anahtar, şifre) yazma, loglama, paylaşma.
+- Bütçe 0 TL. Ücretli servis veya kota aşımı yok.
+- `docs/TALIMAT.md` içindeki Actions/CI/APK adımları (QA koşusu, "yeşil CI" kanıtı) 1 Aralık 2026'ya kadar Cem onayı olmadan çalıştırılmaz. O zamana kadar bu kanıt için ÇALIŞTIRILMADI yaz.
+- main'e doğrudan yazma; her iş ayrı dal ve PR. Yamayı yazan kendi PR'ını onaylamaz (TALIMAT §2).
+- Dosya değiştirdiysen dosya adlarını ve diff özetini bildir.
+
+## 13. Hata yanıt formatı
+
+```
+KARAR:   tek cümle sonuç + (varsa) HİPOTEZ etiketi
+KANIT:   dosya:satır + satırın kendisi, komut çıktısı, sayı
+EKSİK:   ÇALIŞTIRILMADI / DOĞRULANMADI / OKUYAMADIM listesi
+SONRAKİ: tek somut adım (onay gerekiyorsa açıkça yaz)
+TELEFONDA DENENECEK: Android/UI/ses/bildirim değişikliği varsa (TALIMAT §7)
+```
+
+## 14. Örnek vaka (yalnızca örnek, kural değil)
+
+Eleman.net rehber makalesi iş ilanı sayılıyordu. Durum: öneri aşaması, hiçbir şey uygulanmadı, test ÇALIŞTIRILMADI.
+
+- **Belirti:** `eleman.net/is-rehberi/...` URL'li rehber makalesi `JOB_LISTING` / "Yüksek" güven dönüyor.
+- **Kök neden (ChatGPT envanteri, DOĞRULANMADI):** haber kapısı (`isNewsDiscoverySource`) yalnızca dört alan adını tanıyor; başlıktaki "Personel Alımı" ilan dili sayılıyor.
+- **En küçük düzeltme (taslak):** aynı kapıya, yalnızca ilgili alan adı için yol kontrolü. Alan adından bağımsız genel yol kuralı değil.
+- **Dersler:** mevcut mekanizmayı kullan (§7), kuralı dar tut, tüm çağıranları oku (§8), gerçek ilan URL'siyle negatif test yaz (§6).
+
+## 15. Teslim öncesi kontrol listesi
+
+- [ ] Bulgularda dosya:satır ve satırın kendisi var
+- [ ] Kök neden ile belirti ayrı; çıktısızsa HİPOTEZ
+- [ ] Hata testi önce yazıldı ve kırmızı doğrulandı (veya ÇALIŞTIRILMADI yazıldı)
+- [ ] Düzeltme en küçük; yeni tür, kopya, refactor, boş catch yok
+- [ ] Kural dar kapsamlı (kaynak/koşula bağlı)
+- [ ] Tüm çağıranlar okundu
+- [ ] En az 3 risk + kontrol yazıldı
+- [ ] Geliştirmede kaynak + tarih + alternatif karşılaştırması var
+- [ ] `docs/TALIMAT.md` ile çelişki yok (varsa Cem'e bildirildi)
+- [ ] Gizli değer yok; onaysız commit/PR/Actions yok
+- [ ] KARAR / KANIT / EKSİK / SONRAKİ formatı kullanıldı
