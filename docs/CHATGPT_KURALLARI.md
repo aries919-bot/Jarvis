@@ -277,14 +277,12 @@ K6 Hakem:  ONAYLANDI | SORUN VAR | BEKLİYOR (yalnız Q2)
 
 Kanıt satırı olmayan GEÇTİ bir ihlaldir (S2). Bir kapı KALDI ise teslim yoktur: düzelt, yeniden çalıştır. Q2'de K6 BEKLİYOR ise rapor "ön taslak" olarak işaretlenir ve merge önerilmez.
 
-
 ## 17. Sık görülen hatalar (hakem turlarından)
 
-1. Özet/KARAR satırında "doğrulandı" yok. Statik okuma ("kod üzerinden doğrulandı" dahil) HİPOTEZ'dir (§4 yasak listesine ekle).
-2. K1–K5 GEÇTİ'nin kanıtı liste veya alıntıdır. "İncelendi" kanıt değildir. K başlıkları §16'daki adlarla yazılır.
-3. ÖZ-TARAMA'da "düzeltildi" dediğin ihlali raporda yeniden tara. Hâlâ duruyorsa yazma.
+1. Çıktısız davranış iddiasında KARAR'da DOĞRULANDI yazma; statik çıkarımı HİPOTEZ olarak belirt.
+2. Yalnız o QA seviyesinde çalışan kapıların kanıtını, §16'daki kendi GEÇTİ koşuluna göre göster. (Q0'da yalnız K1 ve K5.)
+3. ÖZ-TARAMA'da "düzeltildi" dediğin ihlali raporda yeniden tara. Hâlâ duruyorsa 'düzeltildi' deme; ihlali ve giderilemediğini raporla.
 4. Ürün/davranış kararı (eşik, geçmiş saat politikası, kullanıcıya görünen mesaj metni) Cem'indir. 2–3 seçenekle sor, cevap gelmeden kesinleştirme. Varsayım gerekiyorsa "ÖNERİ" yaz.
 5. Test taslağı teslim öncesi kontrol: (a) kullanılan yardımcı dosyada var mı, yoksa tanımı verildi mi; (b) imza ve türler tutuyor mu; (c) her testte assertion var, gövdesi yorum olan test yok; (d) mevcut testi yineliyor mu; (e) fixture veya saat dilimi değişirse mevcut testler kırılıyor mu, elle izle; (f) hangi test kırmızı, hangisi yeşil olur, tek tek yaz (HİPOTEZ).
-6. Test önermeden önce `app/build.gradle.kts` oku. Telefon, emülatör veya Actions isteyen test önerme (1 Aralık'a kadar, 0 TL). O davranışı TELEFONDA DENENECEK'e yaz.
-7. S5 kapsamı: "N madde / nokta / test" demek de N öğe ister.
-8. Testi yazılmayan kuralı EKSİK'te adıyla yaz.
+6. Test önermeden önce `app/build.gradle.kts` oku. Telefon, emülatör veya Actions isteyen test önerme (1 Aralık'a kadar, 0 TL). O davranışı TELEFONDA DENENECEK'e yaz. Worker test komutunu repodan oku (package.json/tests/); app/build.gradle.kts yalnız Android'i kapsar, Worker için varsayma.
+7. Testi yazılmayan kuralı EKSİK'te adıyla yaz.
