@@ -281,7 +281,7 @@ Kanıt satırı olmayan GEÇTİ bir ihlaldir (S2). Bir kapı KALDI ise teslim yo
 
 1. Çıktısız davranış iddiasında KARAR'da DOĞRULANDI yazma; statik çıkarımı HİPOTEZ olarak belirt.
 2. Yalnız o QA seviyesinde çalışan kapıların kanıtını, §16'daki kendi GEÇTİ koşuluna göre göster. (Q0'da yalnız K1 ve K5.) "İncelendi" kanıt değildir. K başlıkları §16'daki adlarla yazılır.
-3. ÖZ-TARAMA'da "düzeltildi" dediğin ihlali raporda yeniden tara. Hâlâ duruyorsa 'düzeltildi' deme; ihlali ve giderilemediğini raporla.
+3. ÖZ-TARAMA'da "düzeltildi" dediğin ihlali raporda yeniden tara. Hâlâ duruyorsa "düzeltildi" deme; ihlali ve giderilemediğini raporla.
 4. Ürün/davranış kararı (eşik, geçmiş saat politikası, kullanıcıya görünen mesaj metni) Cem'indir. 2–3 seçenekle sor, cevap gelmeden kesinleştirme. Varsayım gerekiyorsa "ÖNERİ" yaz.
 5. Test taslağı teslim öncesi kontrol: (a) kullanılan yardımcı dosyada var mı, yoksa tanımı verildi mi; (b) imza ve türler tutuyor mu; (c) her testte assertion var, gövdesi yorum olan test yok; (d) mevcut testi yineliyor mu; (e) fixture veya saat dilimi değişirse mevcut testler kırılıyor mu, elle izle; (f) hangi test kırmızı, hangisi yeşil olur, tek tek yaz (HİPOTEZ).
 6. Test önermeden önce `app/build.gradle.kts` oku. Telefon, emülatör veya Actions isteyen test önerme (1 Aralık'a kadar, 0 TL). O davranışı TELEFONDA DENENECEK'e yaz. Worker test komutunu repodan oku (package.json/tests/); app/build.gradle.kts yalnız Android'i kapsar, Worker için varsayma.
