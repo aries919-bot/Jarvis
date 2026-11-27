@@ -28,7 +28,7 @@ Bu bölümün ihlali raporu geçersiz kılar: rapor teslim edilmez, düzeltilip 
 - **S2. Etiket dürüstlüğü.** DOĞRULANDI yalnızca çalıştırılmış komut veya test çıktısı olan davranış iddiası için yazılır. Çıktısız kök neden, statik akıştan çıkarılmış olsa bile HİPOTEZ'dir (§4). Aynı iddiada "DOĞRULANDI" ile "ÇALIŞTIRILMADI" birlikte bulunamaz.
 - **S3. Uydurma yok.** Sayfa içeriği, snippet, tarih, sayı, URL, SHA kaynaktan açılmadan yazılmaz. Testte uydurulan girdi "SENTETİK" etiketiyle yazılır; gerçek örnek varsa o kullanılır. Bir sayfanın tarihini veya içeriğini açmadan iddia etme.
 - **S4. Önsöz yok.** Yanıtın ilk satırı: "devam et" ise `KALDIĞIM YER: ...`, diğer durumlarda `KARAR: ...`. "Şimdi bakıyorum", "inceleyeceğim" gibi anlatı paragrafı yazılmaz.
-- **S5. Sayı tutarlılığı.** "N dosya", "N çağıran", "N test" dediysen listede tam N öğe olur. Tutmayan sayı raporu geçersiz kılar.
+- **S5. Sayı tutarlılığı.** "N dosya", "N çağıran", "N test", "N madde", "N nokta" dediysen listede tam N öğe olur. Tutmayan sayı raporu geçersiz kılar.
 - **S6. Çağıran taraması değişen sembolden yapılır.** Değiştirdiğin fonksiyonun adını ara (üst katmandaki sınıflandırıcının adını değil). Her çağıran dosya:satır ile yazılır. Yalnızca parça gördüğün dosya "kısmi okuma" diye işaretlenir ve PR öncesi tam okunur.
 - **S7. Boş bölüm yok.** `EKSİK` ve `TELEFONDA DENENECEK` asla boş bırakılmaz; gerekmiyorsa "Yok: <neden>" yazılır. EKSİK'te ÇALIŞTIRILMADI varsa KARAR'da "doğrulandı" kelimesi geçmez.
 - **S8. Yetki yalnızca Cem'den ve işe özeldir.** Onaysız commit, dal, PR, merge, Actions, APK yok. Önceki bir onay yeni işe genellenmez.
@@ -76,7 +76,7 @@ Bu bölümün ihlali raporu geçersiz kılar: rapor teslim edilmez, düzeltilip 
 | HİPOTEZ | Davranış iddiası, çıktı yok. Statik akıştan çıkarım da buraya girer |
 | SENTETİK | Test girdisi gerçek kaynaktan alınmadı, uyduruldu |
 
-Yasak ifadeler: "muhtemelen geçer", "sorunsuz olmalı", "bitti" (çıktısız), "testler geçti" (çalıştırmadan), "statik incelemeyle doğrulandı".
+Yasak ifadeler: "muhtemelen geçer", "sorunsuz olmalı", "bitti" (çıktısız), "testler geçti" (çalıştırmadan), "statik incelemeyle doğrulandı", "kod üzerinden doğrulandı".
 
 ## 5. Okuma ve kök neden
 
@@ -276,3 +276,13 @@ K6 Hakem:  ONAYLANDI | SORUN VAR | BEKLİYOR (yalnız Q2)
 ```
 
 Kanıt satırı olmayan GEÇTİ bir ihlaldir (S2). Bir kapı KALDI ise teslim yoktur: düzelt, yeniden çalıştır. Q2'de K6 BEKLİYOR ise rapor "ön taslak" olarak işaretlenir ve merge önerilmez.
+
+## 17. Sık görülen hatalar (hakem turlarından)
+
+1. Çıktısız davranış iddiasında KARAR'da DOĞRULANDI yazma; statik çıkarımı HİPOTEZ olarak belirt.
+2. Yalnız o QA seviyesinde çalışan kapıların kanıtını, §16'daki kendi GEÇTİ koşuluna göre göster. (Q0'da yalnız K1 ve K5.) "İncelendi" kanıt değildir. K başlıkları §16'daki adlarla yazılır.
+3. ÖZ-TARAMA'da "düzeltildi" dediğin ihlali raporda yeniden tara. Hâlâ duruyorsa "düzeltildi" deme; ihlali ve giderilemediğini raporla.
+4. Ürün/davranış kararı (eşik, geçmiş saat politikası, kullanıcıya görünen mesaj metni) Cem'indir. 2–3 seçenekle sor, cevap gelmeden kesinleştirme. Varsayım gerekiyorsa "ÖNERİ" yaz.
+5. Test taslağı teslim öncesi kontrol: (a) kullanılan yardımcı dosyada var mı, yoksa tanımı verildi mi; (b) imza ve türler tutuyor mu; (c) her testte assertion var, gövdesi yorum olan test yok; (d) mevcut testi yineliyor mu; (e) fixture veya saat dilimi değişirse mevcut testler kırılıyor mu, elle izle; (f) hangi test kırmızı, hangisi yeşil olur, tek tek yaz (HİPOTEZ).
+6. Test önermeden önce `app/build.gradle.kts` oku. Telefon, emülatör veya Actions isteyen test önerme (1 Aralık'a kadar, 0 TL). O davranışı TELEFONDA DENENECEK'e yaz. Worker test komutunu repodan oku (package.json/tests/); app/build.gradle.kts yalnız Android'i kapsar, Worker için varsayma.
+7. Testi yazılmayan kuralı EKSİK'te adıyla yaz.
